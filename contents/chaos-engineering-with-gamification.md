@@ -1,4 +1,5 @@
 ---
+# Hashnode frontmatter
 title: "Do the Fun Chaos Engineering with Gamification!"
 subtitle: Is Chaos Engineering fun? Nani!!
 cover: https://cdn.hashnode.com/res/hashnode/image/upload/v1651863348760/tEoT2O2Ce.png
@@ -9,6 +10,7 @@ canonical: https://pepo.dev/blog/chaos-engineering-with-gamification
 ignorePost: false
 hideFromHashnodeCommunity: false
 
+# custom frontmatter
 datePublished: Mon Feb 13 2023 15:46:01 GMT+0000 (Coordinated Universal Time)
 ---
 

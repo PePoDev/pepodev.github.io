@@ -1,4 +1,5 @@
 ---
+# Hashnode frontmatter
 title: "AWS Local Zone Bangkok Launch"
 subtitle: Local zone คืออะไรและเมื่อไหร่ถึงควรใช้กันนะ?
 cover: https://cdn.hashnode.com/res/hashnode/image/upload/v1676303064089/130dd7b7-8617-40a4-8334-0e406a19f70d.png
@@ -9,6 +10,7 @@ canonical: https://pepo.dev/blog/aws-local-zone-bangkok-launch
 ignorePost: false
 hideFromHashnodeCommunity: false
 
+# custom frontmatter
 datePublished: Mon Feb 13 2023 15:46:01 GMT+0000 (Coordinated Universal Time)
 ---
 
