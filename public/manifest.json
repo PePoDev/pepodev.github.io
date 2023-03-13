@@ -1,0 +1,51 @@
+{
+  ".solid/index.css": {
+    "file": "assets/index-9440c588.css",
+    "src": ".solid/index.css"
+  },
+  ".solid/index.html": {
+    "css": [
+      "assets/index-9440c588.css"
+    ],
+    "dynamicImports": [
+      "src/routes/[...404].tsx",
+      "src/routes/about.tsx",
+      "src/routes/index.tsx"
+    ],
+    "file": "assets/index-5216d095.js",
+    "isEntry": true,
+    "src": ".solid/index.html"
+  },
+  "_Counter-5211199f.js": {
+    "file": "assets/Counter-5211199f.js",
+    "imports": [
+      ".solid/index.html"
+    ]
+  },
+  "src/routes/[...404].tsx": {
+    "file": "assets/_...404_-ebb8701f.js",
+    "imports": [
+      ".solid/index.html"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/[...404].tsx"
+  },
+  "src/routes/about.tsx": {
+    "file": "assets/about-fba706d0.js",
+    "imports": [
+      ".solid/index.html",
+      "_Counter-5211199f.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/about.tsx"
+  },
+  "src/routes/index.tsx": {
+    "file": "assets/index-05dd8497.js",
+    "imports": [
+      ".solid/index.html",
+      "_Counter-5211199f.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/index.tsx"
+  }
+}
