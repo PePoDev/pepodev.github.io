@@ -2,11 +2,11 @@
   "/*404": [
     {
       "type": "script",
-      "href": "/assets/_...404_-ebb8701f.js"
+      "href": "/assets/_...404_-8b9aaca9.js"
     },
     {
       "type": "script",
-      "href": "/assets/index-5216d095.js"
+      "href": "/assets/index-1427e161.js"
     },
     {
       "type": "style",
@@ -16,11 +16,11 @@
   "/about": [
     {
       "type": "script",
-      "href": "/assets/about-fba706d0.js"
+      "href": "/assets/about-9c713f3b.js"
     },
     {
       "type": "script",
-      "href": "/assets/index-5216d095.js"
+      "href": "/assets/index-1427e161.js"
     },
     {
       "type": "style",
@@ -28,17 +28,53 @@
     },
     {
       "type": "script",
-      "href": "/assets/Counter-5211199f.js"
+      "href": "/assets/Counter-83c5d493.js"
+    }
+  ],
+  "/blog": [
+    {
+      "type": "script",
+      "href": "/assets/blog-77c636ab.js"
+    },
+    {
+      "type": "script",
+      "href": "/assets/index-1427e161.js"
+    },
+    {
+      "type": "style",
+      "href": "/assets/index-9440c588.css"
+    },
+    {
+      "type": "script",
+      "href": "/assets/Counter-83c5d493.js"
+    }
+  ],
+  "/cv": [
+    {
+      "type": "script",
+      "href": "/assets/cv-8aaa8a15.js"
+    },
+    {
+      "type": "script",
+      "href": "/assets/index-1427e161.js"
+    },
+    {
+      "type": "style",
+      "href": "/assets/index-9440c588.css"
+    },
+    {
+      "type": "script",
+      "href": "/assets/Counter-83c5d493.js"
     }
   ],
   "/": [
     {
       "type": "script",
-      "href": "/assets/index-05dd8497.js"
+      "href": "/assets/index-5e86a906.js"
     },
     {
       "type": "script",
-      "href": "/assets/index-5216d095.js"
+      "href": "/assets/index-1427e161.js"
     },
     {
       "type": "style",
@@ -46,14 +82,14 @@
     },
     {
       "type": "script",
-      "href": "/assets/Counter-5211199f.js"
+      "href": "/assets/Counter-83c5d493.js"
     }
   ],
   "entry-client": [],
   "index.html": [
     {
       "type": "script",
-      "href": "/assets/index-5216d095.js"
+      "href": "/assets/index-1427e161.js"
     },
     {
       "type": "style",

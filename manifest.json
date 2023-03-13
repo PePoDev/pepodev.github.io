@@ -10,20 +10,22 @@
     "dynamicImports": [
       "src/routes/[...404].tsx",
       "src/routes/about.tsx",
+      "src/routes/blog.tsx",
+      "src/routes/cv.tsx",
       "src/routes/index.tsx"
     ],
-    "file": "assets/index-5216d095.js",
+    "file": "assets/index-1427e161.js",
     "isEntry": true,
     "src": ".solid/index.html"
   },
-  "_Counter-5211199f.js": {
-    "file": "assets/Counter-5211199f.js",
+  "_Counter-83c5d493.js": {
+    "file": "assets/Counter-83c5d493.js",
     "imports": [
       ".solid/index.html"
     ]
   },
   "src/routes/[...404].tsx": {
-    "file": "assets/_...404_-ebb8701f.js",
+    "file": "assets/_...404_-8b9aaca9.js",
     "imports": [
       ".solid/index.html"
     ],
@@ -31,19 +33,37 @@
     "src": "src/routes/[...404].tsx"
   },
   "src/routes/about.tsx": {
-    "file": "assets/about-fba706d0.js",
+    "file": "assets/about-9c713f3b.js",
     "imports": [
       ".solid/index.html",
-      "_Counter-5211199f.js"
+      "_Counter-83c5d493.js"
     ],
     "isDynamicEntry": true,
     "src": "src/routes/about.tsx"
   },
-  "src/routes/index.tsx": {
-    "file": "assets/index-05dd8497.js",
+  "src/routes/blog.tsx": {
+    "file": "assets/blog-77c636ab.js",
     "imports": [
       ".solid/index.html",
-      "_Counter-5211199f.js"
+      "_Counter-83c5d493.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/blog.tsx"
+  },
+  "src/routes/cv.tsx": {
+    "file": "assets/cv-8aaa8a15.js",
+    "imports": [
+      ".solid/index.html",
+      "_Counter-83c5d493.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/cv.tsx"
+  },
+  "src/routes/index.tsx": {
+    "file": "assets/index-5e86a906.js",
+    "imports": [
+      ".solid/index.html",
+      "_Counter-83c5d493.js"
     ],
     "isDynamicEntry": true,
     "src": "src/routes/index.tsx"

@@ -40,7 +40,7 @@
   "node_modules/.pnpm/solid-start@0.2.23_ostdek7yauxasiuvaniywf7i5y/node_modules/solid-start/server/types.tsx": [
   ],
   "src/components/Counter.tsx": [
-    "/assets/Counter-5211199f.js"
+    "/assets/Counter-83c5d493.js"
   ],
   "src/entry-client.tsx": [
   ],
@@ -49,12 +49,18 @@
   "src/root.tsx": [
   ],
   "src/routes/[...404].tsx": [
-    "/assets/_...404_-ebb8701f.js"
+    "/assets/_...404_-8b9aaca9.js"
   ],
   "src/routes/about.tsx": [
-    "/assets/about-fba706d0.js"
+    "/assets/about-9c713f3b.js"
+  ],
+  "src/routes/blog.tsx": [
+    "/assets/blog-77c636ab.js"
+  ],
+  "src/routes/cv.tsx": [
+    "/assets/cv-8aaa8a15.js"
   ],
   "src/routes/index.tsx": [
-    "/assets/index-05dd8497.js"
+    "/assets/index-5e86a906.js"
   ]
 }
