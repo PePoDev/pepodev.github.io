@@ -14,9 +14,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 🧳 Checkout
         uses: actions/checkout@v4
-      - name: Cache packages
+      - name: 📦 Cache packages
         uses: actions/cache@v4
         with:
           key: npm cache
@@ -24,7 +24,7 @@ jobs:
             ./dist
             ./node_modules
             ~/.npm
-      - name: Build
+      - name: 🏗️ Build
         uses: withastro/action@v2
         with:
           package-manager: pnpm@latest
@@ -36,6 +36,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: 🚀 Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
