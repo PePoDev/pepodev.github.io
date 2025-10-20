@@ -1,0 +1,344 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const myTools = [
+  {
+    id: 1,
+    name: "Portfolio Generator",
+    description:
+      "A CLI tool to quickly scaffold beautiful portfolio websites with Astro",
+    category: "Built by Me",
+    icon: "🛠️",
+    link: "https://github.com/yourusername/portfolio-gen",
+    tech: ["Node.js", "TypeScript", "CLI"],
+  },
+  {
+    id: 2,
+    name: "Code Snippet Manager",
+    description:
+      "Save and organize your favorite code snippets with tags and search",
+    category: "Built by Me",
+    icon: "📝",
+    link: "https://github.com/yourusername/snippet-manager",
+    tech: ["React", "IndexedDB", "PWA"],
+  },
+  {
+    id: 3,
+    name: "Dev Utils Collection",
+    description: "A collection of handy developer utilities for everyday tasks",
+    category: "Built by Me",
+    icon: "🔧",
+    link: "https://github.com/yourusername/dev-utils",
+    tech: ["JavaScript", "Web APIs"],
+  },
+];
+
+const favoriteTools = [
+  {
+    id: 4,
+    name: "Visual Studio Code",
+    description: "My primary code editor with customized extensions and themes",
+    category: "Tools I Love",
+    icon: "💻",
+    link: "https://code.visualstudio.com",
+    type: "Code Editor",
+  },
+  {
+    id: 5,
+    name: "Figma",
+    description: "Design tool for creating UI/UX mockups and prototypes",
+    category: "Tools I Love",
+    icon: "🎨",
+    link: "https://figma.com",
+    type: "Design",
+  },
+  {
+    id: 6,
+    name: "Raycast",
+    description: "Blazingly fast launcher and productivity tool for macOS",
+    category: "Tools I Love",
+    icon: "⚡",
+    link: "https://raycast.com",
+    type: "Productivity",
+  },
+  {
+    id: 7,
+    name: "Warp",
+    description: "Modern terminal with AI-powered command suggestions",
+    category: "Tools I Love",
+    icon: "🚀",
+    link: "https://warp.dev",
+    type: "Terminal",
+  },
+  {
+    id: 8,
+    name: "Obsidian",
+    description: "Knowledge base and note-taking app with markdown support",
+    category: "Tools I Love",
+    icon: "📚",
+    link: "https://obsidian.md",
+    type: "Notes",
+  },
+  {
+    id: 9,
+    name: "GitHub",
+    description: "Version control and collaboration platform I use daily",
+    category: "Tools I Love",
+    icon: "🐙",
+    link: "https://github.com",
+    type: "Development",
+  },
+];
+---
+
+<BaseLayout
+  title="Tools"
+  description="Tools I've built and tools I love using in my daily workflow."
+>
+  <!-- Tools Hero -->
+  <section class="tools-hero section">
+    <div class="container">
+      <h1 class="fade-in">Tools</h1>
+      <p class="lead fade-in">
+        Tools I've built and tools I love using in my daily workflow.
+      </p>
+    </div>
+  </section>
+
+  <!-- My Tools Section -->
+  <section
+    class="my-tools-section section"
+    style="background-color: var(--color-surface);"
+  >
+    <div class="container">
+      <h2 class="section-title">🛠️ Built by Me</h2>
+      <p class="section-subtitle">
+        Open-source tools and utilities I've created
+      </p>
+
+      <div class="tools-grid">
+        {
+          myTools.map((tool) => (
+            <article class="tool-card card">
+              <div class="tool-icon">{tool.icon}</div>
+              <h3 class="tool-name">{tool.name}</h3>
+              <p class="tool-description">{tool.description}</p>
+              <div class="tool-tech">
+                {tool.tech.map((tech) => (
+                  <span class="tech-badge">{tech}</span>
+                ))}
+              </div>
+              <a
+                href={tool.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="tool-link"
+              >
+                View on GitHub →
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Favorite Tools Section -->
+  <section class="favorite-tools-section section">
+    <div class="container">
+      <h2 class="section-title">❤️ Tools I Love</h2>
+      <p class="section-subtitle">Essential tools in my daily workflow</p>
+
+      <div class="tools-grid grid-3">
+        {
+          favoriteTools.map((tool) => (
+            <article class="tool-card card">
+              <div class="tool-icon">{tool.icon}</div>
+              <div class="tool-type-badge">{tool.type}</div>
+              <h3 class="tool-name">{tool.name}</h3>
+              <p class="tool-description">{tool.description}</p>
+              <a
+                href={tool.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="tool-link"
+              >
+                Visit Website →
+              </a>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section
+    class="cta-section section"
+    style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));"
+  >
+    <div class="container">
+      <div class="cta-content">
+        <h2>Have a Tool Suggestion?</h2>
+        <p>
+          I'm always exploring new tools and technologies. Let me know about
+          your favorites!
+        </p>
+        <a
+          href="/about"
+          class="btn"
+          style="background-color: white; color: var(--color-primary);"
+        >
+          Learn More About Me
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Tools Hero */
+  .tools-hero {
+    text-align: center;
+    padding: var(--spacing-2xl) 0;
+  }
+
+  .tools-hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .lead {
+    font-size: 1.25rem;
+    color: var(--color-text-light);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Section Titles */
+  .section-title {
+    text-align: center;
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .section-subtitle {
+    text-align: center;
+    font-size: 1.125rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  /* Tools Grid */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .tool-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-xl);
+    transition: transform var(--transition-normal);
+  }
+
+  .tool-card:hover {
+    transform: translateY(-8px);
+  }
+
+  .tool-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .tool-type-badge {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    padding: 0.25rem 0.625rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: calc(var(--border-radius) / 2);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  .tool-name {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text);
+  }
+
+  .tool-description {
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .tool-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .tech-badge {
+    padding: 0.25rem 0.625rem;
+    background-color: var(--color-surface);
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+    border-radius: calc(var(--border-radius) / 2);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .tool-link {
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    transition: color var(--transition-fast);
+    margin-top: auto;
+  }
+
+  .tool-link:hover {
+    color: var(--color-secondary);
+  }
+
+  /* CTA Section */
+  .cta-section {
+    color: white;
+  }
+
+  .cta-content {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .cta-content h2 {
+    color: white;
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .cta-content p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.25rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  @media (max-width: 768px) {
+    .tools-grid,
+    .grid-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
