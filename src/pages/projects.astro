@@ -1,0 +1,395 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const projects = [
+  {
+    id: 1,
+    title: "E-Commerce Platform",
+    description:
+      "A full-featured online shopping platform with cart functionality, payment integration, and admin dashboard. Built with modern technologies for optimal performance.",
+    image:
+      "https://via.placeholder.com/600x400/2563eb/ffffff?text=E-Commerce+Platform",
+    tags: ["React", "Node.js", "MongoDB", "Stripe"],
+    demoUrl: "#",
+    githubUrl: "#",
+    featured: true,
+  },
+  {
+    id: 2,
+    title: "Task Management App",
+    description:
+      "Collaborative task management application with real-time updates, drag-and-drop functionality, and team collaboration features.",
+    image:
+      "https://via.placeholder.com/600x400/7c3aed/ffffff?text=Task+Manager",
+    tags: ["Vue.js", "Firebase", "Tailwind CSS"],
+    demoUrl: "#",
+    githubUrl: "#",
+    featured: true,
+  },
+  {
+    id: 3,
+    title: "Weather Dashboard",
+    description:
+      "Real-time weather application with beautiful UI, showing current conditions, forecasts, and weather maps for any location worldwide.",
+    image:
+      "https://via.placeholder.com/600x400/f59e0b/ffffff?text=Weather+Dashboard",
+    tags: ["JavaScript", "API Integration", "Charts.js"],
+    demoUrl: "#",
+    githubUrl: "#",
+    featured: false,
+  },
+  {
+    id: 4,
+    title: "Portfolio Website Builder",
+    description:
+      "A drag-and-drop portfolio builder that allows users to create beautiful portfolio websites without coding knowledge.",
+    image:
+      "https://via.placeholder.com/600x400/10b981/ffffff?text=Portfolio+Builder",
+    tags: ["React", "TypeScript", "Styled Components"],
+    demoUrl: "#",
+    githubUrl: "#",
+    featured: false,
+  },
+  {
+    id: 5,
+    title: "Blog CMS",
+    description:
+      "Content management system for bloggers with markdown support, SEO optimization, and analytics integration.",
+    image: "https://via.placeholder.com/600x400/ec4899/ffffff?text=Blog+CMS",
+    tags: ["Next.js", "Prisma", "PostgreSQL"],
+    demoUrl: "#",
+    githubUrl: "#",
+    featured: false,
+  },
+  {
+    id: 6,
+    title: "Fitness Tracker",
+    description:
+      "Mobile-first fitness tracking app with workout logging, progress charts, and personalized fitness recommendations.",
+    image:
+      "https://via.placeholder.com/600x400/06b6d4/ffffff?text=Fitness+Tracker",
+    tags: ["React Native", "Redux", "Firebase"],
+    demoUrl: "#",
+    githubUrl: "#",
+    featured: false,
+  },
+];
+
+const featuredProjects = projects.filter((p) => p.featured);
+const otherProjects = projects.filter((p) => !p.featured);
+---
+
+<BaseLayout
+  title="Projects"
+  description="Explore my portfolio of web development projects, showcasing modern applications and creative solutions."
+>
+  <!-- Projects Hero -->
+  <section class="projects-hero section">
+    <div class="container">
+      <h1 class="fade-in">My Projects</h1>
+      <p class="lead fade-in">
+        A collection of projects showcasing my skills in web development,
+        design, and problem-solving.
+      </p>
+    </div>
+  </section>
+
+  <!-- Featured Projects -->
+  {
+    featuredProjects.length > 0 && (
+      <section
+        class="featured-projects section"
+        style="background-color: var(--color-surface);"
+      >
+        <div class="container">
+          <h2 class="section-title">Featured Projects</h2>
+          <div class="featured-grid">
+            {featuredProjects.map((project) => (
+              <article class="project-card featured-card card">
+                <div class="project-image">
+                  <img src={project.image} alt={project.title} loading="lazy" />
+                  <div class="project-overlay">
+                    <div class="project-links">
+                      <a
+                        href={project.demoUrl}
+                        class="btn btn-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View Demo
+                      </a>
+                      <a
+                        href={project.githubUrl}
+                        class="btn btn-sm btn-outline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        GitHub
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="project-content">
+                  <h3>{project.title}</h3>
+                  <p>{project.description}</p>
+                  <div class="project-tags">
+                    {project.tags.map((tag) => (
+                      <span class="tag">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- All Projects -->
+  <section class="all-projects section">
+    <div class="container">
+      <h2 class="section-title">Other Projects</h2>
+      <div class="projects-grid grid grid-3">
+        {
+          otherProjects.map((project) => (
+            <article class="project-card card">
+              <div class="project-image">
+                <img src={project.image} alt={project.title} loading="lazy" />
+                <div class="project-overlay">
+                  <div class="project-links">
+                    <a
+                      href={project.demoUrl}
+                      class="btn btn-sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Demo
+                    </a>
+                    <a
+                      href={project.githubUrl}
+                      class="btn btn-sm btn-outline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Code
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div class="project-content">
+                <h3>{project.title}</h3>
+                <p>{project.description}</p>
+                <div class="project-tags">
+                  {project.tags.map((tag) => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section
+    class="cta-section section"
+    style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));"
+  >
+    <div class="container">
+      <div class="cta-content">
+        <h2>Interested in Working Together?</h2>
+        <p>Let's discuss your next project and bring your ideas to life.</p>
+        <a
+          href="/contact"
+          class="btn"
+          style="background-color: white; color: var(--color-primary);"
+        >
+          Get In Touch
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Projects Hero */
+  .projects-hero {
+    text-align: center;
+    padding: var(--spacing-2xl) 0;
+  }
+
+  .projects-hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .lead {
+    font-size: 1.25rem;
+    color: var(--color-text-light);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Featured Projects */
+  .featured-grid {
+    display: grid;
+    gap: var(--spacing-xl);
+  }
+
+  .featured-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .featured-card:nth-child(even) {
+    direction: rtl;
+  }
+
+  .featured-card:nth-child(even) > * {
+    direction: ltr;
+  }
+
+  /* Project Card */
+  .project-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform var(--transition-normal);
+  }
+
+  .project-card:hover {
+    transform: translateY(-8px);
+  }
+
+  .project-image {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+  }
+
+  .project-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-normal);
+  }
+
+  .project-card:hover .project-image img {
+    transform: scale(1.05);
+  }
+
+  .project-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .project-card:hover .project-overlay {
+    opacity: 1;
+  }
+
+  .project-links {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+
+  .btn-sm {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.875rem;
+  }
+
+  .project-content {
+    padding: var(--spacing-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .featured-card .project-content {
+    justify-content: center;
+  }
+
+  .project-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text);
+  }
+
+  .project-content p {
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .tag {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--color-background);
+    color: var(--color-primary);
+    border-radius: calc(var(--border-radius) / 2);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid var(--color-border);
+  }
+
+  /* CTA Section */
+  .cta-section {
+    color: white;
+  }
+
+  .cta-content {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .cta-content h2 {
+    color: white;
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .cta-content p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.25rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 968px) {
+    .featured-card {
+      grid-template-columns: 1fr;
+    }
+
+    .featured-card:nth-child(even) {
+      direction: ltr;
+    }
+
+    .project-image {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .projects-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

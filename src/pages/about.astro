@@ -1,18 +1,361 @@
-<a href="/">Home</a>
-<a href="/about/">About</a>
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
 
-<body>
-  <h1>My Astro Site</h1>
-  <h1>About Me</h1>
-  <h2>... and my new Astro site!</h2>
+const skills = [
+  { name: 'JavaScript', level: 90 },
+  { name: 'TypeScript', level: 85 },
+  { name: 'React', level: 88 },
+  { name: 'Node.js', level: 82 },
+  { name: 'HTML/CSS', level: 95 },
+  { name: 'Astro', level: 80 },
+  { name: 'Git', level: 85 },
+  { name: 'UI/UX Design', level: 78 }
+];
+---
 
-  <p>
-    I am working through Astro's introductory tutorial. This is the second page
-    on my website, and it's the first one I built myself!
-  </p>
+<BaseLayout
+  title="About"
+  description="Learn more about my background, skills, and experience as a web developer."
+>
+  <!-- About Hero -->
+  <section class="about-hero section">
+    <div class="container">
+      <h1 class="fade-in">About Me</h1>
+      <p class="lead fade-in">
+        Passionate developer with a love for creating elegant solutions to complex problems.
+      </p>
+    </div>
+  </section>
 
-  <p>
-    This site will update as I complete more of the tutorial, so keep checking
-    back and see how my journey is going!
-  </p>
-</body>
+  <!-- Bio Section -->
+  <section class="bio-section section">
+    <div class="container">
+      <div class="bio-grid">
+        <div class="bio-image">
+          <div class="placeholder-image">
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+        </div>
+        <div class="bio-content">
+          <h2>My Story</h2>
+          <p>
+            I'm a passionate web developer with a strong foundation in modern web technologies.
+            My journey into programming began with a curiosity about how websites work, which
+            quickly evolved into a deep passion for creating digital experiences.
+          </p>
+          <p>
+            With several years of experience in full-stack development, I've worked on diverse
+            projects ranging from small business websites to large-scale web applications. I
+            believe in writing clean, maintainable code and creating user-centric designs that
+            make a real impact.
+          </p>
+          <p>
+            When I'm not coding, you can find me exploring new technologies, contributing to
+            open-source projects, or sharing knowledge with the developer community through
+            blog posts and tutorials.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills Section -->
+  <section class="skills-section section" style="background-color: var(--color-surface);">
+    <div class="container">
+      <h2 class="section-title">Technical Skills</h2>
+      <div class="skills-grid">
+        {skills.map(skill => (
+          <div class="skill-item">
+            <div class="skill-header">
+              <span class="skill-name">{skill.name}</span>
+              <span class="skill-percentage">{skill.level}%</span>
+            </div>
+            <div class="skill-bar">
+              <div class="skill-progress" style={`width: ${skill.level}%`}></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Experience Section -->
+  <section class="experience-section section">
+    <div class="container">
+      <h2 class="section-title">Experience & Education</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content card">
+            <h3>Senior Web Developer</h3>
+            <p class="timeline-company">Tech Company Inc.</p>
+            <p class="timeline-date">2021 - Present</p>
+            <p class="timeline-description">
+              Leading the development of modern web applications using React, TypeScript, and Node.js.
+              Mentoring junior developers and implementing best practices across the team.
+            </p>
+          </div>
+        </div>
+        
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content card">
+            <h3>Full Stack Developer</h3>
+            <p class="timeline-company">Digital Agency</p>
+            <p class="timeline-date">2019 - 2021</p>
+            <p class="timeline-description">
+              Developed and maintained client websites and web applications. Collaborated with
+              designers and project managers to deliver high-quality solutions.
+            </p>
+          </div>
+        </div>
+        
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content card">
+            <h3>Bachelor's in Computer Science</h3>
+            <p class="timeline-company">University Name</p>
+            <p class="timeline-date">2015 - 2019</p>
+            <p class="timeline-description">
+              Graduated with honors. Focused on web technologies, software engineering,
+              and user experience design.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values Section -->
+  <section class="values-section section" style="background-color: var(--color-surface);">
+    <div class="container">
+      <h2 class="section-title">What I Value</h2>
+      <div class="grid grid-2">
+        <div class="value-card card">
+          <h3>Clean Code</h3>
+          <p>
+            Writing maintainable, well-documented code that other developers can easily
+            understand and build upon.
+          </p>
+        </div>
+        <div class="value-card card">
+          <h3>User Experience</h3>
+          <p>
+            Creating intuitive interfaces that prioritize user needs and provide
+            seamless interactions.
+          </p>
+        </div>
+        <div class="value-card card">
+          <h3>Continuous Learning</h3>
+          <p>
+            Staying current with evolving technologies and best practices in the
+            ever-changing web development landscape.
+          </p>
+        </div>
+        <div class="value-card card">
+          <h3>Collaboration</h3>
+          <p>
+            Working effectively with teams, sharing knowledge, and contributing to a
+            positive development culture.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* About Hero */
+  .about-hero {
+    text-align: center;
+    padding: var(--spacing-2xl) 0;
+  }
+  
+  .about-hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .lead {
+    font-size: 1.25rem;
+    color: var(--color-text-light);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  /* Bio Section */
+  .bio-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+  }
+  
+  .bio-image {
+    position: sticky;
+    top: 100px;
+  }
+  
+  .placeholder-image {
+    width: 100%;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .bio-content h2 {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .bio-content p {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  /* Skills Section */
+  .skills-grid {
+    display: grid;
+    gap: var(--spacing-lg);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .skill-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .skill-name {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  
+  .skill-percentage {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+  }
+  
+  .skill-bar {
+    height: 8px;
+    background-color: var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .skill-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    border-radius: 4px;
+    transition: width 1s ease-out;
+  }
+  
+  /* Timeline */
+  .timeline {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    padding-left: var(--spacing-xl);
+  }
+  
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--color-primary), var(--color-secondary));
+  }
+  
+  .timeline-item {
+    position: relative;
+    margin-bottom: var(--spacing-xl);
+  }
+  
+  .timeline-marker {
+    position: absolute;
+    left: calc(-1 * var(--spacing-xl) - 6px);
+    top: 8px;
+    width: 14px;
+    height: 14px;
+    background-color: var(--color-primary);
+    border: 3px solid var(--color-background);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--color-primary);
+  }
+  
+  .timeline-content {
+    padding: var(--spacing-lg);
+  }
+  
+  .timeline-content h3 {
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .timeline-company {
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .timeline-date {
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .timeline-description {
+    color: var(--color-text-light);
+    line-height: 1.6;
+  }
+  
+  /* Values Section */
+  .value-card {
+    text-align: center;
+  }
+  
+  .value-card h3 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 968px) {
+    .bio-grid {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-lg);
+    }
+    
+    .bio-image {
+      position: static;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .timeline {
+      padding-left: var(--spacing-lg);
+    }
+    
+    .timeline-marker {
+      left: calc(-1 * var(--spacing-lg) - 6px);
+    }
+  }
+</style>
