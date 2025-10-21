@@ -1,5 +1,5 @@
 {
-  "name": "portfolio",
+  "name": "personal-website",
   "type": "module",
   "version": "1.0.0",
   "scripts": {
@@ -9,6 +9,6 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^4.15.0"
+    "astro": "^5.14.7"
   }
 }
