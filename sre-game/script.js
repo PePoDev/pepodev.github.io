@@ -319,71 +319,6 @@ $('#solution-replay').addEventListener('click', () => {
   runBoot();
 });
 
-// --- Background Particles ---
-function initParticles() {
-  const canvas = document.createElement('canvas');
-  canvas.id = 'particles-canvas';
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const particles = [];
-  const count = 60;
-
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      r: Math.random() * 1.5 + 0.5,
-      a: Math.random() * 0.3 + 0.1,
-    });
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.x < 0) p.x = canvas.width;
-      if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height;
-      if (p.y > canvas.height) p.y = 0;
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(34, 211, 238, ${p.a})`;
-      ctx.fill();
-    });
-
-    // Draw connections
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(34, 211, 238, ${0.06 * (1 - dist / 120)})`;
-          ctx.stroke();
-        }
-      }
-    }
-
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
-
 // --- Scanlines ---
 function addScanlines() {
   const el = document.createElement('div');
@@ -401,6 +336,7 @@ function initParticleNetwork() {
   const particles = [];
   const pulses = [];
   const count = 80;
+  const ambientBlobs = [];
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -409,23 +345,65 @@ function initParticleNetwork() {
   resize();
   window.addEventListener('resize', resize);
 
+  // Create ambient glow blobs
+  for (let i = 0; i < 4; i++) {
+    ambientBlobs.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: 150 + Math.random() * 200,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15,
+      color: Math.random() < 0.2 ? 'red' : 'green',
+      alpha: 0.02 + Math.random() * 0.02,
+    });
+  }
+
+  // Create particles — some are hub nodes (larger, more connections)
   for (let i = 0; i < count; i++) {
+    const isHub = Math.random() < 0.1;
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      r: Math.random() * 2 + 1,
+      vx: (Math.random() - 0.5) * (isHub ? 0.2 : 0.5),
+      vy: (Math.random() - 0.5) * (isHub ? 0.2 : 0.5),
+      r: isHub ? 3 + Math.random() * 2 : Math.random() * 2 + 1,
+      isHub,
       color: Math.random() < 0.15 ? 'red' : 'green',
       pulseTimer: Math.random() * 300,
+      glowPhase: Math.random() * Math.PI * 2,
+      glowSpeed: 0.01 + Math.random() * 0.02,
     });
   }
+
+  let time = 0;
 
   function draw() {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    time += 0.016;
 
-    // Update positions
+    // --- Ambient glow blobs ---
+    ambientBlobs.forEach(blob => {
+      blob.x += blob.vx;
+      blob.y += blob.vy;
+      if (blob.x < -blob.r) blob.x = canvas.width + blob.r;
+      if (blob.x > canvas.width + blob.r) blob.x = -blob.r;
+      if (blob.y < -blob.r) blob.y = canvas.height + blob.r;
+      if (blob.y > canvas.height + blob.r) blob.y = -blob.r;
+
+      const grad = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r);
+      if (blob.color === 'red') {
+        grad.addColorStop(0, `rgba(239, 68, 68, ${blob.alpha})`);
+        grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+      } else {
+        grad.addColorStop(0, `rgba(34, 197, 94, ${blob.alpha})`);
+        grad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(blob.x - blob.r, blob.y - blob.r, blob.r * 2, blob.r * 2);
+    });
+
+    // --- Update positions ---
     particles.forEach(p => {
       p.x += p.vx;
       p.y += p.vy;
@@ -434,11 +412,10 @@ function initParticleNetwork() {
       if (p.y < 0) p.y = canvas.height;
       if (p.y > canvas.height) p.y = 0;
 
-      // Randomly launch a pulse toward a neighbor
+      // Launch pulses
       p.pulseTimer--;
       if (p.pulseTimer <= 0) {
-        p.pulseTimer = 100 + Math.random() * 400;
-        // Find a nearby particle
+        p.pulseTimer = p.isHub ? 30 + Math.random() * 80 : 100 + Math.random() * 400;
         let nearest = null;
         let nearestDist = Infinity;
         particles.forEach(other => {
@@ -458,12 +435,13 @@ function initParticleNetwork() {
             progress: 0,
             speed: 0.02 + Math.random() * 0.03,
             color: p.color,
+            trail: [],
           });
         }
       }
     });
 
-    // Draw connections
+    // --- Draw connections ---
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const d = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
@@ -479,7 +457,7 @@ function initParticleNetwork() {
       }
     }
 
-    // Draw pulses
+    // --- Draw pulses with trail ---
     for (let i = pulses.length - 1; i >= 0; i--) {
       const pulse = pulses[i];
       pulse.progress += pulse.speed;
@@ -490,26 +468,62 @@ function initParticleNetwork() {
 
       const px = pulse.x + (pulse.tx - pulse.x) * pulse.progress;
       const py = pulse.y + (pulse.ty - pulse.y) * pulse.progress;
-      const glowColor = pulse.color === 'red'
-        ? `rgba(239, 68, 68, ${1 - pulse.progress})`
-        : `rgba(34, 197, 94, ${1 - pulse.progress})`;
+      pulse.trail.push({ x: px, y: py });
+      if (pulse.trail.length > 8) pulse.trail.shift();
 
+      // Draw trail
+      for (let t = 0; t < pulse.trail.length; t++) {
+        const trailAlpha = (t / pulse.trail.length) * 0.8;
+        const trailR = 1 + (t / pulse.trail.length) * 2;
+        const baseColor = pulse.color === 'red' ? '239, 68, 68' : '34, 197, 94';
+        ctx.beginPath();
+        ctx.arc(pulse.trail[t].x, pulse.trail[t].y, trailR, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${baseColor}, ${trailAlpha * (1 - pulse.progress * 0.5)})`;
+        ctx.fill();
+      }
+
+      // Glow around pulse head
+      const baseColor = pulse.color === 'red' ? '239, 68, 68' : '34, 197, 94';
+      const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, 12);
+      glowGrad.addColorStop(0, `rgba(${baseColor}, ${0.6 * (1 - pulse.progress)})`);
+      glowGrad.addColorStop(1, `rgba(${baseColor}, 0)`);
+      ctx.fillStyle = glowGrad;
       ctx.beginPath();
-      ctx.arc(px, py, 3, 0, Math.PI * 2);
-      ctx.fillStyle = glowColor;
+      ctx.arc(px, py, 12, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Draw nodes
+    // --- Draw glowing nodes ---
     particles.forEach(p => {
-      const nodeColor = p.color === 'red'
-        ? 'rgba(239, 68, 68, 0.7)'
-        : 'rgba(34, 197, 94, 0.6)';
+      const glowPulse = Math.sin(time * p.glowSpeed * 60 + p.glowPhase) * 0.3 + 0.7;
+      const baseColor = p.color === 'red' ? '239, 68, 68' : '34, 197, 94';
+
+      // Outer glow
+      const glowR = p.isHub ? 20 : 10;
+      const glowGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+      glowGrad.addColorStop(0, `rgba(${baseColor}, ${0.3 * glowPulse})`);
+      glowGrad.addColorStop(1, `rgba(${baseColor}, 0)`);
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Core dot
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = nodeColor;
+      ctx.fillStyle = `rgba(${baseColor}, ${0.6 * glowPulse + 0.2})`;
       ctx.fill();
     });
+
+    // --- Vignette ---
+    const vignetteGrad = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, canvas.height * 0.3,
+      canvas.width / 2, canvas.height / 2, canvas.height * 0.9
+    );
+    vignetteGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    vignetteGrad.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+    ctx.fillStyle = vignetteGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     requestAnimationFrame(draw);
   }
@@ -524,6 +538,5 @@ function sleep(ms) {
 
 // --- Init ---
 runBoot();
-initParticles();
 initParticleNetwork();
 addScanlines();
