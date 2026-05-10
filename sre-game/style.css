@@ -30,7 +30,7 @@ html {
 }
 
 body {
-  background: transparent;
+  background: #000;
   color: var(--text);
   font-family: var(--font-sans);
   min-height: 100vh;
@@ -58,54 +58,6 @@ body {
   align-items: center;
   position: relative;
   overflow: hidden;
-}
-
-/* Loop background animation */
-.loop-bg {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -60%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.loop-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 1px solid transparent;
-  border-top-color: rgba(34, 211, 238, 0.25);
-  border-right-color: rgba(34, 211, 238, 0.1);
-}
-
-.loop-bg .loop-ring:nth-child(1) {
-  width: 420px;
-  height: 420px;
-  animation: loopSpin 12s linear infinite;
-}
-
-.loop-bg .loop-ring:nth-child(2) {
-  width: 480px;
-  height: 480px;
-  animation: loopSpin 18s linear infinite reverse;
-  border-top-color: rgba(34, 211, 238, 0.15);
-  border-right-color: rgba(34, 211, 238, 0.05);
-}
-
-.loop-bg .loop-ring:nth-child(3) {
-  width: 540px;
-  height: 540px;
-  animation: loopSpin 24s linear infinite;
-  border-top-color: rgba(34, 211, 238, 0.08);
-  border-right-color: rgba(34, 211, 238, 0.03);
-}
-
-@keyframes loopSpin {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .terminal {

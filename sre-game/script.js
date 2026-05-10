@@ -391,59 +391,124 @@ function addScanlines() {
   document.body.appendChild(el);
 }
 
-// --- Animated Grid Background ---
-function initGridBackground() {
+// --- Particle Network Background ---
+function initParticleNetwork() {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  const gridSize = 40;
-  let cols, rows;
-  const cells = [];
+  const connectionDist = 200;
+  const particles = [];
+  const pulses = [];
+  const count = 80;
 
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    cols = Math.ceil(canvas.width / gridSize);
-    rows = Math.ceil(canvas.height / gridSize);
-    cells.length = 0;
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        cells.push({
-          x: x * gridSize,
-          y: y * gridSize,
-          size: gridSize - 4,
-          alpha: Math.random() * 0.05,
-          targetAlpha: Math.random() * 0.15,
-          speed: 0.002 + Math.random() * 0.008,
-          phase: Math.random() * Math.PI * 2,
-        });
-      }
-    }
   }
   resize();
   window.addEventListener('resize', resize);
 
-  let time = 0;
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      r: Math.random() * 2 + 1,
+      color: Math.random() < 0.15 ? 'red' : 'green',
+      pulseTimer: Math.random() * 300,
+    });
+  }
 
   function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    time += 0.016;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    cells.forEach(cell => {
-      const wave = Math.sin(time * cell.speed * 50 + cell.phase) * 0.5 + 0.5;
-      cell.alpha += (cell.targetAlpha * wave - cell.alpha) * 0.05;
+    // Update positions
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
 
-      if (cell.alpha > 0.01) {
-        ctx.fillStyle = `rgba(34, 197, 94, ${cell.alpha})`;
-        ctx.fillRect(cell.x, cell.y, cell.size, cell.size);
+      // Randomly launch a pulse toward a neighbor
+      p.pulseTimer--;
+      if (p.pulseTimer <= 0) {
+        p.pulseTimer = 100 + Math.random() * 400;
+        // Find a nearby particle
+        let nearest = null;
+        let nearestDist = Infinity;
+        particles.forEach(other => {
+          if (other === p) return;
+          const d = Math.hypot(other.x - p.x, other.y - p.y);
+          if (d < connectionDist && d < nearestDist) {
+            nearest = other;
+            nearestDist = d;
+          }
+        });
+        if (nearest) {
+          pulses.push({
+            x: p.x,
+            y: p.y,
+            tx: nearest.x,
+            ty: nearest.y,
+            progress: 0,
+            speed: 0.02 + Math.random() * 0.03,
+            color: p.color,
+          });
+        }
+      }
+    });
+
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const d = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+        if (d < connectionDist) {
+          const alpha = (1 - d / connectionDist) * 0.35;
+          ctx.strokeStyle = `rgba(34, 197, 94, ${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw pulses
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const pulse = pulses[i];
+      pulse.progress += pulse.speed;
+      if (pulse.progress >= 1) {
+        pulses.splice(i, 1);
+        continue;
       }
 
-      // Swap targets occasionally
-      if (Math.random() < 0.001) {
-        cell.targetAlpha = Math.random() * 0.25;
-        cell.phase = Math.random() * Math.PI * 2;
-      }
+      const px = pulse.x + (pulse.tx - pulse.x) * pulse.progress;
+      const py = pulse.y + (pulse.ty - pulse.y) * pulse.progress;
+      const glowColor = pulse.color === 'red'
+        ? `rgba(239, 68, 68, ${1 - pulse.progress})`
+        : `rgba(34, 197, 94, ${1 - pulse.progress})`;
+
+      ctx.beginPath();
+      ctx.arc(px, py, 3, 0, Math.PI * 2);
+      ctx.fillStyle = glowColor;
+      ctx.fill();
+    }
+
+    // Draw nodes
+    particles.forEach(p => {
+      const nodeColor = p.color === 'red'
+        ? 'rgba(239, 68, 68, 0.7)'
+        : 'rgba(34, 197, 94, 0.6)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = nodeColor;
+      ctx.fill();
     });
 
     requestAnimationFrame(draw);
@@ -460,5 +525,5 @@ function sleep(ms) {
 // --- Init ---
 runBoot();
 initParticles();
-initMatrixRain();
+initParticleNetwork();
 addScanlines();
