@@ -1,14 +1,21 @@
 {
-  "name": "personal-website",
+  "name": "web",
   "type": "module",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.14.7"
+    "@astrojs/mdx": "^5.0.4",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.2",
+    "astro": "^6.3.1",
+    "sharp": "^0.34.3"
   }
 }
