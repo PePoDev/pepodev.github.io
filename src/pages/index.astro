@@ -1,49 +1,805 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { blogPosts, projects, experiences, skills } from '../content/apps';
 ---
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <script define:vars={{ blogPosts, projects, experiences, skills }}>
+      window.__APP_DATA__ = { blogPosts, projects, experiences, skills };
+    </script>
+    <div id="desktop">
+      <canvas id="bg-canvas"></canvas>
+
+      <div id="desktop-icons">
+        <div class="desktop-icon" data-app="blog">
+          <svg viewBox="0 0 40 40" fill="none">
+            <rect x="4" y="2" width="32" height="36" rx="3" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+            <line x1="10" y1="10" x2="30" y2="10" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="10" y1="15" x2="26" y2="15" stroke="#4ade80" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+            <line x1="10" y1="19" x2="28" y2="19" stroke="#4ade80" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+            <line x1="10" y1="23" x2="22" y2="23" stroke="#4ade80" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+            <rect x="10" y="28" width="8" height="6" rx="1" fill="#22c55e" opacity="0.3"/>
+          </svg>
+          <span>Blog</span>
+        </div>
+        <div class="desktop-icon" data-app="resume">
+          <svg viewBox="0 0 40 40" fill="none">
+            <rect x="8" y="2" width="24" height="36" rx="2" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+            <circle cx="20" cy="12" r="4" stroke="#06b6d4" stroke-width="1.2"/>
+            <line x1="14" y1="22" x2="26" y2="22" stroke="#06b6d4" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+            <line x1="14" y1="26" x2="24" y2="26" stroke="#06b6d4" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+            <line x1="14" y1="30" x2="22" y2="30" stroke="#06b6d4" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+          </svg>
+          <span>Resume</span>
+        </div>
+        <div class="desktop-icon" data-app="project">
+          <svg viewBox="0 0 40 40" fill="none">
+            <path d="M20 4L34 12V28L20 36L6 28V12L20 4Z" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+            <path d="M20 4V36" stroke="#a855f7" stroke-width="0.8" opacity="0.4"/>
+            <path d="M6 12L34 28" stroke="#a855f7" stroke-width="0.8" opacity="0.4"/>
+            <path d="M34 12L6 28" stroke="#a855f7" stroke-width="0.8" opacity="0.4"/>
+            <circle cx="20" cy="20" r="4" fill="#a855f7" opacity="0.3"/>
+          </svg>
+          <span>Projects</span>
+        </div>
+        <div class="desktop-icon" data-app="work">
+          <svg viewBox="0 0 40 40" fill="none">
+            <rect x="6" y="14" width="28" height="22" rx="2" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+            <path d="M14 14V10C14 6 16 4 20 4C24 4 26 6 26 10V14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+            <rect x="12" y="20" width="16" height="3" rx="1" fill="#f59e0b" opacity="0.4"/>
+            <rect x="12" y="26" width="10" height="3" rx="1" fill="#f59e0b" opacity="0.3"/>
+          </svg>
+          <span>Work</span>
+        </div>
+        <div class="desktop-icon" data-app="me">
+          <svg viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="14" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+            <path d="M8 34C8 26 13 22 20 22C27 22 32 26 32 34" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="20" cy="14" r="3" fill="#3b82f6" opacity="0.3"/>
+          </svg>
+          <span>About Me</span>
+        </div>
+      </div>
+
+      <div id="windows-container"></div>
+
+      <div id="start-menu">
+        <div id="start-menu-header">
+          <h3>Quick Access</h3>
+          <input type="text" id="start-menu-search" placeholder="Search apps..." />
+        </div>
+        <div id="start-menu-apps">
+          <button class="start-menu-app" data-app="blog">
+            <svg viewBox="0 0 40 40" fill="none"><rect x="4" y="2" width="32" height="36" rx="3" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/><line x1="10" y1="10" x2="30" y2="10" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div class="start-menu-app-text"><strong>Blog</strong><small>Read articles &amp; write-ups</small></div>
+          </button>
+          <button class="start-menu-app" data-app="resume">
+            <svg viewBox="0 0 40 40" fill="none"><rect x="8" y="2" width="24" height="36" rx="2" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/><circle cx="20" cy="12" r="4" stroke="#06b6d4" stroke-width="1.2"/></svg>
+            <div class="start-menu-app-text"><strong>Resume</strong><small>View &amp; download CV</small></div>
+          </button>
+          <button class="start-menu-app" data-app="project">
+            <svg viewBox="0 0 40 40" fill="none"><path d="M20 4L34 12V28L20 36L6 28V12L20 4Z" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/><circle cx="20" cy="20" r="4" fill="#a855f7" opacity="0.3"/></svg>
+            <div class="start-menu-app-text"><strong>Projects</strong><small>Showcase of work</small></div>
+          </button>
+          <button class="start-menu-app" data-app="work">
+            <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="14" width="28" height="22" rx="2" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/><path d="M14 14V10C14 6 16 4 20 4C24 4 26 6 26 10V14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div class="start-menu-app-text"><strong>Work</strong><small>Experience &amp; career</small></div>
+          </button>
+          <button class="start-menu-app" data-app="me">
+            <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="14" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/><path d="M8 34C8 26 13 22 20 22C27 22 32 26 32 34" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div class="start-menu-app-text"><strong>About Me</strong><small>Contact &amp; personal info</small></div>
+          </button>
+        </div>
+        <div id="start-menu-footer">
+          <span>system status: nominal</span>
+          <span id="start-menu-uptime">uptime: --</span>
+        </div>
+      </div>
+
+      <div id="taskbar">
+        <button id="taskbar-start">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+          </svg>
+        </button>
+        <div id="taskbar-apps"></div>
+        <div id="taskbar-tray">
+          <span id="taskbar-clock"></span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ===== App Definitions =====
+  const appIcons = {
+    blog: '<svg viewBox="0 0 40 40" fill="none"><rect x="4" y="2" width="32" height="36" rx="3" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/><line x1="10" y1="10" x2="30" y2="10" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    resume: '<svg viewBox="0 0 40 40" fill="none"><rect x="8" y="2" width="24" height="36" rx="2" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/><circle cx="20" cy="12" r="4" stroke="#06b6d4" stroke-width="1.2"/></svg>',
+    project: '<svg viewBox="0 0 40 40" fill="none"><path d="M20 4L34 12V28L20 36L6 28V12L20 4Z" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/><circle cx="20" cy="20" r="4" fill="#a855f7" opacity="0.3"/></svg>',
+    work: '<svg viewBox="0 0 40 40" fill="none"><rect x="6" y="14" width="28" height="22" rx="2" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/><path d="M14 14V10C14 6 16 4 20 4C24 4 26 6 26 10V14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    me: '<svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="14" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/><path d="M8 34C8 26 13 22 20 22C27 22 32 26 32 34" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/></svg>'
+  };
+
+  const appMeta = {
+    blog: { title: 'Blog — Articles', size: [700, 520] },
+    resume: { title: 'Resume — CV', size: [650, 580] },
+    project: { title: 'Projects — Showcase', size: [700, 500] },
+    work: { title: 'Work — Experience', size: [680, 540] },
+    me: { title: 'About Me', size: [600, 560] }
+  };
+
+  // ===== Window Manager =====
+  let windowIdCounter = 0;
+  let topZ = 100;
+  const windows = new Map();
+
+  const container = document.getElementById('windows-container');
+  const taskbarApps = document.getElementById('taskbar-apps');
+
+  function getAppContent(appId) {
+    const postsHtml = blogPosts.map((p, i) => `
+      <div class="blog-item" data-blog-index="${i}">
+        <div class="blog-item-title">${p.title}</div>
+        <div class="blog-item-meta">${p.date}</div>
+        <div class="blog-item-desc">${p.description}</div>
+      </div>
+    `).join('');
+
+    const projectsHtml = projects.map(p => `
+      <div class="project-card">
+        <div class="project-card-name">${p.name}</div>
+        <div class="project-card-desc">${p.description}</div>
+        <div class="project-tags">${p.tags.map(t => `<span class="project-tag">${t}</span>`).join('')}</div>
+      </div>
+    `).join('');
+
+    const expHtml = experiences.map(e => `
+      <div class="timeline-item">
+        <div class="timeline-date">${e.period}</div>
+        <div class="timeline-title">${e.role}</div>
+        <div class="timeline-company">${e.company}</div>
+        <div class="timeline-desc">${e.details.map(d => '<li>' + d + '</li>').join('')}</div>
+      </div>
+    `).join('');
+
+    const skillsHtml = skills.map(s => `
+      <div class="skill-item">
+        <div class="skill-item-label"><span>${s.name}</span><span>${s.level}%</span></div>
+        <div class="skill-bar"><div class="skill-bar-fill" style="width: 0%" data-level="${s.level}"></div></div>
+      </div>
+    `).join('');
+
+    const resumeExpHtml = experiences.map(e => `
+      <div class="resume-entry">
+        <div class="resume-entry-header">
+          <span class="resume-entry-title">${e.role}</span>
+          <span class="resume-entry-date">${e.period}</span>
+        </div>
+        <div class="resume-entry-subtitle">${e.company}</div>
+        <div class="resume-entry-details"><ul>${e.details.map(d => '<li>' + d + '</li>').join('')}</ul></div>
+      </div>
+    `).join('');
+
+    const resumeSkillsHtml = skills.map(s => `
+      <div class="skill-item">
+        <div class="skill-item-label"><span>${s.name}</span><span>${s.level}%</span></div>
+        <div class="skill-bar"><div class="skill-bar-fill" style="width: 0%" data-level="${s.level}"></div></div>
+      </div>
+    `).join('');
+
+    const contentMap = {
+      blog: `
+        <div class="app-content">
+          <div class="terminal-heading"><span class="prompt">~/blog $</span> ls articles/</div>
+          <div id="blog-list-view">
+            <h2>Latest Articles</h2>
+            <p class="app-subtitle">Postmortems, write-ups, and lessons from the trenches</p>
+            <div class="blog-list">${postsHtml}</div>
+          </div>
+          <div class="blog-reader" id="blog-reader">
+            <div class="blog-reader-header">
+              <button class="blog-reader-back" id="blog-back-btn">&#8592; Back to articles</button>
+              <h2 class="blog-reader-title" id="blog-reader-title"></h2>
+              <div class="blog-reader-date" id="blog-reader-date"></div>
+            </div>
+            <div class="blog-reader-body" id="blog-reader-body"></div>
+          </div>
+        </div>`,
+
+      resume: `
+        <div class="app-content">
+          <div class="terminal-heading"><span class="prompt">~/resume $</span> cat cv.tex</div>
+          <a class="download-btn" href="#" id="resume-download">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PDF
+          </a>
+          <div class="resume-section">
+            <div class="resume-section-title">\\section{Education}</div>
+            <div class="resume-entry">
+              <div class="resume-entry-header">
+                <span class="resume-entry-title">B.S. Computer Science</span>
+                <span class="resume-entry-date">2015 — 2019</span>
+              </div>
+              <div class="resume-entry-subtitle">University of Technology</div>
+              <div class="resume-entry-details"><ul><li>GPA: 3.7/4.0 — Dean's List</li><li>Focus: Distributed Systems, Networks</li><li>Capstone: Cluster management simulator</li></ul></div>
+            </div>
+          </div>
+          <div class="resume-section">
+            <div class="resume-section-title">\\section{Experience}</div>
+            ${resumeExpHtml}
+          </div>
+          <div class="resume-section">
+            <div class="resume-section-title">\\section{Technical Skills}</div>
+            <div class="skill-list">${resumeSkillsHtml}</div>
+          </div>
+          <div class="resume-section">
+            <div class="resume-section-title">\\section{Certifications}</div>
+            <div class="resume-entry">
+              <div class="resume-entry-details"><ul>
+                <li>AWS Certified Solutions Architect — Associate</li>
+                <li>Certified Kubernetes Administrator (CKA)</li>
+                <li>HashiCorp Terraform Associate</li>
+                <li>Google Cloud Professional DevOps Engineer</li>
+              </ul></div>
+            </div>
+          </div>
+        </div>`,
+
+      project: `
+        <div class="app-content">
+          <div class="terminal-heading"><span class="prompt">~/projects $</span> gh repo list --limit 10</div>
+          <h2>Project Showcase</h2>
+          <p class="app-subtitle">Tools, systems, and side projects I've built</p>
+          <div class="project-grid">${projectsHtml}</div>
+        </div>`,
+
+      work: `
+        <div class="app-content">
+          <div class="terminal-heading"><span class="prompt">~/work $</span> cat career_history.md</div>
+          <h2>Career Timeline</h2>
+          <p class="app-subtitle">My journey through infrastructure and reliability</p>
+          <div class="work-metrics">
+            <div class="work-metric"><div class="work-metric-value">99.99%</div><div class="work-metric-label">Uptime SLA</div></div>
+            <div class="work-metric"><div class="work-metric-value">50+</div><div class="work-metric-label">Incidents Led</div></div>
+            <div class="work-metric"><div class="work-metric-value">6yr</div><div class="work-metric-label">Experience</div></div>
+          </div>
+          <div class="timeline">${expHtml}</div>
+        </div>`,
+
+      me: `
+        <div class="app-content">
+          <div class="terminal-heading"><span class="prompt">~/about $</span> whoami</div>
+          <div class="profile-header">
+            <div class="profile-avatar">P</div>
+            <div class="profile-info">
+              <h2>PePoDev</h2>
+              <div class="profile-role">Senior Site Reliability Engineer</div>
+              <div class="profile-location">Remote | Asia-Pacific</div>
+              <div style="margin-top:8px"><span class="status-badge online">Available for opportunities</span></div>
+            </div>
+          </div>
+          <h3>Who Am I</h3>
+          <p>I'm an SRE who lives at the intersection of software engineering and operations. I believe systems should be designed to fail gracefully, and that every outage is a learning opportunity. When I'm not keeping production green, I'm building tools to make it stay that way.</p>
+          <div class="section-divider"></div>
+          <h3>Skills & Expertise</h3>
+          <div class="skill-list">${skillsHtml}</div>
+          <div class="section-divider"></div>
+          <h3>Get in Touch</h3>
+          <div class="contact-links">
+            <a href="mailto:hello@pepodev.com" class="contact-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              hello@pepodev.com
+            </a>
+            <a href="https://github.com/pepodev" class="contact-link" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.88-.015 3.285 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              GitHub
+            </a>
+            <a href="https://linkedin.com/in/pepodev" class="contact-link" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.791 0 0 .774 0 1.729v20.542C0 23.227.791 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              LinkedIn
+            </a>
+            <a href="https://twitter.com/pepodev" class="contact-link" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              X (Twitter)
+            </a>
+          </div>
+        </div>`
+    };
+
+    return contentMap[appId] || '<div class="app-content"><p>App not found.</p></div>';
+  }
+
+  function createWindow(appId) {
+    // Check if already open — bring to front
+    for (const [wid, w] of windows) {
+      if (w.appId === appId && !w.minimized) {
+        focusWindow(wid);
+        return;
+      }
+      if (w.appId === appId && w.minimized) {
+        restoreWindow(wid);
+        return;
+      }
+    }
+
+    const id = 'win-' + (++windowIdCounter);
+    const meta = appMeta[appId];
+    const [w, h] = meta.size;
+
+    // Center the window
+    const x = Math.max(40, (window.innerWidth - w) / 2 + (Math.random() * 40 - 20));
+    const y = Math.max(20, (window.innerHeight - h - 48) / 2 + (Math.random() * 30 - 15));
+
+    const win = document.createElement('div');
+    win.className = 'window opening focused';
+    win.id = id;
+    win.dataset.appId = appId;
+    win.style.cssText = `width:${w}px;height:${h}px;left:${x}px;top:${y}px;z-index:${++topZ}`;
+
+    win.innerHTML = `
+      <div class="window-titlebar">
+        <div class="window-titlebar-icon">${appIcons[appId]}</div>
+        <span class="window-title">${meta.title}</span>
+        <div class="window-status-dot"></div>
+        <div class="window-controls">
+          <button class="min-btn" title="Minimize">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="6" x2="10" y2="6"/></svg>
+          </button>
+          <button class="max-btn" title="Maximize">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="8" height="8" rx="1"/></svg>
+          </button>
+          <button class="close-btn" title="Close">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="window-content">${getAppContent(appId)}</div>
+    `;
+
+    container.appendChild(win);
+
+    // Remove opening animation class after it completes
+    setTimeout(() => win.classList.remove('opening'), 300);
+
+    // Store window state
+    windows.set(id, {
+      id,
+      appId,
+      element: win,
+      minimized: false,
+      maximized: false,
+      prevBounds: null
+    });
+
+    focusWindow(id);
+    updateTaskbar();
+    setupWindowEvents(win, id);
+    setupAppSpecificEvents(win, appId, id);
+    animateSkillBars(win);
+
+    return id;
+  }
+
+  function setupWindowEvents(win, id) {
+    const titlebar = win.querySelector('.window-titlebar');
+
+    // Focus on click
+    win.addEventListener('mousedown', () => focusWindow(id));
+
+    // Close
+    win.querySelector('.close-btn').addEventListener('click', () => closeWindow(id));
+
+    // Minimize
+    win.querySelector('.min-btn').addEventListener('click', () => minimizeWindow(id));
+
+    // Maximize
+    win.querySelector('.max-btn').addEventListener('click', () => toggleMaximize(id));
+
+    // Drag
+    let isDragging = false;
+    let dragStartX, dragStartY, winStartX, winStartY;
+
+    titlebar.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.window-controls')) return;
+      const wState = windows.get(id);
+      if (wState && wState.maximized) return;
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      winStartX = win.offsetLeft;
+      winStartY = win.offsetTop;
+      document.body.style.userSelect = 'none';
+    });
+
+    titlebar.addEventListener('dblclick', (e) => {
+      if (e.target.closest('.window-controls')) return;
+      toggleMaximize(id);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      win.style.left = (winStartX + e.clientX - dragStartX) + 'px';
+      win.style.top = Math.max(0, winStartY + e.clientY - dragStartY) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.userSelect = '';
+      }
+    });
+  }
+
+  function setupAppSpecificEvents(win, appId, winId) {
+    if (appId === 'blog') {
+      const blogList = win.querySelector('#blog-list-view');
+      const blogReader = win.querySelector('#blog-reader');
+      const backBtn = win.querySelector('#blog-back-btn');
+
+      win.querySelectorAll('.blog-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const idx = parseInt(item.dataset.blogIndex);
+          const post = blogPosts[idx];
+          if (!post) return;
+          document.getElementById('blog-reader-title').textContent = post.title;
+          document.getElementById('blog-reader-date').textContent = post.date;
+          document.getElementById('blog-reader-body').innerHTML = post.body;
+          if (blogList) blogList.style.display = 'none';
+          if (blogReader) blogReader.classList.add('active');
+        });
+      });
+
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          if (blogList) blogList.style.display = '';
+          if (blogReader) blogReader.classList.remove('active');
+        });
+      }
+    }
+  }
+
+  function animateSkillBars(win) {
+    setTimeout(() => {
+      win.querySelectorAll('.skill-bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.level + '%';
+      });
+    }, 300);
+  }
+
+  function focusWindow(id) {
+    windows.forEach((w, wid) => {
+      w.element.classList.toggle('focused', wid === id);
+      if (wid === id) w.element.style.zIndex = ++topZ;
+    });
+    updateTaskbar();
+  }
+
+  function closeWindow(id) {
+    const w = windows.get(id);
+    if (!w) return;
+    w.element.classList.add('closing');
+    setTimeout(() => {
+      w.element.remove();
+      windows.delete(id);
+      updateTaskbar();
+    }, 200);
+  }
+
+  function minimizeWindow(id) {
+    const w = windows.get(id);
+    if (!w) return;
+    w.minimized = true;
+    w.element.classList.add('minimized');
+    updateTaskbar();
+  }
+
+  function restoreWindow(id) {
+    const w = windows.get(id);
+    if (!w) return;
+    w.minimized = false;
+    w.element.classList.remove('minimized');
+    focusWindow(id);
+    updateTaskbar();
+  }
+
+  function toggleMaximize(id) {
+    const w = windows.get(id);
+    if (!w) return;
+    if (!w.maximized) {
+      w.prevBounds = {
+        left: w.element.style.left,
+        top: w.element.style.top,
+        width: w.element.style.width,
+        height: w.element.style.height
+      };
+      w.element.style.cssText = `left:0;top:0;width:100%;height:calc(100vh - 48px);z-index:${++topZ}`;
+      w.maximized = true;
+    } else {
+      Object.assign(w.element.style, w.prevBounds);
+      w.element.style.zIndex = ++topZ;
+      w.maximized = false;
+    }
+    focusWindow(id);
+  }
+
+  function updateTaskbar() {
+    taskbarApps.innerHTML = '';
+    windows.forEach((w) => {
+      const btn = document.createElement('button');
+      btn.className = 'taskbar-app' + (w.minimized ? ' active' : ' focused');
+      btn.innerHTML = appIcons[w.appId] + '<span>' + appMeta[w.appId].title.split('—')[0].trim() + '</span>';
+      btn.addEventListener('click', () => {
+        if (w.minimized) {
+          restoreWindow(w.id);
+        } else if (w.element.classList.contains('focused')) {
+          minimizeWindow(w.id);
+        } else {
+          focusWindow(w.id);
+        }
+      });
+      taskbarApps.appendChild(btn);
+    });
+  }
+
+  // ===== Desktop Icon Click =====
+  document.querySelectorAll('.desktop-icon').forEach(icon => {
+    icon.addEventListener('dblclick', () => {
+      createWindow(icon.dataset.app);
+    });
+  });
+
+  // ===== Start Menu =====
+  const startMenu = document.getElementById('start-menu');
+  const startBtn = document.getElementById('taskbar-start');
+  let startMenuOpen = false;
+
+  startBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    startMenuOpen = !startMenuOpen;
+    startMenu.classList.toggle('visible', startMenuOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (startMenuOpen && !startMenu.contains(e.target) && e.target !== startBtn && !startBtn.contains(e.target)) {
+      startMenuOpen = false;
+      startMenu.classList.remove('visible');
+    }
+  });
+
+  startMenu.addEventListener('click', (e) => e.stopPropagation());
+
+  document.querySelectorAll('.start-menu-app').forEach(btn => {
+    btn.addEventListener('click', () => {
+      createWindow(btn.dataset.app);
+      startMenuOpen = false;
+      startMenu.classList.remove('visible');
+    });
+  });
+
+  // Start menu search
+  document.getElementById('start-menu-search').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('.start-menu-app').forEach(app => {
+      const text = app.textContent.toLowerCase();
+      app.style.display = text.includes(q) ? '' : 'none';
+    });
+  });
+
+  // ===== Clock =====
+  function updateClock() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('taskbar-clock').textContent = h + ':' + m;
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  // ===== Uptime =====
+  const sessionStart = Date.now();
+  function updateUptime() {
+    const diff = Date.now() - sessionStart;
+    const mins = Math.floor(diff / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    const el = document.getElementById('start-menu-uptime');
+    if (el) el.textContent = 'uptime: ' + mins + 'm ' + secs + 's';
+  }
+  updateUptime();
+  setInterval(updateUptime, 1000);
+
+  // ===== Particle Network Background =====
+  function initParticleNetwork() {
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const connectionDist = 180;
+    const particles = [];
+    const pulses = [];
+    const count = 70;
+    const ambientBlobs = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    for (let i = 0; i < 4; i++) {
+      ambientBlobs.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: 150 + Math.random() * 200,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15,
+        color: Math.random() < 0.3 ? 'cyan' : 'green',
+        alpha: 0.015 + Math.random() * 0.02,
+      });
+    }
+
+    for (let i = 0; i < count; i++) {
+      const isHub = Math.random() < 0.1;
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * (isHub ? 0.2 : 0.4),
+        vy: (Math.random() - 0.5) * (isHub ? 0.2 : 0.4),
+        r: isHub ? 3 + Math.random() * 2 : Math.random() * 2 + 1,
+        isHub,
+        color: Math.random() < 0.15 ? 'cyan' : 'green',
+        pulseTimer: Math.random() * 300,
+        glowPhase: Math.random() * Math.PI * 2,
+        glowSpeed: 0.01 + Math.random() * 0.02,
+      });
+    }
+
+    let time = 0;
+
+    function draw() {
+      ctx.fillStyle = '#0a0e17';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      time += 0.016;
+
+      ambientBlobs.forEach(blob => {
+        blob.x += blob.vx;
+        blob.y += blob.vy;
+        if (blob.x < -blob.r) blob.x = canvas.width + blob.r;
+        if (blob.x > canvas.width + blob.r) blob.x = -blob.r;
+        if (blob.y < -blob.r) blob.y = canvas.height + blob.r;
+        if (blob.y > canvas.height + blob.r) blob.y = -blob.r;
+        const grad = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r);
+        if (blob.color === 'cyan') {
+          grad.addColorStop(0, 'rgba(6, 182, 212, ' + blob.alpha + ')');
+          grad.addColorStop(1, 'rgba(6, 182, 212, 0)');
+        } else {
+          grad.addColorStop(0, 'rgba(34, 197, 94, ' + blob.alpha + ')');
+          grad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(blob.x - blob.r, blob.y - blob.r, blob.r * 2, blob.r * 2);
+      });
+
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        p.pulseTimer--;
+        if (p.pulseTimer <= 0) {
+          p.pulseTimer = p.isHub ? 30 + Math.random() * 80 : 100 + Math.random() * 400;
+          let nearest = null;
+          let nearestDist = Infinity;
+          particles.forEach(other => {
+            if (other === p) return;
+            const d = Math.hypot(other.x - p.x, other.y - p.y);
+            if (d < connectionDist && d < nearestDist) {
+              nearest = other;
+              nearestDist = d;
+            }
+          });
+          if (nearest) {
+            pulses.push({
+              x: p.x, y: p.y, tx: nearest.x, ty: nearest.y,
+              progress: 0, speed: 0.02 + Math.random() * 0.03,
+              color: p.color, trail: [],
+            });
+          }
+        }
+      });
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const d = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+          if (d < connectionDist) {
+            const alpha = (1 - d / connectionDist) * 0.3;
+            ctx.strokeStyle = 'rgba(34, 197, 94, ' + alpha + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (let i = pulses.length - 1; i >= 0; i--) {
+        const pulse = pulses[i];
+        pulse.progress += pulse.speed;
+        if (pulse.progress >= 1) { pulses.splice(i, 1); continue; }
+        const px = pulse.x + (pulse.tx - pulse.x) * pulse.progress;
+        const py = pulse.y + (pulse.ty - pulse.y) * pulse.progress;
+        pulse.trail.push({ x: px, y: py });
+        if (pulse.trail.length > 8) pulse.trail.shift();
+        for (let t = 0; t < pulse.trail.length; t++) {
+          const trailAlpha = (t / pulse.trail.length) * 0.8;
+          const trailR = 1 + (t / pulse.trail.length) * 2;
+          const baseColor = pulse.color === 'cyan' ? '6, 182, 212' : '34, 197, 94';
+          ctx.beginPath();
+          ctx.arc(pulse.trail[t].x, pulse.trail[t].y, trailR, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(' + baseColor + ', ' + (trailAlpha * (1 - pulse.progress * 0.5)) + ')';
+          ctx.fill();
+        }
+        const baseColor = pulse.color === 'cyan' ? '6, 182, 212' : '34, 197, 94';
+        const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, 12);
+        glowGrad.addColorStop(0, 'rgba(' + baseColor + ', ' + (0.6 * (1 - pulse.progress)) + ')');
+        glowGrad.addColorStop(1, 'rgba(' + baseColor + ', 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(px, py, 12, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      particles.forEach(p => {
+        const glowPulse = Math.sin(time * p.glowSpeed * 60 + p.glowPhase) * 0.3 + 0.7;
+        const baseColor = p.color === 'cyan' ? '6, 182, 212' : '34, 197, 94';
+        const glowR = p.isHub ? 20 : 10;
+        const glowGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+        glowGrad.addColorStop(0, 'rgba(' + baseColor + ', ' + (0.3 * glowPulse) + ')');
+        glowGrad.addColorStop(1, 'rgba(' + baseColor + ', 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + baseColor + ', ' + (0.6 * glowPulse + 0.2) + ')';
+        ctx.fill();
+      });
+
+      const vignetteGrad = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.height * 0.3,
+        canvas.width / 2, canvas.height / 2, canvas.height * 0.9
+      );
+      vignetteGrad.addColorStop(0, 'rgba(10, 14, 23, 0)');
+      vignetteGrad.addColorStop(1, 'rgba(10, 14, 23, 0.7)');
+      ctx.fillStyle = vignetteGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  }
+
+  initParticleNetwork();
+
+  // ===== Keyboard shortcut: Escape closes start menu =====
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && startMenuOpen) {
+      startMenuOpen = false;
+      startMenu.classList.remove('visible');
+    }
+  });
+});
+    </script>
+  </body>
 </html>
