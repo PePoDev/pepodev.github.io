@@ -488,6 +488,9 @@ body {
   width: min(380px, calc(100vw - 24px));
   max-height: calc(100vh - 80px);
   overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
   padding: 14px;
   background: rgba(15, 20, 30, 0.92);
   backdrop-filter: blur(30px) saturate(1.5);
@@ -717,6 +720,23 @@ body {
 #audio-volume {
   width: 100%;
   accent-color: var(--accent-cyan);
+}
+
+#tray-panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+#tray-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#tray-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+#tray-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* === Start Menu === */
