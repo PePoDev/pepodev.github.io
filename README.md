@@ -1,36 +1,33 @@
-# Astro Starter Kit: Blog
+# PePoDev | SRE Desktop Portfolio
 
-```sh
-npm create astro@latest -- --template blog
-```
+An interactive, desktop-style portfolio built for a Site Reliability Engineer. The interface mimics a modern OS desktop environment, complete with a window manager, start menu, taskbar, and an interactive chaos simulation game.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## ✨ Features
 
-Features:
-
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and Open Graph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+- 🖥️ **Interactive Desktop UI:** Draggable, resizable, and minimizable windows.
+- 🎮 **SRE Game:** A built-in mini-game simulating production chaos, challenging users to mitigate escalating system failures.
+- 📝 **Terminal-Themed Content:** Blog, Resume, Work Experience, and Project showcase presented in an OS-like application format.
+- 🌌 **Particle Network Background:** An animated, dynamic HTML5 canvas background.
 
 ## 🚀 Project Structure
 
-Inside of your Astro project, you'll see the following folders and files:
+Built with [Astro](https://astro.build/), the project is currently structured as follows:
 
 ```text
 ├── public/
 ├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+│   ├── assets/
+│   ├── components/
+│   │   └── BaseHead.astro
+│   ├── content/
+│   │   ├── blog/          # Markdown blog posts
+│   │   └── apps.ts        # Hardcoded application content data
+│   ├── layouts/
+│   ├── pages/
+│   │   └── index.astro    # Main desktop entry point (SPA)
+│   ├── consts.ts
+│   └── content.config.ts
+└── sre-game/              # Standalone version of the SRE Game
 ```
 
 Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
@@ -53,11 +50,3 @@ All commands are run from the root of the project, from a terminal:
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).

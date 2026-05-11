@@ -1195,6 +1195,7 @@ body {
   overflow: hidden;
   min-height: 100%;
   display: flex;
+  font-family: var(--font-mono);
 }
 
 .sre-game-container .sre-game-screen {
@@ -1213,74 +1214,38 @@ body {
   display: flex;
 }
 
-/* Terminal */
-.sre-terminal {
+/* Boot output area */
+.sre-boot-output {
   width: 100%;
   max-width: 560px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-}
-
-.sre-terminal-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: #1a1f2e;
-  border-bottom: 1px solid var(--border-subtle);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-.sre-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.sre-dot-red { background: #ff5f57; }
-.sre-dot-yellow { background: #febc2e; }
-.sre-dot-green { background: #28c840; }
-
-.sre-terminal-title {
-  margin-left: 8px;
-}
-
-.sre-terminal-body {
-  padding: 16px;
-  font-family: var(--font-mono);
+  padding: 20px;
   font-size: 13px;
   line-height: 1.8;
   color: #22c55e;
-  height: 260px;
+  min-height: 200px;
+  max-height: 350px;
   overflow-y: auto;
-  background: #0d1117;
-  flex-shrink: 0;
 }
 
-.sre-terminal-body::-webkit-scrollbar {
+.sre-boot-output::-webkit-scrollbar {
   width: 4px;
 }
 
-.sre-terminal-body::-webkit-scrollbar-thumb {
+.sre-boot-output::-webkit-scrollbar-thumb {
   background: #1e293b;
   border-radius: 2px;
 }
 
-.sre-terminal-body .sre-line {
+.sre-boot-output .sre-line {
   opacity: 0;
   animation: sreTypeLine 0.1s forwards;
   white-space: nowrap;
 }
 
-.sre-terminal-body .sre-line.sre-error { color: #ef4444; }
-.sre-terminal-body .sre-line.sre-warn { color: #eab308; }
-.sre-terminal-body .sre-line.sre-info { color: #22d3ee; }
-.sre-terminal-body .sre-line.sre-dim { color: var(--text-dim); }
+.sre-boot-output .sre-line.sre-error { color: #ef4444; }
+.sre-boot-output .sre-line.sre-warn { color: #eab308; }
+.sre-boot-output .sre-line.sre-info { color: #22d3ee; }
+.sre-boot-output .sre-line.sre-dim { color: var(--text-dim); }
 
 @keyframes sreTypeLine {
   to { opacity: 1; }
