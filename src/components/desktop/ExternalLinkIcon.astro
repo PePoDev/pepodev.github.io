@@ -1,0 +1,209 @@
+---
+import AppIcon from "./AppIcon.astro";
+
+interface Props {
+  iconName: string;
+  label: string;
+  href: string;
+  id?: string;
+  class?: string;
+}
+
+const { iconName, label, href, id, class: className = "" } = Astro.props;
+---
+
+<a
+  id={id}
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  class:list={["desktop-icon", "desktop-link-icon", className]}
+>
+  <div class="icon-wrapper">
+    <AppIcon name={iconName} />
+    <svg class="link-badge" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <rect width="12" height="12" rx="2" fill="#1e293b"></rect>
+      <path
+        d="M4 8L8 4M8 4H5.5M8 4V6.5"
+        stroke="#22c55e"
+        stroke-width="1.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"></path>
+    </svg>
+  </div>
+  <span>{label}</span>
+</a>
+
+<script>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const linkIcons = Array.from(
+      document.querySelectorAll(".desktop-link-icon"),
+    );
+    const initialRects = new Map(
+      linkIcons.map((icon) => [icon, icon.getBoundingClientRect()]),
+    );
+    const storagePrefix = "pepodev.linkIcon.";
+
+    function loadIconPosition(iconId) {
+      try {
+        const raw = localStorage.getItem(storagePrefix + iconId);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveIconPosition(iconId, position) {
+      try {
+        localStorage.setItem(storagePrefix + iconId, JSON.stringify(position));
+      } catch {
+        // Ignore storage failures
+      }
+    }
+
+    function clampIconPosition(icon, x, y) {
+      const margin = 8;
+      const taskbarReserve = 56;
+      const maxX = Math.max(
+        margin,
+        window.innerWidth - icon.offsetWidth - margin,
+      );
+      const maxY = Math.max(
+        margin,
+        window.innerHeight - icon.offsetHeight - taskbarReserve,
+      );
+
+      return {
+        x: Math.min(Math.max(margin, x), maxX),
+        y: Math.min(Math.max(margin, y), maxY),
+      };
+    }
+
+    function setIconPosition(icon, x, y) {
+      const next = clampIconPosition(icon, x, y);
+      icon.style.position = "fixed";
+      icon.style.left = next.x + "px";
+      icon.style.top = next.y + "px";
+      icon.style.right = "auto";
+      icon.style.bottom = "auto";
+      return next;
+    }
+
+    linkIcons.forEach((icon) => {
+      const iconId = icon.id;
+      if (!iconId) return;
+
+      // Initialize position
+      const initialRect = initialRects.get(icon);
+      const saved = loadIconPosition(iconId);
+      const initial = saved || {
+        x: initialRect?.left || 20,
+        y: initialRect?.top || 20,
+      };
+      setIconPosition(icon, initial.x, initial.y);
+
+      let pointerStartX = 0;
+      let pointerStartY = 0;
+      let iconStartX = 0;
+      let iconStartY = 0;
+      let isPointerDown = false;
+      let isDragging = false;
+      let wasDragging = false; // Track if we just finished dragging
+
+      icon.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
+
+        const rect = icon.getBoundingClientRect();
+        pointerStartX = event.clientX;
+        pointerStartY = event.clientY;
+        iconStartX = rect.left;
+        iconStartY = rect.top;
+        isPointerDown = true;
+        isDragging = false;
+        wasDragging = false;
+        icon.style.zIndex = "30";
+        icon.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      });
+
+      icon.addEventListener("pointermove", (event) => {
+        if (!isPointerDown) return;
+
+        const deltaX = event.clientX - pointerStartX;
+        const deltaY = event.clientY - pointerStartY;
+        if (!isDragging && Math.hypot(deltaX, deltaY) < 4) return;
+
+        isDragging = true;
+        icon.classList.add("dragging");
+        setIconPosition(icon, iconStartX + deltaX, iconStartY + deltaY);
+      });
+
+      icon.addEventListener("pointerup", (event) => {
+        if (!isPointerDown) return;
+
+        icon.releasePointerCapture?.(event.pointerId);
+        isPointerDown = false;
+        icon.style.zIndex = "5";
+
+        if (isDragging) {
+          const rect = icon.getBoundingClientRect();
+          const position = setIconPosition(icon, rect.left, rect.top);
+          saveIconPosition(iconId, position);
+          icon.classList.remove("dragging");
+
+          // Set flag to prevent click event
+          wasDragging = true;
+          isDragging = false;
+
+          // Prevent link navigation after drag
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        // If not dragging, allow normal link behavior
+      });
+
+      icon.addEventListener("pointercancel", () => {
+        isPointerDown = false;
+        isDragging = false;
+        icon.style.zIndex = "5";
+        icon.classList.remove("dragging");
+      });
+
+      // Prevent default link behavior if we just finished dragging
+      icon.addEventListener("click", (e) => {
+        if (wasDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          wasDragging = false; // Reset flag after preventing click
+        }
+        // Otherwise allow normal link navigation
+      });
+    });
+  });
+</script>
+
+<style>
+  .desktop-link-icon {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .icon-wrapper {
+    position: relative;
+    width: 48px;
+    height: 48px;
+  }
+
+  .link-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+</style>
