@@ -1,22 +1,27 @@
 ---
-import portfolio from '../../data/portfolio.json';
-import ContactIcon from './ContactIcon.astro';
-
-const socialLinks = portfolio.socialLinks;
+import socialLinks from "../../data/social-links.json";
+import ContactIcon from "./ContactIcon.astro";
 ---
 
 <div class="app-content">
-	<div class="terminal-heading"><span class="prompt">~/connect $</span> cat social_links.yaml</div>
-	<h2>Find Me Online</h2>
-	<p class="app-subtitle">Click to visit my profiles on external platforms</p>
-	<div class="contact-links">
-		{
-			socialLinks.map((link) => (
-				<a href={link.href} class="contact-link" target="_blank" rel="noopener noreferrer">
-					<ContactIcon name={link.icon} />
-					{link.label}
-				</a>
-			))
-		}
-	</div>
+  <div class="terminal-heading">
+    <span class="prompt">~/connect $</span> cat social_links.yaml
+  </div>
+  <h2>Find Me Online</h2>
+  <p class="app-subtitle">Click to visit my profiles on external platforms</p>
+  <div class="contact-links">
+    {
+      socialLinks.map((link) => (
+        <a
+          href={link.href}
+          class="contact-link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <ContactIcon name={link.icon} />
+          {link.label}
+        </a>
+      ))
+    }
+  </div>
 </div>

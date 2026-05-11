@@ -1,38 +1,38 @@
 ---
-import portfolio from '../../data/portfolio.json';
-
-const experiences = portfolio.experiences;
-const workMetrics = portfolio.workMetrics;
+import experiences from "../../data/experiences.json";
+import workMetrics from "../../data/work-metrics.json";
 ---
 
 <div class="app-content">
-	<div class="terminal-heading"><span class="prompt">~/work $</span> cat career_history.md</div>
-	<h2>Career Timeline</h2>
-	<p class="app-subtitle">My journey through infrastructure and reliability</p>
-	<div class="work-metrics">
-		{
-			workMetrics.map((metric) => (
-				<div class="work-metric">
-					<div class="work-metric-value">{metric.value}</div>
-					<div class="work-metric-label">{metric.label}</div>
-				</div>
-			))
-		}
-	</div>
-	<div class="timeline">
-		{
-			experiences.map((experience) => (
-				<div class="timeline-item">
-					<div class="timeline-date">{experience.period}</div>
-					<div class="timeline-title">{experience.role}</div>
-					<div class="timeline-company">{experience.company}</div>
-					<ul class="timeline-desc">
-						{experience.details.map((detail) => (
-							<li>{detail}</li>
-						))}
-					</ul>
-				</div>
-			))
-		}
-	</div>
+  <div class="terminal-heading">
+    <span class="prompt">~/work $</span> cat career_history.md
+  </div>
+  <h2>Career Timeline</h2>
+  <p class="app-subtitle">My journey through infrastructure and reliability</p>
+  <div class="work-metrics">
+    {
+      workMetrics.map((metric) => (
+        <div class="work-metric">
+          <div class="work-metric-value">{metric.value}</div>
+          <div class="work-metric-label">{metric.label}</div>
+        </div>
+      ))
+    }
+  </div>
+  <div class="timeline">
+    {
+      experiences.map((experience) => (
+        <div class="timeline-item">
+          <div class="timeline-date">{experience.period}</div>
+          <div class="timeline-title">{experience.role}</div>
+          <div class="timeline-company">{experience.company}</div>
+          <ul class="timeline-desc">
+            {experience.details.map((detail) => (
+              <li>{detail}</li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
 </div>

@@ -1,26 +1,26 @@
 ---
-import portfolio from '../../data/portfolio.json';
-
-const projects = portfolio.projects;
+import projects from "../../data/projects.json";
 ---
 
 <div class="app-content">
-	<div class="terminal-heading"><span class="prompt">~/projects $</span> gh repo list --limit 10</div>
-	<h2>Project Showcase</h2>
-	<p class="app-subtitle">Tools, systems, and side projects I've built</p>
-	<div class="project-grid">
-		{
-			projects.map((project) => (
-				<div class="project-card">
-					<div class="project-card-name">{project.name}</div>
-					<div class="project-card-desc">{project.description}</div>
-					<div class="project-tags">
-						{project.tags.map((tag) => (
-							<span class="project-tag">{tag}</span>
-						))}
-					</div>
-				</div>
-			))
-		}
-	</div>
+  <div class="terminal-heading">
+    <span class="prompt">~/projects $</span> gh repo list --limit 10
+  </div>
+  <h2>Project Showcase</h2>
+  <p class="app-subtitle">Tools, systems, and side projects I've built</p>
+  <div class="project-grid">
+    {
+      projects.map((project) => (
+        <div class="project-card">
+          <div class="project-card-name">{project.name}</div>
+          <div class="project-card-desc">{project.description}</div>
+          <div class="project-tags">
+            {project.tags.map((tag) => (
+              <span class="project-tag">{tag}</span>
+            ))}
+          </div>
+        </div>
+      ))
+    }
+  </div>
 </div>

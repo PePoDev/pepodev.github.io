@@ -1,0 +1,55 @@
+[
+  {
+    "company": "ZILO™",
+    "role": "Site Reliability Engineer",
+    "period": "February 2024 - Present",
+    "details": [
+      "Managed cloud infrastructure on AWS with Terraform & Terramate",
+      "Enhanced services with graceful shutdown, query optimization, and performance improvements",
+      "Implemented chaos engineering using AWS FIS",
+      "Built observability platform with Grafana LGTM, OpenTelemetry, and Datadog",
+      "Optimized costs across Cloud, Datadog, and Kubernetes resources",
+      "Deployed and managed Kafka Strimzi, Camunda Zeebe, Elasticsearch, and HashiCorp Vault"
+    ]
+  },
+  {
+    "company": "Opn",
+    "role": "Infrastructure Engineer",
+    "period": "July 2022 - January 2024",
+    "details": [
+      "Improved system reliability and availability using Argo-Rollout, Karpenter, Terragrunt, and AWS Graviton",
+      "Implemented system monitoring with Datadog",
+      "Established GitOps workflows with ArgoCD and GitHub Actions",
+      "Optimized costs using Kubecost, AWS reserved instances, and decommissioned underutilized resources",
+      "Secured system access with Teleport",
+      "Built data ETL pipelines with AWS Glue and AWS Athena",
+      "Contributed to PCI-DSS compliance efforts",
+      "Managed clusters with Rancher and Portainer"
+    ]
+  },
+  {
+    "company": "Opsta (Thailand) Co.,Ltd.",
+    "role": "DevOps Engineer",
+    "period": "May 2020 - June 2022",
+    "details": [
+      "Developed AWS and Google Cloud infrastructure as code with Terraform and Terragrunt",
+      "Built CI/CD pipelines for building, testing, and deploying applications on Kubernetes",
+      "Implemented centralized monitoring and logging with Grafana, Prometheus, and Graylog",
+      "Developed in-house tools with Golang to solve customer problems",
+      "Created load testing plans using Locust and JMeter",
+      "Optimized AWS cloud costs",
+      "Developed scalable stateful applications like Moodle on AWS with automation tools (Packer, Ansible, Terraform)"
+    ]
+  },
+  {
+    "company": "Extend Interactive Co., Ltd.",
+    "role": "Junior Game Developer",
+    "period": "June 2019 - December 2019",
+    "details": [
+      "Developed game backend API with Golang",
+      "Created monitoring stack with Grafana, Prometheus, and ELK stack",
+      "Developed game patcher system in Unity C#",
+      "Built self-service portal for admin operations with Vue.js (voucher creation, player management, ban system)"
+    ]
+  }
+]

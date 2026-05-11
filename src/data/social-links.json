@@ -1,0 +1,22 @@
+[
+  {
+    "label": "GitHub - @pepodev",
+    "href": "https://github.com/pepodev",
+    "icon": "github"
+  },
+  {
+    "label": "LinkedIn - @pepodev",
+    "href": "https://linkedin.com/in/pepodev",
+    "icon": "linkedin"
+  },
+  {
+    "label": "Blog - blog.pepo.dev",
+    "href": "https://blog.pepo.dev",
+    "icon": "blog"
+  },
+  {
+    "label": "Email - pepo@pepo.dev",
+    "href": "mailto:pepo@pepo.dev",
+    "icon": "email"
+  }
+]

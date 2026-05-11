@@ -1,87 +1,97 @@
 ---
-import portfolio from '../../data/portfolio.json';
-
-const experiences = portfolio.experiences;
-const skills = portfolio.skills;
+import experiences from "../../data/experiences.json";
+import skills from "../../data/skills.json";
 ---
 
 <div class="app-content">
-	<div class="terminal-heading"><span class="prompt">~/resume $</span> cat cv.tex</div>
-	<a class="download-btn" href="#" id="resume-download">
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-			<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
-			<polyline points="7 10 12 15 17 10"></polyline>
-			<line x1="12" y1="15" x2="12" y2="3"></line>
-		</svg>
-		Download PDF
-	</a>
-	<div class="resume-section">
-		<div class="resume-section-title">{'\\section{Education}'}</div>
-		<div class="resume-entry">
-			<div class="resume-entry-header">
-				<span class="resume-entry-title">B.S. Computer Science</span>
-				<span class="resume-entry-date">2015 - 2019</span>
-			</div>
-			<div class="resume-entry-subtitle">University of Technology</div>
-			<div class="resume-entry-details">
-				<ul>
-					<li>GPA: 3.7/4.0 - Dean's List</li>
-					<li>Focus: Distributed Systems, Networks</li>
-					<li>Capstone: Cluster management simulator</li>
-				</ul>
-			</div>
-		</div>
-	</div>
-	<div class="resume-section">
-		<div class="resume-section-title">{'\\section{Experience}'}</div>
-		{
-			experiences.map((experience) => (
-				<div class="resume-entry">
-					<div class="resume-entry-header">
-						<span class="resume-entry-title">{experience.role}</span>
-						<span class="resume-entry-date">{experience.period}</span>
-					</div>
-					<div class="resume-entry-subtitle">{experience.company}</div>
-					<div class="resume-entry-details">
-						<ul>
-							{experience.details.map((detail) => (
-								<li>{detail}</li>
-							))}
-						</ul>
-					</div>
-				</div>
-			))
-		}
-	</div>
-	<div class="resume-section">
-		<div class="resume-section-title">{'\\section{Technical Skills}'}</div>
-		<div class="skill-list">
-			{
-				skills.map((skill) => (
-					<div class="skill-item">
-						<div class="skill-item-label">
-							<span>{skill.name}</span>
-							<span>{skill.level}%</span>
-						</div>
-						<div class="skill-bar">
-							<div class="skill-bar-fill" style="width: 0%" data-level={skill.level}></div>
-						</div>
-					</div>
-				))
-			}
-		</div>
-	</div>
-	<div class="resume-section">
-		<div class="resume-section-title">{'\\section{Certifications}'}</div>
-		<div class="resume-entry">
-			<div class="resume-entry-details">
-				<ul>
-					<li>AWS Certified Solutions Architect - Associate</li>
-					<li>Certified Kubernetes Administrator (CKA)</li>
-					<li>HashiCorp Terraform Associate</li>
-					<li>Google Cloud Professional DevOps Engineer</li>
-				</ul>
-			</div>
-		</div>
-	</div>
+  <div class="terminal-heading">
+    <span class="prompt">~/resume $</span> cat cv.tex
+  </div>
+  <a class="download-btn" href="#" id="resume-download">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+    Download PDF
+  </a>
+  <div class="resume-section">
+    <div class="resume-section-title">{"\\section{Education}"}</div>
+    <div class="resume-entry">
+      <div class="resume-entry-header">
+        <span class="resume-entry-title"
+          >Bachelor Degrees, Computer Science</span
+        >
+        <span class="resume-entry-date">2016 - 2020</span>
+      </div>
+      <div class="resume-entry-subtitle">
+        King Mongkut's Institute of Technology Ladkrabang
+      </div>
+    </div>
+  </div>
+  <div class="resume-section">
+    <div class="resume-section-title">{"\\section{Experience}"}</div>
+    {
+      experiences.map((experience) => (
+        <div class="resume-entry">
+          <div class="resume-entry-header">
+            <span class="resume-entry-title">{experience.role}</span>
+            <span class="resume-entry-date">{experience.period}</span>
+          </div>
+          <div class="resume-entry-subtitle">{experience.company}</div>
+          <div class="resume-entry-details">
+            <ul>
+              {experience.details.map((detail) => (
+                <li>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+  <div class="resume-section">
+    <div class="resume-section-title">{"\\section{Technical Skills}"}</div>
+    <div class="skill-list">
+      {
+        skills.map((skill) => (
+          <div class="skill-item">
+            <div class="skill-item-label">
+              <span>{skill.name}</span>
+              <span>{skill.level}%</span>
+            </div>
+            <div class="skill-bar">
+              <div
+                class="skill-bar-fill"
+                style="width: 0%"
+                data-level={skill.level}
+              />
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+  <div class="resume-section">
+    <div class="resume-section-title">{"\\section{Certifications}"}</div>
+    <div class="resume-entry">
+      <div class="resume-entry-details">
+        <ul>
+          <li>AWS Certified Solutions Architect – Associate</li>
+          <li>HashiCorp Terraform Associate</li>
+          <li>Google Cloud Digital Leader</li>
+          <li>Associate Cloud Engineer</li>
+          <li>Google Professional Cloud Architect</li>
+          <li>Certified Kubernetes Administrator (CKA)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>

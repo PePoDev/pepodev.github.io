@@ -1,0 +1,38 @@
+[
+  {
+    "name": "AlertRouter",
+    "description": "Smart alert routing engine that reduces pager fatigue by correlating events across services before notifying on-call engineers.",
+    "tags": ["Go", "Kafka", "Prometheus"],
+    "link": "#"
+  },
+  {
+    "name": "InfraDrift",
+    "description": "Continuous drift detection tool that compares actual cluster state against desired Terraform state and auto-generates PRs.",
+    "tags": ["Python", "Terraform", "GitHub Actions"],
+    "link": "#"
+  },
+  {
+    "name": "CanaryBot",
+    "description": "Slack bot for progressive deployment canaries. Type /canary deploy and it runs your analysis pipeline with real-time metrics.",
+    "tags": ["Rust", "Slack API", "Datadog"],
+    "link": "#"
+  },
+  {
+    "name": "LogSum",
+    "description": "Log aggregation dashboard that surfaces anomalies using statistical outlier detection instead of keyword matching.",
+    "tags": ["TypeScript", "Elasticsearch", "React"],
+    "link": "#"
+  },
+  {
+    "name": "NetPulse",
+    "description": "Synthetic monitoring framework that runs distributed health checks from 30+ global edge locations.",
+    "tags": ["Go", "eBPF", "gRPC"],
+    "link": "#"
+  },
+  {
+    "name": "SRE-Game",
+    "description": "Interactive chaos simulation game that teaches SRE fundamentals. Play it right on this portfolio.",
+    "tags": ["JavaScript", "Canvas", "Game Dev"],
+    "link": "#"
+  }
+]

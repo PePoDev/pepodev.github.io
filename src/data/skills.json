@@ -1,0 +1,12 @@
+[
+  { "name": "Kubernetes / Docker", "level": 92 },
+  { "name": "Terraform / Terramate / IaC", "level": 90 },
+  { "name": "Grafana / Observability", "level": 95 },
+  { "name": "PostgreSQL / Databases", "level": 88 },
+  { "name": "Datadog / Monitoring", "level": 93 },
+  { "name": "Cloud (AWS, GCP)", "level": 87 },
+  { "name": "Go / Python / Java", "level": 85 },
+  { "name": "GitOps (ArgoCD)", "level": 88 },
+  { "name": "CI/CD Pipelines", "level": 90 },
+  { "name": "Chaos Engineering", "level": 82 }
+]
