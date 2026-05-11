@@ -1,0 +1,226 @@
+<div id="taskbar">
+	<button id="taskbar-start" type="button" aria-label="Open start menu">
+		<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+			<path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"></path>
+		</svg>
+	</button>
+	<div id="taskbar-apps"></div>
+	<div id="taskbar-tray">
+		<button id="taskbar-clock-button" type="button" aria-expanded="false" aria-controls="tray-panel">
+			<span id="taskbar-clock"></span>
+			<span id="taskbar-date"></span>
+		</button>
+	</div>
+	<div id="tray-panel" aria-hidden="true">
+		<div class="tray-panel-header">
+			<div>
+				<div id="tray-time"></div>
+				<div id="tray-date"></div>
+			</div>
+			<span class="tray-status">Nominal</span>
+		</div>
+
+		<div class="tray-section">
+			<div class="tray-section-title">Notifications</div>
+			<div class="notification-list">
+				<div class="notification-item">
+					<div class="notification-dot"></div>
+					<div>
+						<strong>Desktop refactor active</strong>
+						<span>Astro windows are server-rendered and ready.</span>
+					</div>
+				</div>
+				<div class="notification-item">
+					<div class="notification-dot notification-dot-warn"></div>
+					<div>
+						<strong>SRE game audio</strong>
+						<span>Volume and mute follow the system controls below.</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="tray-section">
+			<div class="tray-section-title">Calendar</div>
+			<div class="tray-calendar">
+				<div class="tray-calendar-header">
+					<button id="calendar-prev" type="button" aria-label="Previous month">&lt;</button>
+					<span id="calendar-title"></span>
+					<button id="calendar-next" type="button" aria-label="Next month">&gt;</button>
+				</div>
+				<div class="tray-calendar-grid tray-calendar-days" aria-hidden="true">
+					<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+				</div>
+				<div id="calendar-grid" class="tray-calendar-grid"></div>
+			</div>
+		</div>
+
+		<div class="tray-section">
+			<div class="tray-section-title">Audio</div>
+			<div class="audio-control-row">
+				<button id="audio-mute" type="button" aria-pressed="false">Mute</button>
+				<label for="audio-volume">Volume</label>
+				<span id="audio-volume-value">80%</span>
+			</div>
+			<input id="audio-volume" type="range" min="0" max="100" value="80" />
+		</div>
+	</div>
+</div>
+
+<script>
+	// @ts-nocheck
+	document.addEventListener('DOMContentLoaded', () => {
+		const audioSettingsKey = 'pepodev.systemAudio';
+		const clockButton = document.getElementById('taskbar-clock-button');
+		const trayPanel = document.getElementById('tray-panel');
+		const calendarGrid = document.getElementById('calendar-grid');
+		const calendarTitle = document.getElementById('calendar-title');
+		const volumeInput = document.getElementById('audio-volume');
+		const volumeValue = document.getElementById('audio-volume-value');
+		const muteButton = document.getElementById('audio-mute');
+		let trayOpen = false;
+		let visibleMonth = new Date();
+
+		function getAudioSettings() {
+			try {
+				const raw = localStorage.getItem(audioSettingsKey);
+				if (raw) return { volume: 0.8, muted: false, ...JSON.parse(raw) };
+			} catch {
+				// Ignore corrupt persisted settings.
+			}
+			return { volume: 0.8, muted: false };
+		}
+
+		function saveAudioSettings(settings) {
+			localStorage.setItem(audioSettingsKey, JSON.stringify(settings));
+			document.dispatchEvent(new CustomEvent('desktop:audio-settings', { detail: settings }));
+		}
+
+		function renderAudioControls() {
+			const settings = getAudioSettings();
+			const volumePercent = Math.round(settings.volume * 100);
+			volumeInput.value = String(volumePercent);
+			volumeValue.textContent = settings.muted ? 'Muted' : volumePercent + '%';
+			muteButton.textContent = settings.muted ? 'Unmute' : 'Mute';
+			muteButton.setAttribute('aria-pressed', String(settings.muted));
+			document.dispatchEvent(new CustomEvent('desktop:audio-settings', { detail: settings }));
+		}
+
+		function updateClock() {
+			const now = new Date();
+			const h = now.getHours().toString().padStart(2, '0');
+			const m = now.getMinutes().toString().padStart(2, '0');
+			const clock = document.getElementById('taskbar-clock');
+			const taskbarDate = document.getElementById('taskbar-date');
+			const trayTime = document.getElementById('tray-time');
+			const trayDate = document.getElementById('tray-date');
+			const shortDate = new Intl.DateTimeFormat('en', { weekday: 'short', month: 'short', day: 'numeric' }).format(now);
+			const longDate = new Intl.DateTimeFormat('en', {
+				weekday: 'long',
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+			}).format(now);
+
+			if (clock) clock.textContent = h + ':' + m;
+			if (taskbarDate) taskbarDate.textContent = shortDate;
+			if (trayTime) trayTime.textContent = h + ':' + m;
+			if (trayDate) trayDate.textContent = longDate;
+		}
+
+		const sessionStart = Date.now();
+		function updateUptime() {
+			const diff = Date.now() - sessionStart;
+			const mins = Math.floor(diff / 60000);
+			const secs = Math.floor((diff % 60000) / 1000);
+			const uptime = document.getElementById('start-menu-uptime');
+			if (uptime) uptime.textContent = 'uptime: ' + mins + 'm ' + secs + 's';
+		}
+
+		function setTrayOpen(open) {
+			trayOpen = open;
+			trayPanel?.classList.toggle('visible', trayOpen);
+			trayPanel?.setAttribute('aria-hidden', String(!trayOpen));
+			clockButton?.setAttribute('aria-expanded', String(trayOpen));
+			if (trayOpen) renderCalendar();
+		}
+
+		function renderCalendar() {
+			if (!calendarGrid || !calendarTitle) return;
+
+			const today = new Date();
+			const year = visibleMonth.getFullYear();
+			const month = visibleMonth.getMonth();
+			const firstDay = new Date(year, month, 1);
+			const lastDay = new Date(year, month + 1, 0);
+			const mondayBasedOffset = (firstDay.getDay() + 6) % 7;
+
+			calendarTitle.textContent = new Intl.DateTimeFormat('en', {
+				month: 'long',
+				year: 'numeric',
+			}).format(visibleMonth);
+			calendarGrid.innerHTML = '';
+
+			for (let i = 0; i < mondayBasedOffset; i++) {
+				const empty = document.createElement('span');
+				empty.className = 'calendar-empty';
+				calendarGrid.appendChild(empty);
+			}
+
+			for (let day = 1; day <= lastDay.getDate(); day++) {
+				const cell = document.createElement('span');
+				const isToday = year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
+				cell.className = isToday ? 'calendar-day today' : 'calendar-day';
+				cell.textContent = String(day);
+				calendarGrid.appendChild(cell);
+			}
+		}
+
+		clockButton?.addEventListener('click', (event) => {
+			event.stopPropagation();
+			setTrayOpen(!trayOpen);
+		});
+
+		trayPanel?.addEventListener('click', (event) => event.stopPropagation());
+
+		document.addEventListener('click', () => {
+			if (trayOpen) setTrayOpen(false);
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && trayOpen) setTrayOpen(false);
+		});
+
+		document.getElementById('calendar-prev')?.addEventListener('click', () => {
+			visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
+			renderCalendar();
+		});
+
+		document.getElementById('calendar-next')?.addEventListener('click', () => {
+			visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
+			renderCalendar();
+		});
+
+		volumeInput?.addEventListener('input', () => {
+			const settings = getAudioSettings();
+			settings.volume = Number(volumeInput.value) / 100;
+			settings.muted = false;
+			saveAudioSettings(settings);
+			renderAudioControls();
+		});
+
+		muteButton?.addEventListener('click', () => {
+			const settings = getAudioSettings();
+			settings.muted = !settings.muted;
+			saveAudioSettings(settings);
+			renderAudioControls();
+		});
+
+		updateClock();
+		updateUptime();
+		renderAudioControls();
+		renderCalendar();
+		setInterval(updateClock, 30000);
+		setInterval(updateUptime, 1000);
+	});
+</script>

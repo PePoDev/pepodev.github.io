@@ -1,0 +1,62 @@
+---
+import portfolio from '../../data/portfolio.json';
+import ContactIcon from './ContactIcon.astro';
+
+const skills = portfolio.skills;
+---
+
+<div class="app-content">
+	<div class="terminal-heading"><span class="prompt">~/about $</span> whoami</div>
+	<div class="profile-header">
+		<div class="profile-avatar">P</div>
+		<div class="profile-info">
+			<h2>PePoDev</h2>
+			<div class="profile-role">Senior Site Reliability Engineer</div>
+			<div class="profile-location">Remote | Asia-Pacific</div>
+			<div style="margin-top:8px"><span class="status-badge online">Available for opportunities</span></div>
+		</div>
+	</div>
+	<h3>Who Am I</h3>
+	<p>
+		I'm an SRE who lives at the intersection of software engineering and operations. I believe systems should be
+		designed to fail gracefully, and that every outage is a learning opportunity. When I'm not keeping production
+		green, I'm building tools to make it stay that way.
+	</p>
+	<div class="section-divider"></div>
+	<h3>Skills & Expertise</h3>
+	<div class="skill-list">
+		{
+			skills.map((skill) => (
+				<div class="skill-item">
+					<div class="skill-item-label">
+						<span>{skill.name}</span>
+						<span>{skill.level}%</span>
+					</div>
+					<div class="skill-bar">
+						<div class="skill-bar-fill" style="width: 0%" data-level={skill.level}></div>
+					</div>
+				</div>
+			))
+		}
+	</div>
+	<div class="section-divider"></div>
+	<h3>Get in Touch</h3>
+	<div class="contact-links">
+		<a href="mailto:hello@pepodev.com" class="contact-link">
+			<ContactIcon name="email" />
+			hello@pepodev.com
+		</a>
+		<a href="https://github.com/pepodev" class="contact-link" target="_blank" rel="noopener noreferrer">
+			<ContactIcon name="github" />
+			GitHub
+		</a>
+		<a href="https://linkedin.com/in/pepodev" class="contact-link" target="_blank" rel="noopener noreferrer">
+			<ContactIcon name="linkedin" />
+			LinkedIn
+		</a>
+		<a href="https://twitter.com/pepodev" class="contact-link" target="_blank" rel="noopener noreferrer">
+			<ContactIcon name="x" />
+			X (Twitter)
+		</a>
+	</div>
+</div>

@@ -1,0 +1,171 @@
+---
+import AppIcon from './AppIcon.astro';
+
+interface Props {
+	appId: string;
+	label: string;
+	id?: string;
+	class?: string;
+}
+
+const { appId, label, id, class: className = '' } = Astro.props;
+---
+
+<button id={id} type="button" class:list={['desktop-icon', className]} data-open-app={appId}>
+	<AppIcon name={appId} />
+	<span>{label}</span>
+</button>
+
+<script>
+	// @ts-nocheck
+	document.addEventListener('DOMContentLoaded', () => {
+		const desktopIcons = Array.from(document.querySelectorAll('.desktop-icon[data-open-app]'));
+		const initialRects = new Map(desktopIcons.map((icon) => [icon, icon.getBoundingClientRect()]));
+		const storagePrefix = 'pepodev.desktopIcon.';
+
+		function loadIconPosition(appId) {
+			try {
+				const raw = localStorage.getItem(storagePrefix + appId);
+				return raw ? JSON.parse(raw) : null;
+			} catch {
+				return null;
+			}
+		}
+
+		function saveIconPosition(appId, position) {
+			try {
+				localStorage.setItem(storagePrefix + appId, JSON.stringify(position));
+			} catch {
+				// Ignore storage failures; dragging still works for the current session.
+			}
+		}
+
+		function clampIconPosition(icon, x, y) {
+			const margin = 8;
+			const taskbarReserve = 56;
+			const maxX = Math.max(margin, window.innerWidth - icon.offsetWidth - margin);
+			const maxY = Math.max(margin, window.innerHeight - icon.offsetHeight - taskbarReserve);
+
+			return {
+				x: Math.min(Math.max(margin, x), maxX),
+				y: Math.min(Math.max(margin, y), maxY),
+			};
+		}
+
+		function setIconPosition(icon, x, y) {
+			const next = clampIconPosition(icon, x, y);
+			icon.style.position = 'fixed';
+			icon.style.left = next.x + 'px';
+			icon.style.top = next.y + 'px';
+			icon.style.right = 'auto';
+			icon.style.bottom = 'auto';
+			return next;
+		}
+
+		function initializeDesktopIcon(icon) {
+			const appId = icon.dataset.openApp;
+			const initialRect = initialRects.get(icon);
+			const saved = loadIconPosition(appId);
+			const initial = saved || {
+				x: initialRect?.left || 20,
+				y: initialRect?.top || 20,
+			};
+
+			setIconPosition(icon, initial.x, initial.y);
+			icon.dataset.desktopIconReady = 'true';
+		}
+
+		desktopIcons.forEach(initializeDesktopIcon);
+
+		document.querySelectorAll('[data-open-app]').forEach((trigger) => {
+			if (trigger.dataset.launcherBound === 'true') return;
+			trigger.dataset.launcherBound = 'true';
+
+			const openApp = () => {
+				document.dispatchEvent(
+					new CustomEvent('desktop:open-app', {
+						detail: { appId: trigger.dataset.openApp },
+					}),
+				);
+			};
+
+			if (trigger.classList.contains('desktop-icon')) {
+				let pointerStartX = 0;
+				let pointerStartY = 0;
+				let iconStartX = 0;
+				let iconStartY = 0;
+				let isPointerDown = false;
+				let isDragging = false;
+
+				trigger.addEventListener('pointerdown', (event) => {
+					if (event.button !== 0) return;
+
+					const rect = trigger.getBoundingClientRect();
+					pointerStartX = event.clientX;
+					pointerStartY = event.clientY;
+					iconStartX = rect.left;
+					iconStartY = rect.top;
+					isPointerDown = true;
+					isDragging = false;
+					trigger.style.zIndex = '30';
+					trigger.setPointerCapture?.(event.pointerId);
+				});
+
+				trigger.addEventListener('pointermove', (event) => {
+					if (!isPointerDown) return;
+
+					const deltaX = event.clientX - pointerStartX;
+					const deltaY = event.clientY - pointerStartY;
+					if (!isDragging && Math.hypot(deltaX, deltaY) < 4) return;
+
+					isDragging = true;
+					trigger.classList.add('dragging');
+					setIconPosition(trigger, iconStartX + deltaX, iconStartY + deltaY);
+				});
+
+				trigger.addEventListener('pointerup', (event) => {
+					if (!isPointerDown) return;
+
+					trigger.releasePointerCapture?.(event.pointerId);
+					isPointerDown = false;
+					trigger.style.zIndex = '5';
+
+					if (isDragging) {
+						const rect = trigger.getBoundingClientRect();
+						const position = setIconPosition(trigger, rect.left, rect.top);
+						saveIconPosition(trigger.dataset.openApp, position);
+						trigger.classList.remove('dragging');
+						isDragging = false;
+						return;
+					}
+
+					openApp();
+				});
+
+				trigger.addEventListener('pointercancel', () => {
+					isPointerDown = false;
+					isDragging = false;
+					trigger.style.zIndex = '5';
+					trigger.classList.remove('dragging');
+				});
+
+				trigger.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.preventDefault();
+						openApp();
+					}
+				});
+			} else {
+				trigger.addEventListener('click', openApp);
+			}
+		});
+
+		window.addEventListener('resize', () => {
+			desktopIcons.forEach((icon) => {
+				const rect = icon.getBoundingClientRect();
+				const position = setIconPosition(icon, rect.left, rect.top);
+				saveIconPosition(icon.dataset.openApp, position);
+			});
+		});
+	});
+</script>

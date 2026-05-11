@@ -1,1856 +1,263 @@
 ---
-import BaseHead from "../components/BaseHead.astro";
-import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
-import { blogPosts, projects, experiences, skills } from "../content/apps";
+import AboutApp from '../components/apps/AboutApp.astro';
+import BlogApp from '../components/apps/BlogApp.astro';
+import ConnectApp from '../components/apps/ConnectApp.astro';
+import ProjectsApp from '../components/apps/ProjectsApp.astro';
+import ResumeApp from '../components/apps/ResumeApp.astro';
+import SreGameApp from '../components/apps/SreGameApp.astro';
+import WorkApp from '../components/apps/WorkApp.astro';
+import DesktopIcon from '../components/desktop/DesktopIcon.astro';
+import StartMenu from '../components/desktop/StartMenu.astro';
+import Taskbar from '../components/desktop/Taskbar.astro';
+import Window from '../components/desktop/Window.astro';
+import BaseHead from '../components/BaseHead.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 ---
 
 <!doctype html>
 <html lang="en">
-  <head>
-    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-  </head>
-  <body>
-    <script define:vars={{ blogPosts, projects, experiences, skills }}>
-      window.__APP_DATA__ = { blogPosts, projects, experiences, skills };
-    </script>
-    <div id="desktop">
-      <canvas id="bg-canvas"></canvas>
-
-      <div id="desktop-icons">
-        <div class="desktop-icon" data-app="blog">
-          <svg viewBox="0 0 40 40" fill="none">
-            <rect
-              x="4"
-              y="2"
-              width="32"
-              height="36"
-              rx="3"
-              fill="#1e293b"
-              stroke="#22c55e"
-              stroke-width="1.5"></rect>
-            <line
-              x1="10"
-              y1="10"
-              x2="30"
-              y2="10"
-              stroke="#22c55e"
-              stroke-width="1.5"
-              stroke-linecap="round"></line>
-            <line
-              x1="10"
-              y1="15"
-              x2="26"
-              y2="15"
-              stroke="#4ade80"
-              stroke-width="1"
-              stroke-linecap="round"
-              opacity="0.6"></line>
-            <line
-              x1="10"
-              y1="19"
-              x2="28"
-              y2="19"
-              stroke="#4ade80"
-              stroke-width="1"
-              stroke-linecap="round"
-              opacity="0.4"></line>
-            <line
-              x1="10"
-              y1="23"
-              x2="22"
-              y2="23"
-              stroke="#4ade80"
-              stroke-width="1"
-              stroke-linecap="round"
-              opacity="0.3"></line>
-            <rect
-              x="10"
-              y="28"
-              width="8"
-              height="6"
-              rx="1"
-              fill="#22c55e"
-              opacity="0.3"></rect>
-          </svg>
-          <span>Blog</span>
-        </div>
-        <div class="desktop-icon" data-app="resume">
-          <svg viewBox="0 0 40 40" fill="none">
-            <rect
-              x="8"
-              y="2"
-              width="24"
-              height="36"
-              rx="2"
-              fill="#1e293b"
-              stroke="#06b6d4"
-              stroke-width="1.5"></rect>
-            <circle cx="20" cy="12" r="4" stroke="#06b6d4" stroke-width="1.2"
-            ></circle>
-            <line
-              x1="14"
-              y1="22"
-              x2="26"
-              y2="22"
-              stroke="#06b6d4"
-              stroke-width="1"
-              stroke-linecap="round"
-              opacity="0.6"></line>
-            <line
-              x1="14"
-              y1="26"
-              x2="24"
-              y2="26"
-              stroke="#06b6d4"
-              stroke-width="1"
-              stroke-linecap="round"
-              opacity="0.4"></line>
-            <line
-              x1="14"
-              y1="30"
-              x2="22"
-              y2="30"
-              stroke="#06b6d4"
-              stroke-width="1"
-              stroke-linecap="round"
-              opacity="0.3"></line>
-          </svg>
-          <span>Resume</span>
-        </div>
-        <div class="desktop-icon" data-app="project">
-          <svg viewBox="0 0 40 40" fill="none">
-            <path
-              d="M20 4L34 12V28L20 36L6 28V12L20 4Z"
-              fill="#1e293b"
-              stroke="#a855f7"
-              stroke-width="1.5"></path>
-            <path d="M20 4V36" stroke="#a855f7" stroke-width="0.8" opacity="0.4"
-            ></path>
-            <path
-              d="M6 12L34 28"
-              stroke="#a855f7"
-              stroke-width="0.8"
-              opacity="0.4"></path>
-            <path
-              d="M34 12L6 28"
-              stroke="#a855f7"
-              stroke-width="0.8"
-              opacity="0.4"></path>
-            <circle cx="20" cy="20" r="4" fill="#a855f7" opacity="0.3"></circle>
-          </svg>
-          <span>Projects</span>
-        </div>
-        <div class="desktop-icon" data-app="work">
-          <svg viewBox="0 0 40 40" fill="none">
-            <rect
-              x="6"
-              y="14"
-              width="28"
-              height="22"
-              rx="2"
-              fill="#1e293b"
-              stroke="#f59e0b"
-              stroke-width="1.5"></rect>
-            <path
-              d="M14 14V10C14 6 16 4 20 4C24 4 26 6 26 10V14"
-              stroke="#f59e0b"
-              stroke-width="1.5"
-              stroke-linecap="round"></path>
-            <rect
-              x="12"
-              y="20"
-              width="16"
-              height="3"
-              rx="1"
-              fill="#f59e0b"
-              opacity="0.4"></rect>
-            <rect
-              x="12"
-              y="26"
-              width="10"
-              height="3"
-              rx="1"
-              fill="#f59e0b"
-              opacity="0.3"></rect>
-          </svg>
-          <span>Work</span>
-        </div>
-        <div class="desktop-icon" data-app="me">
-          <svg viewBox="0 0 40 40" fill="none">
-            <circle
-              cx="20"
-              cy="14"
-              r="7"
-              fill="#1e293b"
-              stroke="#3b82f6"
-              stroke-width="1.5"></circle>
-            <path
-              d="M8 34C8 26 13 22 20 22C27 22 32 26 32 34"
-              fill="#1e293b"
-              stroke="#3b82f6"
-              stroke-width="1.5"
-              stroke-linecap="round"></path>
-            <circle cx="20" cy="14" r="3" fill="#3b82f6" opacity="0.3"></circle>
-          </svg>
-          <span>About Me</span>
-        </div>
-      </div>
-
-      <div id="desktop-social-icon" class="desktop-icon" data-app="connect">
-        <svg viewBox="0 0 40 40" fill="none">
-          <circle
-            cx="20"
-            cy="20"
-            r="16"
-            fill="#1e293b"
-            stroke="#22c55e"
-            stroke-width="1.5"></circle>
-          <circle cx="14" cy="16" r="2.5" fill="#22c55e" opacity="0.7"></circle>
-          <circle cx="26" cy="16" r="2.5" fill="#06b6d4" opacity="0.7"></circle>
-          <circle cx="20" cy="26" r="2.5" fill="#a855f7" opacity="0.7"></circle>
-          <path
-            d="M14 16L20 26L26 16"
-            stroke="rgba(255,255,255,0.15)"
-            stroke-width="1.2"
-            stroke-linecap="round"></path>
-        </svg>
-        <span>Connect</span>
-      </div>
-
-      <div id="desktop-game-icon" class="desktop-icon" data-app="sregame">
-        <svg viewBox="0 0 40 40" fill="none">
-          <rect
-            x="4"
-            y="4"
-            width="32"
-            height="32"
-            rx="4"
-            fill="#1e293b"
-            stroke="#ef4444"
-            stroke-width="1.5"></rect>
-          <path
-            d="M12 14h16M12 20h10M12 26h13"
-            stroke="#ef4444"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            opacity="0.7"></path>
-          <circle cx="28" cy="26" r="4" fill="#ef4444" opacity="0.3"></circle>
-          <path
-            d="M28 24v4M26 26h4"
-            stroke="#ef4444"
-            stroke-width="1.2"
-            stroke-linecap="round"></path>
-        </svg>
-        <span>SRE Game</span>
-      </div>
-
-      <div id="windows-container"></div>
-
-      <div id="start-menu">
-        <div id="start-menu-header">
-          <h3>Quick Access</h3>
-          <input
-            type="text"
-            id="start-menu-search"
-            placeholder="Search apps..."
-          />
-        </div>
-        <div id="start-menu-apps">
-          <button class="start-menu-app" data-app="blog">
-            <svg viewBox="0 0 40 40" fill="none"
-              ><rect
-                x="4"
-                y="2"
-                width="32"
-                height="36"
-                rx="3"
-                fill="#1e293b"
-                stroke="#22c55e"
-                stroke-width="1.5"></rect><line
-                x1="10"
-                y1="10"
-                x2="30"
-                y2="10"
-                stroke="#22c55e"
-                stroke-width="1.5"
-                stroke-linecap="round"></line></svg
-            >
-            <div class="start-menu-app-text">
-              <strong>Blog</strong><small>Read articles &amp; write-ups</small>
-            </div>
-          </button>
-          <button class="start-menu-app" data-app="resume">
-            <svg viewBox="0 0 40 40" fill="none"
-              ><rect
-                x="8"
-                y="2"
-                width="24"
-                height="36"
-                rx="2"
-                fill="#1e293b"
-                stroke="#06b6d4"
-                stroke-width="1.5"></rect><circle
-                cx="20"
-                cy="12"
-                r="4"
-                stroke="#06b6d4"
-                stroke-width="1.2"></circle></svg
-            >
-            <div class="start-menu-app-text">
-              <strong>Resume</strong><small>View &amp; download CV</small>
-            </div>
-          </button>
-          <button class="start-menu-app" data-app="project">
-            <svg viewBox="0 0 40 40" fill="none"
-              ><path
-                d="M20 4L34 12V28L20 36L6 28V12L20 4Z"
-                fill="#1e293b"
-                stroke="#a855f7"
-                stroke-width="1.5"></path><circle
-                cx="20"
-                cy="20"
-                r="4"
-                fill="#a855f7"
-                opacity="0.3"></circle></svg
-            >
-            <div class="start-menu-app-text">
-              <strong>Projects</strong><small>Showcase of work</small>
-            </div>
-          </button>
-          <button class="start-menu-app" data-app="work">
-            <svg viewBox="0 0 40 40" fill="none"
-              ><rect
-                x="6"
-                y="14"
-                width="28"
-                height="22"
-                rx="2"
-                fill="#1e293b"
-                stroke="#f59e0b"
-                stroke-width="1.5"></rect><path
-                d="M14 14V10C14 6 16 4 20 4C24 4 26 6 26 10V14"
-                stroke="#f59e0b"
-                stroke-width="1.5"
-                stroke-linecap="round"></path></svg
-            >
-            <div class="start-menu-app-text">
-              <strong>Work</strong><small>Experience &amp; career</small>
-            </div>
-          </button>
-          <button class="start-menu-app" data-app="me">
-            <svg viewBox="0 0 40 40" fill="none"
-              ><circle
-                cx="20"
-                cy="14"
-                r="7"
-                fill="#1e293b"
-                stroke="#3b82f6"
-                stroke-width="1.5"></circle><path
-                d="M8 34C8 26 13 22 20 22C27 22 32 26 32 34"
-                fill="#1e293b"
-                stroke="#3b82f6"
-                stroke-width="1.5"
-                stroke-linecap="round"></path></svg
-            >
-            <div class="start-menu-app-text">
-              <strong>About Me</strong><small
-                >Contact &amp; personal info</small>
-            </div>
-          </button>
-          <button class="start-menu-app" data-app="connect">
-            <svg viewBox="0 0 40 40" fill="none"
-              ><circle
-                cx="20"
-                cy="20"
-                r="16"
-                fill="#1e293b"
-                stroke="#22c55e"
-                stroke-width="1.5"></circle><circle
-                cx="14"
-                cy="16"
-                r="2.5"
-                fill="#22c55e"
-                opacity="0.7"></circle><circle
-                cx="26"
-                cy="16"
-                r="2.5"
-                fill="#06b6d4"
-                opacity="0.7"></circle><circle
-                cx="20"
-                cy="26"
-                r="2.5"
-                fill="#a855f7"
-                opacity="0.7"></circle></svg
-            >
-            <div class="start-menu-app-text">
-              <strong>Connect</strong><small
-                >Social links &amp; online presence</small>
-            </div>
-          </button>
-          <button class="start-menu-app" data-app="sregame">
-            <svg viewBox="0 0 40 40" fill="none"
-              ><rect
-                x="4"
-                y="4"
-                width="32"
-                height="32"
-                rx="4"
-                fill="#1e293b"
-                stroke="#ef4444"
-                stroke-width="1.5"></rect><path
-                d="M12 14h16M12 20h10M12 26h13"
-                stroke="#ef4444"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                opacity="0.7"></path></svg
-            >
-            <div class="start-menu-app-text">
-              <strong>SRE Game</strong><small>Chaos simulation game</small>
-            </div>
-          </button>
-        </div>
-        <div id="start-menu-footer">
-          <span>system status: nominal</span>
-          <span id="start-menu-uptime">uptime: --</span>
-        </div>
-      </div>
-
-      <div id="taskbar">
-        <button id="taskbar-start">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"
-            ></path>
-          </svg>
-        </button>
-        <div id="taskbar-apps"></div>
-        <div id="taskbar-tray">
-          <span id="taskbar-clock"></span>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      // @ts-nocheck
-      document.addEventListener("DOMContentLoaded", () => {
-        const { blogPosts, projects, experiences, skills } =
-          window.__APP_DATA__;
-        // ===== App Definitions =====
-        const appIcons = {
-          blog: '<svg viewBox="0 0 40 40" fill="none"><rect x="4" y="2" width="32" height="36" rx="3" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/><line x1="10" y1="10" x2="30" y2="10" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>',
-          resume:
-            '<svg viewBox="0 0 40 40" fill="none"><rect x="8" y="2" width="24" height="36" rx="2" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/><circle cx="20" cy="12" r="4" stroke="#06b6d4" stroke-width="1.2"/></svg>',
-          project:
-            '<svg viewBox="0 0 40 40" fill="none"><path d="M20 4L34 12V28L20 36L6 28V12L20 4Z" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/><circle cx="20" cy="20" r="4" fill="#a855f7" opacity="0.3"/></svg>',
-          work: '<svg viewBox="0 0 40 40" fill="none"><rect x="6" y="14" width="28" height="22" rx="2" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/><path d="M14 14V10C14 6 16 4 20 4C24 4 26 6 26 10V14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/></svg>',
-          me: '<svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="14" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/><path d="M8 34C8 26 13 22 20 22C27 22 32 26 32 34" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/></svg>',
-          connect:
-            '<svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/><circle cx="14" cy="16" r="2.5" fill="#22c55e" opacity="0.7"/><circle cx="26" cy="16" r="2.5" fill="#06b6d4" opacity="0.7"/><circle cx="20" cy="26" r="2.5" fill="#a855f7" opacity="0.7"/></svg>',
-          sregame:
-            '<svg viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" rx="4" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/><path d="M12 14h16M12 20h10M12 26h13" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/></svg>',
-        };
-
-        const appMeta = {
-          blog: { title: "Blog — Articles", size: [700, 520] },
-          resume: { title: "Resume — CV", size: [650, 580] },
-          project: { title: "Projects — Showcase", size: [700, 500] },
-          work: { title: "Work — Experience", size: [680, 540] },
-          me: { title: "About Me", size: [600, 560] },
-          connect: { title: "Connect — Social Links", size: [480, 420] },
-          sregame: { title: "SRE Game — Taming Chaos", size: [800, 600] },
-        };
-
-        // ===== Window Manager =====
-        let windowIdCounter = 0;
-        let topZ = 100;
-        const windows = new Map();
-
-        const container = document.getElementById("windows-container");
-        const taskbarApps = document.getElementById("taskbar-apps");
-
-        function getAppContent(appId) {
-          const postsHtml = blogPosts
-            .map(
-              (p, i) => `
-      <div class="blog-item" data-blog-index="${i}">
-        <div class="blog-item-title">${p.title}</div>
-        <div class="blog-item-meta">${p.date}</div>
-        <div class="blog-item-desc">${p.description}</div>
-      </div>
-    `,
-            )
-            .join("");
-
-          const projectsHtml = projects
-            .map(
-              (p) => `
-      <div class="project-card">
-        <div class="project-card-name">${p.name}</div>
-        <div class="project-card-desc">${p.description}</div>
-        <div class="project-tags">${p.tags.map((t) => `<span class="project-tag">${t}</span>`).join("")}</div>
-      </div>
-    `,
-            )
-            .join("");
-
-          const expHtml = experiences
-            .map(
-              (e) => `
-      <div class="timeline-item">
-        <div class="timeline-date">${e.period}</div>
-        <div class="timeline-title">${e.role}</div>
-        <div class="timeline-company">${e.company}</div>
-        <div class="timeline-desc">${e.details.map((d) => "<li>" + d + "</li>").join("")}</div>
-      </div>
-    `,
-            )
-            .join("");
-
-          const skillsHtml = skills
-            .map(
-              (s) => `
-      <div class="skill-item">
-        <div class="skill-item-label"><span>${s.name}</span><span>${s.level}%</span></div>
-        <div class="skill-bar"><div class="skill-bar-fill" style="width: 0%" data-level="${s.level}"></div></div>
-      </div>
-    `,
-            )
-            .join("");
-
-          const resumeExpHtml = experiences
-            .map(
-              (e) => `
-      <div class="resume-entry">
-        <div class="resume-entry-header">
-          <span class="resume-entry-title">${e.role}</span>
-          <span class="resume-entry-date">${e.period}</span>
-        </div>
-        <div class="resume-entry-subtitle">${e.company}</div>
-        <div class="resume-entry-details"><ul>${e.details.map((d) => "<li>" + d + "</li>").join("")}</ul></div>
-      </div>
-    `,
-            )
-            .join("");
-
-          const resumeSkillsHtml = skills
-            .map(
-              (s) => `
-      <div class="skill-item">
-        <div class="skill-item-label"><span>${s.name}</span><span>${s.level}%</span></div>
-        <div class="skill-bar"><div class="skill-bar-fill" style="width: 0%" data-level="${s.level}"></div></div>
-      </div>
-    `,
-            )
-            .join("");
-
-          const contentMap = {
-            blog: `
-        <div class="app-content">
-          <div class="terminal-heading"><span class="prompt">~/blog $</span> ls articles/</div>
-          <div id="blog-list-view">
-            <h2>Latest Articles</h2>
-            <p class="app-subtitle">Postmortems, write-ups, and lessons from the trenches</p>
-            <div class="blog-list">${postsHtml}</div>
-          </div>
-          <div class="blog-reader" id="blog-reader">
-            <div class="blog-reader-header">
-              <button class="blog-reader-back" id="blog-back-btn">&#8592; Back to articles</button>
-              <h2 class="blog-reader-title" id="blog-reader-title"></h2>
-              <div class="blog-reader-date" id="blog-reader-date"></div>
-            </div>
-            <div class="blog-reader-body" id="blog-reader-body"></div>
-          </div>
-        </div>`,
-
-            resume: `
-        <div class="app-content">
-          <div class="terminal-heading"><span class="prompt">~/resume $</span> cat cv.tex</div>
-          <a class="download-btn" href="#" id="resume-download">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download PDF
-          </a>
-          <div class="resume-section">
-            <div class="resume-section-title">\\section{Education}</div>
-            <div class="resume-entry">
-              <div class="resume-entry-header">
-                <span class="resume-entry-title">B.S. Computer Science</span>
-                <span class="resume-entry-date">2015 — 2019</span>
-              </div>
-              <div class="resume-entry-subtitle">University of Technology</div>
-              <div class="resume-entry-details"><ul><li>GPA: 3.7/4.0 — Dean's List</li><li>Focus: Distributed Systems, Networks</li><li>Capstone: Cluster management simulator</li></ul></div>
-            </div>
-          </div>
-          <div class="resume-section">
-            <div class="resume-section-title">\\section{Experience}</div>
-            ${resumeExpHtml}
-          </div>
-          <div class="resume-section">
-            <div class="resume-section-title">\\section{Technical Skills}</div>
-            <div class="skill-list">${resumeSkillsHtml}</div>
-          </div>
-          <div class="resume-section">
-            <div class="resume-section-title">\\section{Certifications}</div>
-            <div class="resume-entry">
-              <div class="resume-entry-details"><ul>
-                <li>AWS Certified Solutions Architect — Associate</li>
-                <li>Certified Kubernetes Administrator (CKA)</li>
-                <li>HashiCorp Terraform Associate</li>
-                <li>Google Cloud Professional DevOps Engineer</li>
-              </ul></div>
-            </div>
-          </div>
-        </div>`,
-
-            project: `
-        <div class="app-content">
-          <div class="terminal-heading"><span class="prompt">~/projects $</span> gh repo list --limit 10</div>
-          <h2>Project Showcase</h2>
-          <p class="app-subtitle">Tools, systems, and side projects I've built</p>
-          <div class="project-grid">${projectsHtml}</div>
-        </div>`,
-
-            work: `
-        <div class="app-content">
-          <div class="terminal-heading"><span class="prompt">~/work $</span> cat career_history.md</div>
-          <h2>Career Timeline</h2>
-          <p class="app-subtitle">My journey through infrastructure and reliability</p>
-          <div class="work-metrics">
-            <div class="work-metric"><div class="work-metric-value">99.99%</div><div class="work-metric-label">Uptime SLA</div></div>
-            <div class="work-metric"><div class="work-metric-value">50+</div><div class="work-metric-label">Incidents Led</div></div>
-            <div class="work-metric"><div class="work-metric-value">6yr</div><div class="work-metric-label">Experience</div></div>
-          </div>
-          <div class="timeline">${expHtml}</div>
-        </div>`,
-
-            me: `
-        <div class="app-content">
-          <div class="terminal-heading"><span class="prompt">~/about $</span> whoami</div>
-          <div class="profile-header">
-            <div class="profile-avatar">P</div>
-            <div class="profile-info">
-              <h2>PePoDev</h2>
-              <div class="profile-role">Senior Site Reliability Engineer</div>
-              <div class="profile-location">Remote | Asia-Pacific</div>
-              <div style="margin-top:8px"><span class="status-badge online">Available for opportunities</span></div>
-            </div>
-          </div>
-          <h3>Who Am I</h3>
-          <p>I'm an SRE who lives at the intersection of software engineering and operations. I believe systems should be designed to fail gracefully, and that every outage is a learning opportunity. When I'm not keeping production green, I'm building tools to make it stay that way.</p>
-          <div class="section-divider"></div>
-          <h3>Skills & Expertise</h3>
-          <div class="skill-list">${skillsHtml}</div>
-          <div class="section-divider"></div>
-          <h3>Get in Touch</h3>
-          <div class="contact-links">
-            <a href="mailto:hello@pepodev.com" class="contact-link">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              hello@pepodev.com
-            </a>
-            <a href="https://github.com/pepodev" class="contact-link" target="_blank">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.88-.015 3.285 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-              GitHub
-            </a>
-            <a href="https://linkedin.com/in/pepodev" class="contact-link" target="_blank">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.791 0 0 .774 0 1.729v20.542C0 23.227.791 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              LinkedIn
-            </a>
-            <a href="https://twitter.com/pepodev" class="contact-link" target="_blank">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              X (Twitter)
-            </a>
-          </div>
-        </div>`,
-
-            connect: `
-        <div class="app-content">
-          <div class="terminal-heading"><span class="prompt">~/connect $</span> cat social_links.yaml</div>
-          <h2>Find Me Online</h2>
-          <p class="app-subtitle">Click to visit my profiles on external platforms</p>
-          <div class="contact-links">
-            <a href="https://facebook.com/pepodev" class="contact-link" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-              Facebook — @pepodev
-            </a>
-            <a href="https://github.com/pepodev" class="contact-link" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.88-.015 3.285 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-              GitHub — @pepodev
-            </a>
-            <a href="https://linkedin.com/in/pepodev" class="contact-link" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.791 0 0 .774 0 1.729v20.542C0 23.227.791 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              LinkedIn — @pepodev
-            </a>
-            <a href="https://youtube.com/@pepodev" class="contact-link" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              YouTube — @pepodev
-            </a>
-            <a href="https://garden.pepodev.com" class="contact-link" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V8"/><path d="M5 17C5 17 3 15 3 11a3 3 0 0 1 6 0c0 4-2 6-2 6"/><path d="M19 17c0 0-2-2-2-6a3 3 0 0 1 6 0c0 4-2 6-2 6"/><path d="M9 13c0 0-1.5-1-1.5-3a1.5 1.5 0 0 1 3 0c0 2-1.5 3-1.5 3z"/><path d="M15 13c0 0-1.5-1-1.5-3a1.5 1.5 0 0 1 3 0c0 2-1.5 3-1.5 3z"/></svg>
-              Digital Garden — pepodev.com
-            </a>
-            <a href="https://blog.pepodev.com" class="contact-link" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              Blog — blog.pepodev.com
-            </a>
-          </div>
-        </div>`,
-
-            sregame: `
-        <div class="app-content sre-game-container" id="sre-game-${windowIdCounter + 1}">
-          <div class="sre-game-screen sre-game-screen-active">
-            <div class="sre-boot-output"></div>
-            <button class="sre-boot-enter sre-btn sre-hidden">Enter Production</button>
-          </div>
-          <div class="sre-game-screen">
-            <div class="sre-game-hud">
-              <div class="sre-hud-item">
-                <span class="sre-hud-label">System Health</span>
-                <div class="sre-health-bar"><div class="sre-health-fill"></div></div>
-                <span class="sre-health-pct">100%</span>
-              </div>
-              <div class="sre-hud-item">
-                <span class="sre-hud-label">Round</span>
-                <span class="sre-round-num">1</span>
-              </div>
-              <div class="sre-hud-item">
-                <span class="sre-hud-label">Status</span>
-                <span class="sre-game-status sre-status-ok">All Systems Go</span>
-              </div>
-            </div>
-            <div class="sre-game-area">
-              <div class="sre-game-message">
-                <p>Monitoring production... Everything looks green.</p>
-                <p class="sre-sub">Watch for alerts. Click to mitigate before health drops to zero.</p>
-              </div>
-            </div>
-            <div class="sre-game-actions"></div>
-          </div>
-          <div class="sre-game-screen">
-            <div class="sre-gameover">
-              <div class="sre-glitch-wrap">
-                <h1 class="sre-glitch">SYSTEM FAILURE</h1>
-              </div>
-              <p class="sre-gameover-sub">All mitigation attempts have been exhausted.</p>
-              <p class="sre-gameover-sub">The chaos is beyond manual remediation.</p>
-              <br>
-              <button class="sre-gameover-reveal sre-btn sre-btn-danger">What Now?</button>
-            </div>
-          </div>
-          <div class="sre-game-screen">
-            <div class="sre-solution">
-              <div class="sre-hero-badge">The Only Solution</div>
-              <h1 class="sre-hero-title">Hire <span class="sre-accent">PePoDev</span></h1>
-              <p class="sre-hero-subtitle">Senior Site Reliability Engineer</p>
-              <div class="sre-divider"></div>
-              <p class="sre-hero-tagline">
-                You don't need another engineer who patches fires.<br>
-                You need someone who <em>understands fire</em>.
-              </p>
-              <div class="sre-skills-grid">
-                <div class="sre-skill-card">
-                  <div class="sre-skill-icon">⚡</div>
-                  <h3>Incident Response</h3>
-                  <p>Blazing-fast triage and resolution when systems are on fire.</p>
-                </div>
-                <div class="sre-skill-card">
-                  <div class="sre-skill-icon">🛡️</div>
-                  <h3>System Resilience</h3>
-                  <p>Architecture that doesn't just survive chaos — thrives under it.</p>
-                </div>
-                <div class="sre-skill-card">
-                  <div class="sre-skill-icon">📊</div>
-                  <h3>Observability</h3>
-                  <p>Seeing the unseen. Metrics, logs, and traces that tell the truth.</p>
-                </div>
-                <div class="sre-skill-card">
-                  <div class="sre-skill-icon">🔧</div>
-                  <h3>Infrastructure as Code</h3>
-                  <p>Reproducible, versioned, and tested — no cowboy deployments.</p>
-                </div>
-                <div class="sre-skill-card">
-                  <div class="sre-skill-icon">☸️</div>
-                  <h3>Kubernetes</h3>
-                  <p>Orchestrating containers at scale without losing sleep.</p>
-                </div>
-                <div class="sre-skill-card">
-                  <div class="sre-skill-icon">📈</div>
-                  <h3>Capacity Planning</h3>
-                  <p>Predicting and preventing bottlenecks before they become incidents.</p>
-                </div>
-              </div>
-              <div class="sre-cta-group">
-                <a href="mailto:hello@pepodev.com" class="sre-btn sre-btn-primary">Hire PePoDev</a>
-                <button class="sre-btn sre-btn-outline sre-solution-replay">Replay the Chaos</button>
-              </div>
-              <p class="sre-footer-note">Every production has a hero. Let it be me.</p>
-            </div>
-          </div>
-        </div>`,
-          };
-
-          return (
-            contentMap[appId] ||
-            '<div class="app-content"><p>App not found.</p></div>'
-          );
-        }
-
-        function createWindow(appId) {
-          // Check if already open — bring to front
-          for (const [wid, w] of windows) {
-            if (w.appId === appId && !w.minimized) {
-              focusWindow(wid);
-              return;
-            }
-            if (w.appId === appId && w.minimized) {
-              restoreWindow(wid);
-              return;
-            }
-          }
-
-          const id = "win-" + ++windowIdCounter;
-          const meta = appMeta[appId];
-          const [w, h] = meta.size;
-
-          // Center the window
-          const x = Math.max(
-            40,
-            (window.innerWidth - w) / 2 + (Math.random() * 40 - 20),
-          );
-          const y = Math.max(
-            20,
-            (window.innerHeight - h - 48) / 2 + (Math.random() * 30 - 15),
-          );
-
-          const win = document.createElement("div");
-          win.className = "window opening focused";
-          win.id = id;
-          win.dataset.appId = appId;
-          win.style.cssText = `width:${w}px;height:${h}px;left:${x}px;top:${y}px;z-index:${++topZ}`;
-
-          win.innerHTML = `
-      <div class="window-titlebar">
-        <div class="window-titlebar-icon">${appIcons[appId]}</div>
-        <span class="window-title">${meta.title}</span>
-        <div class="window-status-dot"></div>
-        <div class="window-controls">
-          <button class="min-btn" title="Minimize">
-            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="6" x2="10" y2="6"/></svg>
-          </button>
-          <button class="max-btn" title="Maximize">
-            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="8" height="8" rx="1"/></svg>
-          </button>
-          <button class="close-btn" title="Close">
-            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
-          </button>
-        </div>
-      </div>
-      <div class="window-content">${getAppContent(appId)}</div>
-      <div class="window-resize-handle"></div>
-    `;
-
-          container.appendChild(win);
-
-          // Remove opening animation class after it completes
-          setTimeout(() => win.classList.remove("opening"), 300);
-
-          // Store window state
-          windows.set(id, {
-            id,
-            appId,
-            element: win,
-            minimized: false,
-            maximized: false,
-            prevBounds: null,
-          });
-
-          focusWindow(id);
-          updateTaskbar();
-          setupWindowEvents(win, id);
-          setupAppSpecificEvents(win, appId, id);
-          animateSkillBars(win);
-
-          return id;
-        }
-
-        function setupWindowEvents(win, id) {
-          const titlebar = win.querySelector(".window-titlebar");
-
-          // Focus on click
-          win.addEventListener("mousedown", () => focusWindow(id));
-
-          // Close
-          win
-            .querySelector(".close-btn")
-            .addEventListener("click", () => closeWindow(id));
-
-          // Minimize
-          win
-            .querySelector(".min-btn")
-            .addEventListener("click", () => minimizeWindow(id));
-
-          // Maximize
-          win
-            .querySelector(".max-btn")
-            .addEventListener("click", () => toggleMaximize(id));
-
-          // Drag
-          let isDragging = false;
-          let dragStartX, dragStartY, winStartX, winStartY;
-
-          titlebar.addEventListener("mousedown", (e) => {
-            if (e.target.closest(".window-controls")) return;
-            const wState = windows.get(id);
-            if (wState && wState.maximized) return;
-            isDragging = true;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-            winStartX = win.offsetLeft;
-            winStartY = win.offsetTop;
-            document.body.style.userSelect = "none";
-          });
-
-          titlebar.addEventListener("dblclick", (e) => {
-            if (e.target.closest(".window-controls")) return;
-            toggleMaximize(id);
-          });
-
-          document.addEventListener("mousemove", (e) => {
-            if (!isDragging) return;
-            win.style.left = winStartX + e.clientX - dragStartX + "px";
-            win.style.top =
-              Math.max(0, winStartY + e.clientY - dragStartY) + "px";
-          });
-
-          document.addEventListener("mouseup", () => {
-            if (isDragging) {
-              isDragging = false;
-              document.body.style.userSelect = "";
-            }
-          });
-
-          // Resize
-          const resizeHandle = win.querySelector(".window-resize-handle");
-          let isResizing = false;
-          let resizeStartX, resizeStartY, resizeStartW, resizeStartH;
-
-          resizeHandle.addEventListener("mousedown", (e) => {
-            e.stopPropagation();
-            const wState = windows.get(id);
-            if (wState && wState.maximized) return;
-            isResizing = true;
-            resizeStartX = e.clientX;
-            resizeStartY = e.clientY;
-            resizeStartW = win.offsetWidth;
-            resizeStartH = win.offsetHeight;
-            document.body.style.userSelect = "none";
-          });
-
-          document.addEventListener("mousemove", (e) => {
-            if (!isResizing) return;
-            const newW = Math.max(
-              320,
-              resizeStartW + (e.clientX - resizeStartX),
-            );
-            const newH = Math.max(
-              200,
-              resizeStartH + (e.clientY - resizeStartY),
-            );
-            win.style.width = newW + "px";
-            win.style.height = newH + "px";
-          });
-
-          document.addEventListener("mouseup", () => {
-            if (isResizing) {
-              isResizing = false;
-              document.body.style.userSelect = "";
-            }
-          });
-        }
-
-        function setupAppSpecificEvents(win, appId, winId) {
-          if (appId === "blog") {
-            const blogList = win.querySelector("#blog-list-view");
-            const blogReader = win.querySelector("#blog-reader");
-            const backBtn = win.querySelector("#blog-back-btn");
-
-            win.querySelectorAll(".blog-item").forEach((item) => {
-              item.addEventListener("click", () => {
-                const idx = parseInt(item.dataset.blogIndex);
-                const post = blogPosts[idx];
-                if (!post) return;
-                document.getElementById("blog-reader-title").textContent =
-                  post.title;
-                document.getElementById("blog-reader-date").textContent =
-                  post.date;
-                document.getElementById("blog-reader-body").innerHTML =
-                  post.body;
-                if (blogList) blogList.style.display = "none";
-                if (blogReader) blogReader.classList.add("active");
-              });
-            });
-
-            if (backBtn) {
-              backBtn.addEventListener("click", () => {
-                if (blogList) blogList.style.display = "";
-                if (blogReader) blogReader.classList.remove("active");
-              });
-            }
-          }
-
-          if (appId === "sregame") {
-            initSreGame(win);
-          }
-        }
-
-        function animateSkillBars(win) {
-          setTimeout(() => {
-            win.querySelectorAll(".skill-bar-fill").forEach((bar) => {
-              bar.style.width = bar.dataset.level + "%";
-            });
-          }, 300);
-        }
-
-        function focusWindow(id) {
-          windows.forEach((w, wid) => {
-            w.element.classList.toggle("focused", wid === id);
-            if (wid === id) w.element.style.zIndex = ++topZ;
-          });
-          updateTaskbar();
-        }
-
-        function closeWindow(id) {
-          const w = windows.get(id);
-          if (!w) return;
-          // Clean up game timers if closing an SRE Game window
-          if (w.appId === "sregame" && w.alertTimer) {
-            clearInterval(w.alertTimer);
-          }
-          w.element.classList.add("closing");
-          setTimeout(() => {
-            w.element.remove();
-            windows.delete(id);
-            updateTaskbar();
-          }, 200);
-        }
-
-        function minimizeWindow(id) {
-          const w = windows.get(id);
-          if (!w) return;
-          w.minimized = true;
-          w.element.classList.add("minimized");
-          updateTaskbar();
-        }
-
-        function restoreWindow(id) {
-          const w = windows.get(id);
-          if (!w) return;
-          w.minimized = false;
-          w.element.classList.remove("minimized");
-          focusWindow(id);
-          updateTaskbar();
-        }
-
-        function toggleMaximize(id) {
-          const w = windows.get(id);
-          if (!w) return;
-          if (!w.maximized) {
-            w.prevBounds = {
-              left: w.element.style.left,
-              top: w.element.style.top,
-              width: w.element.style.width,
-              height: w.element.style.height,
-            };
-            w.element.style.cssText = `left:0;top:0;width:100%;height:calc(100vh - 48px);z-index:${++topZ}`;
-            w.maximized = true;
-          } else {
-            Object.assign(w.element.style, w.prevBounds);
-            w.element.style.zIndex = ++topZ;
-            w.maximized = false;
-          }
-          focusWindow(id);
-        }
-
-        function updateTaskbar() {
-          taskbarApps.innerHTML = "";
-          windows.forEach((w) => {
-            const btn = document.createElement("button");
-            btn.className =
-              "taskbar-app" + (w.minimized ? " active" : " focused");
-            btn.innerHTML =
-              appIcons[w.appId] +
-              "<span>" +
-              appMeta[w.appId].title.split("—")[0].trim() +
-              "</span>";
-            btn.addEventListener("click", () => {
-              if (w.minimized) {
-                restoreWindow(w.id);
-              } else if (w.element.classList.contains("focused")) {
-                minimizeWindow(w.id);
-              } else {
-                focusWindow(w.id);
-              }
-            });
-            taskbarApps.appendChild(btn);
-          });
-        }
-
-        // ===== Desktop Icon Click =====
-        document.querySelectorAll(".desktop-icon").forEach((icon) => {
-          icon.addEventListener("dblclick", () => {
-            createWindow(icon.dataset.app);
-          });
-        });
-
-        // ===== Start Menu =====
-        const startMenu = document.getElementById("start-menu");
-        const startBtn = document.getElementById("taskbar-start");
-        let startMenuOpen = false;
-
-        startBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          startMenuOpen = !startMenuOpen;
-          startMenu.classList.toggle("visible", startMenuOpen);
-        });
-
-        document.addEventListener("click", (e) => {
-          if (
-            startMenuOpen &&
-            !startMenu.contains(e.target) &&
-            e.target !== startBtn &&
-            !startBtn.contains(e.target)
-          ) {
-            startMenuOpen = false;
-            startMenu.classList.remove("visible");
-          }
-        });
-
-        startMenu.addEventListener("click", (e) => e.stopPropagation());
-
-        document.querySelectorAll(".start-menu-app").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            createWindow(btn.dataset.app);
-            startMenuOpen = false;
-            startMenu.classList.remove("visible");
-          });
-        });
-
-        // Start menu search
-        document
-          .getElementById("start-menu-search")
-          .addEventListener("input", (e) => {
-            const q = e.target.value.toLowerCase();
-            document.querySelectorAll(".start-menu-app").forEach((app) => {
-              const text = app.textContent.toLowerCase();
-              app.style.display = text.includes(q) ? "" : "none";
-            });
-          });
-
-        // ===== Clock =====
-        function updateClock() {
-          const now = new Date();
-          const h = now.getHours().toString().padStart(2, "0");
-          const m = now.getMinutes().toString().padStart(2, "0");
-          document.getElementById("taskbar-clock").textContent = h + ":" + m;
-        }
-        updateClock();
-        setInterval(updateClock, 30000);
-
-        // ===== Uptime =====
-        const sessionStart = Date.now();
-        function updateUptime() {
-          const diff = Date.now() - sessionStart;
-          const mins = Math.floor(diff / 60000);
-          const secs = Math.floor((diff % 60000) / 1000);
-          const el = document.getElementById("start-menu-uptime");
-          if (el) el.textContent = "uptime: " + mins + "m " + secs + "s";
-        }
-        updateUptime();
-        setInterval(updateUptime, 1000);
-
-        // ===== Particle Network Background =====
-        function initParticleNetwork() {
-          const canvas = document.getElementById("bg-canvas");
-          if (!canvas) return;
-          const ctx = canvas.getContext("2d");
-          const connectionDist = 180;
-          const particles = [];
-          const pulses = [];
-          const count = 70;
-          const ambientBlobs = [];
-
-          function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-          }
-          resize();
-          window.addEventListener("resize", resize);
-
-          for (let i = 0; i < 4; i++) {
-            ambientBlobs.push({
-              x: Math.random() * canvas.width,
-              y: Math.random() * canvas.height,
-              r: 150 + Math.random() * 200,
-              vx: (Math.random() - 0.5) * 0.15,
-              vy: (Math.random() - 0.5) * 0.15,
-              color: Math.random() < 0.3 ? "cyan" : "green",
-              alpha: 0.015 + Math.random() * 0.02,
-            });
-          }
-
-          for (let i = 0; i < count; i++) {
-            const isHub = Math.random() < 0.1;
-            particles.push({
-              x: Math.random() * canvas.width,
-              y: Math.random() * canvas.height,
-              vx: (Math.random() - 0.5) * (isHub ? 0.2 : 0.4),
-              vy: (Math.random() - 0.5) * (isHub ? 0.2 : 0.4),
-              r: isHub ? 3 + Math.random() * 2 : Math.random() * 2 + 1,
-              isHub,
-              color: Math.random() < 0.15 ? "cyan" : "green",
-              pulseTimer: Math.random() * 300,
-              glowPhase: Math.random() * Math.PI * 2,
-              glowSpeed: 0.01 + Math.random() * 0.02,
-            });
-          }
-
-          let time = 0;
-
-          function draw() {
-            ctx.fillStyle = "#0a0e17";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            time += 0.016;
-
-            ambientBlobs.forEach((blob) => {
-              blob.x += blob.vx;
-              blob.y += blob.vy;
-              if (blob.x < -blob.r) blob.x = canvas.width + blob.r;
-              if (blob.x > canvas.width + blob.r) blob.x = -blob.r;
-              if (blob.y < -blob.r) blob.y = canvas.height + blob.r;
-              if (blob.y > canvas.height + blob.r) blob.y = -blob.r;
-              const grad = ctx.createRadialGradient(
-                blob.x,
-                blob.y,
-                0,
-                blob.x,
-                blob.y,
-                blob.r,
-              );
-              if (blob.color === "cyan") {
-                grad.addColorStop(0, "rgba(6, 182, 212, " + blob.alpha + ")");
-                grad.addColorStop(1, "rgba(6, 182, 212, 0)");
-              } else {
-                grad.addColorStop(0, "rgba(34, 197, 94, " + blob.alpha + ")");
-                grad.addColorStop(1, "rgba(34, 197, 94, 0)");
-              }
-              ctx.fillStyle = grad;
-              ctx.fillRect(
-                blob.x - blob.r,
-                blob.y - blob.r,
-                blob.r * 2,
-                blob.r * 2,
-              );
-            });
-
-            particles.forEach((p) => {
-              p.x += p.vx;
-              p.y += p.vy;
-              if (p.x < 0) p.x = canvas.width;
-              if (p.x > canvas.width) p.x = 0;
-              if (p.y < 0) p.y = canvas.height;
-              if (p.y > canvas.height) p.y = 0;
-
-              p.pulseTimer--;
-              if (p.pulseTimer <= 0) {
-                p.pulseTimer = p.isHub
-                  ? 30 + Math.random() * 80
-                  : 100 + Math.random() * 400;
-                let nearest = null;
-                let nearestDist = Infinity;
-                particles.forEach((other) => {
-                  if (other === p) return;
-                  const d = Math.hypot(other.x - p.x, other.y - p.y);
-                  if (d < connectionDist && d < nearestDist) {
-                    nearest = other;
-                    nearestDist = d;
-                  }
-                });
-                if (nearest) {
-                  pulses.push({
-                    x: p.x,
-                    y: p.y,
-                    tx: nearest.x,
-                    ty: nearest.y,
-                    progress: 0,
-                    speed: 0.02 + Math.random() * 0.03,
-                    color: p.color,
-                    trail: [],
-                  });
-                }
-              }
-            });
-
-            for (let i = 0; i < particles.length; i++) {
-              for (let j = i + 1; j < particles.length; j++) {
-                const d = Math.hypot(
-                  particles[i].x - particles[j].x,
-                  particles[i].y - particles[j].y,
-                );
-                if (d < connectionDist) {
-                  const alpha = (1 - d / connectionDist) * 0.3;
-                  ctx.strokeStyle = "rgba(34, 197, 94, " + alpha + ")";
-                  ctx.lineWidth = 1;
-                  ctx.beginPath();
-                  ctx.moveTo(particles[i].x, particles[i].y);
-                  ctx.lineTo(particles[j].x, particles[j].y);
-                  ctx.stroke();
-                }
-              }
-            }
-
-            for (let i = pulses.length - 1; i >= 0; i--) {
-              const pulse = pulses[i];
-              pulse.progress += pulse.speed;
-              if (pulse.progress >= 1) {
-                pulses.splice(i, 1);
-                continue;
-              }
-              const px = pulse.x + (pulse.tx - pulse.x) * pulse.progress;
-              const py = pulse.y + (pulse.ty - pulse.y) * pulse.progress;
-              pulse.trail.push({ x: px, y: py });
-              if (pulse.trail.length > 8) pulse.trail.shift();
-              for (let t = 0; t < pulse.trail.length; t++) {
-                const trailAlpha = (t / pulse.trail.length) * 0.8;
-                const trailR = 1 + (t / pulse.trail.length) * 2;
-                const baseColor =
-                  pulse.color === "cyan" ? "6, 182, 212" : "34, 197, 94";
-                ctx.beginPath();
-                ctx.arc(
-                  pulse.trail[t].x,
-                  pulse.trail[t].y,
-                  trailR,
-                  0,
-                  Math.PI * 2,
-                );
-                ctx.fillStyle =
-                  "rgba(" +
-                  baseColor +
-                  ", " +
-                  trailAlpha * (1 - pulse.progress * 0.5) +
-                  ")";
-                ctx.fill();
-              }
-              const baseColor =
-                pulse.color === "cyan" ? "6, 182, 212" : "34, 197, 94";
-              const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, 12);
-              glowGrad.addColorStop(
-                0,
-                "rgba(" + baseColor + ", " + 0.6 * (1 - pulse.progress) + ")",
-              );
-              glowGrad.addColorStop(1, "rgba(" + baseColor + ", 0)");
-              ctx.fillStyle = glowGrad;
-              ctx.beginPath();
-              ctx.arc(px, py, 12, 0, Math.PI * 2);
-              ctx.fill();
-            }
-
-            particles.forEach((p) => {
-              const glowPulse =
-                Math.sin(time * p.glowSpeed * 60 + p.glowPhase) * 0.3 + 0.7;
-              const baseColor =
-                p.color === "cyan" ? "6, 182, 212" : "34, 197, 94";
-              const glowR = p.isHub ? 20 : 10;
-              const glowGrad = ctx.createRadialGradient(
-                p.x,
-                p.y,
-                0,
-                p.x,
-                p.y,
-                glowR,
-              );
-              glowGrad.addColorStop(
-                0,
-                "rgba(" + baseColor + ", " + 0.3 * glowPulse + ")",
-              );
-              glowGrad.addColorStop(1, "rgba(" + baseColor + ", 0)");
-              ctx.fillStyle = glowGrad;
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-              ctx.fillStyle =
-                "rgba(" + baseColor + ", " + (0.6 * glowPulse + 0.2) + ")";
-              ctx.fill();
-            });
-
-            const vignetteGrad = ctx.createRadialGradient(
-              canvas.width / 2,
-              canvas.height / 2,
-              canvas.height * 0.3,
-              canvas.width / 2,
-              canvas.height / 2,
-              canvas.height * 0.9,
-            );
-            vignetteGrad.addColorStop(0, "rgba(10, 14, 23, 0)");
-            vignetteGrad.addColorStop(1, "rgba(10, 14, 23, 0.7)");
-            ctx.fillStyle = vignetteGrad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            requestAnimationFrame(draw);
-          }
-
-          draw();
-        }
-
-        initParticleNetwork();
-
-        // ===== SRE Game Engine =====
-        function initSreGame(win) {
-          const q = (sel) => win.querySelector(sel);
-          const qa = (sel) => win.querySelectorAll(sel);
-
-          const bootLines = [
-            {
-              text: "$ ssh production-cluster.prod.internal",
-              cls: "",
-              delay: 300,
-            },
-            { text: "Connecting to 10.0.42.1...", cls: "sre-dim", delay: 500 },
-            {
-              text: "Authenticated. Welcome to prod.",
-              cls: "sre-info",
-              delay: 400,
-            },
-            { text: "", cls: "", delay: 200 },
-            { text: "$ kubectl get nodes", cls: "", delay: 600 },
-            {
-              text: "NAME           STATUS   ROLES    AGE   VERSION",
-              cls: "sre-dim",
-              delay: 300,
-            },
-            {
-              text: "prod-node-01   Ready    master   45d   v1.36.0",
-              cls: "",
-              delay: 200,
-            },
-            {
-              text: "prod-node-02   Ready    worker   45d   v1.36.0",
-              cls: "",
-              delay: 200,
-            },
-            {
-              text: "prod-node-03   Ready    worker   45d   v1.36.0",
-              cls: "",
-              delay: 200,
-            },
-            { text: "", cls: "", delay: 200 },
-            { text: "$ systemctl status monitoring", cls: "", delay: 500 },
-            {
-              text: "● prometheus.service - Prometheus Monitoring",
-              cls: "",
-              delay: 200,
-            },
-            {
-              text: "   Active: active (running) since Mon 2024-01-15",
-              cls: "",
-              delay: 200,
-            },
-            { text: "", cls: "", delay: 200 },
-            {
-              text: "All systems nominal. No alerts.",
-              cls: "sre-info",
-              delay: 400,
-            },
-            { text: "", cls: "", delay: 200 },
-            {
-              text: "You're on call. The dashboard is green.",
-              cls: "",
-              delay: 600,
-            },
-            { text: "For now...", cls: "sre-warn", delay: 800 },
-          ];
-
-          const alerts = [
-            {
-              severity: "warning",
-              title: "⚠ High Memory Usage Detected",
-              desc: "prod-node-02 memory at 87%. Pod evictions imminent.",
-              timer: 15,
-              damage: 8,
-              actions: [
-                {
-                  text: "Restart pods",
-                  result:
-                    "Pods restarted. Memory dropped... then spiked higher. +12% usage.",
-                },
-                {
-                  text: "Scale horizontally",
-                  result:
-                    "New pods scheduled. Node now at 94% with scheduling overhead.",
-                },
-                {
-                  text: "Kill top consumer",
-                  result:
-                    "Killed memhog process. It was a critical cache. Latency tripled.",
-                },
-              ],
-            },
-            {
-              severity: "warning",
-              title: "⚠ Latency Spike on API Gateway",
-              desc: "p99 latency jumped from 120ms to 2.4s. Users reporting slow responses.",
-              timer: 14,
-              damage: 10,
-              actions: [
-                {
-                  text: "Enable circuit breaker",
-                  result:
-                    "Circuit breaker tripped. Now 40% of requests are failing outright.",
-                },
-                {
-                  text: "Rollback last deploy",
-                  result:
-                    "Rollback complete. The latency was infrastructure-level, not code.",
-                },
-                {
-                  text: "Add rate limiting",
-                  result:
-                    "Rate limiter engaged. Legitimate traffic now being throttled too.",
-                },
-              ],
-            },
-            {
-              severity: "critical",
-              title: "🔴 Disk I/O Saturation",
-              desc: "prod-node-03 disk utilization at 100%. Write operations queueing.",
-              timer: 12,
-              damage: 12,
-              actions: [
-                {
-                  text: "Clear old logs",
-                  result:
-                    "Logs cleared. Application started writing audit logs at 10x rate.",
-                },
-                {
-                  text: "Move to faster storage",
-                  result:
-                    "Storage migration started. I/O spiked during the transition.",
-                },
-                {
-                  text: "Enable write coalescing",
-                  result:
-                    "Writes coalesced. Data consistency checks now failing.",
-                },
-              ],
-            },
-            {
-              severity: "critical",
-              title: "🔴 Certificate Expiring in 2h",
-              desc: "TLS cert for *.prod.internal expires soon. Auto-renewal failed.",
-              timer: 10,
-              damage: 12,
-              actions: [
-                {
-                  text: "Manual cert renewal",
-                  result:
-                    "Renewed cert. ACME challenge failed for internal DNS zone.",
-                },
-                {
-                  text: "Switch to internal CA",
-                  result:
-                    "Internal CA signed it. Browser trust store doesn't recognize the root.",
-                },
-                {
-                  text: "Extend validity window",
-                  result: "Cannot extend expired cert. The window has closed.",
-                },
-              ],
-            },
-            {
-              severity: "critical",
-              title: "🔴 Database Connection Pool Exhausted",
-              desc: "PostgreSQL primary: 450/450 connections used. New connections being rejected.",
-              timer: 10,
-              damage: 14,
-              actions: [
-                {
-                  text: "Increase pool size",
-                  result:
-                    "Pool expanded to 600. Server ran out of shared memory.",
-                },
-                {
-                  text: "Kill idle connections",
-                  result:
-                    "Killed 200 connections. Hit the replication lag monitors.",
-                },
-                {
-                  text: "Enable PgBouncer",
-                  result: "PgBouncer deployed. Transaction retry storms began.",
-                },
-              ],
-            },
-            {
-              severity: "catastrophic",
-              title: "💀 Cascading Failure Detected",
-              desc: "Service mesh sidecars crashing. 12 microservices affected. Error propagation across all zones.",
-              timer: 8,
-              damage: 16,
-              actions: [
-                {
-                  text: "Emergency rollback all",
-                  result:
-                    "Rollback triggered dependency conflicts. More services down.",
-                },
-                {
-                  text: "Isolate affected zones",
-                  result:
-                    "Zones isolated. Cross-zone replication broke. Data divergence detected.",
-                },
-                {
-                  text: "Full cluster restart",
-                  result:
-                    "Restart initiated. Boot storm caused DNS resolution failures.",
-                },
-              ],
-            },
-            {
-              severity: "catastrophic",
-              title: "💀 CRITICAL: Cluster Unstable",
-              desc: "CoreDNS flapping. Etcd quorum at risk. Multiple nodes NotReady. This is it.",
-              timer: 6,
-              damage: 20,
-              actions: [
-                {
-                  text: "Attempt etcd restore",
-                  result:
-                    "Restore started from 4h-old backup. 4 hours of data loss.",
-                },
-                {
-                  text: "Failover to DR site",
-                  result:
-                    "DR site activated. Replication was stale. Partial data available.",
-                },
-                {
-                  text: "Call for help...",
-                  result:
-                    "You need more than a runbook. You need an SRE who lives for this.",
-                },
-              ],
-            },
-          ];
-
-          let health = 100;
-          let currentRound = 0;
-          let alertTimer = null;
-
-          function showScreen(index) {
-            qa(".sre-game-screen").forEach((s, i) => {
-              s.classList.toggle("sre-game-screen-active", i === index);
-            });
-          }
-
-          async function runBoot() {
-            const output = q(".sre-boot-output");
-            for (const line of bootLines) {
-              await new Promise((r) => setTimeout(r, line.delay));
-              const el = document.createElement("div");
-              el.className = `sre-line ${line.cls}`;
-              el.textContent = line.text || " ";
-              output.appendChild(el);
-              output.scrollTop = output.scrollHeight;
-            }
-            q(".sre-boot-enter").classList.remove("sre-hidden");
-          }
-
-          q(".sre-boot-enter").addEventListener("click", () => {
-            showScreen(1);
-            startGame();
-          });
-
-          function startGame() {
-            health = 100;
-            currentRound = 0;
-            updateHealth();
-            updateRound();
-            updateStatus();
-            q(".sre-game-message").innerHTML = `
-        <p>Monitoring production...</p>
-        <p class="sre-sub">Alerts will appear below. Click an action to mitigate before time runs out.</p>
-      `;
-            q(".sre-game-actions").innerHTML = "";
-            scheduleNextAlert();
-          }
-
-          function scheduleNextAlert() {
-            if (currentRound >= alerts.length) return;
-            const delay = currentRound === 0 ? 2500 : 1800;
-            setTimeout(() => showAlert(currentRound), delay);
-          }
-
-          function showAlert(index) {
-            const alert = alerts[index];
-            let timeLeft = alert.timer;
-            const gameArea = q(".sre-game-area");
-            gameArea.innerHTML = "";
-
-            const card = document.createElement("div");
-            card.className = `sre-alert-card sre-severity-${alert.severity}`;
-            card.innerHTML = `
-        <div class="sre-alert-header">
-          <span class="sre-alert-title">${alert.title}</span>
-          <span class="sre-alert-severity">${alert.severity}</span>
-        </div>
-        <div class="sre-alert-desc">${alert.desc}</div>
-        <div class="sre-alert-timer">Time remaining: ${timeLeft}s</div>
-      `;
-            gameArea.appendChild(card);
-
-            const actionsDiv = q(".sre-game-actions");
-            actionsDiv.innerHTML = "";
-            alert.actions.forEach((action, i) => {
-              const btn = document.createElement("button");
-              btn.className = "sre-action-btn";
-              btn.textContent = action.text;
-              btn.addEventListener("click", () => handleAction(index, i));
-              actionsDiv.appendChild(btn);
-            });
-
-            clearInterval(alertTimer);
-            alertTimer = setInterval(() => {
-              timeLeft--;
-              const timerEl = gameArea.querySelector(".sre-alert-timer");
-              if (timerEl) timerEl.textContent = `Time remaining: ${timeLeft}s`;
-              if (timeLeft <= 0) {
-                clearInterval(alertTimer);
-                timeExpired(index);
-              }
-            }, 1000);
-          }
-
-          function handleAction(alertIndex, actionIndex) {
-            clearInterval(alertTimer);
-            const alert = alerts[alertIndex];
-            const action = alert.actions[actionIndex];
-            health -= alert.damage;
-            updateHealth();
-
-            const gameArea = q(".sre-game-area");
-            const log = document.createElement("div");
-            log.className = "sre-mitigation-log";
-            log.innerHTML = `<strong>Mitigation failed:</strong> ${action.result}`;
-            gameArea.appendChild(log);
-
-            qa(".sre-action-btn").forEach((b) => {
-              b.disabled = true;
-              b.style.opacity = "0.4";
-            });
-
-            currentRound++;
-            updateRound();
-            updateStatus();
-
-            if (health <= 0 || currentRound >= alerts.length) {
-              setTimeout(() => showScreen(2), 2000);
-              return;
-            }
-
-            scheduleNextAlert();
-          }
-
-          function timeExpired(alertIndex) {
-            const alert = alerts[alertIndex];
-            health -= alert.damage;
-            updateHealth();
-            updateStatus();
-
-            const gameArea = q(".sre-game-area");
-            const log = document.createElement("div");
-            log.className = "sre-mitigation-log";
-            log.innerHTML = `<strong>Time expired — alert unresolved.</strong> System absorbed the damage.`;
-            gameArea.appendChild(log);
-
-            qa(".sre-action-btn").forEach((b) => {
-              b.disabled = true;
-              b.style.opacity = "0.4";
-            });
-
-            currentRound++;
-            updateRound();
-
-            if (health <= 0) {
-              setTimeout(() => showScreen(2), 2000);
-              return;
-            }
-
-            if (currentRound < alerts.length) {
-              scheduleNextAlert();
-            } else {
-              setTimeout(() => showScreen(2), 2000);
-            }
-          }
-
-          function updateHealth() {
-            health = Math.max(0, Math.min(100, health));
-            const fill = q(".sre-health-fill");
-            fill.style.width = health + "%";
-            fill.style.background =
-              health > 60 ? "#22c55e" : health > 30 ? "#eab308" : "#ef4444";
-            q(".sre-health-pct").textContent = health + "%";
-          }
-
-          function updateRound() {
-            q(".sre-round-num").textContent = currentRound + 1;
-          }
-
-          function updateStatus() {
-            const status = q(".sre-game-status");
-            if (health > 60) {
-              status.textContent = "Stable";
-              status.className = "sre-game-status sre-status-ok";
-            } else if (health > 30) {
-              status.textContent = "Degraded";
-              status.className = "sre-game-status sre-status-warn";
-            } else {
-              status.textContent = "Critical";
-              status.className = "sre-game-status sre-status-crit";
-            }
-          }
-
-          // Game Over → Solution
-          q(".sre-gameover-reveal").addEventListener("click", () => {
-            showScreen(3);
-          });
-
-          // Replay from solution screen
-          q(".sre-solution-replay").addEventListener("click", () => {
-            showScreen(0);
-            q(".sre-boot-output").innerHTML = "";
-            q(".sre-boot-enter").classList.add("sre-hidden");
-            runBoot();
-          });
-
-          // Start boot sequence
-          runBoot();
-
-          // Store alert timer reference on window state for cleanup
-          const wState = windows.get(winId);
-          if (wState) {
-            // Periodically sync the timer so closeWindow can clear it
-            const syncTimer = setInterval(() => {
-              wState.alertTimer = alertTimer;
-            }, 100);
-            // Stop syncing after 60s (game is usually done by then)
-            setTimeout(() => clearInterval(syncTimer), 60000);
-          }
-        }
-
-        // ===== Keyboard shortcut: Escape closes start menu =====
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && startMenuOpen) {
-            startMenuOpen = false;
-            startMenu.classList.remove("visible");
-          }
-        });
-      });
-    </script>
-  </body>
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+	</head>
+	<body>
+		<div id="desktop">
+			<canvas id="bg-canvas"></canvas>
+
+			<div id="desktop-icons">
+				<DesktopIcon appId="blog" label="Blog" />
+				<DesktopIcon appId="resume" label="Resume" />
+				<DesktopIcon appId="project" label="Projects" />
+				<DesktopIcon appId="work" label="Work" />
+				<DesktopIcon appId="me" label="About Me" />
+			</div>
+
+			<DesktopIcon id="desktop-social-icon" appId="connect" label="Connect" />
+			<DesktopIcon id="desktop-game-icon" appId="sregame" label="SRE Game" />
+
+			<div id="windows-container">
+				<Window appId="blog" title="Blog - Articles" width={700} height={520}>
+					<BlogApp />
+				</Window>
+				<Window appId="resume" title="Resume - CV" width={650} height={580}>
+					<ResumeApp />
+				</Window>
+				<Window appId="project" title="Projects - Showcase" width={700} height={500}>
+					<ProjectsApp />
+				</Window>
+				<Window appId="work" title="Work - Experience" width={680} height={540}>
+					<WorkApp />
+				</Window>
+				<Window appId="me" title="About Me" width={600} height={560}>
+					<AboutApp />
+				</Window>
+				<Window appId="connect" title="Connect - Social Links" width={480} height={420}>
+					<ConnectApp />
+				</Window>
+				<Window appId="sregame" title="SRE Game - Taming Chaos" width={800} height={600}>
+					<SreGameApp />
+				</Window>
+			</div>
+
+			<StartMenu />
+			<Taskbar />
+		</div>
+
+		<script>
+			// @ts-nocheck
+			document.addEventListener('DOMContentLoaded', () => {
+				function initParticleNetwork() {
+					const canvas = document.getElementById('bg-canvas');
+					if (!canvas) return;
+					const ctx = canvas.getContext('2d');
+					const connectionDist = 180;
+					const particles = [];
+					const pulses = [];
+					const ambientBlobs = [];
+					const count = 70;
+
+					function resize() {
+						canvas.width = window.innerWidth;
+						canvas.height = window.innerHeight;
+					}
+
+					resize();
+					window.addEventListener('resize', resize);
+
+					for (let i = 0; i < 4; i++) {
+						ambientBlobs.push({
+							x: Math.random() * canvas.width,
+							y: Math.random() * canvas.height,
+							r: 150 + Math.random() * 200,
+							vx: (Math.random() - 0.5) * 0.15,
+							vy: (Math.random() - 0.5) * 0.15,
+							color: Math.random() < 0.3 ? 'cyan' : 'green',
+							alpha: 0.015 + Math.random() * 0.02,
+						});
+					}
+
+					for (let i = 0; i < count; i++) {
+						const isHub = Math.random() < 0.1;
+						particles.push({
+							x: Math.random() * canvas.width,
+							y: Math.random() * canvas.height,
+							vx: (Math.random() - 0.5) * (isHub ? 0.2 : 0.4),
+							vy: (Math.random() - 0.5) * (isHub ? 0.2 : 0.4),
+							r: isHub ? 3 + Math.random() * 2 : Math.random() * 2 + 1,
+							isHub,
+							color: Math.random() < 0.15 ? 'cyan' : 'green',
+							pulseTimer: Math.random() * 300,
+							glowPhase: Math.random() * Math.PI * 2,
+							glowSpeed: 0.01 + Math.random() * 0.02,
+						});
+					}
+
+					let time = 0;
+
+					function draw() {
+						ctx.fillStyle = '#0a0e17';
+						ctx.fillRect(0, 0, canvas.width, canvas.height);
+						time += 0.016;
+
+						ambientBlobs.forEach((blob) => {
+							blob.x += blob.vx;
+							blob.y += blob.vy;
+							if (blob.x < -blob.r) blob.x = canvas.width + blob.r;
+							if (blob.x > canvas.width + blob.r) blob.x = -blob.r;
+							if (blob.y < -blob.r) blob.y = canvas.height + blob.r;
+							if (blob.y > canvas.height + blob.r) blob.y = -blob.r;
+
+							const grad = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r);
+							const color = blob.color === 'cyan' ? '6, 182, 212' : '34, 197, 94';
+							grad.addColorStop(0, 'rgba(' + color + ', ' + blob.alpha + ')');
+							grad.addColorStop(1, 'rgba(' + color + ', 0)');
+							ctx.fillStyle = grad;
+							ctx.fillRect(blob.x - blob.r, blob.y - blob.r, blob.r * 2, blob.r * 2);
+						});
+
+						particles.forEach((particle) => {
+							particle.x += particle.vx;
+							particle.y += particle.vy;
+							if (particle.x < 0) particle.x = canvas.width;
+							if (particle.x > canvas.width) particle.x = 0;
+							if (particle.y < 0) particle.y = canvas.height;
+							if (particle.y > canvas.height) particle.y = 0;
+
+							particle.pulseTimer--;
+							if (particle.pulseTimer <= 0) {
+								particle.pulseTimer = particle.isHub ? 30 + Math.random() * 80 : 100 + Math.random() * 400;
+								let nearest = null;
+								let nearestDist = Infinity;
+
+								particles.forEach((other) => {
+									if (other === particle) return;
+									const distance = Math.hypot(other.x - particle.x, other.y - particle.y);
+									if (distance < connectionDist && distance < nearestDist) {
+										nearest = other;
+										nearestDist = distance;
+									}
+								});
+
+								if (nearest) {
+									pulses.push({
+										x: particle.x,
+										y: particle.y,
+										tx: nearest.x,
+										ty: nearest.y,
+										progress: 0,
+										speed: 0.02 + Math.random() * 0.03,
+										color: particle.color,
+										trail: [],
+									});
+								}
+							}
+						});
+
+						for (let i = 0; i < particles.length; i++) {
+							for (let j = i + 1; j < particles.length; j++) {
+								const distance = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+								if (distance < connectionDist) {
+									const alpha = (1 - distance / connectionDist) * 0.3;
+									ctx.strokeStyle = 'rgba(34, 197, 94, ' + alpha + ')';
+									ctx.lineWidth = 1;
+									ctx.beginPath();
+									ctx.moveTo(particles[i].x, particles[i].y);
+									ctx.lineTo(particles[j].x, particles[j].y);
+									ctx.stroke();
+								}
+							}
+						}
+
+						for (let i = pulses.length - 1; i >= 0; i--) {
+							const pulse = pulses[i];
+							pulse.progress += pulse.speed;
+							if (pulse.progress >= 1) {
+								pulses.splice(i, 1);
+								continue;
+							}
+
+							const px = pulse.x + (pulse.tx - pulse.x) * pulse.progress;
+							const py = pulse.y + (pulse.ty - pulse.y) * pulse.progress;
+							pulse.trail.push({ x: px, y: py });
+							if (pulse.trail.length > 8) pulse.trail.shift();
+
+							for (let t = 0; t < pulse.trail.length; t++) {
+								const trailAlpha = (t / pulse.trail.length) * 0.8;
+								const trailR = 1 + (t / pulse.trail.length) * 2;
+								const baseColor = pulse.color === 'cyan' ? '6, 182, 212' : '34, 197, 94';
+								ctx.beginPath();
+								ctx.arc(pulse.trail[t].x, pulse.trail[t].y, trailR, 0, Math.PI * 2);
+								ctx.fillStyle = 'rgba(' + baseColor + ', ' + trailAlpha * (1 - pulse.progress * 0.5) + ')';
+								ctx.fill();
+							}
+
+							const baseColor = pulse.color === 'cyan' ? '6, 182, 212' : '34, 197, 94';
+							const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, 12);
+							glowGrad.addColorStop(0, 'rgba(' + baseColor + ', ' + 0.6 * (1 - pulse.progress) + ')');
+							glowGrad.addColorStop(1, 'rgba(' + baseColor + ', 0)');
+							ctx.fillStyle = glowGrad;
+							ctx.beginPath();
+							ctx.arc(px, py, 12, 0, Math.PI * 2);
+							ctx.fill();
+						}
+
+						particles.forEach((particle) => {
+							const glowPulse = Math.sin(time * particle.glowSpeed * 60 + particle.glowPhase) * 0.3 + 0.7;
+							const baseColor = particle.color === 'cyan' ? '6, 182, 212' : '34, 197, 94';
+							const glowR = particle.isHub ? 20 : 10;
+							const glowGrad = ctx.createRadialGradient(particle.x, particle.y, 0, particle.x, particle.y, glowR);
+							glowGrad.addColorStop(0, 'rgba(' + baseColor + ', ' + 0.3 * glowPulse + ')');
+							glowGrad.addColorStop(1, 'rgba(' + baseColor + ', 0)');
+							ctx.fillStyle = glowGrad;
+							ctx.beginPath();
+							ctx.arc(particle.x, particle.y, glowR, 0, Math.PI * 2);
+							ctx.fill();
+							ctx.beginPath();
+							ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+							ctx.fillStyle = 'rgba(' + baseColor + ', ' + (0.6 * glowPulse + 0.2) + ')';
+							ctx.fill();
+						});
+
+						const vignetteGrad = ctx.createRadialGradient(
+							canvas.width / 2,
+							canvas.height / 2,
+							canvas.height * 0.3,
+							canvas.width / 2,
+							canvas.height / 2,
+							canvas.height * 0.9,
+						);
+						vignetteGrad.addColorStop(0, 'rgba(10, 14, 23, 0)');
+						vignetteGrad.addColorStop(1, 'rgba(10, 14, 23, 0.7)');
+						ctx.fillStyle = vignetteGrad;
+						ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+						requestAnimationFrame(draw);
+					}
+
+					draw();
+				}
+
+				initParticleNetwork();
+			});
+		</script>
+	</body>
 </html>

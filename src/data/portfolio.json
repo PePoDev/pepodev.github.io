@@ -1,0 +1,100 @@
+{
+  "projects": [
+    {
+      "name": "AlertRouter",
+      "description": "Smart alert routing engine that reduces pager fatigue by correlating events across services before notifying on-call engineers.",
+      "tags": ["Go", "Kafka", "Prometheus"],
+      "link": "#"
+    },
+    {
+      "name": "InfraDrift",
+      "description": "Continuous drift detection tool that compares actual cluster state against desired Terraform state and auto-generates PRs.",
+      "tags": ["Python", "Terraform", "GitHub Actions"],
+      "link": "#"
+    },
+    {
+      "name": "CanaryBot",
+      "description": "Slack bot for progressive deployment canaries. Type /canary deploy and it runs your analysis pipeline with real-time metrics.",
+      "tags": ["Rust", "Slack API", "Datadog"],
+      "link": "#"
+    },
+    {
+      "name": "LogSum",
+      "description": "Log aggregation dashboard that surfaces anomalies using statistical outlier detection instead of keyword matching.",
+      "tags": ["TypeScript", "Elasticsearch", "React"],
+      "link": "#"
+    },
+    {
+      "name": "NetPulse",
+      "description": "Synthetic monitoring framework that runs distributed health checks from 30+ global edge locations.",
+      "tags": ["Go", "eBPF", "gRPC"],
+      "link": "#"
+    },
+    {
+      "name": "SRE-Game",
+      "description": "Interactive chaos simulation game that teaches SRE fundamentals. Play it right on this portfolio.",
+      "tags": ["JavaScript", "Canvas", "Game Dev"],
+      "link": "#"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "Current Company",
+      "role": "Senior Site Reliability Engineer",
+      "period": "2023 - Present",
+      "details": [
+        "Lead on-call rotation for 12 microservices serving 2M+ daily active users",
+        "Reduced MTTR from 45min to 12min through runbook automation and better observability",
+        "Designed and implemented multi-region failover strategy with RTO < 5 minutes",
+        "Mentored 3 junior SREs through incident command training programs"
+      ]
+    },
+    {
+      "company": "Previous Tech Co.",
+      "role": "Site Reliability Engineer",
+      "period": "2021 - 2023",
+      "details": [
+        "Migrated 40+ services from VMs to Kubernetes, reducing infrastructure cost by 35%",
+        "Built custom Prometheus exporters for business-critical metrics not covered by standard integrations",
+        "Implemented GitOps workflow with ArgoCD, achieving zero-downtime deployments",
+        "Reduced weekly alert volume by 60% through SLO-based alerting redesign"
+      ]
+    },
+    {
+      "company": "Startup Inc.",
+      "role": "DevOps Engineer",
+      "period": "2019 - 2021",
+      "details": [
+        "Built CI/CD pipelines from scratch using GitHub Actions and Terraform",
+        "Implemented infrastructure as code for AWS environment (ECS, RDS, CloudFront)",
+        "Set up centralized logging with ELK stack and Grafana dashboards",
+        "Achieved 99.95% uptime SLA for the first time in company history"
+      ]
+    }
+  ],
+  "skills": [
+    { "name": "Kubernetes / Docker", "level": 95 },
+    { "name": "Terraform / IaC", "level": 90 },
+    { "name": "Linux Systems", "level": 92 },
+    { "name": "CI/CD Pipelines", "level": 88 },
+    { "name": "Observability (Prometheus, Grafana)", "level": 93 },
+    { "name": "Cloud (AWS, GCP)", "level": 85 },
+    { "name": "Scripting (Bash, Python, Go)", "level": 87 },
+    { "name": "Networking / DNS / TLS", "level": 82 },
+    { "name": "Incident Management", "level": 90 },
+    { "name": "Database (PostgreSQL, Redis)", "level": 78 }
+  ],
+  "workMetrics": [
+    { "value": "99.99%", "label": "Uptime SLA" },
+    { "value": "50+", "label": "Incidents Led" },
+    { "value": "6yr", "label": "Experience" }
+  ],
+  "socialLinks": [
+    { "label": "Facebook - @pepodev", "href": "https://facebook.com/pepodev", "icon": "facebook" },
+    { "label": "GitHub - @pepodev", "href": "https://github.com/pepodev", "icon": "github" },
+    { "label": "LinkedIn - @pepodev", "href": "https://linkedin.com/in/pepodev", "icon": "linkedin" },
+    { "label": "YouTube - @pepodev", "href": "https://youtube.com/@pepodev", "icon": "youtube" },
+    { "label": "Digital Garden - pepodev.com", "href": "https://garden.pepodev.com", "icon": "garden" },
+    { "label": "Blog - blog.pepodev.com", "href": "https://blog.pepodev.com", "icon": "blog" }
+  ]
+}
