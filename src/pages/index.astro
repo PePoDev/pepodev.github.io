@@ -78,6 +78,16 @@ import { blogPosts, projects, experiences, skills } from '../content/apps';
         <span>Connect</span>
       </div>
 
+      <div id="desktop-game-icon" class="desktop-icon" data-app="sregame">
+        <svg viewBox="0 0 40 40" fill="none">
+          <rect x="4" y="4" width="32" height="32" rx="4" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/>
+          <path d="M12 14h16M12 20h10M12 26h13" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+          <circle cx="28" cy="26" r="4" fill="#ef4444" opacity="0.3"/>
+          <path d="M28 24v4M26 26h4" stroke="#ef4444" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        <span>SRE Game</span>
+      </div>
+
       <div id="windows-container"></div>
 
       <div id="start-menu">
@@ -110,6 +120,10 @@ import { blogPosts, projects, experiences, skills } from '../content/apps';
             <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/><circle cx="14" cy="16" r="2.5" fill="#22c55e" opacity="0.7"/><circle cx="26" cy="16" r="2.5" fill="#06b6d4" opacity="0.7"/><circle cx="20" cy="26" r="2.5" fill="#a855f7" opacity="0.7"/></svg>
             <div class="start-menu-app-text"><strong>Connect</strong><small>Social links &amp; online presence</small></div>
           </button>
+          <button class="start-menu-app" data-app="sregame">
+            <svg viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" rx="4" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/><path d="M12 14h16M12 20h10M12 26h13" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/></svg>
+            <div class="start-menu-app-text"><strong>SRE Game</strong><small>Chaos simulation game</small></div>
+          </button>
         </div>
         <div id="start-menu-footer">
           <span>system status: nominal</span>
@@ -141,7 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
     project: '<svg viewBox="0 0 40 40" fill="none"><path d="M20 4L34 12V28L20 36L6 28V12L20 4Z" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/><circle cx="20" cy="20" r="4" fill="#a855f7" opacity="0.3"/></svg>',
     work: '<svg viewBox="0 0 40 40" fill="none"><rect x="6" y="14" width="28" height="22" rx="2" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/><path d="M14 14V10C14 6 16 4 20 4C24 4 26 6 26 10V14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/></svg>',
     me: '<svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="14" r="7" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/><path d="M8 34C8 26 13 22 20 22C27 22 32 26 32 34" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/></svg>',
-    connect: '<svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/><circle cx="14" cy="16" r="2.5" fill="#22c55e" opacity="0.7"/><circle cx="26" cy="16" r="2.5" fill="#06b6d4" opacity="0.7"/><circle cx="20" cy="26" r="2.5" fill="#a855f7" opacity="0.7"/></svg>'
+    connect: '<svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/><circle cx="14" cy="16" r="2.5" fill="#22c55e" opacity="0.7"/><circle cx="26" cy="16" r="2.5" fill="#06b6d4" opacity="0.7"/><circle cx="20" cy="26" r="2.5" fill="#a855f7" opacity="0.7"/></svg>',
+    sregame: '<svg viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" rx="4" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/><path d="M12 14h16M12 20h10M12 26h13" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/></svg>'
   };
 
   const appMeta = {
@@ -150,7 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
     project: { title: 'Projects — Showcase', size: [700, 500] },
     work: { title: 'Work — Experience', size: [680, 540] },
     me: { title: 'About Me', size: [600, 560] },
-    connect: { title: 'Connect — Social Links', size: [480, 420] }
+    connect: { title: 'Connect — Social Links', size: [480, 420] },
+    sregame: { title: 'SRE Game — Taming Chaos', size: [800, 600] }
   };
 
   // ===== Window Manager =====
@@ -361,6 +377,106 @@ document.addEventListener('DOMContentLoaded', () => {
               Blog — blog.pepodev.com
             </a>
           </div>
+        </div>`,
+
+      sregame: `
+        <div class="app-content sre-game-container" id="sre-game-${windowIdCounter + 1}">
+          <div class="sre-game-screen sre-game-screen-active">
+            <div class="sre-terminal">
+              <div class="sre-terminal-header">
+                <span class="sre-dot sre-dot-red"></span>
+                <span class="sre-dot sre-dot-yellow"></span>
+                <span class="sre-dot sre-dot-green"></span>
+                <span class="sre-terminal-title">production — zsh</span>
+              </div>
+              <div class="sre-terminal-body sre-boot-output"></div>
+            </div>
+            <button class="sre-boot-enter sre-btn sre-hidden">Enter Production</button>
+          </div>
+          <div class="sre-game-screen">
+            <div class="sre-game-hud">
+              <div class="sre-hud-item">
+                <span class="sre-hud-label">System Health</span>
+                <div class="sre-health-bar"><div class="sre-health-fill"></div></div>
+                <span class="sre-health-pct">100%</span>
+              </div>
+              <div class="sre-hud-item">
+                <span class="sre-hud-label">Round</span>
+                <span class="sre-round-num">1</span>
+              </div>
+              <div class="sre-hud-item">
+                <span class="sre-hud-label">Status</span>
+                <span class="sre-game-status sre-status-ok">All Systems Go</span>
+              </div>
+            </div>
+            <div class="sre-game-area">
+              <div class="sre-game-message">
+                <p>Monitoring production... Everything looks green.</p>
+                <p class="sre-sub">Watch for alerts. Click to mitigate before health drops to zero.</p>
+              </div>
+            </div>
+            <div class="sre-game-actions"></div>
+          </div>
+          <div class="sre-game-screen">
+            <div class="sre-gameover">
+              <div class="sre-glitch-wrap">
+                <h1 class="sre-glitch">SYSTEM FAILURE</h1>
+              </div>
+              <p class="sre-gameover-sub">All mitigation attempts have been exhausted.</p>
+              <p class="sre-gameover-sub">The chaos is beyond manual remediation.</p>
+              <br>
+              <button class="sre-gameover-reveal sre-btn sre-btn-danger">What Now?</button>
+            </div>
+          </div>
+          <div class="sre-game-screen">
+            <div class="sre-solution">
+              <div class="sre-hero-badge">The Only Solution</div>
+              <h1 class="sre-hero-title">Hire <span class="sre-accent">PePoDev</span></h1>
+              <p class="sre-hero-subtitle">Senior Site Reliability Engineer</p>
+              <div class="sre-divider"></div>
+              <p class="sre-hero-tagline">
+                You don't need another engineer who patches fires.<br>
+                You need someone who <em>understands fire</em>.
+              </p>
+              <div class="sre-skills-grid">
+                <div class="sre-skill-card">
+                  <div class="sre-skill-icon">⚡</div>
+                  <h3>Incident Response</h3>
+                  <p>Blazing-fast triage and resolution when systems are on fire.</p>
+                </div>
+                <div class="sre-skill-card">
+                  <div class="sre-skill-icon">🛡️</div>
+                  <h3>System Resilience</h3>
+                  <p>Architecture that doesn't just survive chaos — thrives under it.</p>
+                </div>
+                <div class="sre-skill-card">
+                  <div class="sre-skill-icon">📊</div>
+                  <h3>Observability</h3>
+                  <p>Seeing the unseen. Metrics, logs, and traces that tell the truth.</p>
+                </div>
+                <div class="sre-skill-card">
+                  <div class="sre-skill-icon">🔧</div>
+                  <h3>Infrastructure as Code</h3>
+                  <p>Reproducible, versioned, and tested — no cowboy deployments.</p>
+                </div>
+                <div class="sre-skill-card">
+                  <div class="sre-skill-icon">☸️</div>
+                  <h3>Kubernetes</h3>
+                  <p>Orchestrating containers at scale without losing sleep.</p>
+                </div>
+                <div class="sre-skill-card">
+                  <div class="sre-skill-icon">📈</div>
+                  <h3>Capacity Planning</h3>
+                  <p>Predicting and preventing bottlenecks before they become incidents.</p>
+                </div>
+              </div>
+              <div class="sre-cta-group">
+                <a href="mailto:hello@pepodev.com" class="sre-btn sre-btn-primary">Hire PePoDev</a>
+                <button class="sre-btn sre-btn-outline sre-solution-replay">Replay the Chaos</button>
+              </div>
+              <p class="sre-footer-note">Every production has a hero. Let it be me.</p>
+            </div>
+          </div>
         </div>`
     };
 
@@ -547,6 +663,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     }
+
+    if (appId === 'sregame') {
+      initSreGame(win);
+    }
   }
 
   function animateSkillBars(win) {
@@ -568,6 +688,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeWindow(id) {
     const w = windows.get(id);
     if (!w) return;
+    // Clean up game timers if closing an SRE Game window
+    if (w.appId === 'sregame' && w.alertTimer) {
+      clearInterval(w.alertTimer);
+    }
     w.element.classList.add('closing');
     setTimeout(() => {
       w.element.remove();
@@ -876,6 +1000,303 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initParticleNetwork();
+
+  // ===== SRE Game Engine =====
+  function initSreGame(win) {
+    const q = (sel) => win.querySelector(sel);
+    const qa = (sel) => win.querySelectorAll(sel);
+
+    const bootLines = [
+      { text: '$ ssh production-cluster.prod.internal', cls: '', delay: 300 },
+      { text: 'Connecting to 10.0.42.1...', cls: 'sre-dim', delay: 500 },
+      { text: 'Authenticated. Welcome to prod.', cls: 'sre-info', delay: 400 },
+      { text: '', cls: '', delay: 200 },
+      { text: '$ kubectl get nodes', cls: '', delay: 600 },
+      { text: 'NAME           STATUS   ROLES    AGE   VERSION', cls: 'sre-dim', delay: 300 },
+      { text: 'prod-node-01   Ready    master   45d   v1.28.3', cls: '', delay: 200 },
+      { text: 'prod-node-02   Ready    worker   45d   v1.28.3', cls: '', delay: 200 },
+      { text: 'prod-node-03   Ready    worker   45d   v1.28.3', cls: '', delay: 200 },
+      { text: '', cls: '', delay: 200 },
+      { text: '$ systemctl status monitoring', cls: '', delay: 500 },
+      { text: '● prometheus.service - Prometheus Monitoring', cls: '', delay: 200 },
+      { text: '   Active: active (running) since Mon 2024-01-15', cls: '', delay: 200 },
+      { text: '', cls: '', delay: 200 },
+      { text: 'All systems nominal. No alerts.', cls: 'sre-info', delay: 400 },
+      { text: '', cls: '', delay: 200 },
+      { text: "You're on call. The dashboard is green.", cls: '', delay: 600 },
+      { text: 'For now...', cls: 'sre-warn', delay: 800 },
+    ];
+
+    const alerts = [
+      {
+        severity: 'warning', title: '⚠ High Memory Usage Detected',
+        desc: 'prod-node-02 memory at 87%. Pod evictions imminent.',
+        timer: 15, damage: 8,
+        actions: [
+          { text: 'Restart pods', result: 'Pods restarted. Memory dropped... then spiked higher. +12% usage.' },
+          { text: 'Scale horizontally', result: 'New pods scheduled. Node now at 94% with scheduling overhead.' },
+          { text: 'Kill top consumer', result: 'Killed memhog process. It was a critical cache. Latency tripled.' },
+        ]
+      },
+      {
+        severity: 'warning', title: '⚠ Latency Spike on API Gateway',
+        desc: 'p99 latency jumped from 120ms to 2.4s. Users reporting slow responses.',
+        timer: 14, damage: 10,
+        actions: [
+          { text: 'Enable circuit breaker', result: 'Circuit breaker tripped. Now 40% of requests are failing outright.' },
+          { text: 'Rollback last deploy', result: 'Rollback complete. The latency was infrastructure-level, not code.' },
+          { text: 'Add rate limiting', result: 'Rate limiter engaged. Legitimate traffic now being throttled too.' },
+        ]
+      },
+      {
+        severity: 'critical', title: '🔴 Disk I/O Saturation',
+        desc: 'prod-node-03 disk utilization at 100%. Write operations queueing.',
+        timer: 12, damage: 12,
+        actions: [
+          { text: 'Clear old logs', result: 'Logs cleared. Application started writing audit logs at 10x rate.' },
+          { text: 'Move to faster storage', result: 'Storage migration started. I/O spiked during the transition.' },
+          { text: 'Enable write coalescing', result: 'Writes coalesced. Data consistency checks now failing.' },
+        ]
+      },
+      {
+        severity: 'critical', title: '🔴 Certificate Expiring in 2h',
+        desc: 'TLS cert for *.prod.internal expires soon. Auto-renewal failed.',
+        timer: 10, damage: 12,
+        actions: [
+          { text: 'Manual cert renewal', result: 'Renewed cert. ACME challenge failed for internal DNS zone.' },
+          { text: 'Switch to internal CA', result: 'Internal CA signed it. Browser trust store doesn\'t recognize the root.' },
+          { text: 'Extend validity window', result: 'Cannot extend expired cert. The window has closed.' },
+        ]
+      },
+      {
+        severity: 'critical', title: '🔴 Database Connection Pool Exhausted',
+        desc: 'PostgreSQL primary: 450/450 connections used. New connections being rejected.',
+        timer: 10, damage: 14,
+        actions: [
+          { text: 'Increase pool size', result: 'Pool expanded to 600. Server ran out of shared memory.' },
+          { text: 'Kill idle connections', result: 'Killed 200 connections. Hit the replication lag monitors.' },
+          { text: 'Enable PgBouncer', result: 'PgBouncer deployed. Transaction retry storms began.' },
+        ]
+      },
+      {
+        severity: 'catastrophic', title: '💀 Cascading Failure Detected',
+        desc: 'Service mesh sidecars crashing. 12 microservices affected. Error propagation across all zones.',
+        timer: 8, damage: 16,
+        actions: [
+          { text: 'Emergency rollback all', result: 'Rollback triggered dependency conflicts. More services down.' },
+          { text: 'Isolate affected zones', result: 'Zones isolated. Cross-zone replication broke. Data divergence detected.' },
+          { text: 'Full cluster restart', result: 'Restart initiated. Boot storm caused DNS resolution failures.' },
+        ]
+      },
+      {
+        severity: 'catastrophic', title: '💀 CRITICAL: Cluster Unstable',
+        desc: 'CoreDNS flapping. Etcd quorum at risk. Multiple nodes NotReady. This is it.',
+        timer: 6, damage: 20,
+        actions: [
+          { text: 'Attempt etcd restore', result: 'Restore started from 4h-old backup. 4 hours of data loss.' },
+          { text: 'Failover to DR site', result: 'DR site activated. Replication was stale. Partial data available.' },
+          { text: 'Call for help...', result: 'You need more than a runbook. You need an SRE who lives for this.' },
+        ]
+      },
+    ];
+
+    let health = 100;
+    let currentRound = 0;
+    let alertTimer = null;
+
+    function showScreen(index) {
+      qa('.sre-game-screen').forEach((s, i) => {
+        s.classList.toggle('sre-game-screen-active', i === index);
+      });
+    }
+
+    async function runBoot() {
+      const output = q('.sre-boot-output');
+      for (const line of bootLines) {
+        await new Promise(r => setTimeout(r, line.delay));
+        const el = document.createElement('div');
+        el.className = `sre-line ${line.cls}`;
+        el.textContent = line.text || ' ';
+        output.appendChild(el);
+        output.scrollTop = output.scrollHeight;
+      }
+      q('.sre-boot-enter').classList.remove('sre-hidden');
+    }
+
+    q('.sre-boot-enter').addEventListener('click', () => {
+      showScreen(1);
+      startGame();
+    });
+
+    function startGame() {
+      health = 100;
+      currentRound = 0;
+      updateHealth();
+      updateRound();
+      updateStatus();
+      q('.sre-game-message').innerHTML = `
+        <p>Monitoring production...</p>
+        <p class="sre-sub">Alerts will appear below. Click an action to mitigate before time runs out.</p>
+      `;
+      q('.sre-game-actions').innerHTML = '';
+      scheduleNextAlert();
+    }
+
+    function scheduleNextAlert() {
+      if (currentRound >= alerts.length) return;
+      const delay = currentRound === 0 ? 2500 : 1800;
+      setTimeout(() => showAlert(currentRound), delay);
+    }
+
+    function showAlert(index) {
+      const alert = alerts[index];
+      let timeLeft = alert.timer;
+      const gameArea = q('.sre-game-area');
+      gameArea.innerHTML = '';
+
+      const card = document.createElement('div');
+      card.className = `sre-alert-card sre-severity-${alert.severity}`;
+      card.innerHTML = `
+        <div class="sre-alert-header">
+          <span class="sre-alert-title">${alert.title}</span>
+          <span class="sre-alert-severity">${alert.severity}</span>
+        </div>
+        <div class="sre-alert-desc">${alert.desc}</div>
+        <div class="sre-alert-timer">Time remaining: ${timeLeft}s</div>
+      `;
+      gameArea.appendChild(card);
+
+      const actionsDiv = q('.sre-game-actions');
+      actionsDiv.innerHTML = '';
+      alert.actions.forEach((action, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'sre-action-btn';
+        btn.textContent = action.text;
+        btn.addEventListener('click', () => handleAction(index, i));
+        actionsDiv.appendChild(btn);
+      });
+
+      clearInterval(alertTimer);
+      alertTimer = setInterval(() => {
+        timeLeft--;
+        const timerEl = gameArea.querySelector('.sre-alert-timer');
+        if (timerEl) timerEl.textContent = `Time remaining: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(alertTimer);
+          timeExpired(index);
+        }
+      }, 1000);
+    }
+
+    function handleAction(alertIndex, actionIndex) {
+      clearInterval(alertTimer);
+      const alert = alerts[alertIndex];
+      const action = alert.actions[actionIndex];
+      health -= alert.damage;
+      updateHealth();
+
+      const gameArea = q('.sre-game-area');
+      const log = document.createElement('div');
+      log.className = 'sre-mitigation-log';
+      log.innerHTML = `<strong>Mitigation failed:</strong> ${action.result}`;
+      gameArea.appendChild(log);
+
+      qa('.sre-action-btn').forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+
+      currentRound++;
+      updateRound();
+      updateStatus();
+
+      if (health <= 0 || currentRound >= alerts.length) {
+        setTimeout(() => showScreen(2), 2000);
+        return;
+      }
+
+      scheduleNextAlert();
+    }
+
+    function timeExpired(alertIndex) {
+      const alert = alerts[alertIndex];
+      health -= alert.damage;
+      updateHealth();
+      updateStatus();
+
+      const gameArea = q('.sre-game-area');
+      const log = document.createElement('div');
+      log.className = 'sre-mitigation-log';
+      log.innerHTML = `<strong>Time expired — alert unresolved.</strong> System absorbed the damage.`;
+      gameArea.appendChild(log);
+
+      qa('.sre-action-btn').forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+
+      currentRound++;
+      updateRound();
+
+      if (health <= 0) {
+        setTimeout(() => showScreen(2), 2000);
+        return;
+      }
+
+      if (currentRound < alerts.length) {
+        scheduleNextAlert();
+      } else {
+        setTimeout(() => showScreen(2), 2000);
+      }
+    }
+
+    function updateHealth() {
+      health = Math.max(0, Math.min(100, health));
+      const fill = q('.sre-health-fill');
+      fill.style.width = health + '%';
+      fill.style.background = health > 60 ? '#22c55e' : health > 30 ? '#eab308' : '#ef4444';
+      q('.sre-health-pct').textContent = health + '%';
+    }
+
+    function updateRound() {
+      q('.sre-round-num').textContent = currentRound + 1;
+    }
+
+    function updateStatus() {
+      const status = q('.sre-game-status');
+      if (health > 60) {
+        status.textContent = 'Stable';
+        status.className = 'sre-game-status sre-status-ok';
+      } else if (health > 30) {
+        status.textContent = 'Degraded';
+        status.className = 'sre-game-status sre-status-warn';
+      } else {
+        status.textContent = 'Critical';
+        status.className = 'sre-game-status sre-status-crit';
+      }
+    }
+
+    // Game Over → Solution
+    q('.sre-gameover-reveal').addEventListener('click', () => {
+      showScreen(3);
+    });
+
+    // Replay from solution screen
+    q('.sre-solution-replay').addEventListener('click', () => {
+      showScreen(0);
+      q('.sre-boot-output').innerHTML = '';
+      q('.sre-boot-enter').classList.add('sre-hidden');
+      runBoot();
+    });
+
+    // Start boot sequence
+    runBoot();
+
+    // Store alert timer reference on window state for cleanup
+    const wState = windows.get(winId);
+    if (wState) {
+      // Periodically sync the timer so closeWindow can clear it
+      const syncTimer = setInterval(() => {
+        wState.alertTimer = alertTimer;
+      }, 100);
+      // Stop syncing after 60s (game is usually done by then)
+      setTimeout(() => clearInterval(syncTimer), 60000);
+    }
+  }
 
   // ===== Keyboard shortcut: Escape closes start menu =====
   document.addEventListener('keydown', (e) => {

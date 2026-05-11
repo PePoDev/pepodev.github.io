@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🧳 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: 📦 Cache packages
         uses: actions/cache@v4
         with:
@@ -25,7 +25,7 @@ jobs:
             ./node_modules
             ~/.npm
       - name: 🏗️ Build
-        uses: withastro/action@v2
+        uses: withastro/action@v6
         with:
           package-manager: pnpm@latest
 
@@ -38,4 +38,4 @@ jobs:
     steps:
       - name: 🚀 Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
