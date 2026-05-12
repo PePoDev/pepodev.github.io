@@ -1,8 +1,11 @@
 ---
 import AboutApp from "../components/apps/AboutApp.astro";
 import BlogApp from "../components/apps/BlogApp.astro";
+import CalculatorApp from "../components/apps/CalculatorApp.astro";
+import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
 import ResumeApp from "../components/apps/ResumeApp.astro";
+import SettingsApp from "../components/apps/SettingsApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
 import WelcomeApp from "../components/apps/WelcomeApp.astro";
 import WorkApp from "../components/apps/WorkApp.astro";
@@ -34,6 +37,9 @@ import socialLinks from "../data/social-links.json";
         <DesktopIcon appId="work" label="Work" />
         <DesktopIcon appId="me" label="About Me" />
         <DesktopIcon appId="sregame" label="SRE Game" />
+        <DesktopIcon appId="music" label="Music" />
+        <DesktopIcon appId="calculator" label="Calculator" />
+        <DesktopIcon appId="settings" label="Settings" />
       </div>
 
       <!-- External Link Shortcuts -->
@@ -86,6 +92,15 @@ import socialLinks from "../data/social-links.json";
         >
           <SreGameApp />
         </Window>
+        <Window appId="music" title="Music Player" width={460} height={520}>
+          <MusicPlayerApp />
+        </Window>
+        <Window appId="calculator" title="Calculator" width={360} height={520}>
+          <CalculatorApp />
+        </Window>
+        <Window appId="settings" title="Settings" width={620} height={560}>
+          <SettingsApp />
+        </Window>
       </div>
 
       <StartMenu />
@@ -97,8 +112,80 @@ import socialLinks from "../data/social-links.json";
       // @ts-nocheck
       // Initialize theme immediately to prevent flash
       (function () {
-        const savedTheme = localStorage.getItem("pepodev.theme") || "dark";
+        let savedPrefs = {};
+        try {
+          savedPrefs = JSON.parse(
+            localStorage.getItem("pepodev.desktopPrefs") || "{}",
+          );
+        } catch {
+          savedPrefs = {};
+        }
+        const savedTheme =
+          savedPrefs.theme || localStorage.getItem("pepodev.theme") || "dark";
+        const accentMap = {
+          green: { primary: "#30d158", secondary: "#64d2ff" },
+          cyan: { primary: "#64d2ff", secondary: "#30d158" },
+          purple: { primary: "#bf5af2", secondary: "#64d2ff" },
+          amber: { primary: "#ff9f0a", secondary: "#64d2ff" },
+        };
+        const backgroundMap = {
+          network: {
+            bg: "#0a0e17",
+            primary: "34, 197, 94",
+            secondary: "6, 182, 212",
+          },
+          aurora: {
+            bg: "#07111f",
+            primary: "20, 184, 166",
+            secondary: "168, 85, 247",
+          },
+          midnight: {
+            bg: "#101018",
+            primary: "99, 102, 241",
+            secondary: "14, 165, 233",
+          },
+          ember: {
+            bg: "#170d0a",
+            primary: "245, 158, 11",
+            secondary: "239, 68, 68",
+          },
+        };
+        const accent = accentMap[savedPrefs.accent] || accentMap.green;
+        const background =
+          backgroundMap[savedPrefs.background] || backgroundMap.network;
         document.documentElement.setAttribute("data-theme", savedTheme);
+        document.documentElement.style.setProperty(
+          "--accent-green",
+          accent.primary,
+        );
+        document.documentElement.style.setProperty(
+          "--accent-cyan",
+          accent.secondary,
+        );
+        document.documentElement.style.setProperty(
+          "--window-radius",
+          (savedPrefs.radius || 12) + "px",
+        );
+        document.documentElement.style.setProperty(
+          "--glass-bg",
+          "rgba(" +
+            (savedTheme === "light" ? "255, 255, 255" : "44, 44, 46") +
+            ", " +
+            (savedPrefs.glass || 72) / 100 +
+            ")",
+        );
+        document.documentElement.style.setProperty(
+          "--desktop-bg-color",
+          background.bg,
+        );
+        document.documentElement.style.setProperty(
+          "--particle-primary-rgb",
+          background.primary,
+        );
+        document.documentElement.style.setProperty(
+          "--particle-secondary-rgb",
+          background.secondary,
+        );
       })();
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -111,6 +198,23 @@ import socialLinks from "../data/social-links.json";
           const pulses = [];
           const ambientBlobs = [];
           const count = 70;
+          let desktopPrefs = {};
+
+          function getCssVar(name, fallback) {
+            return (
+              getComputedStyle(document.documentElement)
+                .getPropertyValue(name)
+                .trim() || fallback
+            );
+          }
+
+          function readDesktopPrefs() {
+            desktopPrefs = {
+              bg: getCssVar("--desktop-bg-color", "#0a0e17"),
+              primary: getCssVar("--particle-primary-rgb", "34, 197, 94"),
+              secondary: getCssVar("--particle-secondary-rgb", "6, 182, 212"),
+            };
+          }
 
           function resize() {
             canvas.width = window.innerWidth;
@@ -118,7 +222,9 @@ import socialLinks from "../data/social-links.json";
           }
 
           resize();
+          readDesktopPrefs();
           window.addEventListener("resize", resize);
+          document.addEventListener("desktop:preferences", readDesktopPrefs);
 
           for (let i = 0; i < 4; i++) {
             ambientBlobs.push({
@@ -151,7 +257,7 @@ import socialLinks from "../data/social-links.json";
           let time = 0;
 
           function draw() {
-            ctx.fillStyle = "#0a0e17";
+            ctx.fillStyle = desktopPrefs.bg;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             time += 0.016;
 
@@ -172,7 +278,9 @@ import socialLinks from "../data/social-links.json";
                 blob.r,
               );
               const color =
-                blob.color === "cyan" ? "6, 182, 212" : "34, 197, 94";
+                blob.color === "cyan"
+                  ? desktopPrefs.secondary
+                  : desktopPrefs.primary;
               grad.addColorStop(0, "rgba(" + color + ", " + blob.alpha + ")");
               grad.addColorStop(1, "rgba(" + color + ", 0)");
               ctx.fillStyle = grad;
@@ -235,7 +343,8 @@ import socialLinks from "../data/social-links.json";
                 );
                 if (distance < connectionDist) {
                   const alpha = (1 - distance / connectionDist) * 0.3;
-                  ctx.strokeStyle = "rgba(34, 197, 94, " + alpha + ")";
+                  ctx.strokeStyle =
+                    "rgba(" + desktopPrefs.primary + ", " + alpha + ")";
                   ctx.lineWidth = 1;
                   ctx.beginPath();
                   ctx.moveTo(particles[i].x, particles[i].y);
@@ -262,7 +371,9 @@ import socialLinks from "../data/social-links.json";
                 const trailAlpha = (t / pulse.trail.length) * 0.8;
                 const trailR = 1 + (t / pulse.trail.length) * 2;
                 const baseColor =
-                  pulse.color === "cyan" ? "6, 182, 212" : "34, 197, 94";
+                  pulse.color === "cyan"
+                    ? desktopPrefs.secondary
+                    : desktopPrefs.primary;
                 ctx.beginPath();
                 ctx.arc(
                   pulse.trail[t].x,
@@ -281,7 +392,9 @@ import socialLinks from "../data/social-links.json";
               }
 
               const baseColor =
-                pulse.color === "cyan" ? "6, 182, 212" : "34, 197, 94";
+                pulse.color === "cyan"
+                  ? desktopPrefs.secondary
+                  : desktopPrefs.primary;
               const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, 12);
               glowGrad.addColorStop(
                 0,
@@ -300,7 +413,9 @@ import socialLinks from "../data/social-links.json";
                   0.3 +
                 0.7;
               const baseColor =
-                particle.color === "cyan" ? "6, 182, 212" : "34, 197, 94";
+                particle.color === "cyan"
+                  ? desktopPrefs.secondary
+                  : desktopPrefs.primary;
               const glowR = particle.isHub ? 20 : 10;
               const glowGrad = ctx.createRadialGradient(
                 particle.x,

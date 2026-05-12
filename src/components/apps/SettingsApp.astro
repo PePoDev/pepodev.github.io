@@ -1,0 +1,244 @@
+---
+const backgrounds = [
+  { id: "network", label: "SRE Network" },
+  { id: "aurora", label: "Aurora" },
+  { id: "midnight", label: "Midnight" },
+  { id: "ember", label: "Ember" },
+];
+
+const accents = [
+  { id: "green", label: "Green", color: "#30d158" },
+  { id: "cyan", label: "Cyan", color: "#64d2ff" },
+  { id: "purple", label: "Purple", color: "#bf5af2" },
+  { id: "amber", label: "Amber", color: "#ff9f0a" },
+];
+
+const tracks = [
+  { id: "datacenter", label: "Datacenter Pulse" },
+  { id: "nightshift", label: "Night Shift" },
+  { id: "incident", label: "Incident Response" },
+];
+---
+
+<div class="app-content settings-app" data-settings-app>
+  <div class="settings-layout">
+    <section class="settings-panel">
+      <h2>Appearance</h2>
+      <div class="settings-grid">
+        <label class="settings-field">
+          <span>Theme</span>
+          <select data-setting="theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+
+        <label class="settings-field">
+          <span>Background</span>
+          <select data-setting="background">
+            {backgrounds.map((background) => (
+              <option value={background.id}>{background.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <label class="settings-field">
+          <span>Window radius</span>
+          <input data-setting="radius" type="range" min="6" max="20" value="12" />
+        </label>
+
+        <label class="settings-field">
+          <span>Glass opacity</span>
+          <input data-setting="glass" type="range" min="55" max="90" value="72" />
+        </label>
+      </div>
+
+      <div class="settings-swatches" role="radiogroup" aria-label="Accent color">
+        {accents.map((accent) => (
+          <button
+            type="button"
+            data-accent={accent.id}
+            aria-label={`${accent.label} accent`}
+            style={`--swatch: ${accent.color}`}
+          />
+        ))}
+      </div>
+    </section>
+
+    <section class="settings-panel">
+      <h2>Music</h2>
+      <div class="settings-grid">
+        <label class="settings-field">
+          <span>Track</span>
+          <select data-music-setting="track">
+            {tracks.map((track) => <option value={track.id}>{track.label}</option>)}
+          </select>
+        </label>
+
+        <label class="settings-field">
+          <span>Volume</span>
+          <input data-music-setting="volume" type="range" min="0" max="100" value="60" />
+        </label>
+      </div>
+
+      <div class="settings-actions">
+        <button type="button" data-music-setting="toggle">Play music</button>
+        <button type="button" data-settings-reset>Reset style</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const app = document.querySelector("[data-settings-app]");
+    if (!app) return;
+
+    const prefsKey = "pepodev.desktopPrefs";
+    const musicKey = "pepodev.music";
+    const defaults = {
+      theme: localStorage.getItem("pepodev.theme") || "dark",
+      background: "network",
+      accent: "green",
+      radius: 12,
+      glass: 72,
+    };
+    const accentMap = {
+      green: { primary: "#30d158", secondary: "#64d2ff" },
+      cyan: { primary: "#64d2ff", secondary: "#30d158" },
+      purple: { primary: "#bf5af2", secondary: "#64d2ff" },
+      amber: { primary: "#ff9f0a", secondary: "#64d2ff" },
+    };
+    const backgroundMap = {
+      network: { bg: "#0a0e17", primary: "34, 197, 94", secondary: "6, 182, 212" },
+      aurora: { bg: "#07111f", primary: "20, 184, 166", secondary: "168, 85, 247" },
+      midnight: { bg: "#101018", primary: "99, 102, 241", secondary: "14, 165, 233" },
+      ember: { bg: "#170d0a", primary: "245, 158, 11", secondary: "239, 68, 68" },
+    };
+
+    function loadPrefs() {
+      try {
+        const raw = localStorage.getItem(prefsKey);
+        if (raw) return { ...defaults, ...JSON.parse(raw) };
+      } catch {
+        // Ignore corrupt persisted settings.
+      }
+      return { ...defaults };
+    }
+
+    function loadMusic() {
+      try {
+        const raw = localStorage.getItem(musicKey);
+        if (raw)
+          return { track: "datacenter", volume: 0.6, playing: false, ...JSON.parse(raw) };
+      } catch {
+        // Ignore corrupt persisted settings.
+      }
+      return { track: "datacenter", volume: 0.6, playing: false };
+    }
+
+    function applyPrefs(prefs) {
+      const root = document.documentElement;
+      const accent = accentMap[prefs.accent] || accentMap.green;
+      const background = backgroundMap[prefs.background] || backgroundMap.network;
+      root.setAttribute("data-theme", prefs.theme);
+      root.style.setProperty("--accent-green", accent.primary);
+      root.style.setProperty("--accent-cyan", accent.secondary);
+      root.style.setProperty("--window-radius", `${prefs.radius}px`);
+      root.style.setProperty(
+        "--glass-bg",
+        `rgba(${prefs.theme === "light" ? "255, 255, 255" : "44, 44, 46"}, ${
+          prefs.glass / 100
+        })`,
+      );
+      root.style.setProperty("--desktop-bg-color", background.bg);
+      root.style.setProperty("--particle-primary-rgb", background.primary);
+      root.style.setProperty("--particle-secondary-rgb", background.secondary);
+      localStorage.setItem("pepodev.theme", prefs.theme);
+      localStorage.setItem(prefsKey, JSON.stringify(prefs));
+      document.dispatchEvent(
+        new CustomEvent("desktop:preferences", { detail: prefs }),
+      );
+    }
+
+    function render() {
+      const prefs = loadPrefs();
+      const music = loadMusic();
+      app.querySelector('[data-setting="theme"]').value = prefs.theme;
+      app.querySelector('[data-setting="background"]').value = prefs.background;
+      app.querySelector('[data-setting="radius"]').value = String(prefs.radius);
+      app.querySelector('[data-setting="glass"]').value = String(prefs.glass);
+      app.querySelectorAll("[data-accent]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.accent === prefs.accent));
+      });
+      app.querySelector('[data-music-setting="track"]').value = music.track;
+      app.querySelector('[data-music-setting="volume"]').value = String(
+        Math.round(music.volume * 100),
+      );
+      app.querySelector('[data-music-setting="toggle"]').textContent = music.playing
+        ? "Pause music"
+        : "Play music";
+    }
+
+    app.addEventListener("input", (event) => {
+      const target = event.target;
+      if (target.dataset.setting) {
+        const prefs = loadPrefs();
+        prefs[target.dataset.setting] =
+          target.type === "range" ? Number(target.value) : target.value;
+        applyPrefs(prefs);
+        render();
+      }
+
+      if (target.dataset.musicSetting === "volume") {
+        const music = { ...loadMusic(), volume: Number(target.value) / 100 };
+        localStorage.setItem(musicKey, JSON.stringify(music));
+        document.dispatchEvent(
+          new CustomEvent("desktop:music-settings", { detail: music }),
+        );
+        render();
+      }
+    });
+
+    app.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target.dataset.musicSetting === "track") {
+        const music = { ...loadMusic(), track: target.value };
+        localStorage.setItem(musicKey, JSON.stringify(music));
+        document.dispatchEvent(
+          new CustomEvent("desktop:music-settings", { detail: music }),
+        );
+        render();
+      }
+    });
+
+    app.addEventListener("click", (event) => {
+      const accentButton = event.target.closest("[data-accent]");
+      if (accentButton) {
+        const prefs = { ...loadPrefs(), accent: accentButton.dataset.accent };
+        applyPrefs(prefs);
+        render();
+      }
+
+      if (event.target.matches('[data-music-setting="toggle"]')) {
+        const music = loadMusic();
+        const next = { ...music, playing: !music.playing };
+        localStorage.setItem(musicKey, JSON.stringify(next));
+        document.dispatchEvent(
+          new CustomEvent("desktop:music-settings", { detail: next }),
+        );
+        render();
+      }
+
+      if (event.target.matches("[data-settings-reset]")) {
+        applyPrefs({ ...defaults, theme: "dark" });
+        render();
+      }
+    });
+
+    applyPrefs(loadPrefs());
+    render();
+    document.addEventListener("desktop:music-settings", render);
+  });
+</script>

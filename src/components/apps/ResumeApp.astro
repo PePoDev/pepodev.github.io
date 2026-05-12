@@ -14,7 +14,14 @@ const certifications = [
 const resumePdfData = {
   name: "Pepo",
   title: "Site Reliability Engineer",
-  contact: ["pepo@pepo.dev", "github.com/pepodev", "linkedin.com/in/pepodev"],
+  contact: [
+    "Bangkok, Thailand",
+    "pepo@pepo.dev",
+    "github.com/pepodev",
+    "linkedin.com/in/pepodev",
+  ],
+  summary:
+    "Site Reliability Engineer specializing in cloud infrastructure, Kubernetes platforms, observability, infrastructure as code, GitOps delivery, and reliability practices for production systems.",
   education: [
     "Bachelor Degrees, Computer Science",
     "King Mongkut's Institute of Technology Ladkrabang",
@@ -142,13 +149,173 @@ const resumePdfData = {
   });
 
   function createResumePdf(data) {
-    const lines = buildResumeLines(data);
+    const width = 595;
+    const height = 842;
+    const marginX = 46;
+    const bottomMargin = 46;
+    const contentWidth = width - marginX * 2;
     const pages = [];
-    const linesPerPage = 46;
+    let commands = [];
+    let y = 792;
 
-    for (let i = 0; i < lines.length; i += linesPerPage) {
-      pages.push(lines.slice(i, i + linesPerPage));
+    function addPage() {
+      if (commands.length) pages.push(commands.join("\n"));
+      commands = [];
+      y = 792;
     }
+
+    function ensureSpace(requiredHeight) {
+      if (y - requiredHeight < bottomMargin) addPage();
+    }
+
+    function drawText(text, x, textY, options = {}) {
+      const size = options.size || 10;
+      const font = options.bold ? "F2" : "F1";
+      const color = options.color || "0.16 0.17 0.2";
+      let textX = x;
+
+      if (options.align === "center") {
+        textX = x - getTextWidth(text, size, options.bold) / 2;
+      } else if (options.align === "right") {
+        textX = x - getTextWidth(text, size, options.bold);
+      }
+
+      commands.push(
+        "BT",
+        `/${font} ${size} Tf`,
+        `${color} rg`,
+        `${formatNumber(textX)} ${formatNumber(textY)} Td`,
+        `(${escapePdfText(text)}) Tj`,
+        "ET",
+      );
+    }
+
+    function drawLine(x1, y1, x2, y2, shade = "0.86") {
+      commands.push(
+        `${shade} G`,
+        "0.6 w",
+        `${formatNumber(x1)} ${formatNumber(y1)} m`,
+        `${formatNumber(x2)} ${formatNumber(y2)} l`,
+        "S",
+      );
+    }
+
+    function drawRect(x, rectY, rectWidth, rectHeight, fill = "0.96 0.97 0.98") {
+      commands.push(
+        `${fill} rg`,
+        `${formatNumber(x)} ${formatNumber(rectY)} ${formatNumber(rectWidth)} ${formatNumber(rectHeight)} re`,
+        "f",
+      );
+    }
+
+    function drawSection(title) {
+      ensureSpace(34);
+      y -= 8;
+      drawRect(marginX, y - 14, contentWidth, 18);
+      drawText(title.toUpperCase(), width / 2, y - 9, {
+        size: 10,
+        align: "center",
+        color: "0.18 0.19 0.22",
+      });
+      y -= 30;
+    }
+
+    function drawParagraph(text) {
+      const lines = wrapPdfLine(text, contentWidth, 10);
+      ensureSpace(lines.length * 12 + 6);
+      lines.forEach((line) => {
+        drawText(line, marginX, y, { size: 10 });
+        y -= 12;
+      });
+      y -= 6;
+    }
+
+    function drawBulletList(items, maxItems) {
+      items.slice(0, maxItems).forEach((item) => {
+        const lines = wrapPdfLine(item, contentWidth - 22, 9.3);
+        ensureSpace(lines.length * 11 + 2);
+        drawText("-", marginX + 10, y, { size: 9.5 });
+        lines.forEach((line, index) => {
+          drawText(line, marginX + 24, y - index * 11, { size: 9.3 });
+        });
+        y -= lines.length * 11 + 2;
+      });
+    }
+
+    drawText(data.name.toUpperCase(), width / 2, y, {
+      size: 24,
+      align: "center",
+      color: "0.1 0.11 0.14",
+    });
+    y -= 17;
+    drawText(data.title.toUpperCase(), width / 2, y, {
+      size: 11,
+      align: "center",
+      color: "0.23 0.24 0.28",
+    });
+    y -= 11;
+    drawLine(marginX, y, width - marginX, y, "0.88");
+    y -= 14;
+    drawText(data.contact.join(" - "), width / 2, y, {
+      size: 8.5,
+      align: "center",
+      color: "0.3 0.31 0.35",
+    });
+    y -= 24;
+
+    drawSection("Summary");
+    drawParagraph(data.summary);
+
+    drawSection("Experience");
+    data.experiences.forEach((experience, index) => {
+      ensureSpace(72);
+      drawText(experience.role, marginX, y, { size: 10.2, bold: true });
+      drawText(experience.period, width - marginX, y, {
+        size: 9.3,
+        align: "right",
+      });
+      y -= 12;
+      drawText(experience.company, marginX, y, {
+        size: 9.4,
+        color: "0.32 0.33 0.37",
+      });
+      y -= 14;
+      drawBulletList(experience.details, index === 0 ? 5 : 4);
+      y -= 5;
+    });
+
+    drawSection("Education");
+    ensureSpace(42);
+    drawText(data.education[0], marginX, y, { size: 10.2, bold: true });
+    drawText(data.education[2], width - marginX, y, {
+      size: 9.3,
+      align: "right",
+    });
+    y -= 12;
+    drawText(data.education[1], marginX, y, {
+      size: 9.4,
+      color: "0.32 0.33 0.37",
+    });
+    y -= 24;
+
+    drawSection("Technical Skills");
+    const skillLines = splitIntoColumns(
+      data.skills.map((skill) => skill.replace(/\s-\s\d+%$/, "")),
+      2,
+    );
+    skillLines.forEach((row) => {
+      ensureSpace(14);
+      row.forEach((skill, index) => {
+        drawText(skill, marginX + index * (contentWidth / 2), y, { size: 9.5 });
+      });
+      y -= 13;
+    });
+    y -= 8;
+
+    drawSection("Certifications");
+    drawBulletList(data.certifications, data.certifications.length);
+
+    if (commands.length) pages.push(commands.join("\n"));
 
     const objects = [];
     const addObject = (body) => {
@@ -161,17 +328,12 @@ const resumePdfData = {
     const fontId = addObject(
       "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     );
+    const boldFontId = addObject(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+    );
     const pageIds = [];
 
-    pages.forEach((pageLines) => {
-      const content = [
-        "BT",
-        "/F1 11 Tf",
-        "50 780 Td",
-        "14 TL",
-        ...pageLines.map((line) => `(${escapePdfText(line)}) Tj T*`),
-        "ET",
-      ].join("\n");
+    pages.forEach((content) => {
       const contentId = addObject(
         `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
       );
@@ -179,8 +341,8 @@ const resumePdfData = {
         [
           "<< /Type /Page",
           "/Parent 2 0 R",
-          "/MediaBox [0 0 612 792]",
-          `/Resources << /Font << /F1 ${fontId} 0 R >> >>`,
+          `/MediaBox [0 0 ${width} ${height}]`,
+          `/Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >>`,
           `/Contents ${contentId} 0 R`,
           ">>",
         ].join("\n"),
@@ -215,61 +377,47 @@ const resumePdfData = {
     return pdf;
   }
 
-  function buildResumeLines(data) {
-    const lines = [
-      data.name,
-      data.title,
-      data.contact.join(" | "),
-      "",
-      "Education",
-      ...data.education,
-      "",
-      "Experience",
-    ];
+  function wrapPdfLine(line, maxWidth = 503, fontSize = 10) {
+    const normalized = normalizePdfText(line);
+    if (getTextWidth(normalized, fontSize) <= maxWidth) return [normalized];
+    const wrapped = [];
+    const words = normalized.split(/\s+/);
+    let current = "";
 
-    data.experiences.forEach((experience) => {
-      lines.push(
-        "",
-        `${experience.role} | ${experience.company}`,
-        experience.period,
-        ...experience.details.map((detail) => `- ${detail}`),
-      );
+    words.forEach((word) => {
+      const next = current ? `${current} ${word}` : word;
+      if (current && getTextWidth(next, fontSize) > maxWidth) {
+        wrapped.push(current);
+        current = word;
+      } else {
+        current = next;
+      }
     });
 
-    lines.push(
-      "",
-      "Technical Skills",
-      ...data.skills.map((skill) => `- ${skill}`),
-    );
-    lines.push(
-      "",
-      "Certifications",
-      ...data.certifications.map((certification) => `- ${certification}`),
-    );
-
-    return lines.flatMap(wrapPdfLine);
+    if (current) wrapped.push(current);
+    return wrapped;
   }
 
-  function wrapPdfLine(line) {
-    const normalized = normalizePdfText(line);
-    const maxLength = 92;
-    if (normalized.length <= maxLength) return [normalized];
-
-    const wrapped = [];
-    let remaining = normalized;
-    while (remaining.length > maxLength) {
-      const splitAt = remaining.lastIndexOf(" ", maxLength);
-      const index = splitAt > 20 ? splitAt : maxLength;
-      wrapped.push(remaining.slice(0, index));
-      remaining = "  " + remaining.slice(index).trim();
+  function splitIntoColumns(items, columns) {
+    const rows = [];
+    for (let i = 0; i < items.length; i += columns) {
+      rows.push(items.slice(i, i + columns));
     }
-    wrapped.push(remaining);
-    return wrapped;
+    return rows;
+  }
+
+  function getTextWidth(text, fontSize, bold = false) {
+    return normalizePdfText(text).length * fontSize * (bold ? 0.56 : 0.51);
+  }
+
+  function formatNumber(value) {
+    return Number(value).toFixed(2).replace(/\.?0+$/, "");
   }
 
   function normalizePdfText(value) {
     return String(value)
       .replace(/\u2122/g, "")
+      .replace(/\u2022/g, "-")
       .replace(/[\u2013\u2014]/g, "-")
       .replace(/[^\x20-\x7e]/g, "");
   }

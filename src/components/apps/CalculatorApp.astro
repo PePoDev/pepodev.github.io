@@ -1,0 +1,114 @@
+<div class="app-content calculator-app" data-calculator>
+  <div class="calculator-display" aria-live="polite">
+    <div class="calculator-history"></div>
+    <div class="calculator-value">0</div>
+  </div>
+
+  <div class="calculator-grid">
+    <button type="button" data-action="clear">AC</button>
+    <button type="button" data-action="backspace">DEL</button>
+    <button type="button" data-token="%">%</button>
+    <button type="button" class="calculator-op" data-token="/">/</button>
+    <button type="button" data-token="7">7</button>
+    <button type="button" data-token="8">8</button>
+    <button type="button" data-token="9">9</button>
+    <button type="button" class="calculator-op" data-token="*">*</button>
+    <button type="button" data-token="4">4</button>
+    <button type="button" data-token="5">5</button>
+    <button type="button" data-token="6">6</button>
+    <button type="button" class="calculator-op" data-token="-">-</button>
+    <button type="button" data-token="1">1</button>
+    <button type="button" data-token="2">2</button>
+    <button type="button" data-token="3">3</button>
+    <button type="button" class="calculator-op" data-token="+">+</button>
+    <button type="button" class="calculator-zero" data-token="0">0</button>
+    <button type="button" data-token=".">.</button>
+    <button type="button" class="calculator-equals" data-action="equals">=</button>
+  </div>
+</div>
+
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-calculator]").forEach((calculator) => {
+      if (calculator.dataset.ready === "true") return;
+      calculator.dataset.ready = "true";
+
+      const valueEl = calculator.querySelector(".calculator-value");
+      const historyEl = calculator.querySelector(".calculator-history");
+      let expression = "";
+      let justEvaluated = false;
+
+      function render(history = "") {
+        valueEl.textContent = expression || "0";
+        historyEl.textContent = history;
+      }
+
+      function appendToken(token) {
+        if (justEvaluated && /[\d.]/.test(token)) expression = "";
+        justEvaluated = false;
+
+        if (token === "." && /(?:^|[+\-*/%])\d*\.$/.test(expression)) return;
+        if (/[+\-*/%]/.test(token) && /[+\-*/%]$/.test(expression)) {
+          expression = expression.slice(0, -1);
+        }
+
+        expression += token;
+        render();
+      }
+
+      function calculate() {
+        if (!expression || !/^[\d+\-*/%. ()]+$/.test(expression)) return;
+        try {
+          const result = Function(`"use strict"; return (${expression})`)();
+          if (!Number.isFinite(result)) throw new Error("Invalid result");
+          const previous = expression;
+          expression = String(Number.parseFloat(result.toFixed(10)));
+          justEvaluated = true;
+          render(previous + " =");
+        } catch {
+          expression = "";
+          render("Invalid expression");
+        }
+      }
+
+      calculator.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+
+        if (button.dataset.token) appendToken(button.dataset.token);
+        if (button.dataset.action === "clear") {
+          expression = "";
+          justEvaluated = false;
+          render();
+        }
+        if (button.dataset.action === "backspace") {
+          expression = expression.slice(0, -1);
+          render();
+        }
+        if (button.dataset.action === "equals") calculate();
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const windowEl = calculator.closest(".window");
+        if (windowEl?.hidden || windowEl?.getAttribute("aria-hidden") === "true")
+          return;
+
+        if (/[\d+\-*/%.]/.test(event.key)) {
+          event.preventDefault();
+          appendToken(event.key);
+        } else if (event.key === "Enter" || event.key === "=") {
+          event.preventDefault();
+          calculate();
+        } else if (event.key === "Backspace") {
+          event.preventDefault();
+          expression = expression.slice(0, -1);
+          render();
+        } else if (event.key === "Escape") {
+          expression = "";
+          render();
+        }
+      });
+    });
+  });
+</script>
