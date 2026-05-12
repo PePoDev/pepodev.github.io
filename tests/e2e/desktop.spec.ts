@@ -14,7 +14,11 @@ const apps = [
   { label: "Terminal", appId: "terminal", title: "Terminal" },
   { label: "Incidents", appId: "incidents", title: "Incident Timeline" },
   { label: "Metrics", appId: "metrics", title: "Metrics Dashboard" },
-  { label: "Architecture", appId: "architecture", title: "Architecture Viewer" },
+  {
+    label: "Architecture",
+    appId: "architecture",
+    title: "Architecture Viewer",
+  },
   { label: "Runbook", appId: "runbook", title: "Runbook" },
   { label: "Certs", appId: "certs", title: "Certifications Wallet" },
   { label: "Deploy Sim", appId: "deploysim", title: "Deploy Simulator" },
@@ -30,7 +34,10 @@ async function resetPage(page: Page) {
 }
 
 async function openApp(page: Page, label: string, appId: string) {
-  await page.locator("#desktop-icons").getByRole("button", { name: label }).click();
+  await page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: label })
+    .click();
   const window = page.locator(`#window-${appId}`);
   await expect(window).toBeVisible();
   await expect(window).toHaveAttribute("aria-hidden", "false");
@@ -66,14 +73,21 @@ test("supports window minimize, restore, maximize, close, and taskbar state", as
 }) => {
   const window = await openApp(page, "Projects", "project");
 
-  await window.getByRole("button", { name: "Minimize Projects - Showcase" }).click();
+  await window
+    .getByRole("button", { name: "Minimize Projects - Showcase" })
+    .click();
   await expect(window).toHaveClass(/minimized/);
 
-  await page.locator("#taskbar-apps").getByRole("button", { name: /Projects/ }).click();
+  await page
+    .locator("#taskbar-apps")
+    .getByRole("button", { name: /Projects/ })
+    .click();
   await expect(window).not.toHaveClass(/minimized/);
   await expect(window).toHaveClass(/focused/);
 
-  await window.getByRole("button", { name: "Maximize Projects - Showcase" }).click();
+  await window
+    .getByRole("button", { name: "Maximize Projects - Showcase" })
+    .click();
   await expect(window).toHaveClass(/maximized/);
 
   await page.keyboard.press("Escape");
@@ -124,7 +138,9 @@ test("resizes windows from the right and bottom borders", async ({ page }) => {
   const heightResizedBox = await window.boundingBox();
   expect(heightResizedBox).not.toBeNull();
   expect(heightResizedBox!.width).toBeCloseTo(widthResizedBox!.width, 0);
-  expect(heightResizedBox!.height).toBeGreaterThan(widthResizedBox!.height + 60);
+  expect(heightResizedBox!.height).toBeGreaterThan(
+    widthResizedBox!.height + 60,
+  );
 });
 
 test("searches and launches apps from start menu and command palette", async ({
@@ -132,7 +148,10 @@ test("searches and launches apps from start menu and command palette", async ({
 }) => {
   await page.getByRole("button", { name: "Open start menu" }).click();
   await page.locator("#start-menu-search").fill("runbook");
-  await page.locator("#start-menu").getByRole("button", { name: /Runbook/ }).click();
+  await page
+    .locator("#start-menu")
+    .getByRole("button", { name: /Runbook/ })
+    .click();
   const runbookWindow = page.locator("#window-runbook");
   await expect(runbookWindow).toBeVisible();
   await runbookWindow.getByRole("button", { name: "Close Runbook" }).click();
@@ -145,7 +164,9 @@ test("searches and launches apps from start menu and command palette", async ({
     "true",
   );
   await page.locator("#command-palette-input").fill("metrics");
-  await page.getByRole("button", { name: /Metrics Open service metrics/ }).click();
+  await page
+    .getByRole("button", { name: /Metrics Open service metrics/ })
+    .click();
   await expect(page.locator("#window-metrics")).toBeVisible();
 });
 
@@ -175,7 +196,9 @@ test("calculator handles arithmetic, percent, keyboard input, and clear", async 
   await expect(window.locator(".calculator-value")).toHaveText("3");
 });
 
-test("settings customizes and persists desktop preferences", async ({ page }) => {
+test("settings customizes and persists desktop preferences", async ({
+  page,
+}) => {
   const window = await openApp(page, "Settings", "settings");
 
   await window.locator('[data-setting="theme"]').selectOption("light");
@@ -191,16 +214,22 @@ test("settings customizes and persists desktop preferences", async ({ page }) =>
   await expect(page.locator("html")).toHaveCSS("--window-radius", "18px");
 });
 
-test("music player and settings music controls update state", async ({ page }) => {
+test("music player and settings music controls update state", async ({
+  page,
+}) => {
   const music = await openApp(page, "Music", "music");
   await music.getByRole("button", { name: "Play", exact: true }).click();
-  await expect(music.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
+  await expect(
+    music.getByRole("button", { name: "Pause", exact: true }),
+  ).toBeVisible();
 
   await music.locator("[data-music-track]").selectOption("nightshift");
   await expect(music.locator("#music-title")).toHaveText("Night Shift");
 
   const settings = await openApp(page, "Settings", "settings");
-  await settings.locator('[data-music-setting="track"]').selectOption("incident");
+  await settings
+    .locator('[data-music-setting="track"]')
+    .selectOption("incident");
   await expect(music.locator("#music-title")).toHaveText("Incident Response");
 });
 
@@ -219,7 +248,9 @@ test("terminal commands print output and can open apps", async ({ page }) => {
   await expect(page.locator("#window-metrics")).toBeVisible();
 });
 
-test("gallery requires the password before showing pictures", async ({ page }) => {
+test("gallery requires the password before showing pictures", async ({
+  page,
+}) => {
   const gallery = await openApp(page, "Gallery", "gallery");
 
   await expect(gallery.getByText("Please enter the password")).toBeVisible();
@@ -228,7 +259,7 @@ test("gallery requires the password before showing pictures", async ({ page }) =
   await gallery.locator("[data-gallery-password]").fill("wrong");
   await gallery.getByRole("button", { name: "Unlock" }).click();
   await expect(gallery.locator("[data-gallery-error]")).toContainText(
-    'Please enter the "password"',
+    "Please enter the password",
   );
   await expect(gallery.locator("[data-gallery-unlocked]")).toBeHidden();
 
@@ -243,17 +274,25 @@ test("utility apps expose their primary interactions", async ({ page }) => {
   const runbook = await openApp(page, "Runbook", "runbook");
   await runbook.locator("[data-runbook-search]").fill("kafka");
   await expect(runbook.locator("[data-runbook-card]:visible")).toHaveCount(1);
-  await expect(runbook.locator("[data-runbook-card]:visible")).toContainText("Kafka");
+  await expect(runbook.locator("[data-runbook-card]:visible")).toContainText(
+    "Kafka",
+  );
 
   const architecture = await openApp(page, "Architecture", "architecture");
   await architecture.getByRole("button", { name: "Security" }).click();
-  await expect(architecture.locator("[data-architecture-title]")).toHaveText("Security");
+  await expect(architecture.locator("[data-architecture-title]")).toHaveText(
+    "Security",
+  );
 
   const deploy = await openApp(page, "Deploy Sim", "deploysim");
   await deploy.getByRole("button", { name: "Start deploy" }).click();
-  await expect(deploy.locator("[data-deploy-console]")).toContainText("Running");
+  await expect(deploy.locator("[data-deploy-console]")).toContainText(
+    "Running",
+  );
   await deploy.getByRole("button", { name: "Rollback" }).click();
-  await expect(deploy.locator("[data-deploy-console]")).toContainText("Rollback");
+  await expect(deploy.locator("[data-deploy-console]")).toContainText(
+    "Rollback",
+  );
 
   const monitor = await openApp(page, "Monitor", "monitor");
   await expect(monitor.locator('[data-monitor="cpu"]')).toContainText("%");
@@ -263,7 +302,9 @@ test("desktop icons snap and swap occupied grid cells", async ({ page }) => {
   const welcome = page.locator("#desktop-icons").getByRole("button", {
     name: "Welcome",
   });
-  const blog = page.locator("#desktop-icons").getByRole("button", { name: "Blog" });
+  const blog = page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: "Blog" });
   const welcomeBox = await welcome.boundingBox();
   const blogBox = await blog.boundingBox();
   expect(welcomeBox).not.toBeNull();
