@@ -1,312 +1,366 @@
 ---
-import AppIcon from './AppIcon.astro';
+import AppIcon from "./AppIcon.astro";
 
 interface Props {
-	appId: string;
-	title: string;
-	width: number;
-	height: number;
+  appId: string;
+  title: string;
+  width: number;
+  height: number;
 }
 
 const { appId, title, width, height } = Astro.props;
 ---
 
 <section
-	id={`window-${appId}`}
-	class="window"
-	data-window
-	data-app-id={appId}
-	data-title={title}
-	data-width={width}
-	data-height={height}
-	aria-hidden="true"
-	hidden
+  id={`window-${appId}`}
+  class="window"
+  data-window
+  data-app-id={appId}
+  data-title={title}
+  data-width={width}
+  data-height={height}
+  aria-hidden="true"
+  hidden
 >
-	<div class="window-titlebar">
-		<div class="window-titlebar-icon"><AppIcon name={appId} /></div>
-		<span class="window-title">{title}</span>
-		<div class="window-status-dot"></div>
-		<div class="window-controls">
-			<button class="min-btn" type="button" title="Minimize" aria-label={`Minimize ${title}`}>
-				<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-					<line x1="2" y1="6" x2="10" y2="6"></line>
-				</svg>
-			</button>
-			<button class="max-btn" type="button" title="Maximize" aria-label={`Maximize ${title}`}>
-				<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-					<rect x="2" y="2" width="8" height="8" rx="1"></rect>
-				</svg>
-			</button>
-			<button class="close-btn" type="button" title="Close" aria-label={`Close ${title}`}>
-				<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-					<line x1="2" y1="2" x2="10" y2="10"></line>
-					<line x1="10" y1="2" x2="2" y2="10"></line>
-				</svg>
-			</button>
-		</div>
-	</div>
-	<div class="window-content">
-		<slot />
-	</div>
-	<div class="window-resize-handle"></div>
+  <div class="window-titlebar">
+    <div class="window-titlebar-icon"><AppIcon name={appId} /></div>
+    <span class="window-title">{title}</span>
+    <div class="window-status-dot"></div>
+    <div class="window-controls">
+      <button
+        class="min-btn"
+        type="button"
+        title="Minimize"
+        aria-label={`Minimize ${title}`}
+      >
+        <svg
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          aria-hidden="true"
+        >
+          <line x1="2" y1="6" x2="10" y2="6"></line>
+        </svg>
+      </button>
+      <button
+        class="max-btn"
+        type="button"
+        title="Maximize"
+        aria-label={`Maximize ${title}`}
+      >
+        <svg
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          aria-hidden="true"
+        >
+          <rect x="2" y="2" width="8" height="8" rx="1"></rect>
+        </svg>
+      </button>
+      <button
+        class="close-btn"
+        type="button"
+        title="Close"
+        aria-label={`Close ${title}`}
+      >
+        <svg
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          aria-hidden="true"
+        >
+          <line x1="2" y1="2" x2="10" y2="10"></line>
+          <line x1="10" y1="2" x2="2" y2="10"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="window-content">
+    <slot />
+  </div>
+  <div class="window-resize-handle"></div>
 </section>
 
-<script>
-	// @ts-nocheck
-	document.addEventListener('DOMContentLoaded', () => {
-		const taskbarApps = document.getElementById('taskbar-apps');
-		let topZ = 100;
-		const windows = new Map();
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const taskbarApps = document.getElementById("taskbar-apps");
+    let topZ = 100;
+    const windows = new Map();
 
-		document.querySelectorAll('[data-window]').forEach((element) => {
-			const state = {
-				id: element.id,
-				appId: element.dataset.appId,
-				title: element.dataset.title,
-				width: Number(element.dataset.width),
-				height: Number(element.dataset.height),
-				element,
-				open: false,
-				minimized: false,
-				maximized: false,
-				prevBounds: null,
-				hasOpened: false,
-			};
-			windows.set(state.appId, state);
-			setupWindowEvents(state);
-		});
+    document.querySelectorAll("[data-window]").forEach((element) => {
+      const state = {
+        id: element.id,
+        appId: element.dataset.appId,
+        title: element.dataset.title,
+        width: Number(element.dataset.width),
+        height: Number(element.dataset.height),
+        element,
+        open: false,
+        minimized: false,
+        maximized: false,
+        prevBounds: null,
+        hasOpened: false,
+      };
+      windows.set(state.appId, state);
+      setupWindowEvents(state);
+    });
 
-		document.addEventListener('desktop:open-app', (event) => {
-			openWindow(event.detail.appId);
-		});
+    document.addEventListener("desktop:open-app", (event) => {
+      openWindow(event.detail.appId);
+    });
 
-		function openWindow(appId) {
-			const state = windows.get(appId);
-			if (!state) return;
+    function openWindow(appId) {
+      const state = windows.get(appId);
+      if (!state) return;
 
-			if (state.open && state.minimized) {
-				restoreWindow(appId);
-				return;
-			}
+      if (state.open && state.minimized) {
+        restoreWindow(appId);
+        return;
+      }
 
-			if (state.open) {
-				focusWindow(appId);
-				return;
-			}
+      if (state.open) {
+        focusWindow(appId);
+        return;
+      }
 
-			const availableWidth = Math.max(280, window.innerWidth - 24);
-			const availableHeight = Math.max(220, window.innerHeight - 72);
-			const targetWidth = Math.min(state.width, availableWidth);
-			const targetHeight = Math.min(state.height, availableHeight);
-			const x = Math.max(12, (window.innerWidth - targetWidth) / 2 + (Math.random() * 40 - 20));
-			const y = Math.max(12, (window.innerHeight - targetHeight - 48) / 2 + (Math.random() * 30 - 15));
+      const availableWidth = Math.max(280, window.innerWidth - 24);
+      const availableHeight = Math.max(220, window.innerHeight - 72);
+      const targetWidth = Math.min(state.width, availableWidth);
+      const targetHeight = Math.min(state.height, availableHeight);
+      const x = Math.max(
+        12,
+        (window.innerWidth - targetWidth) / 2 + (Math.random() * 40 - 20),
+      );
+      const y = Math.max(
+        12,
+        (window.innerHeight - targetHeight - 48) / 2 +
+          (Math.random() * 30 - 15),
+      );
 
-			state.open = true;
-			state.minimized = false;
-			state.maximized = false;
-			state.prevBounds = null;
-			state.element.hidden = false;
-			state.element.setAttribute('aria-hidden', 'false');
-			state.element.classList.remove('minimized', 'closing');
-			state.element.classList.add('opening');
-			state.element.style.width = targetWidth + 'px';
-			state.element.style.height = targetHeight + 'px';
-			state.element.style.left = x + 'px';
-			state.element.style.top = y + 'px';
-			state.element.style.zIndex = ++topZ;
+      state.open = true;
+      state.minimized = false;
+      state.maximized = false;
+      state.prevBounds = null;
+      state.element.hidden = false;
+      state.element.setAttribute("aria-hidden", "false");
+      state.element.classList.remove("minimized", "closing");
+      state.element.classList.add("opening");
+      state.element.style.width = targetWidth + "px";
+      state.element.style.height = targetHeight + "px";
+      state.element.style.left = x + "px";
+      state.element.style.top = y + "px";
+      state.element.style.zIndex = ++topZ;
 
-			window.setTimeout(() => state.element.classList.remove('opening'), 300);
-			focusWindow(appId);
-			animateSkillBars(state.element);
-			updateTaskbar();
-			state.element.dispatchEvent(
-				new CustomEvent('desktop:window-open', {
-					detail: { appId, firstOpen: !state.hasOpened },
-				}),
-			);
-			state.hasOpened = true;
-		}
+      window.setTimeout(() => state.element.classList.remove("opening"), 300);
+      focusWindow(appId);
+      animateSkillBars(state.element);
+      updateTaskbar();
+      state.element.dispatchEvent(
+        new CustomEvent("desktop:window-open", {
+          detail: { appId, firstOpen: !state.hasOpened },
+        }),
+      );
+      state.hasOpened = true;
+    }
 
-		function setupWindowEvents(state) {
-			const win = state.element;
-			const titlebar = win.querySelector('.window-titlebar');
-			const resizeHandle = win.querySelector('.window-resize-handle');
+    function setupWindowEvents(state) {
+      const win = state.element;
+      const titlebar = win.querySelector(".window-titlebar");
+      const resizeHandle = win.querySelector(".window-resize-handle");
 
-			win.addEventListener('mousedown', () => {
-				if (state.open && !state.minimized) focusWindow(state.appId);
-			});
+      win.addEventListener("mousedown", () => {
+        if (state.open && !state.minimized) focusWindow(state.appId);
+      });
 
-			win.querySelector('.close-btn')?.addEventListener('click', () => closeWindow(state.appId));
-			win.querySelector('.min-btn')?.addEventListener('click', () => minimizeWindow(state.appId));
-			win.querySelector('.max-btn')?.addEventListener('click', () => toggleMaximize(state.appId));
+      win
+        .querySelector(".close-btn")
+        ?.addEventListener("click", () => closeWindow(state.appId));
+      win
+        .querySelector(".min-btn")
+        ?.addEventListener("click", () => minimizeWindow(state.appId));
+      win
+        .querySelector(".max-btn")
+        ?.addEventListener("click", () => toggleMaximize(state.appId));
 
-			let isDragging = false;
-			let dragStartX = 0;
-			let dragStartY = 0;
-			let winStartX = 0;
-			let winStartY = 0;
+      let isDragging = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+      let winStartX = 0;
+      let winStartY = 0;
 
-			titlebar?.addEventListener('mousedown', (event) => {
-				if (event.target.closest('.window-controls') || state.maximized) return;
-				isDragging = true;
-				dragStartX = event.clientX;
-				dragStartY = event.clientY;
-				winStartX = win.offsetLeft;
-				winStartY = win.offsetTop;
-				document.body.style.userSelect = 'none';
-			});
+      titlebar?.addEventListener("mousedown", (event) => {
+        if (event.target.closest(".window-controls") || state.maximized) return;
+        isDragging = true;
+        dragStartX = event.clientX;
+        dragStartY = event.clientY;
+        winStartX = win.offsetLeft;
+        winStartY = win.offsetTop;
+        document.body.style.userSelect = "none";
+      });
 
-			titlebar?.addEventListener('dblclick', (event) => {
-				if (event.target.closest('.window-controls')) return;
-				toggleMaximize(state.appId);
-			});
+      titlebar?.addEventListener("dblclick", (event) => {
+        if (event.target.closest(".window-controls")) return;
+        toggleMaximize(state.appId);
+      });
 
-			let isResizing = false;
-			let resizeStartX = 0;
-			let resizeStartY = 0;
-			let resizeStartW = 0;
-			let resizeStartH = 0;
+      let isResizing = false;
+      let resizeStartX = 0;
+      let resizeStartY = 0;
+      let resizeStartW = 0;
+      let resizeStartH = 0;
 
-			resizeHandle?.addEventListener('mousedown', (event) => {
-				event.stopPropagation();
-				if (state.maximized) return;
-				isResizing = true;
-				resizeStartX = event.clientX;
-				resizeStartY = event.clientY;
-				resizeStartW = win.offsetWidth;
-				resizeStartH = win.offsetHeight;
-				document.body.style.userSelect = 'none';
-			});
+      resizeHandle?.addEventListener("mousedown", (event) => {
+        event.stopPropagation();
+        if (state.maximized) return;
+        isResizing = true;
+        resizeStartX = event.clientX;
+        resizeStartY = event.clientY;
+        resizeStartW = win.offsetWidth;
+        resizeStartH = win.offsetHeight;
+        document.body.style.userSelect = "none";
+      });
 
-			document.addEventListener('mousemove', (event) => {
-				if (isDragging) {
-					win.style.left = winStartX + event.clientX - dragStartX + 'px';
-					win.style.top = Math.max(0, winStartY + event.clientY - dragStartY) + 'px';
-				}
+      document.addEventListener("mousemove", (event) => {
+        if (isDragging) {
+          win.style.left = winStartX + event.clientX - dragStartX + "px";
+          win.style.top =
+            Math.max(0, winStartY + event.clientY - dragStartY) + "px";
+        }
 
-				if (isResizing) {
-					win.style.width = Math.max(320, resizeStartW + event.clientX - resizeStartX) + 'px';
-					win.style.height = Math.max(200, resizeStartH + event.clientY - resizeStartY) + 'px';
-				}
-			});
+        if (isResizing) {
+          win.style.width =
+            Math.max(320, resizeStartW + event.clientX - resizeStartX) + "px";
+          win.style.height =
+            Math.max(200, resizeStartH + event.clientY - resizeStartY) + "px";
+        }
+      });
 
-			document.addEventListener('mouseup', () => {
-				if (isDragging || isResizing) {
-					isDragging = false;
-					isResizing = false;
-					document.body.style.userSelect = '';
-				}
-			});
-		}
+      document.addEventListener("mouseup", () => {
+        if (isDragging || isResizing) {
+          isDragging = false;
+          isResizing = false;
+          document.body.style.userSelect = "";
+        }
+      });
+    }
 
-		function focusWindow(appId) {
-			windows.forEach((state) => {
-				const isFocused = state.appId === appId && state.open && !state.minimized;
-				state.element.classList.toggle('focused', isFocused);
-				if (isFocused) state.element.style.zIndex = ++topZ;
-			});
-			updateTaskbar();
-		}
+    function focusWindow(appId) {
+      windows.forEach((state) => {
+        const isFocused =
+          state.appId === appId && state.open && !state.minimized;
+        state.element.classList.toggle("focused", isFocused);
+        if (isFocused) state.element.style.zIndex = ++topZ;
+      });
+      updateTaskbar();
+    }
 
-		function closeWindow(appId) {
-			const state = windows.get(appId);
-			if (!state || !state.open) return;
+    function closeWindow(appId) {
+      const state = windows.get(appId);
+      if (!state || !state.open) return;
 
-			state.element.dispatchEvent(new CustomEvent('desktop:window-close', { detail: { appId } }));
-			state.open = false;
-			state.minimized = false;
-			state.maximized = false;
-			state.element.classList.add('closing');
-			state.element.classList.remove('focused', 'minimized');
-			window.setTimeout(() => {
-				state.element.hidden = true;
-				state.element.setAttribute('aria-hidden', 'true');
-				state.element.classList.remove('closing');
-				updateTaskbar();
-			}, 200);
-			updateTaskbar();
-		}
+      state.element.dispatchEvent(
+        new CustomEvent("desktop:window-close", { detail: { appId } }),
+      );
+      state.open = false;
+      state.minimized = false;
+      state.maximized = false;
+      state.element.classList.add("closing");
+      state.element.classList.remove("focused", "minimized");
+      window.setTimeout(() => {
+        state.element.hidden = true;
+        state.element.setAttribute("aria-hidden", "true");
+        state.element.classList.remove("closing");
+        updateTaskbar();
+      }, 200);
+      updateTaskbar();
+    }
 
-		function minimizeWindow(appId) {
-			const state = windows.get(appId);
-			if (!state || !state.open) return;
-			state.minimized = true;
-			state.element.classList.add('minimized');
-			state.element.classList.remove('focused');
-			updateTaskbar();
-		}
+    function minimizeWindow(appId) {
+      const state = windows.get(appId);
+      if (!state || !state.open) return;
+      state.minimized = true;
+      state.element.classList.add("minimized");
+      state.element.classList.remove("focused");
+      updateTaskbar();
+    }
 
-		function restoreWindow(appId) {
-			const state = windows.get(appId);
-			if (!state || !state.open) return;
-			state.minimized = false;
-			state.element.hidden = false;
-			state.element.classList.remove('minimized');
-			focusWindow(appId);
-			animateSkillBars(state.element);
-			updateTaskbar();
-		}
+    function restoreWindow(appId) {
+      const state = windows.get(appId);
+      if (!state || !state.open) return;
+      state.minimized = false;
+      state.element.hidden = false;
+      state.element.classList.remove("minimized");
+      focusWindow(appId);
+      animateSkillBars(state.element);
+      updateTaskbar();
+    }
 
-		function toggleMaximize(appId) {
-			const state = windows.get(appId);
-			if (!state || !state.open) return;
+    function toggleMaximize(appId) {
+      const state = windows.get(appId);
+      if (!state || !state.open) return;
 
-			if (!state.maximized) {
-				state.prevBounds = {
-					left: state.element.style.left,
-					top: state.element.style.top,
-					width: state.element.style.width,
-					height: state.element.style.height,
-				};
-				state.element.style.left = '0';
-				state.element.style.top = '0';
-				state.element.style.width = '100%';
-				state.element.style.height = 'calc(100vh - 48px)';
-				state.element.style.zIndex = ++topZ;
-				state.maximized = true;
-			} else if (state.prevBounds) {
-				Object.assign(state.element.style, state.prevBounds);
-				state.element.style.zIndex = ++topZ;
-				state.maximized = false;
-			}
+      if (!state.maximized) {
+        state.prevBounds = {
+          left: state.element.style.left,
+          top: state.element.style.top,
+          width: state.element.style.width,
+          height: state.element.style.height,
+        };
+        state.element.style.left = "0";
+        state.element.style.top = "0";
+        state.element.style.width = "100%";
+        state.element.style.height = "calc(100vh - 48px)";
+        state.element.style.zIndex = ++topZ;
+        state.maximized = true;
+      } else if (state.prevBounds) {
+        Object.assign(state.element.style, state.prevBounds);
+        state.element.style.zIndex = ++topZ;
+        state.maximized = false;
+      }
 
-			focusWindow(appId);
-		}
+      focusWindow(appId);
+    }
 
-		function updateTaskbar() {
-			if (!taskbarApps) return;
-			taskbarApps.innerHTML = '';
+    function updateTaskbar() {
+      if (!taskbarApps) return;
+      taskbarApps.innerHTML = "";
 
-			windows.forEach((state) => {
-				if (!state.open) return;
+      windows.forEach((state) => {
+        if (!state.open) return;
 
-				const btn = document.createElement('button');
-				btn.type = 'button';
-				btn.className = 'taskbar-app active' + (state.element.classList.contains('focused') ? ' focused' : '');
-				btn.innerHTML =
-					state.element.querySelector('.window-titlebar-icon')?.innerHTML +
-					'<span>' +
-					state.title.split('-')[0].trim() +
-					'</span>';
-				btn.addEventListener('click', () => {
-					if (state.minimized) {
-						restoreWindow(state.appId);
-					} else if (state.element.classList.contains('focused')) {
-						minimizeWindow(state.appId);
-					} else {
-						focusWindow(state.appId);
-					}
-				});
-				taskbarApps.appendChild(btn);
-			});
-		}
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className =
+          "taskbar-app active" +
+          (state.element.classList.contains("focused") ? " focused" : "");
+        btn.innerHTML =
+          state.element.querySelector(".window-titlebar-icon")?.innerHTML +
+          "<span>" +
+          state.title.split("-")[0].trim() +
+          "</span>";
+        btn.addEventListener("click", () => {
+          if (state.minimized) {
+            restoreWindow(state.appId);
+          } else if (state.element.classList.contains("focused")) {
+            minimizeWindow(state.appId);
+          } else {
+            focusWindow(state.appId);
+          }
+        });
+        taskbarApps.appendChild(btn);
+      });
+    }
 
-		function animateSkillBars(win) {
-			window.setTimeout(() => {
-				win.querySelectorAll('.skill-bar-fill').forEach((bar) => {
-					bar.style.width = bar.dataset.level + '%';
-				});
-			}, 300);
-		}
-	});
+    function animateSkillBars(win) {
+      window.setTimeout(() => {
+        win.querySelectorAll(".skill-bar-fill").forEach((bar) => {
+          bar.style.width = bar.dataset.level + "%";
+        });
+      }, 300);
+    }
+  });
 </script>

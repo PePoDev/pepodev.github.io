@@ -1,449 +1,592 @@
 <div class="app-content sre-game-container" data-sre-game>
-	<button class="sre-audio-toggle" type="button" aria-pressed="false">Audio Off</button>
-	<div class="sre-game-screen sre-game-screen-active">
-		<div class="sre-boot-output"></div>
-		<button class="sre-boot-enter sre-btn sre-hidden" type="button">Enter Production</button>
-	</div>
-	<div class="sre-game-screen">
-		<div class="sre-game-hud">
-			<div class="sre-hud-item">
-				<span class="sre-hud-label">System Health</span>
-				<div class="sre-health-bar"><div class="sre-health-fill"></div></div>
-				<span class="sre-health-pct">100%</span>
-			</div>
-			<div class="sre-hud-item">
-				<span class="sre-hud-label">Round</span>
-				<span class="sre-round-num">1</span>
-			</div>
-			<div class="sre-hud-item">
-				<span class="sre-hud-label">Status</span>
-				<span class="sre-game-status sre-status-ok">All Systems Go</span>
-			</div>
-		</div>
-		<div class="sre-game-area">
-			<div class="sre-game-message">
-				<p>Monitoring production... Everything looks green.</p>
-				<p class="sre-sub">Watch for alerts. Click to mitigate before health drops to zero.</p>
-			</div>
-		</div>
-		<div class="sre-game-actions"></div>
-	</div>
-	<div class="sre-game-screen">
-		<div class="sre-gameover">
-			<div class="sre-glitch-wrap">
-				<h1 class="sre-glitch">SYSTEM FAILURE</h1>
-			</div>
-			<p class="sre-gameover-sub">All mitigation attempts have been exhausted.</p>
-			<p class="sre-gameover-sub">The chaos is beyond manual remediation.</p>
-			<br />
-			<button class="sre-gameover-reveal sre-btn sre-btn-danger" type="button">What Now?</button>
-		</div>
-	</div>
-	<div class="sre-game-screen">
-		<div class="sre-solution">
-			<div class="sre-hero-badge">The Only Solution</div>
-			<h1 class="sre-hero-title">Hire <span class="sre-accent">PePoDev</span></h1>
-			<p class="sre-hero-subtitle">Senior Site Reliability Engineer</p>
-			<div class="sre-divider"></div>
-			<p class="sre-hero-tagline">
-				You don't need another engineer who patches fires.<br />
-				You need someone who <em>understands fire</em>.
-			</p>
-			<div class="sre-skills-grid">
-				<div class="sre-skill-card">
-					<div class="sre-skill-icon">IR</div>
-					<h3>Incident Response</h3>
-					<p>Fast triage and resolution when systems are under pressure.</p>
-				</div>
-				<div class="sre-skill-card">
-					<div class="sre-skill-icon">SR</div>
-					<h3>System Resilience</h3>
-					<p>Architecture that survives stress and recovers cleanly.</p>
-				</div>
-				<div class="sre-skill-card">
-					<div class="sre-skill-icon">OB</div>
-					<h3>Observability</h3>
-					<p>Metrics, logs, and traces that explain what production is doing.</p>
-				</div>
-				<div class="sre-skill-card">
-					<div class="sre-skill-icon">IaC</div>
-					<h3>Infrastructure as Code</h3>
-					<p>Reproducible, versioned, and tested systems.</p>
-				</div>
-				<div class="sre-skill-card">
-					<div class="sre-skill-icon">K8s</div>
-					<h3>Kubernetes</h3>
-					<p>Orchestrating containers at scale without losing sleep.</p>
-				</div>
-				<div class="sre-skill-card">
-					<div class="sre-skill-icon">CP</div>
-					<h3>Capacity Planning</h3>
-					<p>Predicting and preventing bottlenecks before they become incidents.</p>
-				</div>
-			</div>
-			<div class="sre-cta-group">
-				<a href="https://linkedin.com/in/pepodev" class="sre-btn sre-btn-primary" target="_blank" rel="noopener noreferrer">
-					Hire PePoDev
-				</a>
-				<button class="sre-btn sre-btn-outline sre-solution-replay" type="button">Replay the Chaos</button>
-			</div>
-			<p class="sre-footer-note">Every production has a hero. Let it be me.</p>
-		</div>
-	</div>
+  <button class="sre-audio-toggle" type="button" aria-pressed="false"
+    >Audio Off</button
+  >
+  <div class="sre-game-screen sre-game-screen-active">
+    <div class="sre-boot-output"></div>
+    <button class="sre-boot-enter sre-btn sre-hidden" type="button"
+      >Enter Production</button
+    >
+  </div>
+  <div class="sre-game-screen">
+    <div class="sre-game-hud">
+      <div class="sre-hud-item">
+        <span class="sre-hud-label">System Health</span>
+        <div class="sre-health-bar"><div class="sre-health-fill"></div></div>
+        <span class="sre-health-pct">100%</span>
+      </div>
+      <div class="sre-hud-item">
+        <span class="sre-hud-label">Round</span>
+        <span class="sre-round-num">1</span>
+      </div>
+      <div class="sre-hud-item">
+        <span class="sre-hud-label">Status</span>
+        <span class="sre-game-status sre-status-ok">All Systems Go</span>
+      </div>
+    </div>
+    <div class="sre-game-area">
+      <div class="sre-game-message">
+        <p>Monitoring production... Everything looks green.</p>
+        <p class="sre-sub">
+          Watch for alerts. Click to mitigate before health drops to zero.
+        </p>
+      </div>
+    </div>
+    <div class="sre-game-actions"></div>
+  </div>
+  <div class="sre-game-screen">
+    <div class="sre-gameover">
+      <div class="sre-glitch-wrap">
+        <h1 class="sre-glitch">SYSTEM FAILURE</h1>
+      </div>
+      <p class="sre-gameover-sub">
+        All mitigation attempts have been exhausted.
+      </p>
+      <p class="sre-gameover-sub">The chaos is beyond manual remediation.</p>
+      <br />
+      <button class="sre-gameover-reveal sre-btn sre-btn-danger" type="button"
+        >What Now?</button
+      >
+    </div>
+  </div>
+  <div class="sre-game-screen">
+    <div class="sre-solution">
+      <div class="sre-hero-badge">The Only Solution</div>
+      <h1 class="sre-hero-title">
+        Hire <span class="sre-accent">PePoDev</span>
+      </h1>
+      <p class="sre-hero-subtitle">Senior Site Reliability Engineer</p>
+      <div class="sre-divider"></div>
+      <p class="sre-hero-tagline">
+        You don't need another engineer who patches fires.<br />
+        You need someone who <em>understands fire</em>.
+      </p>
+      <div class="sre-skills-grid">
+        <div class="sre-skill-card">
+          <div class="sre-skill-icon">IR</div>
+          <h3>Incident Response</h3>
+          <p>Fast triage and resolution when systems are under pressure.</p>
+        </div>
+        <div class="sre-skill-card">
+          <div class="sre-skill-icon">SR</div>
+          <h3>System Resilience</h3>
+          <p>Architecture that survives stress and recovers cleanly.</p>
+        </div>
+        <div class="sre-skill-card">
+          <div class="sre-skill-icon">OB</div>
+          <h3>Observability</h3>
+          <p>
+            Metrics, logs, and traces that explain what production is doing.
+          </p>
+        </div>
+        <div class="sre-skill-card">
+          <div class="sre-skill-icon">IaC</div>
+          <h3>Infrastructure as Code</h3>
+          <p>Reproducible, versioned, and tested systems.</p>
+        </div>
+        <div class="sre-skill-card">
+          <div class="sre-skill-icon">K8s</div>
+          <h3>Kubernetes</h3>
+          <p>Orchestrating containers at scale without losing sleep.</p>
+        </div>
+        <div class="sre-skill-card">
+          <div class="sre-skill-icon">CP</div>
+          <h3>Capacity Planning</h3>
+          <p>
+            Predicting and preventing bottlenecks before they become incidents.
+          </p>
+        </div>
+      </div>
+      <div class="sre-cta-group">
+        <a
+          href="https://linkedin.com/in/pepodev"
+          class="sre-btn sre-btn-primary"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Hire PePoDev
+        </a>
+        <button
+          class="sre-btn sre-btn-outline sre-solution-replay"
+          type="button">Replay the Chaos</button
+        >
+      </div>
+      <p class="sre-footer-note">Every production has a hero. Let it be me.</p>
+    </div>
+  </div>
 </div>
 
-<script>
-	// @ts-nocheck
-	document.addEventListener('DOMContentLoaded', () => {
-		document.querySelectorAll('[data-sre-game]').forEach((root) => {
-			const shell = root.closest('[data-window]');
-			const q = (selector) => root.querySelector(selector);
-			const qa = (selector) => root.querySelectorAll(selector);
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-sre-game]").forEach((root) => {
+      const shell = root.closest("[data-window]");
+      const q = (selector) => root.querySelector(selector);
+      const qa = (selector) => root.querySelectorAll(selector);
 
-			const bootLines = [
-				{ text: '$ ssh production-cluster.prod.internal', cls: '', delay: 300 },
-				{ text: 'Connecting to 10.0.42.1...', cls: 'sre-dim', delay: 500 },
-				{ text: 'Authenticated. Welcome to prod.', cls: 'sre-info', delay: 400 },
-				{ text: '', cls: '', delay: 200 },
-				{ text: '$ kubectl get nodes', cls: '', delay: 600 },
-				{ text: 'NAME           STATUS   ROLES    AGE   VERSION', cls: 'sre-dim', delay: 300 },
-				{ text: 'prod-node-01   Ready    master   45d   v1.36.0', cls: '', delay: 200 },
-				{ text: 'prod-node-02   Ready    worker   45d   v1.36.0', cls: '', delay: 200 },
-				{ text: 'prod-node-03   Ready    worker   45d   v1.36.0', cls: '', delay: 200 },
-				{ text: '', cls: '', delay: 200 },
-				{ text: '$ systemctl status monitoring', cls: '', delay: 500 },
-				{ text: 'prometheus.service - Prometheus Monitoring', cls: '', delay: 200 },
-				{ text: 'Active: active (running)', cls: '', delay: 200 },
-				{ text: '', cls: '', delay: 200 },
-				{ text: 'All systems nominal. No alerts.', cls: 'sre-info', delay: 400 },
-				{ text: '', cls: '', delay: 200 },
-				{ text: "You're on call. The dashboard is green.", cls: '', delay: 600 },
-				{ text: 'For now...', cls: 'sre-warn', delay: 800 },
-			];
+      const bootLines = [
+        { text: "$ ssh production-cluster.prod.internal", cls: "", delay: 300 },
+        { text: "Connecting to 10.0.42.1...", cls: "sre-dim", delay: 500 },
+        {
+          text: "Authenticated. Welcome to prod.",
+          cls: "sre-info",
+          delay: 400,
+        },
+        { text: "", cls: "", delay: 200 },
+        { text: "$ kubectl get nodes", cls: "", delay: 600 },
+        {
+          text: "NAME           STATUS   ROLES    AGE   VERSION",
+          cls: "sre-dim",
+          delay: 300,
+        },
+        {
+          text: "prod-node-01   Ready    master   45d   v1.36.0",
+          cls: "",
+          delay: 200,
+        },
+        {
+          text: "prod-node-02   Ready    worker   45d   v1.36.0",
+          cls: "",
+          delay: 200,
+        },
+        {
+          text: "prod-node-03   Ready    worker   45d   v1.36.0",
+          cls: "",
+          delay: 200,
+        },
+        { text: "", cls: "", delay: 200 },
+        { text: "$ systemctl status monitoring", cls: "", delay: 500 },
+        {
+          text: "prometheus.service - Prometheus Monitoring",
+          cls: "",
+          delay: 200,
+        },
+        { text: "Active: active (running)", cls: "", delay: 200 },
+        { text: "", cls: "", delay: 200 },
+        {
+          text: "All systems nominal. No alerts.",
+          cls: "sre-info",
+          delay: 400,
+        },
+        { text: "", cls: "", delay: 200 },
+        {
+          text: "You're on call. The dashboard is green.",
+          cls: "",
+          delay: 600,
+        },
+        { text: "For now...", cls: "sre-warn", delay: 800 },
+      ];
 
-			const alerts = [
-				{
-					severity: 'warning',
-					title: 'High Memory Usage Detected',
-					desc: 'prod-node-02 memory at 87%. Pod evictions imminent.',
-					timer: 15,
-					damage: 8,
-					actions: [
-						{ text: 'Restart pods', result: 'Pods restarted. Memory dropped, then spiked higher.' },
-						{ text: 'Scale horizontally', result: 'New pods scheduled. The node is now at 94% with scheduling overhead.' },
-						{ text: 'Kill top consumer', result: 'Killed the memory-heavy process. It was a critical cache.' },
-					],
-				},
-				{
-					severity: 'warning',
-					title: 'Latency Spike on API Gateway',
-					desc: 'p99 latency jumped from 120ms to 2.4s. Users reporting slow responses.',
-					timer: 14,
-					damage: 10,
-					actions: [
-						{ text: 'Enable circuit breaker', result: 'Circuit breaker tripped. Now 40% of requests fail outright.' },
-						{ text: 'Rollback last deploy', result: 'Rollback complete. The latency was infrastructure-level, not code.' },
-						{ text: 'Add rate limiting', result: 'Rate limiter engaged. Legitimate traffic is throttled too.' },
-					],
-				},
-				{
-					severity: 'critical',
-					title: 'Disk I/O Saturation',
-					desc: 'prod-node-03 disk utilization at 100%. Write operations queueing.',
-					timer: 12,
-					damage: 12,
-					actions: [
-						{ text: 'Clear old logs', result: 'Logs cleared. Application started writing audit logs at 10x rate.' },
-						{ text: 'Move to faster storage', result: 'Storage migration started. I/O spiked during the transition.' },
-						{ text: 'Enable write coalescing', result: 'Writes coalesced. Data consistency checks now fail.' },
-					],
-				},
-				{
-					severity: 'critical',
-					title: 'Database Connection Pool Exhausted',
-					desc: 'PostgreSQL primary: 450/450 connections used. New connections rejected.',
-					timer: 10,
-					damage: 14,
-					actions: [
-						{ text: 'Increase pool size', result: 'Pool expanded to 600. Server ran out of shared memory.' },
-						{ text: 'Kill idle connections', result: 'Killed 200 connections. Replication lag monitors fired.' },
-						{ text: 'Enable PgBouncer', result: 'PgBouncer deployed. Transaction retry storms began.' },
-					],
-				},
-				{
-					severity: 'catastrophic',
-					title: 'Cascading Failure Detected',
-					desc: 'Service mesh sidecars crashing. Error propagation across all zones.',
-					timer: 8,
-					damage: 18,
-					actions: [
-						{ text: 'Emergency rollback all', result: 'Rollback triggered dependency conflicts. More services down.' },
-						{ text: 'Isolate zones', result: 'Zones isolated. Cross-zone replication broke. Data divergence detected.' },
-						{ text: 'Full cluster restart', result: 'Restart initiated. Boot storm caused DNS resolution failures.' },
-					],
-				},
-			];
+      const alerts = [
+        {
+          severity: "warning",
+          title: "High Memory Usage Detected",
+          desc: "prod-node-02 memory at 87%. Pod evictions imminent.",
+          timer: 15,
+          damage: 8,
+          actions: [
+            {
+              text: "Restart pods",
+              result: "Pods restarted. Memory dropped, then spiked higher.",
+            },
+            {
+              text: "Scale horizontally",
+              result:
+                "New pods scheduled. The node is now at 94% with scheduling overhead.",
+            },
+            {
+              text: "Kill top consumer",
+              result:
+                "Killed the memory-heavy process. It was a critical cache.",
+            },
+          ],
+        },
+        {
+          severity: "warning",
+          title: "Latency Spike on API Gateway",
+          desc: "p99 latency jumped from 120ms to 2.4s. Users reporting slow responses.",
+          timer: 14,
+          damage: 10,
+          actions: [
+            {
+              text: "Enable circuit breaker",
+              result:
+                "Circuit breaker tripped. Now 40% of requests fail outright.",
+            },
+            {
+              text: "Rollback last deploy",
+              result:
+                "Rollback complete. The latency was infrastructure-level, not code.",
+            },
+            {
+              text: "Add rate limiting",
+              result:
+                "Rate limiter engaged. Legitimate traffic is throttled too.",
+            },
+          ],
+        },
+        {
+          severity: "critical",
+          title: "Disk I/O Saturation",
+          desc: "prod-node-03 disk utilization at 100%. Write operations queueing.",
+          timer: 12,
+          damage: 12,
+          actions: [
+            {
+              text: "Clear old logs",
+              result:
+                "Logs cleared. Application started writing audit logs at 10x rate.",
+            },
+            {
+              text: "Move to faster storage",
+              result:
+                "Storage migration started. I/O spiked during the transition.",
+            },
+            {
+              text: "Enable write coalescing",
+              result: "Writes coalesced. Data consistency checks now fail.",
+            },
+          ],
+        },
+        {
+          severity: "critical",
+          title: "Database Connection Pool Exhausted",
+          desc: "PostgreSQL primary: 450/450 connections used. New connections rejected.",
+          timer: 10,
+          damage: 14,
+          actions: [
+            {
+              text: "Increase pool size",
+              result: "Pool expanded to 600. Server ran out of shared memory.",
+            },
+            {
+              text: "Kill idle connections",
+              result: "Killed 200 connections. Replication lag monitors fired.",
+            },
+            {
+              text: "Enable PgBouncer",
+              result: "PgBouncer deployed. Transaction retry storms began.",
+            },
+          ],
+        },
+        {
+          severity: "catastrophic",
+          title: "Cascading Failure Detected",
+          desc: "Service mesh sidecars crashing. Error propagation across all zones.",
+          timer: 8,
+          damage: 18,
+          actions: [
+            {
+              text: "Emergency rollback all",
+              result:
+                "Rollback triggered dependency conflicts. More services down.",
+            },
+            {
+              text: "Isolate zones",
+              result:
+                "Zones isolated. Cross-zone replication broke. Data divergence detected.",
+            },
+            {
+              text: "Full cluster restart",
+              result:
+                "Restart initiated. Boot storm caused DNS resolution failures.",
+            },
+          ],
+        },
+      ];
 
-			let health = 100;
-			let currentRound = 0;
-			let alertTimer = null;
-			let bootToken = 0;
-			const timeouts = new Set();
-			const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-			let audioContext = null;
-			let masterGain = null;
-			let musicGain = null;
-			let sfxGain = null;
-			let bgmTimer = null;
-			let bgmStep = 0;
-			let audioEnabled = false;
-			const systemAudioKey = 'pepodev.systemAudio';
-			let systemAudioSettings = loadSystemAudioSettings();
+      let health = 100;
+      let currentRound = 0;
+      let alertTimer = null;
+      let bootToken = 0;
+      const timeouts = new Set();
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
+      let audioContext = null;
+      let masterGain = null;
+      let musicGain = null;
+      let sfxGain = null;
+      let bgmTimer = null;
+      let bgmStep = 0;
+      let audioEnabled = false;
+      const systemAudioKey = "pepodev.systemAudio";
+      let systemAudioSettings = loadSystemAudioSettings();
 
-			function later(callback, delay) {
-				const handle = window.setTimeout(() => {
-					timeouts.delete(handle);
-					callback();
-				}, delay);
-				timeouts.add(handle);
-				return handle;
-			}
+      function later(callback, delay) {
+        const handle = window.setTimeout(() => {
+          timeouts.delete(handle);
+          callback();
+        }, delay);
+        timeouts.add(handle);
+        return handle;
+      }
 
-			function wait(delay) {
-				return new Promise((resolve) => later(resolve, delay));
-			}
+      function wait(delay) {
+        return new Promise((resolve) => later(resolve, delay));
+      }
 
-			function clearTimers() {
-				if (alertTimer) clearInterval(alertTimer);
-				alertTimer = null;
-				timeouts.forEach((handle) => clearTimeout(handle));
-				timeouts.clear();
-				bootToken++;
-				stopBgm();
-			}
+      function clearTimers() {
+        if (alertTimer) clearInterval(alertTimer);
+        alertTimer = null;
+        timeouts.forEach((handle) => clearTimeout(handle));
+        timeouts.clear();
+        bootToken++;
+        stopBgm();
+      }
 
-			function setupAudio() {
-				if (!AudioContextClass) return false;
-				if (audioContext) return true;
+      function setupAudio() {
+        if (!AudioContextClass) return false;
+        if (audioContext) return true;
 
-				audioContext = new AudioContextClass();
-				masterGain = audioContext.createGain();
-				musicGain = audioContext.createGain();
-				sfxGain = audioContext.createGain();
+        audioContext = new AudioContextClass();
+        masterGain = audioContext.createGain();
+        musicGain = audioContext.createGain();
+        sfxGain = audioContext.createGain();
 
-				masterGain.gain.value = getEffectiveVolume();
-				musicGain.gain.value = 0.08;
-				sfxGain.gain.value = 0.22;
+        masterGain.gain.value = getEffectiveVolume();
+        musicGain.gain.value = 0.08;
+        sfxGain.gain.value = 0.22;
 
-				musicGain.connect(masterGain);
-				sfxGain.connect(masterGain);
-				masterGain.connect(audioContext.destination);
-				return true;
-			}
+        musicGain.connect(masterGain);
+        sfxGain.connect(masterGain);
+        masterGain.connect(audioContext.destination);
+        return true;
+      }
 
-			function loadSystemAudioSettings() {
-				try {
-					const raw = localStorage.getItem(systemAudioKey);
-					if (raw) return { volume: 0.8, muted: false, ...JSON.parse(raw) };
-				} catch {
-					// Ignore corrupt persisted settings.
-				}
-				return { volume: 0.8, muted: false };
-			}
+      function loadSystemAudioSettings() {
+        try {
+          const raw = localStorage.getItem(systemAudioKey);
+          if (raw) return { volume: 0.8, muted: false, ...JSON.parse(raw) };
+        } catch {
+          // Ignore corrupt persisted settings.
+        }
+        return { volume: 0.8, muted: false };
+      }
 
-			function getEffectiveVolume() {
-				return systemAudioSettings.muted ? 0 : systemAudioSettings.volume;
-			}
+      function getEffectiveVolume() {
+        return systemAudioSettings.muted ? 0 : systemAudioSettings.volume;
+      }
 
-			function applySystemAudioSettings(settings) {
-				systemAudioSettings = { volume: 0.8, muted: false, ...settings };
-				if (masterGain && audioContext) {
-					masterGain.gain.setTargetAtTime(getEffectiveVolume(), audioContext.currentTime, 0.02);
-				}
-			}
+      function applySystemAudioSettings(settings) {
+        systemAudioSettings = { volume: 0.8, muted: false, ...settings };
+        if (masterGain && audioContext) {
+          masterGain.gain.setTargetAtTime(
+            getEffectiveVolume(),
+            audioContext.currentTime,
+            0.02,
+          );
+        }
+      }
 
-			async function enableAudio() {
-				if (!setupAudio()) return false;
-				if (audioContext.state === 'suspended') await audioContext.resume();
-				audioEnabled = true;
-				updateAudioToggle();
-				startBgm();
-				return true;
-			}
+      async function enableAudio() {
+        if (!setupAudio()) return false;
+        if (audioContext.state === "suspended") await audioContext.resume();
+        audioEnabled = true;
+        updateAudioToggle();
+        startBgm();
+        return true;
+      }
 
-			function disableAudio() {
-				audioEnabled = false;
-				stopBgm();
-				updateAudioToggle();
-			}
+      function disableAudio() {
+        audioEnabled = false;
+        stopBgm();
+        updateAudioToggle();
+      }
 
-			function updateAudioToggle() {
-				const toggle = q('.sre-audio-toggle');
-				toggle.textContent = audioEnabled ? (systemAudioSettings.muted ? 'Audio Muted' : 'Audio On') : 'Audio Off';
-				toggle.setAttribute('aria-pressed', String(audioEnabled));
-			}
+      function updateAudioToggle() {
+        const toggle = q(".sre-audio-toggle");
+        toggle.textContent = audioEnabled
+          ? systemAudioSettings.muted
+            ? "Audio Muted"
+            : "Audio On"
+          : "Audio Off";
+        toggle.setAttribute("aria-pressed", String(audioEnabled));
+      }
 
-			function playTone(freq, duration = 0.12, type = 'sine', volume = 0.12, destination = sfxGain, startOffset = 0) {
-				if (!audioEnabled || !audioContext || !destination) return;
+      function playTone(
+        freq,
+        duration = 0.12,
+        type = "sine",
+        volume = 0.12,
+        destination = sfxGain,
+        startOffset = 0,
+      ) {
+        if (!audioEnabled || !audioContext || !destination) return;
 
-				const start = audioContext.currentTime + startOffset;
-				const oscillator = audioContext.createOscillator();
-				const gain = audioContext.createGain();
+        const start = audioContext.currentTime + startOffset;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
 
-				oscillator.type = type;
-				oscillator.frequency.setValueAtTime(freq, start);
-				gain.gain.setValueAtTime(0.0001, start);
-				gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), start + 0.015);
-				gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(
+          Math.max(0.0001, volume),
+          start + 0.015,
+        );
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
 
-				oscillator.connect(gain);
-				gain.connect(destination);
-				oscillator.start(start);
-				oscillator.stop(start + duration + 0.03);
-			}
+        oscillator.connect(gain);
+        gain.connect(destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration + 0.03);
+      }
 
-			function playSequence(notes, type = 'sine', volume = 0.12, spacing = 0.08, duration = 0.1) {
-				notes.forEach((note, index) => {
-					playTone(note, duration, type, volume, sfxGain, index * spacing);
-				});
-			}
+      function playSequence(
+        notes,
+        type = "sine",
+        volume = 0.12,
+        spacing = 0.08,
+        duration = 0.1,
+      ) {
+        notes.forEach((note, index) => {
+          playTone(note, duration, type, volume, sfxGain, index * spacing);
+        });
+      }
 
-			function startBgm() {
-				if (!audioEnabled || bgmTimer) return;
+      function startBgm() {
+        if (!audioEnabled || bgmTimer) return;
 
-				const pattern = [110, 146.83, 164.81, 220, 196, 164.81, 146.83, 123.47];
-				const pulse = () => {
-					const note = pattern[bgmStep % pattern.length];
-					playTone(note, 0.26, 'triangle', 0.16, musicGain);
-					if (bgmStep % 4 === 0) playTone(note / 2, 0.5, 'sine', 0.08, musicGain, 0.02);
-					bgmStep++;
-				};
+        const pattern = [110, 146.83, 164.81, 220, 196, 164.81, 146.83, 123.47];
+        const pulse = () => {
+          const note = pattern[bgmStep % pattern.length];
+          playTone(note, 0.26, "triangle", 0.16, musicGain);
+          if (bgmStep % 4 === 0)
+            playTone(note / 2, 0.5, "sine", 0.08, musicGain, 0.02);
+          bgmStep++;
+        };
 
-				pulse();
-				bgmTimer = window.setInterval(pulse, 380);
-			}
+        pulse();
+        bgmTimer = window.setInterval(pulse, 380);
+      }
 
-			function stopBgm() {
-				if (!bgmTimer) return;
-				clearInterval(bgmTimer);
-				bgmTimer = null;
-			}
+      function stopBgm() {
+        if (!bgmTimer) return;
+        clearInterval(bgmTimer);
+        bgmTimer = null;
+      }
 
-			function playBootTick() {
-				playTone(1046.5, 0.025, 'square', 0.045);
-			}
+      function playBootTick() {
+        playTone(1046.5, 0.025, "square", 0.045);
+      }
 
-			function playStartCue() {
-				playSequence([220, 330, 440, 660], 'triangle', 0.12, 0.075, 0.11);
-			}
+      function playStartCue() {
+        playSequence([220, 330, 440, 660], "triangle", 0.12, 0.075, 0.11);
+      }
 
-			function playAlertCue(severity) {
-				if (severity === 'catastrophic') {
-					playSequence([110, 110, 220, 110], 'sawtooth', 0.18, 0.09, 0.12);
-					return;
-				}
+      function playAlertCue(severity) {
+        if (severity === "catastrophic") {
+          playSequence([110, 110, 220, 110], "sawtooth", 0.18, 0.09, 0.12);
+          return;
+        }
 
-				if (severity === 'critical') {
-					playSequence([659.25, 440, 659.25], 'square', 0.14, 0.11, 0.12);
-					return;
-				}
+        if (severity === "critical") {
+          playSequence([659.25, 440, 659.25], "square", 0.14, 0.11, 0.12);
+          return;
+        }
 
-				playSequence([440, 554.37], 'triangle', 0.12, 0.12, 0.12);
-			}
+        playSequence([440, 554.37], "triangle", 0.12, 0.12, 0.12);
+      }
 
-			function playFailureCue() {
-				playSequence([246.94, 196, 146.83, 110], 'sawtooth', 0.13, 0.075, 0.1);
-			}
+      function playFailureCue() {
+        playSequence([246.94, 196, 146.83, 110], "sawtooth", 0.13, 0.075, 0.1);
+      }
 
-			function playTimeoutCue() {
-				playSequence([220, 164.81, 123.47], 'square', 0.13, 0.12, 0.14);
-			}
+      function playTimeoutCue() {
+        playSequence([220, 164.81, 123.47], "square", 0.13, 0.12, 0.14);
+      }
 
-			function playGameOverCue() {
-				playSequence([98, 73.42, 55], 'sawtooth', 0.2, 0.18, 0.24);
-			}
+      function playGameOverCue() {
+        playSequence([98, 73.42, 55], "sawtooth", 0.2, 0.18, 0.24);
+      }
 
-			function playSolutionCue() {
-				playSequence([261.63, 329.63, 392, 523.25], 'triangle', 0.14, 0.1, 0.15);
-			}
+      function playSolutionCue() {
+        playSequence(
+          [261.63, 329.63, 392, 523.25],
+          "triangle",
+          0.14,
+          0.1,
+          0.15,
+        );
+      }
 
-			function showScreen(index) {
-				qa('.sre-game-screen').forEach((screen, i) => {
-					screen.classList.toggle('sre-game-screen-active', i === index);
-				});
+      function showScreen(index) {
+        qa(".sre-game-screen").forEach((screen, i) => {
+          screen.classList.toggle("sre-game-screen-active", i === index);
+        });
 
-				if (index === 2) {
-					stopBgm();
-					playGameOverCue();
-				}
+        if (index === 2) {
+          stopBgm();
+          playGameOverCue();
+        }
 
-				if (index === 3) {
-					playSolutionCue();
-				}
-			}
+        if (index === 3) {
+          playSolutionCue();
+        }
+      }
 
-			async function runBoot() {
-				const token = ++bootToken;
-				const output = q('.sre-boot-output');
-				output.innerHTML = '';
+      async function runBoot() {
+        const token = ++bootToken;
+        const output = q(".sre-boot-output");
+        output.innerHTML = "";
 
-				for (const line of bootLines) {
-					await wait(line.delay);
-					if (token !== bootToken) return;
-					const row = document.createElement('div');
-					row.className = `sre-line ${line.cls}`;
-					row.textContent = line.text || ' ';
-					output.appendChild(row);
-					output.scrollTop = output.scrollHeight;
-					playBootTick();
-				}
+        for (const line of bootLines) {
+          await wait(line.delay);
+          if (token !== bootToken) return;
+          const row = document.createElement("div");
+          row.className = `sre-line ${line.cls}`;
+          row.textContent = line.text || " ";
+          output.appendChild(row);
+          output.scrollTop = output.scrollHeight;
+          playBootTick();
+        }
 
-				q('.sre-boot-enter').classList.remove('sre-hidden');
-			}
+        q(".sre-boot-enter").classList.remove("sre-hidden");
+      }
 
-			function resetGame() {
-				clearTimers();
-				health = 100;
-				currentRound = 0;
-				showScreen(0);
-				q('.sre-boot-enter').classList.add('sre-hidden');
-				q('.sre-game-actions').innerHTML = '';
-				q('.sre-game-area').innerHTML = `
+      function resetGame() {
+        clearTimers();
+        health = 100;
+        currentRound = 0;
+        showScreen(0);
+        q(".sre-boot-enter").classList.add("sre-hidden");
+        q(".sre-game-actions").innerHTML = "";
+        q(".sre-game-area").innerHTML = `
 					<div class="sre-game-message">
 						<p>Monitoring production...</p>
 						<p class="sre-sub">Alerts will appear below. Click an action to mitigate before time runs out.</p>
 					</div>
 				`;
-				updateHealth();
-				updateRound();
-				updateStatus();
-				runBoot();
-			}
+        updateHealth();
+        updateRound();
+        updateStatus();
+        runBoot();
+      }
 
-			function startGame() {
-				startBgm();
-				playStartCue();
-				health = 100;
-				currentRound = 0;
-				updateHealth();
-				updateRound();
-				updateStatus();
-				q('.sre-game-actions').innerHTML = '';
-				showScreen(1);
-				scheduleNextAlert();
-			}
+      function startGame() {
+        startBgm();
+        playStartCue();
+        health = 100;
+        currentRound = 0;
+        updateHealth();
+        updateRound();
+        updateStatus();
+        q(".sre-game-actions").innerHTML = "";
+        showScreen(1);
+        scheduleNextAlert();
+      }
 
-			function scheduleNextAlert() {
-				if (currentRound >= alerts.length) return;
-				later(() => showAlert(currentRound), currentRound === 0 ? 2500 : 1800);
-			}
+      function scheduleNextAlert() {
+        if (currentRound >= alerts.length) return;
+        later(() => showAlert(currentRound), currentRound === 0 ? 2500 : 1800);
+      }
 
-			function showAlert(index) {
-				const alert = alerts[index];
-				playAlertCue(alert.severity);
-				let timeLeft = alert.timer;
-				const gameArea = q('.sre-game-area');
-				gameArea.innerHTML = `
+      function showAlert(index) {
+        const alert = alerts[index];
+        playAlertCue(alert.severity);
+        let timeLeft = alert.timer;
+        const gameArea = q(".sre-game-area");
+        gameArea.innerHTML = `
 					<div class="sre-alert-card sre-severity-${alert.severity}">
 						<div class="sre-alert-header">
 							<span class="sre-alert-title">${alert.title}</span>
@@ -454,135 +597,143 @@
 					</div>
 				`;
 
-				const actionsDiv = q('.sre-game-actions');
-				actionsDiv.innerHTML = '';
-				alert.actions.forEach((action, actionIndex) => {
-					const button = document.createElement('button');
-					button.className = 'sre-action-btn';
-					button.type = 'button';
-					button.textContent = action.text;
-					button.addEventListener('click', () => handleAction(index, actionIndex));
-					actionsDiv.appendChild(button);
-				});
+        const actionsDiv = q(".sre-game-actions");
+        actionsDiv.innerHTML = "";
+        alert.actions.forEach((action, actionIndex) => {
+          const button = document.createElement("button");
+          button.className = "sre-action-btn";
+          button.type = "button";
+          button.textContent = action.text;
+          button.addEventListener("click", () =>
+            handleAction(index, actionIndex),
+          );
+          actionsDiv.appendChild(button);
+        });
 
-				if (alertTimer) clearInterval(alertTimer);
-				alertTimer = setInterval(() => {
-					timeLeft--;
-					const timer = gameArea.querySelector('.sre-alert-timer');
-					if (timer) timer.textContent = `Time remaining: ${timeLeft}s`;
-					if (timeLeft <= 0) {
-						clearInterval(alertTimer);
-						timeExpired(index);
-					}
-				}, 1000);
-			}
+        if (alertTimer) clearInterval(alertTimer);
+        alertTimer = setInterval(() => {
+          timeLeft--;
+          const timer = gameArea.querySelector(".sre-alert-timer");
+          if (timer) timer.textContent = `Time remaining: ${timeLeft}s`;
+          if (timeLeft <= 0) {
+            clearInterval(alertTimer);
+            timeExpired(index);
+          }
+        }, 1000);
+      }
 
-			function handleAction(alertIndex, actionIndex) {
-				if (alertTimer) clearInterval(alertTimer);
-				const alert = alerts[alertIndex];
-				const action = alert.actions[actionIndex];
-				playFailureCue();
-				health -= alert.damage;
-				updateHealth();
-				logMitigation('<strong>Mitigation failed:</strong> ' + action.result);
-				disableActions();
-				currentRound++;
-				updateRound();
-				updateStatus();
+      function handleAction(alertIndex, actionIndex) {
+        if (alertTimer) clearInterval(alertTimer);
+        const alert = alerts[alertIndex];
+        const action = alert.actions[actionIndex];
+        playFailureCue();
+        health -= alert.damage;
+        updateHealth();
+        logMitigation("<strong>Mitigation failed:</strong> " + action.result);
+        disableActions();
+        currentRound++;
+        updateRound();
+        updateStatus();
 
-				if (health <= 0 || currentRound >= alerts.length) {
-					later(() => showScreen(2), 1800);
-					return;
-				}
+        if (health <= 0 || currentRound >= alerts.length) {
+          later(() => showScreen(2), 1800);
+          return;
+        }
 
-				scheduleNextAlert();
-			}
+        scheduleNextAlert();
+      }
 
-			function timeExpired(alertIndex) {
-				playTimeoutCue();
-				health -= alerts[alertIndex].damage;
-				updateHealth();
-				updateStatus();
-				logMitigation('<strong>Time expired - alert unresolved.</strong> System absorbed the damage.');
-				disableActions();
-				currentRound++;
-				updateRound();
+      function timeExpired(alertIndex) {
+        playTimeoutCue();
+        health -= alerts[alertIndex].damage;
+        updateHealth();
+        updateStatus();
+        logMitigation(
+          "<strong>Time expired - alert unresolved.</strong> System absorbed the damage.",
+        );
+        disableActions();
+        currentRound++;
+        updateRound();
 
-				if (health <= 0 || currentRound >= alerts.length) {
-					later(() => showScreen(2), 1800);
-					return;
-				}
+        if (health <= 0 || currentRound >= alerts.length) {
+          later(() => showScreen(2), 1800);
+          return;
+        }
 
-				scheduleNextAlert();
-			}
+        scheduleNextAlert();
+      }
 
-			function logMitigation(html) {
-				const log = document.createElement('div');
-				log.className = 'sre-mitigation-log';
-				log.innerHTML = html;
-				q('.sre-game-area').appendChild(log);
-			}
+      function logMitigation(html) {
+        const log = document.createElement("div");
+        log.className = "sre-mitigation-log";
+        log.innerHTML = html;
+        q(".sre-game-area").appendChild(log);
+      }
 
-			function disableActions() {
-				qa('.sre-action-btn').forEach((button) => {
-					button.disabled = true;
-					button.style.opacity = '0.4';
-				});
-			}
+      function disableActions() {
+        qa(".sre-action-btn").forEach((button) => {
+          button.disabled = true;
+          button.style.opacity = "0.4";
+        });
+      }
 
-			function updateHealth() {
-				health = Math.max(0, Math.min(100, health));
-				const fill = q('.sre-health-fill');
-				fill.style.width = health + '%';
-				fill.style.background = health > 60 ? '#22c55e' : health > 30 ? '#eab308' : '#ef4444';
-				q('.sre-health-pct').textContent = health + '%';
-			}
+      function updateHealth() {
+        health = Math.max(0, Math.min(100, health));
+        const fill = q(".sre-health-fill");
+        fill.style.width = health + "%";
+        fill.style.background =
+          health > 60 ? "#22c55e" : health > 30 ? "#eab308" : "#ef4444";
+        q(".sre-health-pct").textContent = health + "%";
+      }
 
-			function updateRound() {
-				q('.sre-round-num').textContent = Math.min(currentRound + 1, alerts.length).toString();
-			}
+      function updateRound() {
+        q(".sre-round-num").textContent = Math.min(
+          currentRound + 1,
+          alerts.length,
+        ).toString();
+      }
 
-			function updateStatus() {
-				const status = q('.sre-game-status');
-				if (health > 60) {
-					status.textContent = 'Stable';
-					status.className = 'sre-game-status sre-status-ok';
-				} else if (health > 30) {
-					status.textContent = 'Degraded';
-					status.className = 'sre-game-status sre-status-warn';
-				} else {
-					status.textContent = 'Critical';
-					status.className = 'sre-game-status sre-status-crit';
-				}
-			}
+      function updateStatus() {
+        const status = q(".sre-game-status");
+        if (health > 60) {
+          status.textContent = "Stable";
+          status.className = "sre-game-status sre-status-ok";
+        } else if (health > 30) {
+          status.textContent = "Degraded";
+          status.className = "sre-game-status sre-status-warn";
+        } else {
+          status.textContent = "Critical";
+          status.className = "sre-game-status sre-status-crit";
+        }
+      }
 
-			q('.sre-audio-toggle').addEventListener('click', async () => {
-				if (audioEnabled) {
-					disableAudio();
-					return;
-				}
+      q(".sre-audio-toggle").addEventListener("click", async () => {
+        if (audioEnabled) {
+          disableAudio();
+          return;
+        }
 
-				await enableAudio();
-				playStartCue();
-			});
+        await enableAudio();
+        playStartCue();
+      });
 
-			q('.sre-boot-enter').addEventListener('click', async () => {
-				await enableAudio();
-				startGame();
-			});
-			q('.sre-gameover-reveal').addEventListener('click', () => showScreen(3));
-			q('.sre-solution-replay').addEventListener('click', resetGame);
+      q(".sre-boot-enter").addEventListener("click", async () => {
+        await enableAudio();
+        startGame();
+      });
+      q(".sre-gameover-reveal").addEventListener("click", () => showScreen(3));
+      q(".sre-solution-replay").addEventListener("click", resetGame);
 
-			document.addEventListener('desktop:audio-settings', (event) => {
-				applySystemAudioSettings(event.detail || loadSystemAudioSettings());
-				updateAudioToggle();
-			});
+      document.addEventListener("desktop:audio-settings", (event) => {
+        applySystemAudioSettings(event.detail || loadSystemAudioSettings());
+        updateAudioToggle();
+      });
 
-			shell?.addEventListener('desktop:window-open', resetGame);
-			shell?.addEventListener('desktop:window-close', () => {
-				clearTimers();
-				stopBgm();
-			});
-		});
-	});
+      shell?.addEventListener("desktop:window-open", resetGame);
+      shell?.addEventListener("desktop:window-close", () => {
+        clearTimers();
+        stopBgm();
+      });
+    });
+  });
 </script>
