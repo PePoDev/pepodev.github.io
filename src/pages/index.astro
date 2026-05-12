@@ -415,10 +415,87 @@ import socialLinks from "../data/social-links.json";
             primary: "184, 115, 51",
             secondary: "205, 127, 50",
           },
+          // Light theme backgrounds
+          cloud: {
+            bg: "#f0f4f8",
+            primary: "100, 149, 237",
+            secondary: "135, 206, 235",
+          },
+          daylight: {
+            bg: "#fef9e7",
+            primary: "255, 193, 7",
+            secondary: "255, 152, 0",
+          },
+          mint: {
+            bg: "#f0fdf4",
+            primary: "52, 211, 153",
+            secondary: "16, 185, 129",
+          },
+          peach: {
+            bg: "#fff5f0",
+            primary: "255, 159, 64",
+            secondary: "255, 127, 80",
+          },
+          sky: {
+            bg: "#e0f2fe",
+            primary: "14, 165, 233",
+            secondary: "56, 189, 248",
+          },
+          lavender: {
+            bg: "#f5f3ff",
+            primary: "167, 139, 250",
+            secondary: "196, 181, 253",
+          },
+          cream: {
+            bg: "#fefce8",
+            primary: "234, 179, 8",
+            secondary: "250, 204, 21",
+          },
+          rose: {
+            bg: "#fff1f2",
+            primary: "251, 113, 133",
+            secondary: "244, 63, 94",
+          },
+          sage: {
+            bg: "#f0fdf4",
+            primary: "74, 222, 128",
+            secondary: "134, 239, 172",
+          },
+          coral: {
+            bg: "#fff7ed",
+            primary: "251, 146, 60",
+            secondary: "249, 115, 22",
+          },
+          powder: {
+            bg: "#ecfeff",
+            primary: "6, 182, 212",
+            secondary: "34, 211, 238",
+          },
+          lemon: {
+            bg: "#fefce8",
+            primary: "250, 204, 21",
+            secondary: "253, 224, 71",
+          },
+          blush: {
+            bg: "#fce7f3",
+            primary: "236, 72, 153",
+            secondary: "244, 114, 182",
+          },
+          seafoam: {
+            bg: "#ecfdf5",
+            primary: "16, 185, 129",
+            secondary: "52, 211, 153",
+          },
+          sand: {
+            bg: "#fef3c7",
+            primary: "217, 119, 6",
+            secondary: "245, 158, 11",
+          },
         };
         const accent = accentMap[savedPrefs.accent] || accentMap.green;
-        const background =
-          backgroundMap[savedPrefs.background] || backgroundMap.network;
+        const defaultBg =
+          savedTheme === "light" ? backgroundMap.cloud : backgroundMap.network;
+        const background = backgroundMap[savedPrefs.background] || defaultBg;
         document.documentElement.setAttribute("data-theme", savedTheme);
         document.documentElement.style.setProperty(
           "--accent-primary",

@@ -1,5 +1,5 @@
 ---
-const backgrounds = [
+const darkBackgrounds = [
   { id: "network", label: "SRE Network" },
   { id: "aurora", label: "Aurora" },
   { id: "midnight", label: "Midnight" },
@@ -15,6 +15,24 @@ const backgrounds = [
   { id: "forest", label: "Forest" },
   { id: "sunset", label: "Sunset" },
   { id: "copper", label: "Copper" },
+];
+
+const lightBackgrounds = [
+  { id: "cloud", label: "Cloud" },
+  { id: "daylight", label: "Daylight" },
+  { id: "mint", label: "Mint" },
+  { id: "peach", label: "Peach" },
+  { id: "sky", label: "Sky" },
+  { id: "lavender", label: "Lavender" },
+  { id: "cream", label: "Cream" },
+  { id: "rose", label: "Rose" },
+  { id: "sage", label: "Sage" },
+  { id: "coral", label: "Coral" },
+  { id: "powder", label: "Powder Blue" },
+  { id: "lemon", label: "Lemon" },
+  { id: "blush", label: "Blush" },
+  { id: "seafoam", label: "Seafoam" },
+  { id: "sand", label: "Sand" },
 ];
 
 const accents = [
@@ -46,12 +64,8 @@ const tracks = [
 
         <label class="settings-field">
           <span>Background</span>
-          <select data-setting="background">
-            {
-              backgrounds.map((background) => (
-                <option value={background.id}>{background.label}</option>
-              ))
-            }
+          <select data-setting="background" data-background-select>
+            <!-- Options will be populated dynamically based on theme -->
           </select>
         </label>
 
@@ -145,6 +159,43 @@ const tracks = [
       radius: 12,
       glass: 72,
     };
+
+    const darkBackgroundsList = [
+      { id: "network", label: "SRE Network" },
+      { id: "aurora", label: "Aurora" },
+      { id: "midnight", label: "Midnight" },
+      { id: "ember", label: "Ember" },
+      { id: "ocean", label: "Ocean Deep" },
+      { id: "glacier", label: "Glacier" },
+      { id: "void", label: "Void" },
+      { id: "neon", label: "Neon City" },
+      { id: "plasma", label: "Plasma" },
+      { id: "storm", label: "Storm" },
+      { id: "matrix", label: "Matrix" },
+      { id: "sakura", label: "Sakura" },
+      { id: "forest", label: "Forest" },
+      { id: "sunset", label: "Sunset" },
+      { id: "copper", label: "Copper" },
+    ];
+
+    const lightBackgroundsList = [
+      { id: "cloud", label: "Cloud" },
+      { id: "daylight", label: "Daylight" },
+      { id: "mint", label: "Mint" },
+      { id: "peach", label: "Peach" },
+      { id: "sky", label: "Sky" },
+      { id: "lavender", label: "Lavender" },
+      { id: "cream", label: "Cream" },
+      { id: "rose", label: "Rose" },
+      { id: "sage", label: "Sage" },
+      { id: "coral", label: "Coral" },
+      { id: "powder", label: "Powder Blue" },
+      { id: "lemon", label: "Lemon" },
+      { id: "blush", label: "Blush" },
+      { id: "seafoam", label: "Seafoam" },
+      { id: "sand", label: "Sand" },
+    ];
+
     const accentMap = {
       green: { primary: "#30d158", secondary: "#64d2ff" },
       cyan: { primary: "#64d2ff", secondary: "#30d158" },
@@ -152,6 +203,7 @@ const tracks = [
       amber: { primary: "#ff9f0a", secondary: "#64d2ff" },
     };
     const backgroundMap = {
+      // Dark theme backgrounds
       network: {
         bg: "#0a0e17",
         primary: "34, 197, 94",
@@ -227,6 +279,82 @@ const tracks = [
         primary: "184, 115, 51",
         secondary: "205, 127, 50",
       },
+      // Light theme backgrounds
+      cloud: {
+        bg: "#f0f4f8",
+        primary: "100, 149, 237",
+        secondary: "135, 206, 235",
+      },
+      daylight: {
+        bg: "#fef9e7",
+        primary: "255, 193, 7",
+        secondary: "255, 152, 0",
+      },
+      mint: {
+        bg: "#f0fdf4",
+        primary: "52, 211, 153",
+        secondary: "16, 185, 129",
+      },
+      peach: {
+        bg: "#fff5f0",
+        primary: "255, 159, 64",
+        secondary: "255, 127, 80",
+      },
+      sky: {
+        bg: "#e0f2fe",
+        primary: "14, 165, 233",
+        secondary: "56, 189, 248",
+      },
+      lavender: {
+        bg: "#f5f3ff",
+        primary: "167, 139, 250",
+        secondary: "196, 181, 253",
+      },
+      cream: {
+        bg: "#fefce8",
+        primary: "234, 179, 8",
+        secondary: "250, 204, 21",
+      },
+      rose: {
+        bg: "#fff1f2",
+        primary: "251, 113, 133",
+        secondary: "244, 63, 94",
+      },
+      sage: {
+        bg: "#f0fdf4",
+        primary: "74, 222, 128",
+        secondary: "134, 239, 172",
+      },
+      coral: {
+        bg: "#fff7ed",
+        primary: "251, 146, 60",
+        secondary: "249, 115, 22",
+      },
+      powder: {
+        bg: "#ecfeff",
+        primary: "6, 182, 212",
+        secondary: "34, 211, 238",
+      },
+      lemon: {
+        bg: "#fefce8",
+        primary: "250, 204, 21",
+        secondary: "253, 224, 71",
+      },
+      blush: {
+        bg: "#fce7f3",
+        primary: "236, 72, 153",
+        secondary: "244, 114, 182",
+      },
+      seafoam: {
+        bg: "#ecfdf5",
+        primary: "16, 185, 129",
+        secondary: "52, 211, 153",
+      },
+      sand: {
+        bg: "#fef3c7",
+        primary: "217, 119, 6",
+        secondary: "245, 158, 11",
+      },
     };
 
     function loadPrefs() {
@@ -283,9 +411,24 @@ const tracks = [
       );
     }
 
+    function populateBackgrounds(theme) {
+      const backgroundSelect = app.querySelector("[data-background-select]");
+      if (!backgroundSelect) return;
+
+      const backgrounds =
+        theme === "light" ? lightBackgroundsList : darkBackgroundsList;
+      backgroundSelect.innerHTML = backgrounds
+        .map((bg) => `<option value="${bg.id}">${bg.label}</option>`)
+        .join("");
+    }
+
     function render() {
       const prefs = loadPrefs();
       const music = loadMusic();
+
+      // Populate backgrounds based on current theme
+      populateBackgrounds(prefs.theme);
+
       app.querySelector('[data-setting="theme"]').value = prefs.theme;
       app.querySelector('[data-setting="background"]').value = prefs.background;
       app.querySelector('[data-setting="radius"]').value = String(prefs.radius);
@@ -308,8 +451,16 @@ const tracks = [
       const target = event.target;
       if (target.dataset.setting) {
         const prefs = loadPrefs();
+        const oldTheme = prefs.theme;
         prefs[target.dataset.setting] =
           target.type === "range" ? Number(target.value) : target.value;
+
+        // If theme changed, switch to appropriate default background
+        if (target.dataset.setting === "theme" && oldTheme !== prefs.theme) {
+          const defaultBg = prefs.theme === "light" ? "cloud" : "network";
+          prefs.background = defaultBg;
+        }
+
         applyPrefs(prefs);
         render();
       }
