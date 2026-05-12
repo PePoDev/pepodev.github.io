@@ -7,7 +7,6 @@ const apps = [
   { id: "project", name: "Projects", description: "Browse project showcase" },
   { id: "work", name: "Work", description: "Career timeline" },
   { id: "me", name: "About Me", description: "Learn more about me" },
-  { id: "connect", name: "Connect", description: "Social links" },
   { id: "sregame", name: "SRE Game", description: "Play the chaos game" },
 ];
 
@@ -17,6 +16,12 @@ const commands = [
     name: "Reset Desktop",
     description: "Clear icon positions and reset layout",
     icon: "🔄",
+  },
+  {
+    id: "toggle-theme",
+    name: "Toggle Theme",
+    description: "Switch between dark and light theme",
+    icon: "🌓",
   },
 ];
 
@@ -235,14 +240,18 @@ const externalLinks = socialLinks.map((link) => ({
         }
         keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-        // Show confirmation
-        alert(
-          "Desktop reset! Icon positions have been cleared. Refresh the page to see the default layout.",
-        );
         closePalette();
 
-        // Optionally reload the page
+        // Reload the page to show default layout
         setTimeout(() => window.location.reload(), 500);
+      } else if (commandId === "toggle-theme") {
+        // Toggle theme
+        const currentTheme =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("pepodev.theme", newTheme);
+        closePalette();
       }
     }
 

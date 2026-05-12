@@ -1,0 +1,320 @@
+---
+
+---
+
+<div class="app-content welcome-app">
+  <div class="terminal-heading">
+    <span class="prompt">~/system $</span> login.sh
+  </div>
+
+  <div class="welcome-header">
+    <pre
+      class="ascii-art">
+ ██╗    ██╗███████╗██╗      ██████╗ ██████╗ ███╗   ███╗███████╗
+ ██║    ██║██╔════╝██║     ██╔════╝██╔═══██╗████╗ ████║██╔════╝
+ ██║ █╗ ██║█████╗  ██║     ██║     ██║   ██║██╔████╔██║█████╗  
+ ██║███╗██║██╔══╝  ██║     ██║     ██║   ██║██║╚██╔╝██║██╔══╝  
+ ╚███╔███╔╝███████╗███████╗╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗
+  ╚══╝╚══╝ ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
+    </pre>
+  </div>
+
+  <div class="welcome-messages">
+    <div class="system-message">
+      <span class="timestamp">[{new Date().toLocaleTimeString()}]</span>
+      <span class="msg-success">✓</span> Access granted to PePoDev's Desktop
+    </div>
+
+    <div class="system-message">
+      <span class="timestamp">[{new Date().toLocaleTimeString()}]</span>
+      <span class="msg-info">ℹ</span> Initializing awesome portfolio...
+    </div>
+
+    <div class="system-message">
+      <span class="timestamp">[{new Date().toLocaleTimeString()}]</span>
+      <span class="msg-success">✓</span> Loading 100% organic, free-range code
+    </div>
+
+    <div class="system-message">
+      <span class="timestamp">[{new Date().toLocaleTimeString()}]</span>
+      <span class="msg-warning">⚠</span> Warning: May contain traces of caffeine and
+      late-night commits
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="quote-box">
+      <div class="quote-icon">💭</div>
+      <div class="quote-text">
+        <p class="quote-main">
+          "Any sufficiently advanced technology is indistinguishable from
+          magic."
+        </p>
+        <p class="quote-author">— Arthur C. Clarke</p>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <h3>System Status</h3>
+    <div class="status-grid">
+      <div class="status-item">
+        <div class="status-label">Coffee Level</div>
+        <div class="status-value">
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              style="width: 87%; background: linear-gradient(135deg, #8b4513, #d2691e);"
+            >
+            </div>
+          </div>
+          <span>87%</span>
+        </div>
+      </div>
+
+      <div class="status-item">
+        <div class="status-label">Code Quality</div>
+        <div class="status-value">
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              style="width: 95%; background: linear-gradient(135deg, #22c55e, #16a34a);"
+            >
+            </div>
+          </div>
+          <span>95%</span>
+        </div>
+      </div>
+
+      <div class="status-item">
+        <div class="status-label">Bug Squashing</div>
+        <div class="status-value">
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              style="width: 92%; background: linear-gradient(135deg, #3b82f6, #2563eb);"
+            >
+            </div>
+          </div>
+          <span>92%</span>
+        </div>
+      </div>
+
+      <div class="status-item">
+        <div class="status-label">Meme Game</div>
+        <div class="status-value">
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              style="width: 99%; background: linear-gradient(135deg, #a855f7, #9333ea);"
+            >
+            </div>
+          </div>
+          <span>99%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="fun-facts">
+      <h3>Did You Know?</h3>
+      <ul class="fact-list">
+        <li>🚀 This portfolio runs on 100% renewable keyboard energy</li>
+        <li>🎯 No rubber ducks were harmed in the making of this code</li>
+        <li>☕ Powered by coffee, debugged by determination</li>
+        <li>🔥 Kubernetes clusters tamed, chaos engineered responsibly</li>
+        <li>💚 Open source contributor & DevOps enthusiast</li>
+      </ul>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="terminal-prompt">
+      <span class="prompt">~/explore $</span>
+      <span class="cursor-blink">▊</span>
+      <p style="margin-top: 8px; font-size: 0.9em; opacity: 0.7;">
+        Hint: Click on the desktop icons to explore my work, projects, and
+        experience!
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .welcome-app {
+    font-family: "Courier New", monospace;
+  }
+
+  .welcome-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .ascii-art {
+    color: var(--accent-green);
+    font-size: 0.45rem;
+    line-height: 1;
+    margin: 0;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  }
+
+  .welcome-messages {
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  .system-message {
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .timestamp {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .msg-success {
+    color: var(--accent-green);
+  }
+
+  .msg-info {
+    color: var(--accent-blue);
+  }
+
+  .msg-warning {
+    color: var(--accent-yellow);
+  }
+
+  .quote-box {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid var(--accent-green);
+    border-radius: 4px;
+    margin: 1rem 0;
+  }
+
+  .quote-icon {
+    font-size: 2rem;
+  }
+
+  .quote-text {
+    flex: 1;
+  }
+
+  .quote-main {
+    font-style: italic;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+  }
+
+  .quote-author {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .status-grid {
+    display: grid;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .status-label {
+    font-weight: 500;
+    min-width: 120px;
+  }
+
+  .status-value {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease-out;
+  }
+
+  .status-value span {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    min-width: 40px;
+  }
+
+  .fun-facts {
+    margin: 1rem 0;
+  }
+
+  .fact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+  }
+
+  .fact-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+  }
+
+  .fact-list li::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    color: var(--accent-green);
+    font-weight: bold;
+  }
+
+  .terminal-prompt {
+    margin-top: 1.5rem;
+  }
+
+  .cursor-blink {
+    animation: blink 1s step-end infinite;
+    color: var(--accent-green);
+  }
+
+  @keyframes blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

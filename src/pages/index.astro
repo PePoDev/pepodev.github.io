@@ -1,10 +1,10 @@
 ---
 import AboutApp from "../components/apps/AboutApp.astro";
 import BlogApp from "../components/apps/BlogApp.astro";
-import ConnectApp from "../components/apps/ConnectApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
 import ResumeApp from "../components/apps/ResumeApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
+import WelcomeApp from "../components/apps/WelcomeApp.astro";
 import WorkApp from "../components/apps/WorkApp.astro";
 import DesktopIcon from "../components/desktop/DesktopIcon.astro";
 import ExternalLinkIcon from "../components/desktop/ExternalLinkIcon.astro";
@@ -27,6 +27,7 @@ import socialLinks from "../data/social-links.json";
       <canvas id="bg-canvas"></canvas>
 
       <div id="desktop-icons">
+        <DesktopIcon appId="welcome" label="Welcome" />
         <DesktopIcon appId="blog" label="Blog" />
         <DesktopIcon appId="resume" label="Resume" />
         <DesktopIcon appId="project" label="Projects" />
@@ -34,7 +35,6 @@ import socialLinks from "../data/social-links.json";
         <DesktopIcon appId="me" label="About Me" />
       </div>
 
-      <DesktopIcon id="desktop-social-icon" appId="connect" label="Connect" />
       <DesktopIcon id="desktop-game-icon" appId="sregame" label="SRE Game" />
 
       <!-- External Link Shortcuts -->
@@ -45,11 +45,20 @@ import socialLinks from "../data/social-links.json";
             iconName={link.icon}
             label={link.label.split(" - ")[0]}
             href={link.href}
+            data-shortcut-index={index}
           />
         ))
       }
 
       <div id="windows-container">
+        <Window
+          appId="welcome"
+          title="Welcome - Login"
+          width={680}
+          height={600}
+        >
+          <WelcomeApp />
+        </Window>
         <Window appId="blog" title="Blog - Articles" width={700} height={520}>
           <BlogApp />
         </Window>
@@ -71,14 +80,6 @@ import socialLinks from "../data/social-links.json";
           <AboutApp />
         </Window>
         <Window
-          appId="connect"
-          title="Connect - Social Links"
-          width={480}
-          height={420}
-        >
-          <ConnectApp />
-        </Window>
-        <Window
           appId="sregame"
           title="SRE Game - Taming Chaos"
           width={800}
@@ -95,6 +96,12 @@ import socialLinks from "../data/social-links.json";
 
     <script>
       // @ts-nocheck
+      // Initialize theme immediately to prevent flash
+      (function () {
+        const savedTheme = localStorage.getItem("pepodev.theme") || "dark";
+        document.documentElement.setAttribute("data-theme", savedTheme);
+      })();
+
       document.addEventListener("DOMContentLoaded", () => {
         function initParticleNetwork() {
           const canvas = document.getElementById("bg-canvas");

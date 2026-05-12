@@ -94,14 +94,30 @@ const { iconName, label, href, id, class: className = "" } = Astro.props;
       const iconId = icon.id;
       if (!iconId) return;
 
-      // Initialize position
-      const initialRect = initialRects.get(icon);
+      // Initialize position from top-right
+      const shortcutIndex = parseInt(icon.dataset.shortcutIndex || "0");
+      const iconSpacing = 100; // vertical spacing between icons
+      const rightMargin = 20;
+      const topMargin = 20;
+
+      function calculateDefaultPosition() {
+        return {
+          x: window.innerWidth - 80 - rightMargin, // Position from right
+          y: topMargin + shortcutIndex * iconSpacing, // Stack vertically
+        };
+      }
+
       const saved = loadIconPosition(iconId);
-      const initial = saved || {
-        x: initialRect?.left || 20,
-        y: initialRect?.top || 20,
-      };
+      const initial = saved || calculateDefaultPosition();
       setIconPosition(icon, initial.x, initial.y);
+
+      // Reposition on window resize if no saved position
+      window.addEventListener("resize", () => {
+        if (!loadIconPosition(iconId)) {
+          const defaultPos = calculateDefaultPosition();
+          setIconPosition(icon, defaultPos.x, defaultPos.y);
+        }
+      });
 
       let pointerStartX = 0;
       let pointerStartY = 0;

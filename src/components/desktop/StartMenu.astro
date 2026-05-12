@@ -1,79 +1,85 @@
 ---
-import AppIcon from './AppIcon.astro';
+import AppIcon from "./AppIcon.astro";
 
 const apps = [
-	{ appId: 'blog', label: 'Blog', description: 'Read articles & write-ups' },
-	{ appId: 'resume', label: 'Resume', description: 'View & download CV' },
-	{ appId: 'project', label: 'Projects', description: 'Showcase of work' },
-	{ appId: 'work', label: 'Work', description: 'Experience & career' },
-	{ appId: 'me', label: 'About Me', description: 'Contact & personal info' },
-	{ appId: 'connect', label: 'Connect', description: 'Social links & online presence' },
-	{ appId: 'sregame', label: 'SRE Game', description: 'Chaos simulation game' },
+  { appId: "welcome", label: "Welcome", description: "Login & introduction" },
+  { appId: "blog", label: "Blog", description: "Read articles & write-ups" },
+  { appId: "resume", label: "Resume", description: "View & download CV" },
+  { appId: "project", label: "Projects", description: "Showcase of work" },
+  { appId: "work", label: "Work", description: "Experience & career" },
+  { appId: "me", label: "About Me", description: "Contact & personal info" },
+  {
+    appId: "connect",
+    label: "Connect",
+    description: "Social links & online presence",
+  },
+  { appId: "sregame", label: "SRE Game", description: "Chaos simulation game" },
 ];
 ---
 
 <div id="start-menu" aria-label="Start menu">
-	<div id="start-menu-header">
-		<h3>Quick Access</h3>
-		<input type="text" id="start-menu-search" placeholder="Search apps..." />
-	</div>
-	<div id="start-menu-apps">
-		{
-			apps.map((app) => (
-				<button class="start-menu-app" type="button" data-open-app={app.appId}>
-					<AppIcon name={app.appId} />
-					<div class="start-menu-app-text">
-						<strong>{app.label}</strong>
-						<small>{app.description}</small>
-					</div>
-				</button>
-			))
-		}
-	</div>
-	<div id="start-menu-footer">
-		<span>system status: nominal</span>
-		<span id="start-menu-uptime">uptime: --</span>
-	</div>
+  <div id="start-menu-header">
+    <h3>Quick Access</h3>
+    <input type="text" id="start-menu-search" placeholder="Search apps..." />
+  </div>
+  <div id="start-menu-apps">
+    {
+      apps.map((app) => (
+        <button class="start-menu-app" type="button" data-open-app={app.appId}>
+          <AppIcon name={app.appId} />
+          <div class="start-menu-app-text">
+            <strong>{app.label}</strong>
+            <small>{app.description}</small>
+          </div>
+        </button>
+      ))
+    }
+  </div>
+  <div id="start-menu-footer">
+    <span>system status: nominal</span>
+    <span id="start-menu-uptime">uptime: --</span>
+  </div>
 </div>
 
 <script>
-	// @ts-nocheck
-	document.addEventListener('DOMContentLoaded', () => {
-		const startMenu = document.getElementById('start-menu');
-		const startBtn = document.getElementById('taskbar-start');
-		const search = document.getElementById('start-menu-search');
-		let startMenuOpen = false;
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const startMenu = document.getElementById("start-menu");
+    const startBtn = document.getElementById("taskbar-start");
+    const search = document.getElementById("start-menu-search");
+    let startMenuOpen = false;
 
-		function setStartMenu(open) {
-			startMenuOpen = open;
-			startMenu?.classList.toggle('visible', startMenuOpen);
-		}
+    function setStartMenu(open) {
+      startMenuOpen = open;
+      startMenu?.classList.toggle("visible", startMenuOpen);
+    }
 
-		startBtn?.addEventListener('click', (event) => {
-			event.stopPropagation();
-			setStartMenu(!startMenuOpen);
-		});
+    startBtn?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setStartMenu(!startMenuOpen);
+    });
 
-		startMenu?.addEventListener('click', (event) => event.stopPropagation());
+    startMenu?.addEventListener("click", (event) => event.stopPropagation());
 
-		document.addEventListener('click', (event) => {
-			if (!startMenuOpen) return;
-			if (startMenu?.contains(event.target) || startBtn?.contains(event.target)) return;
-			setStartMenu(false);
-		});
+    document.addEventListener("click", (event) => {
+      if (!startMenuOpen) return;
+      if (startMenu?.contains(event.target) || startBtn?.contains(event.target))
+        return;
+      setStartMenu(false);
+    });
 
-		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape' && startMenuOpen) setStartMenu(false);
-		});
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && startMenuOpen) setStartMenu(false);
+    });
 
-		document.addEventListener('desktop:open-app', () => setStartMenu(false));
+    document.addEventListener("desktop:open-app", () => setStartMenu(false));
 
-		search?.addEventListener('input', (event) => {
-			const q = event.target.value.toLowerCase();
-			document.querySelectorAll('.start-menu-app').forEach((app) => {
-				const text = app.textContent.toLowerCase();
-				app.style.display = text.includes(q) ? '' : 'none';
-			});
-		});
-	});
+    search?.addEventListener("input", (event) => {
+      const q = event.target.value.toLowerCase();
+      document.querySelectorAll(".start-menu-app").forEach((app) => {
+        const text = app.textContent.toLowerCase();
+        app.style.display = text.includes(q) ? "" : "none";
+      });
+    });
+  });
 </script>
