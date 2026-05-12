@@ -20,6 +20,7 @@ const apps = [
   { label: "Deploy Sim", appId: "deploysim", title: "Deploy Simulator" },
   { label: "Monitor", appId: "monitor", title: "System Monitor" },
   { label: "Gallery", appId: "gallery", title: "Gallery" },
+  { label: "Trash", appId: "trash", title: "Trash Bin" },
 ];
 
 async function resetPage(page: Page) {

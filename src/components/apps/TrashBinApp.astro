@@ -1,0 +1,112 @@
+---
+const trashItems = [
+  {
+    name: "final-final-v7-actually-final.md",
+    type: "Document",
+    deleted: "42 minutes ago",
+    note: "A postmortem draft that was mostly the word 'oops' in headings.",
+  },
+  {
+    name: "node_modules_backup_do_not_open.zip",
+    type: "Archive",
+    deleted: "Yesterday",
+    note: "Estimated restore time: three business quarters.",
+  },
+  {
+    name: "prod-hotfix-from-friday-night.sh",
+    type: "Script",
+    deleted: "Last sprint",
+    note: "Removed after it tried to fix DNS with confidence and no evidence.",
+  },
+  {
+    name: "slo-budget-excuses.csv",
+    type: "Spreadsheet",
+    deleted: "Two incidents ago",
+    note: "Rows include 'cosmic rays', 'cache had feelings', and 'it worked on staging'.",
+  },
+  {
+    name: "meeting-that-could-have-been-a-logline.ics",
+    type: "Calendar",
+    deleted: "Just now",
+    note: "Restoring this may summon a 30-minute alignment sync.",
+  },
+];
+---
+
+<div class="app-content trash-app" data-trash-app>
+  <div class="trash-toolbar">
+    <div>
+      <h2>Trash Bin</h2>
+      <p data-trash-count>{trashItems.length} questionable artifacts quarantined</p>
+    </div>
+    <button type="button" data-empty-trash>Empty trash</button>
+  </div>
+
+  <div class="trash-list" data-trash-list>
+    {trashItems.map((item) => (
+      <article class="trash-item" data-trash-item>
+        <div class="trash-item-icon" aria-hidden="true">TR</div>
+        <div>
+          <div class="trash-item-title">
+            <h3>{item.name}</h3>
+            <span>{item.type}</span>
+          </div>
+          <p>{item.note}</p>
+          <small>Deleted {item.deleted}</small>
+        </div>
+        <button type="button" data-restore-trash>Restore</button>
+      </article>
+    ))}
+  </div>
+
+  <div class="trash-empty" data-trash-empty hidden>
+    <strong>Trash is empty.</strong>
+    <span>The desktop feels lighter. Suspiciously lighter.</span>
+  </div>
+</div>
+
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const app = document.querySelector("[data-trash-app]");
+    if (!app) return;
+
+    const list = app.querySelector("[data-trash-list]");
+    const empty = app.querySelector("[data-trash-empty]");
+    const count = app.querySelector("[data-trash-count]");
+
+    function renderCount() {
+      const remaining = app.querySelectorAll("[data-trash-item]").length;
+      count.textContent =
+        remaining === 1
+          ? "1 questionable artifact quarantined"
+          : remaining + " questionable artifacts quarantined";
+      empty.hidden = remaining > 0;
+    }
+
+    app.addEventListener("click", (event) => {
+      const restoreButton = event.target.closest("[data-restore-trash]");
+      if (restoreButton) {
+        const item = restoreButton.closest("[data-trash-item]");
+        restoreButton.textContent = "Restored-ish";
+        restoreButton.disabled = true;
+        item.classList.add("restored");
+        window.setTimeout(() => {
+          item.remove();
+          renderCount();
+        }, 450);
+      }
+
+      if (event.target.closest("[data-empty-trash]")) {
+        list.querySelectorAll("[data-trash-item]").forEach((item, index) => {
+          window.setTimeout(() => {
+            item.remove();
+            renderCount();
+          }, index * 80);
+        });
+      }
+    });
+
+    renderCount();
+  });
+</script>

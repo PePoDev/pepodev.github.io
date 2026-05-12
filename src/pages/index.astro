@@ -17,6 +17,7 @@ import SettingsApp from "../components/apps/SettingsApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
 import SystemMonitorApp from "../components/apps/SystemMonitorApp.astro";
 import TerminalApp from "../components/apps/TerminalApp.astro";
+import TrashBinApp from "../components/apps/TrashBinApp.astro";
 import WelcomeApp from "../components/apps/WelcomeApp.astro";
 import WorkApp from "../components/apps/WorkApp.astro";
 import DesktopIcon from "../components/desktop/DesktopIcon.astro";
@@ -58,6 +59,7 @@ import socialLinks from "../data/social-links.json";
         <DesktopIcon appId="metrics" label="Metrics" data-default-col="center+3" data-default-row="5" data-layout-group="utility" data-layout-index="6" />
         <DesktopIcon appId="music" label="Music" data-default-col="0" data-default-row="bottom" />
         <DesktopIcon appId="calculator" label="Calculator" data-default-col="1" data-default-row="bottom" />
+        <DesktopIcon appId="trash" label="Trash" data-default-col="2" data-default-row="bottom" />
         <DesktopIcon appId="terminal" label="Terminal" data-default-col="center" data-default-row="bottom" />
         <DesktopIcon appId="settings" label="Settings" data-default-col="right" data-default-row="bottom" />
       </div>
@@ -155,6 +157,9 @@ import socialLinks from "../data/social-links.json";
         </Window>
         <Window appId="gallery" title="Gallery" width={680} height={560}>
           <GalleryApp />
+        </Window>
+        <Window appId="trash" title="Trash Bin" width={680} height={520}>
+          <TrashBinApp />
         </Window>
       </div>
 

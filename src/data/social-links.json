@@ -10,6 +10,11 @@
     "icon": "linkedin"
   },
   {
+    "label": "Facebook - @pepodev",
+    "href": "https://fb.com/pepodev",
+    "icon": "facebook"
+  },
+  {
     "label": "Blog - blog.pepo.dev",
     "href": "https://blog.pepo.dev",
     "icon": "blog"
@@ -18,6 +23,11 @@
     "label": "Digital Garden - garden.pepo.dev",
     "href": "https://garden.pepo.dev",
     "icon": "garden"
+  },
+  {
+    "label": "Report Issue - GitHub",
+    "href": "https://github.com/pepodev/pepodev.github.io/issues/new",
+    "icon": "issue"
   },
   {
     "label": "Email - pepo@pepo.dev",

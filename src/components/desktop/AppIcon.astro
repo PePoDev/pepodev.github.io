@@ -16,6 +16,7 @@ const utilityIcons: Record<string, { label: string; color: string }> = {
   deploysim: { label: "CI", color: "#64d2ff" },
   monitor: { label: "CPU", color: "#ff9f0a" },
   gallery: { label: "IMG", color: "#bf5af2" },
+  trash: { label: "TR", color: "#8b949e" },
 };
 
 const utilityIcon = utilityIcons[name];
@@ -359,8 +360,21 @@ const utilityIcon = utilityIcons[name];
         stroke="#ff9f0a"
         stroke-width="1.5"
       />
-      <rect x="12" y="9" width="16" height="6" rx="1.5" fill="#ff9f0a" opacity="0.25" />
-      <path d="M14 21H14.1M20 21H20.1M26 21H26.1M14 27H14.1M20 27H20.1M26 27H26.1" stroke="#ff9f0a" stroke-width="2.4" stroke-linecap="round" />
+      <rect
+        x="12"
+        y="9"
+        width="16"
+        height="6"
+        rx="1.5"
+        fill="#ff9f0a"
+        opacity="0.25"
+      />
+      <path
+        d="M14 21H14.1M20 21H20.1M26 21H26.1M14 27H14.1M20 27H20.1M26 27H26.1"
+        stroke="#ff9f0a"
+        stroke-width="2.4"
+        stroke-linecap="round"
+      />
     </svg>
   )
 }
@@ -540,6 +554,63 @@ const utilityIcon = utilityIcons[name];
         stroke="#30d158"
         stroke-width="1.6"
         stroke-linecap="round"
+      />
+    </svg>
+  )
+}
+{
+  name === "issue" && (
+    <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <circle
+        cx="20"
+        cy="20"
+        r="16"
+        fill="#1e293b"
+        stroke="#ff453a"
+        stroke-width="1.5"
+      />
+      <path
+        d="M20 10L30 28H10L20 10Z"
+        fill="#ff453a"
+        opacity="0.18"
+        stroke="#ff453a"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M20 16V22"
+        stroke="#ff453a"
+        stroke-width="1.8"
+        stroke-linecap="round"
+      />
+      <circle cx="20" cy="26" r="1.4" fill="#ff453a" />
+    </svg>
+  )
+}
+{
+  name === "facebook" && (
+    <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <circle
+        cx="20"
+        cy="20"
+        r="16"
+        fill="#1e293b"
+        stroke="#3b82f6"
+        stroke-width="1.5"
+      />
+      <rect
+        x="10"
+        y="10"
+        width="20"
+        height="20"
+        rx="2"
+        fill="#3b82f6"
+        opacity="0.2"
+      />
+      <path
+        d="M22 12H24V16H22C21 16 20.5 16.5 20.5 17.5V19H24V22H20.5V30H17V22H15V19H17V17.5C17 14.5 18.5 12 22 12Z"
+        fill="#3b82f6"
+        opacity="0.9"
       />
     </svg>
   )
