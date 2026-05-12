@@ -10,6 +10,7 @@ import IncidentTimelineApp from "../components/apps/IncidentTimelineApp.astro";
 import MetricsDashboardApp from "../components/apps/MetricsDashboardApp.astro";
 import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
+import ReliabilityArcadeApp from "../components/apps/ReliabilityArcadeApp.astro";
 import ResumeApp from "../components/apps/ResumeApp.astro";
 import RunbookApp from "../components/apps/RunbookApp.astro";
 import SettingsApp from "../components/apps/SettingsApp.astro";
@@ -46,6 +47,7 @@ import socialLinks from "../data/social-links.json";
         <DesktopIcon appId="work" label="Work" />
         <DesktopIcon appId="me" label="About Me" />
         <DesktopIcon appId="sregame" label="SRE Game" />
+        <DesktopIcon appId="arcade" label="Arcade" />
         <DesktopIcon appId="music" label="Music" />
         <DesktopIcon appId="calculator" label="Calculator" />
         <DesktopIcon appId="settings" label="Settings" />
@@ -109,6 +111,14 @@ import socialLinks from "../data/social-links.json";
           height={600}
         >
           <SreGameApp />
+        </Window>
+        <Window
+          appId="arcade"
+          title="Reliability Arcade"
+          width={900}
+          height={640}
+        >
+          <ReliabilityArcadeApp />
         </Window>
         <Window appId="music" title="Music Player" width={460} height={520}>
           <MusicPlayerApp />

@@ -81,7 +81,18 @@ const { appId, title, width, height } = Astro.props;
   <div class="window-content">
     <slot />
   </div>
-  <div class="window-resize-handle"></div>
+  <div
+    class="window-resize-handle window-resize-handle-right"
+    data-resize-direction="right"
+  ></div>
+  <div
+    class="window-resize-handle window-resize-handle-bottom"
+    data-resize-direction="bottom"
+  ></div>
+  <div
+    class="window-resize-handle window-resize-handle-corner"
+    data-resize-direction="corner"
+  ></div>
 </section>
 
 <script is:inline>
@@ -184,7 +195,7 @@ const { appId, title, width, height } = Astro.props;
     function setupWindowEvents(state) {
       const win = state.element;
       const titlebar = win.querySelector(".window-titlebar");
-      const resizeHandle = win.querySelector(".window-resize-handle");
+      const resizeHandles = win.querySelectorAll(".window-resize-handle");
 
       win.addEventListener("mousedown", () => {
         if (state.open && !state.minimized) focusWindow(state.appId);
@@ -229,16 +240,20 @@ const { appId, title, width, height } = Astro.props;
       let resizeStartY = 0;
       let resizeStartW = 0;
       let resizeStartH = 0;
+      let resizeDirection = "corner";
 
-      resizeHandle?.addEventListener("mousedown", (event) => {
-        event.stopPropagation();
-        if (state.maximized) return;
-        isResizing = true;
-        resizeStartX = event.clientX;
-        resizeStartY = event.clientY;
-        resizeStartW = win.offsetWidth;
-        resizeStartH = win.offsetHeight;
-        document.body.style.userSelect = "none";
+      resizeHandles.forEach((handle) => {
+        handle.addEventListener("mousedown", (event) => {
+          event.stopPropagation();
+          if (state.maximized) return;
+          isResizing = true;
+          resizeDirection = handle.dataset.resizeDirection || "corner";
+          resizeStartX = event.clientX;
+          resizeStartY = event.clientY;
+          resizeStartW = win.offsetWidth;
+          resizeStartH = win.offsetHeight;
+          document.body.style.userSelect = "none";
+        });
       });
 
       document.addEventListener("mousemove", (event) => {
@@ -269,10 +284,17 @@ const { appId, title, width, height } = Astro.props;
         }
 
         if (isResizing) {
-          win.style.width =
-            Math.max(320, resizeStartW + event.clientX - resizeStartX) + "px";
-          win.style.height =
-            Math.max(200, resizeStartH + event.clientY - resizeStartY) + "px";
+          if (resizeDirection === "right" || resizeDirection === "corner") {
+            win.style.width =
+              Math.max(320, resizeStartW + event.clientX - resizeStartX) +
+              "px";
+          }
+
+          if (resizeDirection === "bottom" || resizeDirection === "corner") {
+            win.style.height =
+              Math.max(200, resizeStartH + event.clientY - resizeStartY) +
+              "px";
+          }
         }
       });
 

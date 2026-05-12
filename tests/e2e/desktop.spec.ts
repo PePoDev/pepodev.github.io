@@ -79,6 +79,53 @@ test("supports window minimize, restore, maximize, close, and taskbar state", as
   await expect(window).toBeHidden();
 });
 
+test("resizes windows from the right and bottom borders", async ({ page }) => {
+  const window = await openApp(page, "Projects", "project");
+  await expect(window).not.toHaveClass(/opening/);
+  const initialBox = await window.boundingBox();
+  expect(initialBox).not.toBeNull();
+
+  const rightHandle = window.locator(".window-resize-handle-right");
+  const rightHandleBox = await rightHandle.boundingBox();
+  expect(rightHandleBox).not.toBeNull();
+
+  await page.mouse.move(
+    rightHandleBox!.x + rightHandleBox!.width / 2,
+    rightHandleBox!.y + rightHandleBox!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    rightHandleBox!.x + rightHandleBox!.width / 2 + 80,
+    rightHandleBox!.y + rightHandleBox!.height / 2,
+  );
+  await page.mouse.up();
+
+  const widthResizedBox = await window.boundingBox();
+  expect(widthResizedBox).not.toBeNull();
+  expect(widthResizedBox!.width).toBeGreaterThan(initialBox!.width + 60);
+  expect(widthResizedBox!.height).toBeCloseTo(initialBox!.height, 0);
+
+  const bottomHandle = window.locator(".window-resize-handle-bottom");
+  const bottomHandleBox = await bottomHandle.boundingBox();
+  expect(bottomHandleBox).not.toBeNull();
+
+  await page.mouse.move(
+    bottomHandleBox!.x + bottomHandleBox!.width / 2,
+    bottomHandleBox!.y + bottomHandleBox!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    bottomHandleBox!.x + bottomHandleBox!.width / 2,
+    bottomHandleBox!.y + bottomHandleBox!.height / 2 + 80,
+  );
+  await page.mouse.up();
+
+  const heightResizedBox = await window.boundingBox();
+  expect(heightResizedBox).not.toBeNull();
+  expect(heightResizedBox!.width).toBeCloseTo(widthResizedBox!.width, 0);
+  expect(heightResizedBox!.height).toBeGreaterThan(widthResizedBox!.height + 60);
+});
+
 test("searches and launches apps from start menu and command palette", async ({
   page,
 }) => {
