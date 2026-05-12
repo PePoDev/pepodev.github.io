@@ -6,9 +6,13 @@ interface Props {
   label: string;
   id?: string;
   class?: string;
+  "data-default-col"?: string | number;
+  "data-default-row"?: string | number;
+  "data-layout-group"?: string;
+  "data-layout-index"?: string | number;
 }
 
-const { appId, label, id, class: className = "" } = Astro.props;
+const { appId, label, id, class: className = "", ...rest } = Astro.props;
 ---
 
 <button
@@ -16,6 +20,7 @@ const { appId, label, id, class: className = "" } = Astro.props;
   type="button"
   class:list={["desktop-icon", className]}
   data-open-app={appId}
+  {...rest}
 >
   <AppIcon name={appId} />
   <span>{label}</span>
@@ -118,15 +123,98 @@ const { appId, label, id, class: className = "" } = Astro.props;
       return setIconPosition(icon, next.x, next.y);
     }
 
+    function getGridIndex(value, maxIndex, fallback) {
+      const centerIndex = Math.round(maxIndex / 2);
+      const centerMatch = String(value || "").match(/^center([+-]\d+)?$/);
+      if (centerMatch) {
+        const offset = Number.parseInt(centerMatch[1] || "0", 10);
+        return Math.min(Math.max(0, centerIndex + offset), maxIndex);
+      }
+      if (value === "right" || value === "bottom") return maxIndex;
+
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isFinite(parsed)) {
+        return Math.min(Math.max(0, parsed), maxIndex);
+      }
+
+      return fallback;
+    }
+
+    function getUtilityPosition(icon, maxColumn, maxRow) {
+      const index = Number.parseInt(icon.dataset.layoutIndex || "0", 10);
+      const shortViewportPositions = [
+        { column: maxColumn - 2, row: 0 },
+        { column: maxColumn - 2, row: 1 },
+        { column: maxColumn - 2, row: 2 },
+        { column: maxColumn - 2, row: 3 },
+        { column: maxColumn - 1, row: 0 },
+        { column: maxColumn - 1, row: 1 },
+        { column: maxColumn - 1, row: 2 },
+      ];
+      const position = shortViewportPositions[index] || {
+        column: index,
+        row: 0,
+      };
+
+      return {
+        column: Math.min(Math.max(0, position.column), maxColumn),
+        row: Math.min(Math.max(0, position.row), maxRow),
+      };
+    }
+
+    function getDefaultIconPosition(icon, fallbackRect) {
+      const maxX = window.innerWidth - icon.offsetWidth - 8;
+      const maxY = window.innerHeight - icon.offsetHeight - 56;
+      const maxColumn = Math.max(
+        0,
+        Math.floor((maxX - gridOriginX) / gridColumnStep),
+      );
+      const maxRow = Math.max(
+        0,
+        Math.floor((maxY - gridOriginY) / gridRowStep),
+      );
+      const fallbackColumn = Math.round(
+        ((fallbackRect?.left || gridOriginX) - gridOriginX) / gridColumnStep,
+      );
+      const fallbackRow = Math.round(
+        ((fallbackRect?.top || gridOriginY) - gridOriginY) / gridRowStep,
+      );
+      let column = getGridIndex(
+        icon.dataset.defaultCol,
+        maxColumn,
+        fallbackColumn,
+      );
+      let row = getGridIndex(icon.dataset.defaultRow, maxRow, fallbackRow);
+
+      if (icon.dataset.layoutGroup === "utility" && maxRow <= 6) {
+        const utilityPosition = getUtilityPosition(icon, maxColumn, maxRow);
+        column = utilityPosition.column;
+        row = utilityPosition.row;
+      } else if (icon.dataset.layoutGroup === "left-mid" && maxRow <= 6) {
+        const offset = Number.parseInt(icon.dataset.layoutIndex || "0", 10);
+        row = Math.max(2, maxRow - 2 + offset);
+      }
+
+      return {
+        x: gridOriginX + column * gridColumnStep,
+        y: gridOriginY + row * gridRowStep,
+      };
+    }
+
     function findIconAtPosition(sourceIcon, position) {
+      const targetCenterX = position.x + sourceIcon.offsetWidth / 2;
+      const targetCenterY = position.y + sourceIcon.offsetHeight / 2;
+
       return Array.from(document.querySelectorAll(".desktop-icon")).find(
         (icon) => {
           if (icon === sourceIcon) return false;
 
           const rect = icon.getBoundingClientRect();
+          const iconCenterX = rect.left + rect.width / 2;
+          const iconCenterY = rect.top + rect.height / 2;
           return (
-            Math.abs(rect.left - position.x) < 2 &&
-            Math.abs(rect.top - position.y) < 2
+            Math.abs(iconCenterX - targetCenterX) < gridColumnStep / 2 &&
+            Math.abs(iconCenterY - targetCenterY) < gridRowStep / 2
           );
         },
       );
@@ -148,10 +236,7 @@ const { appId, label, id, class: className = "" } = Astro.props;
       const appId = icon.dataset.openApp;
       const initialRect = initialRects.get(icon);
       const saved = loadIconPosition(appId);
-      const initial = saved || {
-        x: initialRect?.left || 20,
-        y: initialRect?.top || 20,
-      };
+      const initial = saved || getDefaultIconPosition(icon, initialRect);
 
       snapIconPosition(icon, initial.x, initial.y);
       icon.dataset.desktopIconReady = "true";

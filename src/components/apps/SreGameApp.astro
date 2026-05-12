@@ -356,11 +356,11 @@
       function loadSystemAudioSettings() {
         try {
           const raw = localStorage.getItem(systemAudioKey);
-          if (raw) return { volume: 0.8, muted: false, ...JSON.parse(raw) };
+          if (raw) return { volume: 1, muted: false, ...JSON.parse(raw) };
         } catch {
           // Ignore corrupt persisted settings.
         }
-        return { volume: 0.8, muted: false };
+        return { volume: 1, muted: false };
       }
 
       function getEffectiveVolume() {
@@ -368,7 +368,7 @@
       }
 
       function applySystemAudioSettings(settings) {
-        systemAudioSettings = { volume: 0.8, muted: false, ...settings };
+        systemAudioSettings = { volume: 1, muted: false, ...settings };
         if (masterGain && audioContext) {
           masterGain.gain.setTargetAtTime(
             getEffectiveVolume(),

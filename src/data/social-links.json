@@ -15,6 +15,11 @@
     "icon": "blog"
   },
   {
+    "label": "Digital Garden - garden.pepo.dev",
+    "href": "https://garden.pepo.dev",
+    "icon": "garden"
+  },
+  {
     "label": "Email - pepo@pepo.dev",
     "href": "mailto:pepo@pepo.dev",
     "icon": "email"

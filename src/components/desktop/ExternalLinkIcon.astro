@@ -288,17 +288,20 @@ const {
 
   .icon-wrapper {
     position: relative;
-    width: 48px;
-    height: 48px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
   }
 
   .link-badge {
     position: absolute;
-    bottom: -2px;
-    right: -2px;
+    top: -3px;
+    right: -3px;
     width: 14px;
     height: 14px;
     border-radius: 3px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
   }
 </style>

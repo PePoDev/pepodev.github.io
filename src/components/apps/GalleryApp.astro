@@ -53,7 +53,10 @@ const photos = [
       {
         photos.map((photo) => (
           <article class="gallery-card">
-            <div class="gallery-picture" style={`background: ${photo.gradient}`}>
+            <div
+              class="gallery-picture"
+              style={`background: ${photo.gradient}`}
+            >
               <span>{photo.title}</span>
             </div>
             <h3>{photo.title}</h3>
@@ -87,7 +90,7 @@ const photos = [
         return;
       }
 
-      error.textContent = 'Hint: Please enter the "password".';
+      error.textContent = 'Please enter the "password"';
       passwordInput.select();
     });
   });
