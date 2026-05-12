@@ -100,7 +100,7 @@ const { appId, label, id, class: className = "" } = Astro.props;
       return next;
     }
 
-    function snapIconPosition(icon, x, y) {
+    function getSnappedPosition(icon, x, y) {
       const current = clampIconPosition(icon, x, y);
       const snappedX =
         gridOriginX +
@@ -110,7 +110,12 @@ const { appId, label, id, class: className = "" } = Astro.props;
         gridOriginY +
         Math.round((current.y - gridOriginY) / gridRowStep) * gridRowStep;
 
-      return setIconPosition(icon, snappedX, snappedY);
+      return clampIconPosition(icon, snappedX, snappedY);
+    }
+
+    function snapIconPosition(icon, x, y) {
+      const next = getSnappedPosition(icon, x, y);
+      return setIconPosition(icon, next.x, next.y);
     }
 
     function findIconAtPosition(sourceIcon, position) {
@@ -128,19 +133,15 @@ const { appId, label, id, class: className = "" } = Astro.props;
     }
 
     function snapIconPositionWithSwap(icon, x, y, previousX, previousY) {
-      const position = snapIconPosition(icon, x, y);
+      const position = getSnappedPosition(icon, x, y);
       const occupiedIcon = findIconAtPosition(icon, position);
 
       if (occupiedIcon) {
-        const swappedPosition = snapIconPosition(
-          occupiedIcon,
-          previousX,
-          previousY,
-        );
+        const swappedPosition = snapIconPosition(occupiedIcon, previousX, previousY);
         saveAnyIconPosition(occupiedIcon, swappedPosition);
       }
 
-      return position;
+      return setIconPosition(icon, position.x, position.y);
     }
 
     function initializeDesktopIcon(icon) {

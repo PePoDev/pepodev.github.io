@@ -1,0 +1,94 @@
+---
+const photos = [
+  {
+    title: "Production Dawn",
+    meta: "observability wall",
+    gradient: "linear-gradient(135deg, #0f766e, #22d3ee)",
+  },
+  {
+    title: "Cluster Room",
+    meta: "platform notes",
+    gradient: "linear-gradient(135deg, #312e81, #a855f7)",
+  },
+  {
+    title: "Release Night",
+    meta: "deploy window",
+    gradient: "linear-gradient(135deg, #7c2d12, #f59e0b)",
+  },
+  {
+    title: "Quiet Pager",
+    meta: "green dashboard",
+    gradient: "linear-gradient(135deg, #14532d, #30d158)",
+  },
+];
+---
+
+<div class="app-content gallery-app" data-gallery-app>
+  <section class="gallery-lock" data-gallery-lock>
+    <div class="gallery-lock-image" aria-hidden="true">
+      <div class="gallery-lock-shackle"></div>
+      <div class="gallery-lock-body">
+        <span></span>
+      </div>
+    </div>
+    <form class="gallery-lock-form" data-gallery-form>
+      <label for="gallery-password">Please enter the password</label>
+      <input
+        id="gallery-password"
+        data-gallery-password
+        type="password"
+        autocomplete="current-password"
+      />
+      <button type="submit">Unlock</button>
+      <p data-gallery-error role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="gallery-unlocked" data-gallery-unlocked hidden>
+    <div class="gallery-header">
+      <span class="ops-pill">Private gallery</span>
+      <strong>{photos.length} pictures</strong>
+    </div>
+    <div class="gallery-grid">
+      {
+        photos.map((photo) => (
+          <article class="gallery-card">
+            <div class="gallery-picture" style={`background: ${photo.gradient}`}>
+              <span>{photo.title}</span>
+            </div>
+            <h3>{photo.title}</h3>
+            <p>{photo.meta}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+</div>
+
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const app = document.querySelector("[data-gallery-app]");
+    if (!app) return;
+
+    const form = app.querySelector("[data-gallery-form]");
+    const passwordInput = app.querySelector("[data-gallery-password]");
+    const error = app.querySelector("[data-gallery-error]");
+    const locked = app.querySelector("[data-gallery-lock]");
+    const unlocked = app.querySelector("[data-gallery-unlocked]");
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      if (passwordInput.value === "password") {
+        locked.hidden = true;
+        unlocked.hidden = false;
+        error.textContent = "";
+        return;
+      }
+
+      error.textContent = 'Hint: Please enter the "password".';
+      passwordInput.select();
+    });
+  });
+</script>

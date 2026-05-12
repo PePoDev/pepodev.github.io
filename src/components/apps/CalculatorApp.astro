@@ -60,7 +60,10 @@
       function calculate() {
         if (!expression || !/^[\d+\-*/%. ()]+$/.test(expression)) return;
         try {
-          const result = Function(`"use strict"; return (${expression})`)();
+          const evaluableExpression = normalizePercentExpression(expression);
+          const result = Function(
+            `"use strict"; return (${evaluableExpression})`,
+          )();
           if (!Number.isFinite(result)) throw new Error("Invalid result");
           const previous = expression;
           expression = String(Number.parseFloat(result.toFixed(10)));
@@ -70,6 +73,10 @@
           expression = "";
           render("Invalid expression");
         }
+      }
+
+      function normalizePercentExpression(value) {
+        return value.replace(/(\d+(?:\.\d+)?)%/g, "($1/100)");
       }
 
       calculator.addEventListener("click", (event) => {

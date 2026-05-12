@@ -5,6 +5,7 @@ import BlogApp from "../components/apps/BlogApp.astro";
 import CalculatorApp from "../components/apps/CalculatorApp.astro";
 import CertificationsWalletApp from "../components/apps/CertificationsWalletApp.astro";
 import DeploySimulatorApp from "../components/apps/DeploySimulatorApp.astro";
+import GalleryApp from "../components/apps/GalleryApp.astro";
 import IncidentTimelineApp from "../components/apps/IncidentTimelineApp.astro";
 import MetricsDashboardApp from "../components/apps/MetricsDashboardApp.astro";
 import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
@@ -56,6 +57,7 @@ import socialLinks from "../data/social-links.json";
         <DesktopIcon appId="certs" label="Certs" />
         <DesktopIcon appId="deploysim" label="Deploy Sim" />
         <DesktopIcon appId="monitor" label="Monitor" />
+        <DesktopIcon appId="gallery" label="Gallery" />
       </div>
 
       <!-- External Link Shortcuts -->
@@ -140,6 +142,9 @@ import socialLinks from "../data/social-links.json";
         </Window>
         <Window appId="monitor" title="System Monitor" width={620} height={500}>
           <SystemMonitorApp />
+        </Window>
+        <Window appId="gallery" title="Gallery" width={680} height={560}>
+          <GalleryApp />
         </Window>
       </div>
 

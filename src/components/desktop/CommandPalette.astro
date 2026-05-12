@@ -19,6 +19,7 @@ const apps = [
   { id: "certs", name: "Certs", description: "View certification wallet" },
   { id: "deploysim", name: "Deploy Sim", description: "Run a CI/CD simulation" },
   { id: "monitor", name: "Monitor", description: "Watch live system signals" },
+  { id: "gallery", name: "Gallery", description: "Open protected pictures" },
 ];
 
 const commands = [
@@ -269,7 +270,7 @@ const externalLinks = socialLinks.map((link) => ({
     // Keyboard shortcuts
     document.addEventListener("keydown", (e) => {
       // Open palette: Ctrl+K or Cmd+K
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         if (palette.dataset.visible === "true") {
           closePalette();
@@ -342,7 +343,7 @@ const externalLinks = socialLinks.map((link) => ({
   .command-palette {
     position: fixed;
     inset: 0;
-    z-index: 9999;
+    z-index: 20000;
     display: flex;
     align-items: flex-start;
     justify-content: center;

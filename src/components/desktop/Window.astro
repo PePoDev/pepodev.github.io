@@ -116,6 +116,17 @@ const { appId, title, width, height } = Astro.props;
       openWindow(event.detail.appId);
     });
 
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (isEscapeOwnedByOverlay()) return;
+
+      const activeWindow = getActiveWindow();
+      if (!activeWindow) return;
+
+      event.preventDefault();
+      closeWindow(activeWindow.appId);
+    });
+
     function openWindow(appId) {
       const state = windows.get(appId);
       if (!state) return;
@@ -304,6 +315,33 @@ const { appId, title, width, height } = Astro.props;
         updateTaskbar();
       }, 200);
       updateTaskbar();
+    }
+
+    function getActiveWindow() {
+      const focused = Array.from(windows.values()).find(
+        (state) =>
+          state.open &&
+          !state.minimized &&
+          state.element.classList.contains("focused"),
+      );
+      if (focused) return focused;
+
+      return Array.from(windows.values())
+        .filter((state) => state.open && !state.minimized)
+        .sort(
+          (a, b) =>
+            Number(b.element.style.zIndex || 0) -
+            Number(a.element.style.zIndex || 0),
+        )[0];
+    }
+
+    function isEscapeOwnedByOverlay() {
+      return (
+        document.getElementById("command-palette")?.dataset.visible ===
+          "true" ||
+        document.getElementById("start-menu")?.classList.contains("visible") ||
+        document.getElementById("tray-panel")?.classList.contains("visible")
+      );
     }
 
     function minimizeWindow(appId) {
