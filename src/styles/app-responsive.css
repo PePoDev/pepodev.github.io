@@ -1,0 +1,34 @@
+/* Responsive */
+@media (max-width: 768px) {
+  .window {
+    min-width: 280px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .work-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  #start-menu {
+    width: calc(100% - 24px);
+    max-width: 360px;
+  }
+}
+
+/* Selection color */
+::selection {
+  background: rgba(6, 182, 212, 0.3);
+  color: var(--text-primary);
+}

@@ -1,0 +1,228 @@
+/* Window System */
+
+.window {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--window-radius);
+  box-shadow: var(--window-shadow);
+  overflow: hidden;
+  transition:
+    box-shadow 0.2s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  min-width: 320px;
+  min-height: 200px;
+}
+
+.window[hidden] {
+  display: none;
+}
+
+.window.focused {
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--accent-blue);
+  border-color: rgba(10, 132, 255, 0.2);
+}
+
+.window.minimized {
+  opacity: 0;
+  transform: scale(0.9) translateY(40px);
+  pointer-events: none;
+}
+
+.window.closing {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+/* Resize Handle */
+.window-resize-handle {
+  position: absolute;
+  z-index: 10;
+}
+
+.window-resize-handle-right {
+  top: 16px;
+  right: 0;
+  bottom: 16px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.window-resize-handle-bottom {
+  right: 16px;
+  bottom: 0;
+  left: 16px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.window-resize-handle-corner {
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+}
+
+.window.maximized .window-resize-handle {
+  display: none;
+}
+
+.window.opening {
+  animation: windowOpen 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes windowOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Window Title Bar */
+.window-titlebar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border);
+  cursor: default;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.window.focused .window-titlebar {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.window-titlebar-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.window-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-sans);
+}
+
+.window.focused .window-title {
+  color: var(--text-primary);
+}
+
+.window-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+  animation: statusPulse 3s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.window-controls {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.window-controls button {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.1s ease;
+}
+
+.window-controls button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.window-controls button.close-btn:hover {
+  background: var(--accent-red);
+  color: white;
+}
+
+.window-controls button svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Visual indicator when window is maximized */
+.window.maximized .max-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--accent-blue);
+}
+
+.window.maximized .max-btn:hover {
+  background: rgba(10, 132, 255, 0.2);
+}
+
+/* Window Content */
+.window-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.window-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.window-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.window-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.window-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 768px) {
+  .window {
+    min-width: 280px;
+  }
+}
