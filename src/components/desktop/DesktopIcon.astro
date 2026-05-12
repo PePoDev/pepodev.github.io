@@ -31,6 +31,11 @@ const { appId, label, id, class: className = "" } = Astro.props;
       desktopIcons.map((icon) => [icon, icon.getBoundingClientRect()]),
     );
     const storagePrefix = "pepodev.desktopIcon.";
+    const linkStoragePrefix = "pepodev.linkIcon.v2.";
+    const gridOriginX = 20;
+    const gridOriginY = 20;
+    const gridColumnStep = 88;
+    const gridRowStep = 98;
 
     function loadIconPosition(appId) {
       try {
@@ -44,6 +49,24 @@ const { appId, label, id, class: className = "" } = Astro.props;
     function saveIconPosition(appId, position) {
       try {
         localStorage.setItem(storagePrefix + appId, JSON.stringify(position));
+      } catch {
+        // Ignore storage failures; dragging still works for the current session.
+      }
+    }
+
+    function saveAnyIconPosition(icon, position) {
+      try {
+        if (icon.dataset.openApp) {
+          localStorage.setItem(
+            storagePrefix + icon.dataset.openApp,
+            JSON.stringify(position),
+          );
+        } else if (icon.classList.contains("desktop-link-icon") && icon.id) {
+          localStorage.setItem(
+            linkStoragePrefix + icon.id,
+            JSON.stringify(position),
+          );
+        }
       } catch {
         // Ignore storage failures; dragging still works for the current session.
       }
@@ -77,6 +100,49 @@ const { appId, label, id, class: className = "" } = Astro.props;
       return next;
     }
 
+    function snapIconPosition(icon, x, y) {
+      const current = clampIconPosition(icon, x, y);
+      const snappedX =
+        gridOriginX +
+        Math.round((current.x - gridOriginX) / gridColumnStep) *
+          gridColumnStep;
+      const snappedY =
+        gridOriginY +
+        Math.round((current.y - gridOriginY) / gridRowStep) * gridRowStep;
+
+      return setIconPosition(icon, snappedX, snappedY);
+    }
+
+    function findIconAtPosition(sourceIcon, position) {
+      return Array.from(document.querySelectorAll(".desktop-icon")).find(
+        (icon) => {
+          if (icon === sourceIcon) return false;
+
+          const rect = icon.getBoundingClientRect();
+          return (
+            Math.abs(rect.left - position.x) < 2 &&
+            Math.abs(rect.top - position.y) < 2
+          );
+        },
+      );
+    }
+
+    function snapIconPositionWithSwap(icon, x, y, previousX, previousY) {
+      const position = snapIconPosition(icon, x, y);
+      const occupiedIcon = findIconAtPosition(icon, position);
+
+      if (occupiedIcon) {
+        const swappedPosition = snapIconPosition(
+          occupiedIcon,
+          previousX,
+          previousY,
+        );
+        saveAnyIconPosition(occupiedIcon, swappedPosition);
+      }
+
+      return position;
+    }
+
     function initializeDesktopIcon(icon) {
       const appId = icon.dataset.openApp;
       const initialRect = initialRects.get(icon);
@@ -86,7 +152,7 @@ const { appId, label, id, class: className = "" } = Astro.props;
         y: initialRect?.top || 20,
       };
 
-      setIconPosition(icon, initial.x, initial.y);
+      snapIconPosition(icon, initial.x, initial.y);
       icon.dataset.desktopIconReady = "true";
     }
 
@@ -147,7 +213,13 @@ const { appId, label, id, class: className = "" } = Astro.props;
 
           if (isDragging) {
             const rect = trigger.getBoundingClientRect();
-            const position = setIconPosition(trigger, rect.left, rect.top);
+            const position = snapIconPositionWithSwap(
+              trigger,
+              rect.left,
+              rect.top,
+              iconStartX,
+              iconStartY,
+            );
             saveIconPosition(trigger.dataset.openApp, position);
             trigger.classList.remove("dragging");
             isDragging = false;
@@ -178,7 +250,7 @@ const { appId, label, id, class: className = "" } = Astro.props;
     window.addEventListener("resize", () => {
       desktopIcons.forEach((icon) => {
         const rect = icon.getBoundingClientRect();
-        const position = setIconPosition(icon, rect.left, rect.top);
+        const position = snapIconPosition(icon, rect.left, rect.top);
         saveIconPosition(icon.dataset.openApp, position);
       });
     });

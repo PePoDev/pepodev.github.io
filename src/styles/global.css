@@ -90,9 +90,12 @@ body {
   position: fixed;
   top: 20px;
   left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 80px);
+  grid-auto-rows: 88px;
+  gap: 10px 8px;
+  align-items: start;
+  justify-items: center;
   z-index: 5;
 }
 
@@ -100,14 +103,6 @@ body {
 #desktop-social-icon {
   position: fixed;
   top: 20px;
-  right: 20px;
-  z-index: 5;
-}
-
-/* === SRE Game Icon (bottom-right) === */
-#desktop-game-icon {
-  position: fixed;
-  bottom: 68px;
   right: 20px;
   z-index: 5;
 }
@@ -130,6 +125,18 @@ body {
   color: inherit;
   font: inherit;
   touch-action: none;
+}
+
+@media (max-width: 560px) {
+  #desktop-icons {
+    grid-template-columns: repeat(2, 80px);
+  }
+}
+
+@media (max-width: 360px) {
+  #desktop-icons {
+    grid-template-columns: 80px;
+  }
 }
 
 .desktop-icon:hover {

@@ -53,6 +53,11 @@ const {
       linkIcons.map((icon) => [icon, icon.getBoundingClientRect()]),
     );
     const storagePrefix = "pepodev.linkIcon.v2."; // v2 to reset old stacked positions
+    const appStoragePrefix = "pepodev.desktopIcon.";
+    const gridOriginX = 20;
+    const gridOriginY = 20;
+    const gridColumnStep = 88;
+    const gridRowStep = 98;
 
     function loadIconPosition(iconId) {
       try {
@@ -66,6 +71,21 @@ const {
     function saveIconPosition(iconId, position) {
       try {
         localStorage.setItem(storagePrefix + iconId, JSON.stringify(position));
+      } catch {
+        // Ignore storage failures
+      }
+    }
+
+    function saveAnyIconPosition(icon, position) {
+      try {
+        if (icon.classList.contains("desktop-link-icon") && icon.id) {
+          localStorage.setItem(storagePrefix + icon.id, JSON.stringify(position));
+        } else if (icon.dataset.openApp) {
+          localStorage.setItem(
+            appStoragePrefix + icon.dataset.openApp,
+            JSON.stringify(position),
+          );
+        }
       } catch {
         // Ignore storage failures
       }
@@ -99,6 +119,49 @@ const {
       return next;
     }
 
+    function snapIconPosition(icon, x, y) {
+      const current = clampIconPosition(icon, x, y);
+      const snappedX =
+        gridOriginX +
+        Math.round((current.x - gridOriginX) / gridColumnStep) *
+          gridColumnStep;
+      const snappedY =
+        gridOriginY +
+        Math.round((current.y - gridOriginY) / gridRowStep) * gridRowStep;
+
+      return setIconPosition(icon, snappedX, snappedY);
+    }
+
+    function findIconAtPosition(sourceIcon, position) {
+      return Array.from(document.querySelectorAll(".desktop-icon")).find(
+        (icon) => {
+          if (icon === sourceIcon) return false;
+
+          const rect = icon.getBoundingClientRect();
+          return (
+            Math.abs(rect.left - position.x) < 2 &&
+            Math.abs(rect.top - position.y) < 2
+          );
+        },
+      );
+    }
+
+    function snapIconPositionWithSwap(icon, x, y, previousX, previousY) {
+      const position = snapIconPosition(icon, x, y);
+      const occupiedIcon = findIconAtPosition(icon, position);
+
+      if (occupiedIcon) {
+        const swappedPosition = snapIconPosition(
+          occupiedIcon,
+          previousX,
+          previousY,
+        );
+        saveAnyIconPosition(occupiedIcon, swappedPosition);
+      }
+
+      return position;
+    }
+
     linkIcons.forEach((icon) => {
       const iconId = icon.id;
       if (!iconId) return;
@@ -118,13 +181,13 @@ const {
 
       const saved = loadIconPosition(iconId);
       const initial = saved || calculateDefaultPosition();
-      setIconPosition(icon, initial.x, initial.y);
+      snapIconPosition(icon, initial.x, initial.y);
 
       // Reposition on window resize if no saved position
       window.addEventListener("resize", () => {
         if (!loadIconPosition(iconId)) {
           const defaultPos = calculateDefaultPosition();
-          setIconPosition(icon, defaultPos.x, defaultPos.y);
+          snapIconPosition(icon, defaultPos.x, defaultPos.y);
         }
       });
 
@@ -173,7 +236,13 @@ const {
 
         if (isDragging) {
           const rect = icon.getBoundingClientRect();
-          const position = setIconPosition(icon, rect.left, rect.top);
+          const position = snapIconPositionWithSwap(
+            icon,
+            rect.left,
+            rect.top,
+            iconStartX,
+            iconStartY,
+          );
           saveIconPosition(iconId, position);
           icon.classList.remove("dragging");
 
