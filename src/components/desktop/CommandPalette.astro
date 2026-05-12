@@ -56,7 +56,7 @@ const commands = [
   {
     id: "reset-desktop",
     name: "Reset Desktop",
-    description: "Clear icon positions and reset layout",
+    description: "Clear all settings and state for a fresh start",
     icon: "🔄",
   },
   {
@@ -275,14 +275,12 @@ const externalLinks = socialLinks.map((link) => ({
 
     function executeCommand(commandId) {
       if (commandId === "reset-desktop") {
-        // Clear all desktop icon positions
+        // Clear ALL desktop settings and state for a complete fresh start
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (
-            key?.startsWith("pepodev.desktopIcon.") ||
-            key?.startsWith("pepodev.linkIcon.")
-          ) {
+          // Remove all pepodev-related keys
+          if (key?.startsWith("pepodev.")) {
             keysToRemove.push(key);
           }
         }
@@ -290,7 +288,7 @@ const externalLinks = socialLinks.map((link) => ({
 
         closePalette();
 
-        // Reload the page to show default layout
+        // Reload the page to show default state
         setTimeout(() => window.location.reload(), 500);
       } else if (commandId === "toggle-theme") {
         // Toggle theme using the same logic as Settings app
@@ -318,8 +316,8 @@ const externalLinks = socialLinks.map((link) => ({
         const accentMap = {
           green: { primary: "#30d158", secondary: "#64d2ff" },
           cyan: { primary: "#64d2ff", secondary: "#30d158" },
-          purple: { primary: "#bf5af2", secondary: "#ff9f0a" },
-          amber: { primary: "#ff9f0a", secondary: "#bf5af2" },
+          purple: { primary: "#bf5af2", secondary: "#64d2ff" },
+          amber: { primary: "#ff9f0a", secondary: "#64d2ff" },
         };
         const backgroundMap = {
           network: {
@@ -352,6 +350,9 @@ const externalLinks = socialLinks.map((link) => ({
         root.setAttribute("data-theme", prefs.theme);
         root.style.setProperty("--accent-primary", accent.primary);
         root.style.setProperty("--accent-secondary", accent.secondary);
+        // Also update the main accent variables for backward compatibility
+        root.style.setProperty("--accent-green", accent.primary);
+        root.style.setProperty("--accent-cyan", accent.secondary);
         root.style.setProperty("--window-radius", `${prefs.radius}px`);
         root.style.setProperty(
           "--glass-bg",

@@ -252,7 +252,7 @@
 }
 
 .settings-field input[type="range"] {
-  accent-color: var(--accent-cyan);
+  accent-color: var(--accent-primary);
 }
 
 .settings-swatches,
@@ -301,4 +301,3 @@
     grid-template-columns: 1fr;
   }
 }
-

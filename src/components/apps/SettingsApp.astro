@@ -113,7 +113,7 @@ const tracks = [
 
       <div class="settings-actions">
         <button type="button" data-music-setting="toggle">Play music</button>
-        <button type="button" data-settings-reset>Reset style</button>
+        <button type="button" data-settings-reset>Reset all settings</button>
       </div>
     </section>
   </div>
@@ -137,8 +137,8 @@ const tracks = [
     const accentMap = {
       green: { primary: "#30d158", secondary: "#64d2ff" },
       cyan: { primary: "#64d2ff", secondary: "#30d158" },
-      purple: { primary: "#bf5af2", secondary: "#ff9f0a" },
-      amber: { primary: "#ff9f0a", secondary: "#bf5af2" },
+      purple: { primary: "#bf5af2", secondary: "#64d2ff" },
+      amber: { primary: "#ff9f0a", secondary: "#64d2ff" },
     };
     const backgroundMap = {
       network: {
@@ -197,6 +197,9 @@ const tracks = [
       root.setAttribute("data-theme", prefs.theme);
       root.style.setProperty("--accent-primary", accent.primary);
       root.style.setProperty("--accent-secondary", accent.secondary);
+      // Also update the main accent variables for backward compatibility
+      root.style.setProperty("--accent-green", accent.primary);
+      root.style.setProperty("--accent-cyan", accent.secondary);
       root.style.setProperty("--window-radius", `${prefs.radius}px`);
       root.style.setProperty(
         "--glass-bg",
@@ -286,8 +289,19 @@ const tracks = [
       }
 
       if (event.target.matches("[data-settings-reset]")) {
-        applyPrefs({ ...defaults, theme: "dark" });
-        render();
+        // Clear ALL desktop settings and state for a complete fresh start
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          // Remove all pepodev-related keys
+          if (key?.startsWith("pepodev.")) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+        // Reload the page to show default state
+        setTimeout(() => window.location.reload(), 200);
       }
     });
 
