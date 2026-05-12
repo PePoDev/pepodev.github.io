@@ -127,6 +127,14 @@ const { appId, title, width, height } = Astro.props;
       openWindow(event.detail.appId);
     });
 
+    document.addEventListener("desktop:close-all-windows", () => {
+      windows.forEach((state) => {
+        if (state.open) {
+          closeWindow(state.appId);
+        }
+      });
+    });
+
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
       if (isEscapeOwnedByOverlay()) return;

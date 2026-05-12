@@ -37,6 +37,12 @@ const commands = [
     description: "Switch between dark and light theme",
     icon: "🌓",
   },
+  {
+    id: "close-all-windows",
+    name: "Close All Windows",
+    description: "Close all open application windows",
+    icon: "❌",
+  },
 ];
 
 const externalLinks = socialLinks.map((link) => ({
@@ -265,6 +271,12 @@ const externalLinks = socialLinks.map((link) => ({
         const newTheme = currentTheme === "dark" ? "light" : "dark";
         document.documentElement.setAttribute("data-theme", newTheme);
         localStorage.setItem("pepodev.theme", newTheme);
+        closePalette();
+      } else if (commandId === "close-all-windows") {
+        // Close all open windows
+        document.dispatchEvent(
+          new CustomEvent("desktop:close-all-windows"),
+        );
         closePalette();
       }
     }
