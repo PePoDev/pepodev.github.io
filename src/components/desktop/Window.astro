@@ -87,6 +87,9 @@ const { appId, title, width, height } = Astro.props;
 <script is:inline>
   // @ts-nocheck
   document.addEventListener("DOMContentLoaded", () => {
+    if (window.__pepodevWindowManagerReady) return;
+    window.__pepodevWindowManagerReady = true;
+
     const taskbarApps = document.getElementById("taskbar-apps");
     let topZ = 100;
     const windows = new Map();
@@ -147,7 +150,7 @@ const { appId, title, width, height } = Astro.props;
       state.prevBounds = null;
       state.element.hidden = false;
       state.element.setAttribute("aria-hidden", "false");
-      state.element.classList.remove("minimized", "closing");
+      state.element.classList.remove("minimized", "maximized", "closing");
       state.element.classList.add("opening");
       state.element.style.width = targetWidth + "px";
       state.element.style.height = targetHeight + "px";
@@ -191,39 +194,17 @@ const { appId, title, width, height } = Astro.props;
       let dragStartY = 0;
       let winStartX = 0;
       let winStartY = 0;
+      let wasMaximized = false;
 
       titlebar?.addEventListener("mousedown", (event) => {
         if (event.target.closest(".window-controls")) return;
 
-        // If maximized, restore window on drag start
-        if (state.maximized) {
-          const rect = win.getBoundingClientRect();
-          const clickX = event.clientX;
-          const clickRatioX = clickX / rect.width;
-
-          // Restore the window
-          if (state.prevBounds) {
-            Object.assign(win.style, state.prevBounds);
-            state.maximized = false;
-            win.classList.remove("maximized");
-
-            // Position window so cursor is at the same relative position on titlebar
-            const newWidth = parseInt(state.prevBounds.width);
-            const newX = clickX - newWidth * clickRatioX;
-            win.style.left = Math.max(0, newX) + "px";
-            win.style.top = "0px";
-
-            // Update drag start positions for smooth continuation
-            winStartX = parseInt(win.style.left);
-            winStartY = 0;
-          }
-        }
-
-        isDragging = true;
         dragStartX = event.clientX;
         dragStartY = event.clientY;
         winStartX = win.offsetLeft;
         winStartY = win.offsetTop;
+        wasMaximized = state.maximized;
+        isDragging = true;
         document.body.style.userSelect = "none";
       });
 
@@ -251,9 +232,29 @@ const { appId, title, width, height } = Astro.props;
 
       document.addEventListener("mousemove", (event) => {
         if (isDragging) {
-          win.style.left = winStartX + event.clientX - dragStartX + "px";
-          win.style.top =
-            Math.max(0, winStartY + event.clientY - dragStartY) + "px";
+          const deltaX = event.clientX - dragStartX;
+          const deltaY = event.clientY - dragStartY;
+
+          if (wasMaximized && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+            if (state.prevBounds) {
+              const restoredBounds = { ...state.prevBounds };
+              const clickRatioX = dragStartX / window.innerWidth;
+              const newX = dragStartX - restoredBounds.width * clickRatioX;
+
+              restoredBounds.left = Math.max(0, newX);
+              restoredBounds.top = 0;
+              unmaximizeWindow(state, restoredBounds);
+
+              winStartX = parseInt(win.style.left);
+              winStartY = 0;
+              dragStartX = event.clientX;
+              dragStartY = event.clientY;
+              wasMaximized = false;
+            }
+          } else if (!wasMaximized) {
+            win.style.left = winStartX + deltaX + "px";
+            win.style.top = Math.max(0, winStartY + deltaY) + "px";
+          }
         }
 
         if (isResizing) {
@@ -268,6 +269,7 @@ const { appId, title, width, height } = Astro.props;
         if (isDragging || isResizing) {
           isDragging = false;
           isResizing = false;
+          wasMaximized = false;
           document.body.style.userSelect = "";
         }
       });
@@ -294,7 +296,7 @@ const { appId, title, width, height } = Astro.props;
       state.minimized = false;
       state.maximized = false;
       state.element.classList.add("closing");
-      state.element.classList.remove("focused", "minimized");
+      state.element.classList.remove("focused", "minimized", "maximized");
       window.setTimeout(() => {
         state.element.hidden = true;
         state.element.setAttribute("aria-hidden", "true");
@@ -329,27 +331,44 @@ const { appId, title, width, height } = Astro.props;
       if (!state || !state.open) return;
 
       if (!state.maximized) {
-        state.prevBounds = {
-          left: state.element.style.left,
-          top: state.element.style.top,
-          width: state.element.style.width,
-          height: state.element.style.height,
-        };
+        state.prevBounds = getWindowBounds(state.element);
         state.element.style.left = "0";
         state.element.style.top = "0";
-        state.element.style.width = "100%";
+        state.element.style.width = "100vw";
         state.element.style.height = "calc(100vh - 48px)";
         state.element.style.zIndex = ++topZ;
         state.maximized = true;
         state.element.classList.add("maximized");
       } else if (state.prevBounds) {
-        Object.assign(state.element.style, state.prevBounds);
-        state.element.style.zIndex = ++topZ;
-        state.maximized = false;
-        state.element.classList.remove("maximized");
+        unmaximizeWindow(state);
       }
 
       focusWindow(appId);
+    }
+
+    function getWindowBounds(element) {
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+
+    function applyWindowBounds(element, bounds) {
+      element.style.left = bounds.left + "px";
+      element.style.top = bounds.top + "px";
+      element.style.width = bounds.width + "px";
+      element.style.height = bounds.height + "px";
+    }
+
+    function unmaximizeWindow(state, bounds = state.prevBounds) {
+      if (!bounds) return;
+      applyWindowBounds(state.element, bounds);
+      state.element.style.zIndex = ++topZ;
+      state.maximized = false;
+      state.element.classList.remove("maximized");
     }
 
     function updateTaskbar() {
