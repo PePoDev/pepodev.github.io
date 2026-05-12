@@ -10,18 +10,46 @@ const apps = [
   { id: "sregame", name: "SRE Game", description: "Play the chaos game" },
   { id: "arcade", name: "Arcade", description: "Play reliability mini apps" },
   { id: "music", name: "Music", description: "Play ambient desktop music" },
-  { id: "calculator", name: "Calculator", description: "Run quick calculations" },
+  {
+    id: "calculator",
+    name: "Calculator",
+    description: "Run quick calculations",
+  },
   { id: "settings", name: "Settings", description: "Customize the desktop" },
-  { id: "terminal", name: "Terminal", description: "Use the interactive shell" },
-  { id: "incidents", name: "Incidents", description: "Review incident response" },
+  {
+    id: "terminal",
+    name: "Terminal",
+    description: "Use the interactive shell",
+  },
+  {
+    id: "incidents",
+    name: "Incidents",
+    description: "Review incident response",
+  },
   { id: "metrics", name: "Metrics", description: "Open service metrics" },
-  { id: "architecture", name: "Architecture", description: "Inspect platform architecture" },
-  { id: "runbook", name: "Runbook", description: "Search operational runbooks" },
+  {
+    id: "architecture",
+    name: "Architecture",
+    description: "Inspect platform architecture",
+  },
+  {
+    id: "runbook",
+    name: "Runbook",
+    description: "Search operational runbooks",
+  },
   { id: "certs", name: "Certs", description: "View certification wallet" },
-  { id: "deploysim", name: "Deploy Sim", description: "Run a CI/CD simulation" },
+  {
+    id: "deploysim",
+    name: "Deploy Sim",
+    description: "Run a CI/CD simulation",
+  },
   { id: "monitor", name: "Monitor", description: "Watch live system signals" },
   { id: "gallery", name: "Gallery", description: "Open protected pictures" },
-  { id: "trash", name: "Trash", description: "Inspect deleted desktop nonsense" },
+  {
+    id: "trash",
+    name: "Trash",
+    description: "Inspect deleted desktop nonsense",
+  },
 ];
 
 const commands = [
@@ -274,9 +302,7 @@ const externalLinks = socialLinks.map((link) => ({
         closePalette();
       } else if (commandId === "close-all-windows") {
         // Close all open windows
-        document.dispatchEvent(
-          new CustomEvent("desktop:close-all-windows"),
-        );
+        document.dispatchEvent(new CustomEvent("desktop:close-all-windows"));
         closePalette();
       }
     }

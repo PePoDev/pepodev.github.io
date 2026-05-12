@@ -84,15 +84,18 @@ const { appId, title, width, height } = Astro.props;
   <div
     class="window-resize-handle window-resize-handle-right"
     data-resize-direction="right"
-  ></div>
+  >
+  </div>
   <div
     class="window-resize-handle window-resize-handle-bottom"
     data-resize-direction="bottom"
-  ></div>
+  >
+  </div>
   <div
     class="window-resize-handle window-resize-handle-corner"
     data-resize-direction="corner"
-  ></div>
+  >
+  </div>
 </section>
 
 <script is:inline>
@@ -294,14 +297,12 @@ const { appId, title, width, height } = Astro.props;
         if (isResizing) {
           if (resizeDirection === "right" || resizeDirection === "corner") {
             win.style.width =
-              Math.max(320, resizeStartW + event.clientX - resizeStartX) +
-              "px";
+              Math.max(320, resizeStartW + event.clientX - resizeStartX) + "px";
           }
 
           if (resizeDirection === "bottom" || resizeDirection === "corner") {
             win.style.height =
-              Math.max(200, resizeStartH + event.clientY - resizeStartY) +
-              "px";
+              Math.max(200, resizeStartH + event.clientY - resizeStartY) + "px";
           }
         }
       });
