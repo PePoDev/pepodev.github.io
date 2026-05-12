@@ -115,3 +115,22 @@
   line-height: 1.2;
   word-break: break-word;
 }
+
+/* Light Theme Overrides */
+[data-theme="light"] .desktop-icon:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .desktop-icon:active {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .desktop-icon svg {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
+}
+
+[data-theme="light"] .desktop-icon span {
+  text-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.9),
+    0 0 10px rgba(255, 255, 255, 0.5);
+}

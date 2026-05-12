@@ -226,3 +226,36 @@
     min-width: 280px;
   }
 }
+
+/* Light Theme Overrides */
+[data-theme="light"] .window {
+  backdrop-filter: blur(40px) saturate(1.2) brightness(1.05);
+  -webkit-backdrop-filter: blur(40px) saturate(1.2) brightness(1.05);
+}
+
+[data-theme="light"] .window.focused {
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.08),
+    0 0 0 1px var(--accent-blue);
+}
+
+[data-theme="light"] .window-titlebar {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .window.focused .window-titlebar {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .window-controls button:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .window-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .window-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}

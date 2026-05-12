@@ -293,12 +293,84 @@ const externalLinks = socialLinks.map((link) => ({
         // Reload the page to show default layout
         setTimeout(() => window.location.reload(), 500);
       } else if (commandId === "toggle-theme") {
-        // Toggle theme
-        const currentTheme =
-          document.documentElement.getAttribute("data-theme") || "dark";
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", newTheme);
-        localStorage.setItem("pepodev.theme", newTheme);
+        // Toggle theme using the same logic as Settings app
+        const prefsKey = "pepodev.desktopPrefs";
+        const defaults = {
+          theme: localStorage.getItem("pepodev.theme") || "dark",
+          background: "network",
+          accent: "green",
+          radius: 12,
+          glass: 72,
+        };
+
+        let prefs = { ...defaults };
+        try {
+          const raw = localStorage.getItem(prefsKey);
+          if (raw) prefs = { ...defaults, ...JSON.parse(raw) };
+        } catch {
+          // Ignore corrupt settings
+        }
+
+        // Toggle the theme
+        prefs.theme = prefs.theme === "dark" ? "light" : "dark";
+
+        // Apply preferences with proper CSS variables
+        const accentMap = {
+          green: { primary: "#30d158", secondary: "#64d2ff" },
+          cyan: { primary: "#64d2ff", secondary: "#30d158" },
+          purple: { primary: "#bf5af2", secondary: "#ff9f0a" },
+          amber: { primary: "#ff9f0a", secondary: "#bf5af2" },
+        };
+        const backgroundMap = {
+          network: {
+            bg: "#0a0e17",
+            primary: "34, 197, 94",
+            secondary: "6, 182, 212",
+          },
+          aurora: {
+            bg: "#07111f",
+            primary: "20, 184, 166",
+            secondary: "168, 85, 247",
+          },
+          midnight: {
+            bg: "#101018",
+            primary: "99, 102, 241",
+            secondary: "14, 165, 233",
+          },
+          ember: {
+            bg: "#170d0a",
+            primary: "245, 158, 11",
+            secondary: "239, 68, 68",
+          },
+        };
+
+        const root = document.documentElement;
+        const accent = accentMap[prefs.accent] || accentMap.green;
+        const background =
+          backgroundMap[prefs.background] || backgroundMap.network;
+
+        root.setAttribute("data-theme", prefs.theme);
+        root.style.setProperty("--accent-primary", accent.primary);
+        root.style.setProperty("--accent-secondary", accent.secondary);
+        root.style.setProperty("--window-radius", `${prefs.radius}px`);
+        root.style.setProperty(
+          "--glass-bg",
+          `rgba(${prefs.theme === "light" ? "255, 255, 255" : "44, 44, 46"}, ${prefs.glass / 100})`,
+        );
+        root.style.setProperty("--desktop-bg-color", background.bg);
+        root.style.setProperty("--particle-primary-rgb", background.primary);
+        root.style.setProperty(
+          "--particle-secondary-rgb",
+          background.secondary,
+        );
+
+        localStorage.setItem("pepodev.theme", prefs.theme);
+        localStorage.setItem(prefsKey, JSON.stringify(prefs));
+
+        document.dispatchEvent(
+          new CustomEvent("desktop:preferences", { detail: prefs }),
+        );
+
         closePalette();
       } else if (commandId === "close-all-windows") {
         // Close all open windows
