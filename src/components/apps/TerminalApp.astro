@@ -1,0 +1,101 @@
+---
+const commands = [
+  "help",
+  "whoami",
+  "skills",
+  "projects",
+  "incidents",
+  "uptime",
+  "contact",
+  "open resume",
+  "open metrics",
+  "clear",
+];
+---
+
+<div class="app-content terminal-app" data-terminal-app>
+  <div class="terminal-output" data-terminal-output>
+    <div><span class="terminal-muted">pepo-shell v1.0</span></div>
+    <div>Type <span class="terminal-accent">help</span> to list commands.</div>
+  </div>
+  <form class="terminal-input-row" data-terminal-form>
+    <span>pepo@desktop:~$</span>
+    <input
+      data-terminal-input
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="Terminal command"
+    />
+  </form>
+</div>
+
+<script define:vars={{ commands }} is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const app = document.querySelector("[data-terminal-app]");
+    if (!app) return;
+
+    const output = app.querySelector("[data-terminal-output]");
+    const form = app.querySelector("[data-terminal-form]");
+    const input = app.querySelector("[data-terminal-input]");
+    const bootTime = Date.now();
+
+    function print(text, className = "") {
+      const line = document.createElement("div");
+      if (className) line.className = className;
+      line.textContent = text;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function openApp(appId) {
+      document.dispatchEvent(
+        new CustomEvent("desktop:open-app", { detail: { appId } }),
+      );
+    }
+
+    function execute(raw) {
+      const command = raw.trim().toLowerCase();
+      print("pepo@desktop:~$ " + raw, "terminal-command");
+
+      if (!command) return;
+      if (command === "clear") {
+        output.innerHTML = "";
+        return;
+      }
+      if (command === "help") {
+        print("Available commands: " + commands.join(", "));
+      } else if (command === "whoami") {
+        print("Pepo - Site Reliability Engineer focused on cloud platforms, observability, IaC, GitOps, and production resilience.");
+      } else if (command === "skills") {
+        print("Kubernetes, Terraform, AWS, GCP, Grafana, Datadog, Kafka, Vault, ArgoCD, Go, Python.");
+      } else if (command === "projects") {
+        print("Opening Projects...");
+        openApp("project");
+      } else if (command === "incidents") {
+        print("Opening Incident Timeline...");
+        openApp("incidents");
+      } else if (command === "uptime") {
+        const seconds = Math.floor((Date.now() - bootTime) / 1000);
+        print("desktop uptime: " + seconds + "s");
+      } else if (command === "contact") {
+        print("pepo@pepo.dev | github.com/pepodev | linkedin.com/in/pepodev");
+      } else if (command === "open resume") {
+        openApp("resume");
+      } else if (command === "open metrics") {
+        openApp("metrics");
+      } else {
+        print("command not found: " + raw, "terminal-error");
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      execute(input.value);
+      input.value = "";
+    });
+
+    app.addEventListener("click", () => input.focus());
+  });
+</script>

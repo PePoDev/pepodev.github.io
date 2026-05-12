@@ -1,0 +1,29 @@
+---
+const certifications = [
+  { name: "AWS Solutions Architect Associate", provider: "AWS", status: "Active" },
+  { name: "HashiCorp Terraform Associate", provider: "HashiCorp", status: "Active" },
+  { name: "Google Professional Cloud Architect", provider: "Google Cloud", status: "Active" },
+  { name: "Certified Kubernetes Administrator", provider: "CNCF", status: "Active" },
+  { name: "Google Associate Cloud Engineer", provider: "Google Cloud", status: "Active" },
+  { name: "Google Cloud Digital Leader", provider: "Google Cloud", status: "Active" },
+];
+---
+
+<div class="app-content ops-app cert-wallet-app">
+  <div class="cert-wallet-header">
+    <span class="ops-pill">Credential wallet</span>
+    <strong>{certifications.length} verified records</strong>
+  </div>
+  <div class="cert-grid">
+    {certifications.map((certification) => (
+      <article class="cert-card">
+        <div class="cert-mark">{certification.provider.slice(0, 2).toUpperCase()}</div>
+        <div>
+          <h3>{certification.name}</h3>
+          <p>{certification.provider}</p>
+          <span>{certification.status}</span>
+        </div>
+      </article>
+    ))}
+  </div>
+</div>

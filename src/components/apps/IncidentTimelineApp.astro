@@ -1,0 +1,48 @@
+---
+const incidents = [
+  {
+    time: "09:12",
+    title: "Latency spike detected",
+    status: "Detected",
+    detail: "p95 checkout latency crossed 1.8s after a deployment marker.",
+  },
+  {
+    time: "09:18",
+    title: "Canary rollback",
+    status: "Mitigated",
+    detail: "Traffic shifted back to stable service version while traces were reviewed.",
+  },
+  {
+    time: "09:31",
+    title: "Database query hot path",
+    status: "Root cause",
+    detail: "Missing index amplified reads during promotion traffic.",
+  },
+  {
+    time: "10:05",
+    title: "Postmortem actions created",
+    status: "Learning",
+    detail: "Added query budget alert, migration checklist, and rollout guardrail.",
+  },
+];
+---
+
+<div class="app-content ops-app incident-app">
+  <div class="ops-summary-grid">
+    <div class="ops-stat"><span>MTTD</span><strong>4m</strong></div>
+    <div class="ops-stat"><span>MTTR</span><strong>53m</strong></div>
+    <div class="ops-stat"><span>Impact</span><strong>Partial</strong></div>
+  </div>
+  <div class="incident-timeline">
+    {incidents.map((incident) => (
+      <article class="incident-item">
+        <time>{incident.time}</time>
+        <div>
+          <span class="ops-pill">{incident.status}</span>
+          <h3>{incident.title}</h3>
+          <p>{incident.detail}</p>
+        </div>
+      </article>
+    ))}
+  </div>
+</div>
