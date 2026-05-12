@@ -221,6 +221,10 @@ body {
   z-index: 10;
 }
 
+.window.maximized .window-resize-handle {
+  display: none;
+}
+
 .window.opening {
   animation: windowOpen 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -322,6 +326,16 @@ body {
 .window-controls button svg {
   width: 12px;
   height: 12px;
+}
+
+/* Visual indicator when window is maximized */
+.window.maximized .max-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--accent-blue);
+}
+
+.window.maximized .max-btn:hover {
+  background: rgba(10, 132, 255, 0.2);
 }
 
 /* === Window Content === */

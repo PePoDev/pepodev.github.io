@@ -578,7 +578,7 @@
 
       function scheduleNextAlert() {
         if (currentRound >= alerts.length) return;
-        later(() => showAlert(currentRound), currentRound === 0 ? 2500 : 1800);
+        later(() => showAlert(currentRound), currentRound === 0 ? 2500 : 3500);
       }
 
       function showAlert(index) {
@@ -636,7 +636,7 @@
         updateStatus();
 
         if (health <= 0 || currentRound >= alerts.length) {
-          later(() => showScreen(2), 1800);
+          later(() => showScreen(2), 3500);
           return;
         }
 
@@ -656,7 +656,7 @@
         updateRound();
 
         if (health <= 0 || currentRound >= alerts.length) {
-          later(() => showScreen(2), 1800);
+          later(() => showScreen(2), 3500);
           return;
         }
 

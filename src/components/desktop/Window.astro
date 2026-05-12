@@ -193,7 +193,32 @@ const { appId, title, width, height } = Astro.props;
       let winStartY = 0;
 
       titlebar?.addEventListener("mousedown", (event) => {
-        if (event.target.closest(".window-controls") || state.maximized) return;
+        if (event.target.closest(".window-controls")) return;
+
+        // If maximized, restore window on drag start
+        if (state.maximized) {
+          const rect = win.getBoundingClientRect();
+          const clickX = event.clientX;
+          const clickRatioX = clickX / rect.width;
+
+          // Restore the window
+          if (state.prevBounds) {
+            Object.assign(win.style, state.prevBounds);
+            state.maximized = false;
+            win.classList.remove("maximized");
+
+            // Position window so cursor is at the same relative position on titlebar
+            const newWidth = parseInt(state.prevBounds.width);
+            const newX = clickX - newWidth * clickRatioX;
+            win.style.left = Math.max(0, newX) + "px";
+            win.style.top = "0px";
+
+            // Update drag start positions for smooth continuation
+            winStartX = parseInt(win.style.left);
+            winStartY = 0;
+          }
+        }
+
         isDragging = true;
         dragStartX = event.clientX;
         dragStartY = event.clientY;
@@ -316,10 +341,12 @@ const { appId, title, width, height } = Astro.props;
         state.element.style.height = "calc(100vh - 48px)";
         state.element.style.zIndex = ++topZ;
         state.maximized = true;
+        state.element.classList.add("maximized");
       } else if (state.prevBounds) {
         Object.assign(state.element.style, state.prevBounds);
         state.element.style.zIndex = ++topZ;
         state.maximized = false;
+        state.element.classList.remove("maximized");
       }
 
       focusWindow(appId);
