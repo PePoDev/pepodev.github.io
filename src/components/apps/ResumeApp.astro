@@ -1,13 +1,41 @@
 ---
 import experiences from "../../data/experiences.json";
 import skills from "../../data/skills.json";
+
+const certifications = [
+  "AWS Certified Solutions Architect - Associate",
+  "HashiCorp Terraform Associate",
+  "Google Cloud Digital Leader",
+  "Associate Cloud Engineer",
+  "Google Professional Cloud Architect",
+  "Certified Kubernetes Administrator (CKA)",
+];
+
+const resumePdfData = {
+  name: "Pepo",
+  title: "Site Reliability Engineer",
+  contact: ["pepo@pepo.dev", "github.com/pepodev", "linkedin.com/in/pepodev"],
+  education: [
+    "Bachelor Degrees, Computer Science",
+    "King Mongkut's Institute of Technology Ladkrabang",
+    "2016 - 2020",
+  ],
+  experiences,
+  skills: skills.map((skill) => `${skill.name} - ${skill.level}%`),
+  certifications,
+};
 ---
 
 <div class="app-content">
   <div class="terminal-heading">
     <span class="prompt">~/resume $</span> cat cv.tex
   </div>
-  <a class="download-btn" href="#" id="resume-download">
+  <a
+    class="download-btn"
+    href="#"
+    id="resume-download"
+    download="pepo-resume.pdf"
+  >
     <svg
       viewBox="0 0 24 24"
       fill="none"
@@ -84,14 +112,172 @@ import skills from "../../data/skills.json";
     <div class="resume-entry">
       <div class="resume-entry-details">
         <ul>
-          <li>AWS Certified Solutions Architect – Associate</li>
-          <li>HashiCorp Terraform Associate</li>
-          <li>Google Cloud Digital Leader</li>
-          <li>Associate Cloud Engineer</li>
-          <li>Google Professional Cloud Architect</li>
-          <li>Certified Kubernetes Administrator (CKA)</li>
+          {certifications.map((certification) => <li>{certification}</li>)}
         </ul>
       </div>
     </div>
   </div>
 </div>
+
+<script define:vars={{ resumePdfData }} is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const button = document.getElementById("resume-download");
+    if (!button) return;
+
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      const pdf = createResumePdf(resumePdfData);
+      const url = URL.createObjectURL(
+        new Blob([pdf], { type: "application/pdf" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "pepo-resume.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    });
+  });
+
+  function createResumePdf(data) {
+    const lines = buildResumeLines(data);
+    const pages = [];
+    const linesPerPage = 46;
+
+    for (let i = 0; i < lines.length; i += linesPerPage) {
+      pages.push(lines.slice(i, i + linesPerPage));
+    }
+
+    const objects = [];
+    const addObject = (body) => {
+      objects.push(body);
+      return objects.length;
+    };
+
+    const catalogId = addObject("<< /Type /Catalog /Pages 2 0 R >>");
+    const pagesId = addObject("");
+    const fontId = addObject(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    );
+    const pageIds = [];
+
+    pages.forEach((pageLines) => {
+      const content = [
+        "BT",
+        "/F1 11 Tf",
+        "50 780 Td",
+        "14 TL",
+        ...pageLines.map((line) => `(${escapePdfText(line)}) Tj T*`),
+        "ET",
+      ].join("\n");
+      const contentId = addObject(
+        `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+      );
+      const pageId = addObject(
+        [
+          "<< /Type /Page",
+          "/Parent 2 0 R",
+          "/MediaBox [0 0 612 792]",
+          `/Resources << /Font << /F1 ${fontId} 0 R >> >>`,
+          `/Contents ${contentId} 0 R`,
+          ">>",
+        ].join("\n"),
+      );
+      pageIds.push(pageId);
+    });
+
+    objects[pagesId - 1] =
+      `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageIds.length} >>`;
+
+    let pdf = "%PDF-1.4\n";
+    const offsets = [0];
+    objects.forEach((body, index) => {
+      offsets.push(pdf.length);
+      pdf += `${index + 1} 0 obj\n${body}\nendobj\n`;
+    });
+
+    const xrefOffset = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n`;
+    pdf += "0000000000 65535 f \n";
+    offsets.slice(1).forEach((offset) => {
+      pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+    });
+    pdf += [
+      "trailer",
+      `<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>`,
+      "startxref",
+      String(xrefOffset),
+      "%%EOF",
+    ].join("\n");
+
+    return pdf;
+  }
+
+  function buildResumeLines(data) {
+    const lines = [
+      data.name,
+      data.title,
+      data.contact.join(" | "),
+      "",
+      "Education",
+      ...data.education,
+      "",
+      "Experience",
+    ];
+
+    data.experiences.forEach((experience) => {
+      lines.push(
+        "",
+        `${experience.role} | ${experience.company}`,
+        experience.period,
+        ...experience.details.map((detail) => `- ${detail}`),
+      );
+    });
+
+    lines.push(
+      "",
+      "Technical Skills",
+      ...data.skills.map((skill) => `- ${skill}`),
+    );
+    lines.push(
+      "",
+      "Certifications",
+      ...data.certifications.map((certification) => `- ${certification}`),
+    );
+
+    return lines.flatMap(wrapPdfLine);
+  }
+
+  function wrapPdfLine(line) {
+    const normalized = normalizePdfText(line);
+    const maxLength = 92;
+    if (normalized.length <= maxLength) return [normalized];
+
+    const wrapped = [];
+    let remaining = normalized;
+    while (remaining.length > maxLength) {
+      const splitAt = remaining.lastIndexOf(" ", maxLength);
+      const index = splitAt > 20 ? splitAt : maxLength;
+      wrapped.push(remaining.slice(0, index));
+      remaining = "  " + remaining.slice(index).trim();
+    }
+    wrapped.push(remaining);
+    return wrapped;
+  }
+
+  function normalizePdfText(value) {
+    return String(value)
+      .replace(/\u2122/g, "")
+      .replace(/[\u2013\u2014]/g, "-")
+      .replace(/[^\x20-\x7e]/g, "");
+  }
+
+  function escapePdfText(value) {
+    return normalizePdfText(value)
+      .replace(/\\/g, "\\\\")
+      .replace(/\(/g, "\\(")
+      .replace(/\)/g, "\\)");
+  }
+</script>
