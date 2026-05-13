@@ -477,5 +477,17 @@ const { appId, title, width, height } = Astro.props;
         });
       }, 300);
     }
+
+    // Open welcome window on first visit
+    const firstVisitKey = "pepodev.hasVisited";
+    const hasVisited = localStorage.getItem(firstVisitKey);
+
+    if (!hasVisited) {
+      // Delay slightly to ensure DOM is fully ready
+      setTimeout(() => {
+        openWindow("welcome");
+        localStorage.setItem(firstVisitKey, "true");
+      }, 500);
+    }
   });
 </script>
