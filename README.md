@@ -68,6 +68,8 @@ music player, game, calculator, gallery, or other interaction changes.
 │   └── utils/                 # Utility functions (certifications sorting, etc.)
 ├── tests/e2e/                 # Playwright desktop coverage
 ├── sre-game/                  # Standalone static copy of the SRE game
+├── .deployment-config.md      # Security headers and deployment guide
+├── .script-optimization.md    # Script directive best practices
 ├── .env.example               # Environment variables template
 └── dist/                      # Generated production build output
 ```
@@ -109,7 +111,7 @@ The project uses TypeScript path aliases for cleaner imports:
 - `@components/*` → `src/components/*`
 - `@data/*` → `src/data/*`
 - `@utils/*` → `src/utils/*`
-- `@types/*` → `src/types/*`
+- `@app-types/*` → `src/types/*`
 - `@layouts/*` → `src/layouts/*`
 - `@styles/*` → `src/styles/*`
 

@@ -46,7 +46,8 @@ Use `pnpm build` as the default verification step after code changes. Use
   `certifications.json`. `src/data/music.ts` discovers local tracks from
   `public/music/` at build time.
 - `src/types/` contains TypeScript type definitions for all data structures
-  (Project, Experience, Skill, Certification, etc.).
+  (Project, Experience, Skill, Certification, etc.). Import via `@app-types/*`
+  path alias (not `@types/*` which conflicts with npm DefinitelyTyped packages).
 - `src/utils/` contains utility functions like certification status sorting.
 - `src/styles/global.css` imports split CSS modules for the shared desktop visual
   system and app styling.
@@ -56,6 +57,11 @@ Use `pnpm build` as the default verification step after code changes. Use
 - `tests/e2e/desktop.spec.ts` contains Playwright coverage for the desktop shell,
   app launchers, windows, and major app interactions.
 - `sre-game/` is a standalone static copy of the SRE game and is separate from the Astro desktop app.
+- `.deployment-config.md` contains security headers configuration for various
+  hosting platforms (GitHub Pages, Cloudflare, Netlify, Vercel) and caching
+  strategies.
+- `.script-optimization.md` documents script directive best practices, when to use
+  regular `<script>` vs `is:inline` vs `is:raw`, and current component audit.
 
 ## Implementation Rules
 
@@ -66,7 +72,7 @@ Use `pnpm build` as the default verification step after code changes. Use
   - Update TypeScript type definitions in `src/types/data.ts` when modifying data structures.
   - Extract reusable logic to utility functions in `src/utils/`.
 - Add blog articles to `src/content/blog/` and keep frontmatter compatible with `src/content.config.ts`.
-- Use TypeScript path aliases (`@components/*`, `@data/*`, `@utils/*`, etc.) for imports.
+- Use TypeScript path aliases (`@components/*`, `@data/*`, `@utils/*`, `@app-types/*`, etc.) for imports.
 - Define environment-specific values in `.env` files (never commit secrets).
 - Reuse existing desktop classes and CSS variables before adding new styling patterns.
 - Avoid broad refactors in shared components unless the requested change requires them.
@@ -75,7 +81,9 @@ Use `pnpm build` as the default verification step after code changes. Use
   `src/pages/index.astro` imports/window/icon, `StartMenu.astro`,
   `CommandPalette.astro`, and `AppIcon.astro`.
 - App windows are managed by `Window.astro`. Keep app bodies server-rendered and
-  use small inline scripts for behavior.
+  use regular `<script>` tags (bundled by Vite) for behavior. Only use `is:inline`
+  when accessing `define:vars` or preventing critical render path issues. See
+  `.script-optimization.md` for best practices.
 - Desktop icon positions are persisted in `localStorage` and snap to the desktop
   grid. If editing drag/drop behavior, preserve swap-on-occupied-cell behavior.
 - `Escape` closes the focused window. Overlays such as the command palette, start
