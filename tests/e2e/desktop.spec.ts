@@ -239,12 +239,14 @@ test("music player and settings music controls update state", async ({
   ).toBeVisible();
   await expect
     .poll(async () =>
-      music.locator("[data-music-media]").evaluate((media: HTMLMediaElement) => ({
-        currentTime: media.currentTime,
-        muted: media.muted,
-        paused: media.paused,
-        volume: media.volume,
-      })),
+      music
+        .locator("[data-music-media]")
+        .evaluate((media: HTMLMediaElement) => ({
+          currentTime: media.currentTime,
+          muted: media.muted,
+          paused: media.paused,
+          volume: media.volume,
+        })),
     )
     .toMatchObject({
       muted: false,
@@ -260,14 +262,20 @@ test("music player and settings music controls update state", async ({
     .toBeGreaterThan(0);
 
   await music.locator("[data-music-track]").selectOption("late_shift_protocol");
-  await expect(music.locator("#music-title")).toHaveValue("late_shift_protocol");
+  await expect(music.locator("#music-title")).toHaveValue(
+    "late_shift_protocol",
+  );
 
   const settings = await openApp(page, "Settings", "settings");
-  await expect(settings.locator('[data-music-setting="volume"]')).toHaveCount(0);
+  await expect(settings.locator('[data-music-setting="volume"]')).toHaveCount(
+    0,
+  );
   await settings
     .locator('[data-music-setting="track"]')
     .selectOption("late_shift_protocol");
-  await expect(music.locator("#music-title")).toHaveValue("late_shift_protocol");
+  await expect(music.locator("#music-title")).toHaveValue(
+    "late_shift_protocol",
+  );
 });
 
 test("music player recovers from stale saved playback state", async ({
