@@ -1,7 +1,7 @@
 ---
 url-slug: do-the-fun-chaos-engineering-with-gamification
 sub-title: Is Chaos Engineering fun? Nani!!
-cover-picture: https://cdn.hashnode.com/res/hashnode/image/upload/v1651863348760/tEoT2O2Ce.png?w=1600&h=840&fit=crop&crop=entropy&auto=compress,format&format=webp
+cover-picture: ../../assets/blog/tEoT2O2Ce.png
 publish: true
 dg-publish: true
 ---
@@ -17,7 +17,7 @@ The meaning is relatively straightforward, In short, It's is "rude to your clust
 
 Leave it behind, Because in this article we will talk only about the **FUN** part of chaos engineering, But it might not be fun for everyone 🤣
 
-![Meme](https://cdn.hashnode.com/res/hashnode/image/upload/v1651862659687/3nVA2mppF.png?auto=compress,format&format=webp)
+![Meme](../../assets/blog/3nVA2mppF.png)
 
 ## What is Gamification?
 
@@ -26,8 +26,6 @@ Leave it behind, Because in this article we will talk only about the **FUN** p
 > [Cambridge Dictionary](https://dictionary.cambridge.org/dictionary/english/gamification)
 
 For example, In the classroom, the teacher can give you a point that you can use to exchange with a special score or some benefits like gaining more time to do the homework than other people and the point will give to the student that participated and answers in the classroom. Does it sound like the game?
-
-![Sirish Puppala on LinkedIn: Building Next-Gen Technology: How SS&C Eze  Fosters Innovation](https://media-exp1.licdn.com/dms/image/D5612AQFQPecMWpxmnQ/article-cover_image-shrink_600_2000/0/1663035818162?e=2147483647&v=beta&t=WRHL7nWKj6B_0YzTn7KDBQff9GN_xvcnvvJrWs8VKCk)
 
 ## Ready for the fun?
 
@@ -45,13 +43,13 @@ Are you ready? Let's get started.
 
 > KubeDoom is The next level of chaos engineering! Kill pods inside your Kubernetes cluster by shooting them in Doom! - [KubeDoom](https://github.com/storax/kubedoom)
 
-![KubeDoom](https://cdn.hashnode.com/res/hashnode/image/upload/v1651863348760/tEoT2O2Ce.png?auto=compress,format&format=webp)
+![KubeDoom](../../assets/blog/tEoT2O2Ce.png)
 
 ### 2. KubeInvaders
 
 > Gamified Chaos Engineering Tool for Kubernetes - [KubeInvaders](https://github.com/lucky-sideburn/KubeInvaders)
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1683888130697/8ae6b234-4f89-4e60-9d19-49f44672d9c0.png?auto=compress,format&format=webp)
+![](../../assets/blog/8ae6b234-4f89-4e60-9d19-49f44672d9c0.png)
 
 ### 3. Kube Chaos
 

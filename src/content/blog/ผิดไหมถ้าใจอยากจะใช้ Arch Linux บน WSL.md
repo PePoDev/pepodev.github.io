@@ -1,7 +1,7 @@
 ---
 url-slug: arch-linux-wsl
 sub-title: วิธีการติดตั้ง Linux distro ใดๆก็ตามที่เราต้องการลงบน WSL
-cover-picture: https://cdn.hashnode.com/res/hashnode/image/upload/v1703266246115/f52421dd-89d5-4f42-a460-5e971498c57f.webp?w=1600&h=840&fit=crop&crop=entropy&auto=compress,format&format=webp
+cover-picture: ../../assets/blog/f52421dd-89d5-4f42-a460-5e971498c57f.webp
 publish: true
 dg-publish: true
 ---
@@ -20,8 +20,6 @@ dg-publish: true
 > appx ก็คือ package file ของ windows ที่เอาไว้ใช้แจกจ่ายสำหรับการติดตั้ง application ที่เป็น Universal Windows Platform (UWP) ส่วนมากใช้สำหรับนำแอพขึ้น Windows Store
 
 นอกจาก Arch Linux แล้ว เรายังสามารถเอา wsldl มาใช้ได้กับทุก distro ที่เราต้องการได้เลย สามารถใช้กับ CPU ประเภท ARM ได้อีกด้วย
-
-![screenshot](https://raw.githubusercontent.com/wiki/yuk7/wsldl/img/Arch_Alpine_Cent.png)
 
 ขอให้สนุกกับ WSL ครับ 👋
 ## References
