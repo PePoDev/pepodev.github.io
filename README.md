@@ -115,7 +115,7 @@ The project uses TypeScript path aliases for cleaner imports:
 
 Example:
 ```typescript
-import { Project } from '@types/data';
+import { Project } from '@app-types/data';
 import projects from '@data/projects.json';
 import { sortCertificationsByStatus } from '@utils/certifications';
 ```

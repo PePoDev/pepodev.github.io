@@ -1,5 +1,5 @@
 ---
-import { getMusicTracks } from "../../data/music";
+import { getMusicTracks } from "@data/music";
 
 const tracks = getMusicTracks();
 const defaultTrack = tracks[0];
@@ -23,7 +23,7 @@ const defaultTrack = tracks[0];
           class="music-art"
           id="music-art"
           src=""
-          alt=""
+          alt="Album artwork for currently playing track"
           loading="lazy"
         />
       ) : (

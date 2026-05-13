@@ -101,14 +101,21 @@ const posts = (await getCollection("blog"))
                 <li>
                   <a href={`/blog/${post.id}/`}>
                     {heroImage && typeof heroImage === "string" ? (
-                      <img width="720" height="360" src={heroImage} alt="" />
+                      <img
+                        width="720"
+                        height="360"
+                        src={heroImage}
+                        alt={`Cover image for ${title}`}
+                        loading="lazy"
+                      />
                     ) : (
                       heroImage && (
                         <Image
                           width={720}
                           height={360}
                           src={heroImage}
-                          alt=""
+                          alt={`Cover image for ${title}`}
+                          loading="lazy"
                         />
                       )
                     )}

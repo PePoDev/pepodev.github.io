@@ -80,8 +80,7 @@ const formatDate = (date: Date) =>
   </div>
 </div>
 
-<script is:inline>
-  // @ts-nocheck
+<script>
   document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-blog-app]").forEach((app) => {
       const listView = app.querySelector("[data-blog-list-view]");

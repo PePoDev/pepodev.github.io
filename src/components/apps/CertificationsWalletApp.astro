@@ -1,6 +1,6 @@
 ---
-import allCertifications from "../../data/certifications.json";
-import { sortCertificationsByStatus } from "../../utils/certifications";
+import allCertifications from "@data/certifications.json";
+import { sortCertificationsByStatus } from "@utils/certifications";
 
 // Calculate status for each certification and sort: Active → Expiring Soon → Expired
 const certifications = sortCertificationsByStatus(allCertifications);
@@ -43,8 +43,7 @@ const certifications = sortCertificationsByStatus(allCertifications);
   </div>
 </div>
 
-<script is:inline>
-  // @ts-nocheck
+<script>
   function updateCertStatuses() {
     const certCards = document.querySelectorAll(".cert-card[data-expiry]");
     const today = new Date();

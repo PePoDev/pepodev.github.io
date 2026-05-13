@@ -7,6 +7,18 @@ import { defineConfig, fontProviders } from "astro/config";
 export default defineConfig({
   site: "https://pepo.dev",
   integrations: [sitemap()],
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "viewport",
+  },
+  build: {
+    inlineStylesheets: "auto",
+  },
+  compressHTML: true,
+  image: {
+    domains: [],
+    remotePatterns: [],
+  },
   vite: {
     resolve: {
       alias: {
@@ -17,7 +29,7 @@ export default defineConfig({
         "@layouts": fileURLToPath(new URL("./src/layouts", import.meta.url)),
         "@data": fileURLToPath(new URL("./src/data", import.meta.url)),
         "@utils": fileURLToPath(new URL("./src/utils", import.meta.url)),
-        "@types": fileURLToPath(new URL("./src/types", import.meta.url)),
+        "@app-types": fileURLToPath(new URL("./src/types", import.meta.url)),
         "@styles": fileURLToPath(new URL("./src/styles", import.meta.url)),
       },
     },

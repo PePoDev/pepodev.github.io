@@ -10,7 +10,7 @@
       "@layouts/*": ["./src/layouts/*"],
       "@data/*": ["./src/data/*"],
       "@utils/*": ["./src/utils/*"],
-      "@types/*": ["./src/types/*"],
+      "@app-types/*": ["./src/types/*"],
       "@styles/*": ["./src/styles/*"]
     }
   }

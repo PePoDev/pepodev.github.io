@@ -23,12 +23,13 @@
     <button type="button" class="calculator-op" data-token="+">+</button>
     <button type="button" class="calculator-zero" data-token="0">0</button>
     <button type="button" data-token=".">.</button>
-    <button type="button" class="calculator-equals" data-action="equals">=</button>
+    <button type="button" class="calculator-equals" data-action="equals"
+      >=</button
+    >
   </div>
 </div>
 
-<script is:inline>
-  // @ts-nocheck
+<script>
   document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-calculator]").forEach((calculator) => {
       if (calculator.dataset.ready === "true") return;
@@ -98,7 +99,10 @@
 
       document.addEventListener("keydown", (event) => {
         const windowEl = calculator.closest(".window");
-        if (windowEl?.hidden || windowEl?.getAttribute("aria-hidden") === "true")
+        if (
+          windowEl?.hidden ||
+          windowEl?.getAttribute("aria-hidden") === "true"
+        )
           return;
 
         if (/[\d+\-*/%.]/.test(event.key)) {

@@ -1,9 +1,9 @@
 ---
 // Import the global.css file here so that it is included on
 // all pages through the use of the <BaseHead /> component.
-import "../styles/global.css";
+import "@styles/global.css";
 import type { ImageMetadata } from "astro";
-import { SITE_TITLE } from "../consts";
+import { SITE_TITLE } from "@/consts";
 import { Font } from "astro:assets";
 
 interface Props {
@@ -30,6 +30,11 @@ const { title, description, image } = Astro.props;
   href={new URL("rss.xml", Astro.site)}
 />
 <meta name="generator" content={Astro.generator} />
+
+<!-- Theme & Author -->
+<meta name="theme-color" content="#1a1a1a" />
+<meta name="author" content="PePoDev" />
+<meta name="robots" content="index, follow" />
 
 <Font cssVariable="--font-atkinson" preload />
 
@@ -58,3 +63,26 @@ const { title, description, image } = Astro.props;
     <meta property="twitter:image" content={new URL(image.src, Astro.url)} />
   )
 }
+
+<!-- Structured Data -->
+<script
+  type="application/ld+json"
+  set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Thiwanon Chomcharoen (PePo)",
+    jobTitle: "Site Reliability Engineer",
+    url: Astro.site,
+    sameAs: [
+      "https://github.com/pepodev",
+      "https://linkedin.com/in/pepodev",
+      "https://blog.pepo.dev",
+    ],
+    knowsAbout: [
+      "Kubernetes",
+      "Terraform",
+      "Cloud Infrastructure",
+      "Site Reliability Engineering",
+    ],
+  })}
+/>

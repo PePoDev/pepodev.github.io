@@ -37,26 +37,34 @@ const trashItems = [
   <div class="trash-toolbar">
     <div>
       <h2>Trash Bin</h2>
-      <p data-trash-count>{trashItems.length} questionable artifacts quarantined</p>
+      <p data-trash-count>
+        {trashItems.length} questionable artifacts quarantined
+      </p>
     </div>
     <button type="button" data-empty-trash>Empty trash</button>
   </div>
 
   <div class="trash-list" data-trash-list>
-    {trashItems.map((item) => (
-      <article class="trash-item" data-trash-item>
-        <div class="trash-item-icon" aria-hidden="true">TR</div>
-        <div>
-          <div class="trash-item-title">
-            <h3>{item.name}</h3>
-            <span>{item.type}</span>
+    {
+      trashItems.map((item) => (
+        <article class="trash-item" data-trash-item>
+          <div class="trash-item-icon" aria-hidden="true">
+            TR
           </div>
-          <p>{item.note}</p>
-          <small>Deleted {item.deleted}</small>
-        </div>
-        <button type="button" data-restore-trash>Restore</button>
-      </article>
-    ))}
+          <div>
+            <div class="trash-item-title">
+              <h3>{item.name}</h3>
+              <span>{item.type}</span>
+            </div>
+            <p>{item.note}</p>
+            <small>Deleted {item.deleted}</small>
+          </div>
+          <button type="button" data-restore-trash>
+            Restore
+          </button>
+        </article>
+      ))
+    }
   </div>
 
   <div class="trash-empty" data-trash-empty hidden>
@@ -65,8 +73,7 @@ const trashItems = [
   </div>
 </div>
 
-<script is:inline>
-  // @ts-nocheck
+<script>
   document.addEventListener("DOMContentLoaded", () => {
     const app = document.querySelector("[data-trash-app]");
     if (!app) return;
