@@ -58,14 +58,17 @@ music player, game, calculator, gallery, or other interaction changes.
 │   │   └── desktop/           # Window manager, icons, taskbar, start menu
 │   ├── content/
 │   │   └── blog/              # Markdown/MDX blog posts (supports Obsidian format)
-│   ├── data/                  # Portfolio data JSON and music discovery helper
+│   ├── data/                  # Portfolio data JSON (projects, skills, certifications, etc.)
 │   ├── layouts/
 │   ├── pages/
 │   │   ├── index.astro        # Main desktop entry point
 │   │   └── resume.astro       # Standalone resume download page
-│   └── styles/                # Split CSS modules imported by global.css
+│   ├── styles/                # Split CSS modules imported by global.css
+│   ├── types/                 # TypeScript type definitions for data structures
+│   └── utils/                 # Utility functions (certifications sorting, etc.)
 ├── tests/e2e/                 # Playwright desktop coverage
 ├── sre-game/                  # Standalone static copy of the SRE game
+├── .env.example               # Environment variables template
 └── dist/                      # Generated production build output
 ```
 
@@ -74,6 +77,7 @@ Do not edit generated files in `dist/`.
 ## Content Updates
 
 - Add portfolio content to the relevant JSON file in `src/data/`.
+  - Update TypeScript interfaces in `src/types/data.ts` when adding new fields.
 - Add blog articles to `src/content/blog/` and keep frontmatter compatible with
   `src/content.config.ts`. Blog posts support both standard Astro and Obsidian
   frontmatter formats (all fields optional).
@@ -85,6 +89,36 @@ Do not edit generated files in `dist/`.
   `src/components/desktop/StartMenu.astro`,
   `src/components/desktop/CommandPalette.astro`, and
   `src/components/desktop/AppIcon.astro`.
+
+## Configuration
+
+### Environment Variables
+
+The project supports environment variable overrides. Copy `.env.example` to `.env`
+to customize:
+
+- `PUBLIC_SITE_URL` - Site URL (default: `https://pepo.dev`)
+- `PUBLIC_SITE_TITLE` - Site title
+- `PUBLIC_SITE_DESCRIPTION` - Meta description
+
+### Path Aliases
+
+The project uses TypeScript path aliases for cleaner imports:
+
+- `@/*` → `src/*`
+- `@components/*` → `src/components/*`
+- `@data/*` → `src/data/*`
+- `@utils/*` → `src/utils/*`
+- `@types/*` → `src/types/*`
+- `@layouts/*` → `src/layouts/*`
+- `@styles/*` → `src/styles/*`
+
+Example:
+```typescript
+import { Project } from '@types/data';
+import projects from '@data/projects.json';
+import { sortCertificationsByStatus } from '@utils/certifications';
+```
 
 ## Deployment
 

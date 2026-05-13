@@ -42,8 +42,12 @@ Use `pnpm build` as the default verification step after code changes. Use
   prefixes for organization (e.g., `aws-graviton-01.png`,
   `obsidian-multi-devices-cover.png`).
 - `src/data/` contains structured data files such as `experiences.json`,
-  `projects.json`, `skills.json`, `social-links.json`, and `work-metrics.json`.
-  `src/data/music.ts` discovers local tracks from `public/music/` at build time.
+  `projects.json`, `skills.json`, `social-links.json`, `work-metrics.json`, and
+  `certifications.json`. `src/data/music.ts` discovers local tracks from
+  `public/music/` at build time.
+- `src/types/` contains TypeScript type definitions for all data structures
+  (Project, Experience, Skill, Certification, etc.).
+- `src/utils/` contains utility functions like certification status sorting.
 - `src/styles/global.css` imports split CSS modules for the shared desktop visual
   system and app styling.
 - `public/music/` contains local media files used by the music player. Browser
@@ -59,7 +63,11 @@ Use `pnpm build` as the default verification step after code changes. Use
 - Keep client JavaScript scoped to interaction behavior: opening windows, focus, drag/resize, taskbar state, start menu, game state, and blog reader toggles.
 - Add portfolio content to the relevant JSON file in `src/data/` unless it is a
   blog article.
+  - Update TypeScript type definitions in `src/types/data.ts` when modifying data structures.
+  - Extract reusable logic to utility functions in `src/utils/`.
 - Add blog articles to `src/content/blog/` and keep frontmatter compatible with `src/content.config.ts`.
+- Use TypeScript path aliases (`@components/*`, `@data/*`, `@utils/*`, etc.) for imports.
+- Define environment-specific values in `.env` files (never commit secrets).
 - Reuse existing desktop classes and CSS variables before adding new styling patterns.
 - Avoid broad refactors in shared components unless the requested change requires them.
 - Do not reintroduce a hardcoded app content module under `src/content/apps.ts`.
@@ -83,6 +91,8 @@ Use `pnpm build` as the default verification step after code changes. Use
 - The certifications wallet displays credentials sorted by status at build time:
   Active (≥90 days until expiry) → Expiring Soon (<90 days) → Expired. Status
   badges update dynamically on the client every hour.
+  - Certification data lives in `src/data/certifications.json`.
+  - Sorting logic is in `src/utils/certifications.ts` for reusability and testability.
 - Blog posts reference local images from `src/assets/blog/` using relative paths.
   Images are automatically optimized and converted to WebP during the build.
 - The White Noise app provides ambient rain sounds with a minimal UI (clouds and

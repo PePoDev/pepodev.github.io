@@ -1,0 +1,51 @@
+[
+  {
+    "name": "AWS Certified Solutions Architect - Associate",
+    "provider": "Amazon Web Services",
+    "issueDate": "2023-03-15",
+    "expirationDate": "2026-03-15",
+    "credlyUrl": "https://www.credly.com/earner/earned/badge/c54619ad-85c6-446c-993d-fd519a9f5333"
+  },
+  {
+    "name": "HashiCorp Certified: Terraform Associate (003)",
+    "provider": "HashiCorp",
+    "issueDate": "2024-01-20",
+    "expirationDate": "2026-01-20",
+    "credlyUrl": "https://www.credly.com/earner/earned/badge/4f047eee-ba40-43af-b4c6-0e756c9fba63"
+  },
+  {
+    "name": "Google Cloud Digital Leader",
+    "provider": "Google Cloud",
+    "issueDate": "2022-08-10",
+    "expirationDate": "2025-08-10",
+    "credlyUrl": "https://www.credly.com/earner/earned/badge/5a43d250-5fac-40af-9212-20bef9cd5925"
+  },
+  {
+    "name": "Associate Cloud Engineer",
+    "provider": "Google Cloud",
+    "issueDate": "2023-06-12",
+    "expirationDate": "2026-06-12",
+    "credlyUrl": "https://www.credly.com/earner/earned/badge/8d4c0723-4b47-499d-846b-2c9a6aded593"
+  },
+  {
+    "name": "Professional Cloud Architect",
+    "provider": "Google Cloud",
+    "issueDate": "2024-02-05",
+    "expirationDate": "2026-02-05",
+    "credlyUrl": "https://www.credly.com/earner/earned/badge/2e31ce37-d885-4607-b499-c4d2481319f0"
+  },
+  {
+    "name": "Certified Kubernetes Administrator (CKA)",
+    "provider": "Cloud Native Computing Foundation",
+    "issueDate": "2023-11-22",
+    "expirationDate": "2026-11-22",
+    "credlyUrl": "https://www.credly.com/earner/earned/badge/b163f563-7c67-46ea-902a-8f5d4b8aea96"
+  },
+  {
+    "name": "Certified Kubernetes Security Specialist (CKS)",
+    "provider": "Cloud Native Computing Foundation",
+    "issueDate": "2024-03-18",
+    "expirationDate": "2026-11-22",
+    "credlyUrl": "https://www.credly.com/earner/earned/badge/94ce7532-9d3e-4b67-a68c-c193d6634b1e"
+  }
+]
