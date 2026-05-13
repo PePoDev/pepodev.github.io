@@ -25,6 +25,15 @@
     width: calc(100% - 24px);
     max-width: 360px;
   }
+
+  .snake-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .snake-controls button,
+  .snake-pad button {
+    height: 36px;
+  }
 }
 
 /* Selection color */

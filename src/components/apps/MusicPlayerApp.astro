@@ -31,11 +31,31 @@ const defaultTrack = tracks[0];
       )
     }
     <div>
+      <label class="music-title-picker">
+        <select id="music-title" data-music-track aria-label="Track">
+          {tracks.map((track) => <option value={track.id}>{track.title}</option>)}
+        </select>
+      </label>
       <div class="music-eyebrow">Now Playing</div>
-      <h2 id="music-title">{defaultTrack?.title ?? "No Music Found"}</h2>
       <p id="music-detail">
         {defaultTrack?.detail ?? "Add audio files to public/music"}
       </p>
+    </div>
+  </div>
+
+  <div class="music-playback-header">
+    <div class="music-time-row" aria-label="Playback time">
+      <span data-music-elapsed>0:00</span>
+      <input
+        data-music-seek
+        type="range"
+        min="0"
+        max="1000"
+        value="0"
+        aria-label="Seek track"
+        disabled
+      />
+      <span data-music-remaining>-0:00</span>
     </div>
   </div>
 
@@ -45,21 +65,13 @@ const defaultTrack = tracks[0];
     <button type="button" data-music-next aria-label="Next track">&gt;&gt;</button>
   </div>
 
-  <div class="music-meter" aria-hidden="true">
-    <span></span><span></span><span></span><span></span><span></span>
+  <div class="music-visualizer" aria-hidden="true">
+    <canvas
+      data-music-visualizer
+      width="720"
+      height="160"></canvas>
+    <div class="music-visualizer-glow"></div>
   </div>
-
-  <label class="settings-field">
-    <span>Track</span>
-    <select data-music-track>
-      {tracks.map((track) => <option value={track.id}>{track.title}</option>)}
-    </select>
-  </label>
-
-  <label class="settings-field">
-    <span>Music volume</span>
-    <input data-music-volume type="range" min="0" max="100" value="60" />
-  </label>
 
   <p class="music-status" data-music-status aria-live="polite"></p>
 
@@ -89,42 +101,64 @@ const defaultTrack = tracks[0];
   // @ts-nocheck
   document.addEventListener("DOMContentLoaded", () => {
     const musicKey = "pepodev.music";
+    const audioSettingsKey = "pepodev.systemAudio";
     const player = document.querySelector("[data-music-player]");
     if (!player || window.__pepoMusicController) return;
 
     const defaultTrackId = tracks[0]?.id || "";
     const persistedSettings = loadMusicSettings();
     let settings = normalizeMusicSettings({ ...persistedSettings, playing: false });
+    let audioSettings = loadAudioSettings();
 
     const title = document.getElementById("music-title");
     const detail = document.getElementById("music-detail");
     const art = document.getElementById("music-art");
     const toggle = player.querySelector("[data-music-toggle]");
     const trackSelect = player.querySelector("[data-music-track]");
-    const volume = player.querySelector("[data-music-volume]");
     const media = player.querySelector("[data-music-media]");
     const status = player.querySelector("[data-music-status]");
+    const elapsedTime = player.querySelector("[data-music-elapsed]");
+    const remainingTime = player.querySelector("[data-music-remaining]");
+    const seek = player.querySelector("[data-music-seek]");
+    const visualizer = player.querySelector("[data-music-visualizer]");
+    const visualizerContext = visualizer?.getContext("2d");
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     let playbackRequestId = 0;
+    let audioContext = null;
+    let analyser = null;
+    let outputGain = null;
+    let mediaSource = null;
+    let frequencyData = null;
+    let waveformData = null;
+    let visualizerFrame = 0;
+    let visualizerPhase = 0;
 
     function loadMusicSettings() {
       try {
         const raw = localStorage.getItem(musicKey);
         if (raw)
-          return { track: defaultTrackId, volume: 0.6, playing: false, ...JSON.parse(raw) };
+          return { track: defaultTrackId, playing: false, ...JSON.parse(raw) };
       } catch {
         // Ignore corrupt persisted settings.
       }
-      return { track: defaultTrackId, volume: 0.6, playing: false };
+      return { track: defaultTrackId, playing: false };
+    }
+
+    function loadAudioSettings() {
+      try {
+        const raw = localStorage.getItem(audioSettingsKey);
+        if (raw) return { volume: 1, muted: false, ...JSON.parse(raw) };
+      } catch {
+        // Ignore corrupt persisted settings.
+      }
+      return { volume: 1, muted: false };
     }
 
     function normalizeMusicSettings(next) {
       const track = tracks.some((item) => item.id === next.track)
         ? next.track
         : defaultTrackId;
-      const volume = Number.isFinite(next.volume)
-        ? Math.max(0, Math.min(1, next.volume))
-        : 0.6;
-      return { track, volume, playing: Boolean(next.playing) };
+      return { track, playing: Boolean(next.playing) };
     }
 
     function saveMusicSettings(next) {
@@ -144,10 +178,218 @@ const defaultTrack = tracks[0];
       return Boolean(media && !media.paused && !media.ended);
     }
 
+    function formatTime(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+      const wholeSeconds = Math.floor(seconds);
+      const minutes = Math.floor(wholeSeconds / 60);
+      const remainder = String(wholeSeconds % 60).padStart(2, "0");
+      return `${minutes}:${remainder}`;
+    }
+
+    function updatePlaybackTime() {
+      if (!elapsedTime || !remainingTime) return;
+      const currentTime = media?.currentTime || 0;
+      const duration = media?.duration || 0;
+      elapsedTime.textContent = formatTime(currentTime);
+      remainingTime.textContent = Number.isFinite(duration) && duration > 0
+        ? `-${formatTime(Math.max(0, duration - currentTime))}`
+        : "-0:00";
+      if (seek) {
+        const canSeek = Number.isFinite(duration) && duration > 0;
+        seek.disabled = !canSeek;
+        seek.value = canSeek
+          ? String(Math.round((currentTime / duration) * Number(seek.max)))
+          : "0";
+      }
+    }
+
+    function setupAnalyzer() {
+      if (!media || !AudioContextClass || analyser) return Boolean(analyser);
+      try {
+        audioContext = new AudioContextClass();
+        analyser = audioContext.createAnalyser();
+        outputGain = audioContext.createGain();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.72;
+        frequencyData = new Uint8Array(analyser.frequencyBinCount);
+        waveformData = new Uint8Array(analyser.fftSize);
+        mediaSource = audioContext.createMediaElementSource(media);
+        mediaSource.connect(analyser);
+        analyser.connect(outputGain);
+        outputGain.connect(audioContext.destination);
+        applyVolume();
+      } catch {
+        analyser = null;
+        outputGain = null;
+        frequencyData = null;
+        waveformData = null;
+      }
+      return Boolean(analyser);
+    }
+
+    async function resumeAnalyzer() {
+      if (!setupAnalyzer() || !audioContext) return;
+      if (audioContext.state === "suspended") {
+        try {
+          await audioContext.resume();
+        } catch {
+          // Keep the fallback visualizer running if Web Audio is unavailable.
+        }
+      }
+    }
+
+    function drawVisualizer() {
+      if (!visualizer || !visualizerContext) return;
+
+      const width = visualizer.width;
+      const height = visualizer.height;
+      const center = height * 0.58;
+      const barCount = 40;
+      const gap = 4;
+      const barWidth = (width - gap * (barCount - 1)) / barCount;
+      const gradient = visualizerContext.createLinearGradient(0, 18, 0, height);
+      const playing = isMediaPlaying();
+
+      visualizerPhase += playing ? 0.055 : 0.025;
+      visualizerContext.clearRect(0, 0, width, height);
+
+      const background = visualizerContext.createLinearGradient(0, 0, width, height);
+      background.addColorStop(0, "rgba(6, 13, 24, 0.58)");
+      background.addColorStop(1, "rgba(18, 32, 48, 0.32)");
+      visualizerContext.fillStyle = background;
+      visualizerContext.fillRect(0, 0, width, height);
+
+      visualizerContext.globalAlpha = 0.28;
+      visualizerContext.strokeStyle = "rgba(125, 240, 255, 0.25)";
+      visualizerContext.lineWidth = 1;
+      for (let y = 24; y < height; y += 28) {
+        visualizerContext.beginPath();
+        visualizerContext.moveTo(0, y);
+        visualizerContext.lineTo(width, y);
+        visualizerContext.stroke();
+      }
+      visualizerContext.globalAlpha = 1;
+
+      if (analyser && frequencyData && waveformData && audioContext?.state === "running") {
+        analyser.getByteFrequencyData(frequencyData);
+        analyser.getByteTimeDomainData(waveformData);
+      }
+
+      if (playing && frequencyData && audioContext?.state === "running") {
+        let low = 0;
+        let mid = 0;
+        let high = 0;
+        const lowLimit = Math.max(1, Math.floor(frequencyData.length * 0.18));
+        const midLimit = Math.max(lowLimit + 1, Math.floor(frequencyData.length * 0.52));
+
+        frequencyData.forEach((value, index) => {
+          if (index < lowLimit) low += value;
+          else if (index < midLimit) mid += value;
+          else high += value;
+        });
+
+        const lowLevel = low / (lowLimit * 255);
+        const midLevel = mid / ((midLimit - lowLimit) * 255);
+        const highLevel = high / ((frequencyData.length - midLimit) * 255);
+        document.dispatchEvent(
+          new CustomEvent("desktop:music-audio-frame", {
+            detail: {
+              playing: true,
+              low: lowLevel,
+              mid: midLevel,
+              high: highLevel,
+              energy: Math.min(1, lowLevel * 0.46 + midLevel * 0.34 + highLevel * 0.2),
+            },
+          }),
+        );
+      } else if (!playing) {
+        document.dispatchEvent(
+          new CustomEvent("desktop:music-audio-frame", {
+            detail: { playing: false, low: 0, mid: 0, high: 0, energy: 0 },
+          }),
+        );
+      }
+
+      gradient.addColorStop(0, "rgba(247, 211, 96, 0.95)");
+      gradient.addColorStop(0.42, "rgba(79, 224, 200, 0.92)");
+      gradient.addColorStop(1, "rgba(119, 152, 255, 0.48)");
+      visualizerContext.fillStyle = gradient;
+      visualizerContext.shadowBlur = 18;
+      visualizerContext.shadowColor = "rgba(79, 224, 200, 0.45)";
+
+      for (let index = 0; index < barCount; index += 1) {
+        const sourceIndex = frequencyData
+          ? Math.min(frequencyData.length - 1, Math.floor((index / barCount) * frequencyData.length))
+          : index;
+        const frequencyLevel = frequencyData?.[sourceIndex] ?? 0;
+        const idleLevel =
+          28 +
+          Math.sin(visualizerPhase + index * 0.55) * 12 +
+          Math.cos(visualizerPhase * 0.65 + index * 0.28) * 8;
+        const hasAudioData = playing && analyser && audioContext?.state === "running";
+        const normalizedLevel = hasAudioData ? frequencyLevel / 255 : idleLevel / 100;
+        const pulse = playing ? Math.max(0.12, normalizedLevel) : Math.max(0.08, normalizedLevel * 0.52);
+        const barHeight = Math.max(8, pulse * (height - 34));
+        const x = index * (barWidth + gap);
+        const y = center - barHeight / 2;
+        const radius = Math.min(8, barWidth / 2);
+
+        visualizerContext.beginPath();
+        visualizerContext.roundRect(x, y, barWidth, barHeight, radius);
+        visualizerContext.fill();
+      }
+
+      visualizerContext.shadowBlur = 0;
+      visualizerContext.globalAlpha = playing ? 0.92 : 0.42;
+      visualizerContext.strokeStyle = "rgba(247, 211, 96, 0.72)";
+      visualizerContext.lineWidth = 2;
+      visualizerContext.beginPath();
+      for (let x = 0; x <= width; x += 12) {
+        const waveformIndex = waveformData
+          ? Math.min(waveformData.length - 1, Math.floor((x / width) * waveformData.length))
+          : 0;
+        const frequencyIndex = frequencyData
+          ? Math.min(frequencyData.length - 1, Math.floor((x / width) * frequencyData.length))
+          : 0;
+        const waveform = waveformData
+          ? (waveformData[waveformIndex] - 128) / 128
+          : Math.sin(visualizerPhase * 1.6 + x * 0.028) * 0.35;
+        const energy = frequencyData?.[frequencyIndex]
+          ? frequencyData[frequencyIndex] / 255
+          : 0.22;
+        const y =
+          center +
+          waveform *
+            (8 + energy * 24) *
+            (playing ? 1 : 0.42);
+        if (x === 0) visualizerContext.moveTo(x, y);
+        else visualizerContext.lineTo(x, y);
+      }
+      visualizerContext.stroke();
+      visualizerContext.globalAlpha = 1;
+
+      visualizerFrame = requestAnimationFrame(drawVisualizer);
+    }
+
+    function startVisualizer() {
+      if (visualizerFrame || !visualizerContext) return;
+      drawVisualizer();
+    }
+
     function applyVolume() {
       if (!media) return;
-      media.volume = Math.max(0, Math.min(1, settings.volume));
-      media.muted = false;
+      const volume = Number.isFinite(audioSettings.volume)
+        ? Math.max(0, Math.min(1, audioSettings.volume))
+        : 1;
+      const outputVolume = audioSettings.muted ? 0 : volume;
+      if (outputGain && audioContext) {
+        outputGain.gain.setTargetAtTime(outputVolume, audioContext.currentTime, 0.015);
+        media.volume = 1;
+        media.muted = false;
+        return;
+      }
+      media.volume = volume;
+      media.muted = Boolean(audioSettings.muted);
     }
 
     function syncAudioSource() {
@@ -172,6 +414,7 @@ const defaultTrack = tracks[0];
       }
       applyVolume();
       try {
+        await resumeAnalyzer();
         await media.play();
         if (requestId !== playbackRequestId || !isMediaPlaying()) return false;
         saveMusicSettings({ playing: true });
@@ -210,16 +453,15 @@ const defaultTrack = tracks[0];
       const track = currentTrack();
       const isActuallyPlaying = isMediaPlaying();
       if (!track) {
-        title.textContent = "No Music Found";
+        if (title) title.innerHTML = '<option value="">No Music Found</option>';
         detail.textContent = "Add audio files to public/music";
         trackSelect.disabled = true;
-        volume.disabled = true;
         toggle.disabled = true;
         player.classList.remove("music-playing");
+        updatePlaybackTime();
         if (status) status.textContent = "Add playable files to public/music.";
         return;
       }
-      title.textContent = track.title;
       detail.textContent = track.detail;
       if (art?.tagName === "VIDEO" && track.mediaType === "video") {
         if (!art.src.endsWith(track.src)) {
@@ -230,20 +472,18 @@ const defaultTrack = tracks[0];
         art.removeAttribute("src");
       }
       trackSelect.value = track.id;
-      volume.value = String(Math.round(settings.volume * 100));
       trackSelect.disabled = false;
-      volume.disabled = false;
       toggle.disabled = false;
       toggle.textContent = isActuallyPlaying ? "Pause" : "Play";
       player.classList.toggle("music-playing", isActuallyPlaying);
       if (status) {
-        status.textContent = isActuallyPlaying
-          ? settings.volume === 0
-            ? "Playing silently. Raise Music volume to hear it."
-            : "Playing from public/music."
-          : "";
+        status.textContent =
+          isActuallyPlaying && (audioSettings.muted || audioSettings.volume === 0)
+            ? "Playing silently. Raise system volume to hear it."
+            : "";
       }
       applyVolume();
+      updatePlaybackTime();
     }
 
     toggle.addEventListener("click", () => setPlaying(!isMediaPlaying()));
@@ -258,9 +498,10 @@ const defaultTrack = tracks[0];
       setTrack(tracks[((index < 0 ? 0 : index) + 1) % tracks.length].id);
     });
     trackSelect.addEventListener("change", () => setTrack(trackSelect.value));
-    volume.addEventListener("input", () => {
-      saveMusicSettings({ volume: Number(volume.value) / 100 });
-      applyVolume();
+    seek?.addEventListener("input", () => {
+      if (!media || !Number.isFinite(media.duration) || media.duration <= 0) return;
+      media.currentTime = (Number(seek.value) / Number(seek.max)) * media.duration;
+      updatePlaybackTime();
     });
 
     document.addEventListener("desktop:music-settings", (event) => {
@@ -276,6 +517,12 @@ const defaultTrack = tracks[0];
       if (!settings.playing) media.pause();
     });
 
+    document.addEventListener("desktop:audio-settings", (event) => {
+      audioSettings = { ...loadAudioSettings(), ...(event.detail || {}) };
+      applyVolume();
+      render();
+    });
+
     media?.addEventListener("ended", () => {
       if (!tracks.length) return;
       const index = tracks.findIndex((track) => track.id === settings.track);
@@ -284,6 +531,10 @@ const defaultTrack = tracks[0];
 
     media?.addEventListener("play", render);
     media?.addEventListener("pause", render);
+    media?.addEventListener("timeupdate", updatePlaybackTime);
+    media?.addEventListener("loadedmetadata", updatePlaybackTime);
+    media?.addEventListener("durationchange", updatePlaybackTime);
+    media?.addEventListener("seeked", updatePlaybackTime);
 
     media?.addEventListener("error", () => {
       const code = media.error?.code;
@@ -297,6 +548,7 @@ const defaultTrack = tracks[0];
 
     window.__pepoMusicController = { setPlaying, setTrack };
     syncAudioSource();
+    startVisualizer();
     if (persistedSettings.playing) {
       localStorage.setItem(musicKey, JSON.stringify(settings));
       document.dispatchEvent(

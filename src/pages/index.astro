@@ -8,10 +8,12 @@ import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
 import ResumeApp from "../components/apps/ResumeApp.astro";
 import SettingsApp from "../components/apps/SettingsApp.astro";
+import SnakeApp from "../components/apps/SnakeApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
 import TerminalApp from "../components/apps/TerminalApp.astro";
 import TrashBinApp from "../components/apps/TrashBinApp.astro";
 import WelcomeApp from "../components/apps/WelcomeApp.astro";
+import WhiteNoiseApp from "../components/apps/WhiteNoiseApp.astro";
 import WorkApp from "../components/apps/WorkApp.astro";
 import DesktopIcon from "../components/desktop/DesktopIcon.astro";
 import ExternalLinkIcon from "../components/desktop/ExternalLinkIcon.astro";
@@ -85,17 +87,29 @@ import socialLinks from "../data/social-links.json";
           data-layout-index="0"
         />
         <DesktopIcon
-          appId="gallery"
-          label="Gallery"
+          appId="snake"
+          label="Snake"
           data-default-col="0"
           data-default-row="5"
           data-layout-group="left-mid"
           data-layout-index="1"
         />
         <DesktopIcon
+          appId="gallery"
+          label="Gallery"
+          data-default-col="3"
+          data-default-row="bottom"
+        />
+        <DesktopIcon
           appId="music"
           label="Music"
           data-default-col="0"
+          data-default-row="bottom"
+        />
+        <DesktopIcon
+          appId="whitenoise"
+          label="Noise"
+          data-default-col="4"
           data-default-row="bottom"
         />
         <DesktopIcon
@@ -174,8 +188,14 @@ import socialLinks from "../data/social-links.json";
         >
           <SreGameApp />
         </Window>
-        <Window appId="music" title="Music Player" width={460} height={520}>
+        <Window appId="snake" title="Snake" width={560} height={680}>
+          <SnakeApp />
+        </Window>
+        <Window appId="music" title="Music Player" width={560} height={490}>
           <MusicPlayerApp />
+        </Window>
+        <Window appId="whitenoise" title="White Noise" width={480} height={540}>
+          <WhiteNoiseApp />
         </Window>
         <Window appId="calculator" title="Calculator" width={360} height={520}>
           <CalculatorApp />
@@ -438,9 +458,13 @@ import socialLinks from "../data/social-links.json";
           const connectionDist = 180;
           const particles = [];
           const pulses = [];
+          const audioRings = [];
           const ambientBlobs = [];
           const count = 70;
           let desktopPrefs = {};
+          let musicAudio = { playing: false, low: 0, mid: 0, high: 0, energy: 0 };
+          let smoothedAudio = { low: 0, mid: 0, high: 0, energy: 0 };
+          let lastAudioRingAt = 0;
 
           function getCssVar(name, fallback) {
             return (
@@ -467,6 +491,16 @@ import socialLinks from "../data/social-links.json";
           readDesktopPrefs();
           window.addEventListener("resize", resize);
           document.addEventListener("desktop:preferences", readDesktopPrefs);
+          document.addEventListener("desktop:music-audio-frame", (event) => {
+            const detail = event.detail || {};
+            musicAudio = {
+              playing: Boolean(detail.playing),
+              low: Math.max(0, Math.min(1, detail.low || 0)),
+              mid: Math.max(0, Math.min(1, detail.mid || 0)),
+              high: Math.max(0, Math.min(1, detail.high || 0)),
+              energy: Math.max(0, Math.min(1, detail.energy || 0)),
+            };
+          });
 
           for (let i = 0; i < 4; i++) {
             ambientBlobs.push({
@@ -502,10 +536,19 @@ import socialLinks from "../data/social-links.json";
             ctx.fillStyle = desktopPrefs.bg;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             time += 0.016;
+            smoothedAudio.low += (musicAudio.low - smoothedAudio.low) * 0.16;
+            smoothedAudio.mid += (musicAudio.mid - smoothedAudio.mid) * 0.12;
+            smoothedAudio.high += (musicAudio.high - smoothedAudio.high) * 0.18;
+            smoothedAudio.energy += (musicAudio.energy - smoothedAudio.energy) * 0.14;
+            const audioEnergy = musicAudio.playing ? smoothedAudio.energy : 0;
+            const lowEnergy = musicAudio.playing ? smoothedAudio.low : 0;
+            const midEnergy = musicAudio.playing ? smoothedAudio.mid : 0;
+            const highEnergy = musicAudio.playing ? smoothedAudio.high : 0;
+            const reactiveConnectionDist = connectionDist + audioEnergy * 95;
 
             ambientBlobs.forEach((blob) => {
-              blob.x += blob.vx;
-              blob.y += blob.vy;
+              blob.x += blob.vx * (1 + midEnergy * 2.4);
+              blob.y += blob.vy * (1 + midEnergy * 2.4);
               if (blob.x < -blob.r) blob.x = canvas.width + blob.r;
               if (blob.x > canvas.width + blob.r) blob.x = -blob.r;
               if (blob.y < -blob.r) blob.y = canvas.height + blob.r;
@@ -523,7 +566,10 @@ import socialLinks from "../data/social-links.json";
                 blob.color === "cyan"
                   ? desktopPrefs.secondary
                   : desktopPrefs.primary;
-              grad.addColorStop(0, "rgba(" + color + ", " + blob.alpha + ")");
+              grad.addColorStop(
+                0,
+                "rgba(" + color + ", " + (blob.alpha + audioEnergy * 0.045) + ")",
+              );
               grad.addColorStop(1, "rgba(" + color + ", 0)");
               ctx.fillStyle = grad;
               ctx.fillRect(
@@ -535,18 +581,22 @@ import socialLinks from "../data/social-links.json";
             });
 
             particles.forEach((particle) => {
-              particle.x += particle.vx;
-              particle.y += particle.vy;
+              const audioDrift =
+                musicAudio.playing && particle.isHub
+                  ? Math.sin(time * 2 + particle.glowPhase) * lowEnergy * 0.35
+                  : 0;
+              particle.x += particle.vx * (1 + highEnergy * 3.8) + audioDrift;
+              particle.y += particle.vy * (1 + highEnergy * 3.8) + audioDrift * 0.45;
               if (particle.x < 0) particle.x = canvas.width;
               if (particle.x > canvas.width) particle.x = 0;
               if (particle.y < 0) particle.y = canvas.height;
               if (particle.y > canvas.height) particle.y = 0;
 
-              particle.pulseTimer--;
+              particle.pulseTimer -= 1 + audioEnergy * 3.5;
               if (particle.pulseTimer <= 0) {
                 particle.pulseTimer = particle.isHub
                   ? 30 + Math.random() * 80
-                  : 100 + Math.random() * 400;
+                  : 100 + Math.random() * 400 - audioEnergy * 120;
                 let nearest = null;
                 let nearestDist = Infinity;
 
@@ -556,7 +606,7 @@ import socialLinks from "../data/social-links.json";
                     other.x - particle.x,
                     other.y - particle.y,
                   );
-                  if (distance < connectionDist && distance < nearestDist) {
+                  if (distance < reactiveConnectionDist && distance < nearestDist) {
                     nearest = other;
                     nearestDist = distance;
                   }
@@ -569,13 +619,33 @@ import socialLinks from "../data/social-links.json";
                     tx: nearest.x,
                     ty: nearest.y,
                     progress: 0,
-                    speed: 0.02 + Math.random() * 0.03,
+                    speed: 0.02 + Math.random() * 0.03 + audioEnergy * 0.035,
                     color: particle.color,
+                    audioBoost: audioEnergy,
                     trail: [],
                   });
                 }
               }
             });
+
+            if (
+              musicAudio.playing &&
+              lowEnergy > 0.42 &&
+              time - lastAudioRingAt > 0.18
+            ) {
+              lastAudioRingAt = time;
+              const source = particles[Math.floor(Math.random() * particles.length)];
+              if (source) {
+                audioRings.push({
+                  x: source.x,
+                  y: source.y,
+                  radius: 8,
+                  alpha: 0.22 + lowEnergy * 0.45,
+                  speed: 3.5 + lowEnergy * 8,
+                  color: source.color,
+                });
+              }
+            }
 
             for (let i = 0; i < particles.length; i++) {
               for (let j = i + 1; j < particles.length; j++) {
@@ -583,11 +653,13 @@ import socialLinks from "../data/social-links.json";
                   particles[i].x - particles[j].x,
                   particles[i].y - particles[j].y,
                 );
-                if (distance < connectionDist) {
-                  const alpha = (1 - distance / connectionDist) * 0.3;
+                if (distance < reactiveConnectionDist) {
+                  const alpha =
+                    (1 - distance / reactiveConnectionDist) *
+                    (0.22 + audioEnergy * 0.42);
                   ctx.strokeStyle =
                     "rgba(" + desktopPrefs.primary + ", " + alpha + ")";
-                  ctx.lineWidth = 1;
+                  ctx.lineWidth = 1 + audioEnergy * 1.4;
                   ctx.beginPath();
                   ctx.moveTo(particles[i].x, particles[i].y);
                   ctx.lineTo(particles[j].x, particles[j].y);
@@ -611,7 +683,8 @@ import socialLinks from "../data/social-links.json";
 
               for (let t = 0; t < pulse.trail.length; t++) {
                 const trailAlpha = (t / pulse.trail.length) * 0.8;
-                const trailR = 1 + (t / pulse.trail.length) * 2;
+                const trailR =
+                  1 + (t / pulse.trail.length) * (2 + pulse.audioBoost * 5);
                 const baseColor =
                   pulse.color === "cyan"
                     ? desktopPrefs.secondary
@@ -628,7 +701,9 @@ import socialLinks from "../data/social-links.json";
                   "rgba(" +
                   baseColor +
                   ", " +
-                  trailAlpha * (1 - pulse.progress * 0.5) +
+                  trailAlpha *
+                    (1 - pulse.progress * 0.5) *
+                    (1 + pulse.audioBoost) +
                   ")";
                 ctx.fill();
               }
@@ -640,13 +715,36 @@ import socialLinks from "../data/social-links.json";
               const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, 12);
               glowGrad.addColorStop(
                 0,
-                "rgba(" + baseColor + ", " + 0.6 * (1 - pulse.progress) + ")",
+                "rgba(" +
+                  baseColor +
+                  ", " +
+                  (0.6 + pulse.audioBoost * 0.35) * (1 - pulse.progress) +
+                  ")",
               );
               glowGrad.addColorStop(1, "rgba(" + baseColor + ", 0)");
               ctx.fillStyle = glowGrad;
               ctx.beginPath();
               ctx.arc(px, py, 12, 0, Math.PI * 2);
               ctx.fill();
+            }
+
+            for (let i = audioRings.length - 1; i >= 0; i--) {
+              const ring = audioRings[i];
+              ring.radius += ring.speed;
+              ring.alpha *= 0.94;
+              if (ring.alpha < 0.015 || ring.radius > 220) {
+                audioRings.splice(i, 1);
+                continue;
+              }
+              const baseColor =
+                ring.color === "cyan"
+                  ? desktopPrefs.secondary
+                  : desktopPrefs.primary;
+              ctx.beginPath();
+              ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI * 2);
+              ctx.strokeStyle = "rgba(" + baseColor + ", " + ring.alpha + ")";
+              ctx.lineWidth = 1.5 + lowEnergy * 3;
+              ctx.stroke();
             }
 
             particles.forEach((particle) => {
@@ -658,7 +756,9 @@ import socialLinks from "../data/social-links.json";
                 particle.color === "cyan"
                   ? desktopPrefs.secondary
                   : desktopPrefs.primary;
-              const glowR = particle.isHub ? 20 : 10;
+              const glowR =
+                (particle.isHub ? 20 : 10) *
+                (1 + audioEnergy * (particle.isHub ? 2.1 : 1.25));
               const glowGrad = ctx.createRadialGradient(
                 particle.x,
                 particle.y,
@@ -669,7 +769,11 @@ import socialLinks from "../data/social-links.json";
               );
               glowGrad.addColorStop(
                 0,
-                "rgba(" + baseColor + ", " + 0.3 * glowPulse + ")",
+                "rgba(" +
+                  baseColor +
+                  ", " +
+                  (0.3 * glowPulse + audioEnergy * 0.28) +
+                  ")",
               );
               glowGrad.addColorStop(1, "rgba(" + baseColor + ", 0)");
               ctx.fillStyle = glowGrad;
@@ -679,7 +783,11 @@ import socialLinks from "../data/social-links.json";
               ctx.beginPath();
               ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
               ctx.fillStyle =
-                "rgba(" + baseColor + ", " + (0.6 * glowPulse + 0.2) + ")";
+                "rgba(" +
+                baseColor +
+                ", " +
+                (0.6 * glowPulse + 0.2 + highEnergy * 0.38) +
+                ")";
               ctx.fill();
             });
 

@@ -1,4 +1,4 @@
-# PePoDev | SRE Desktop Portfolio
+# PePoDev | Desktop Portfolio
 
 An interactive desktop-style portfolio for a Site Reliability Engineer, built
 with Astro as a static site. The main page renders an OS-like desktop with

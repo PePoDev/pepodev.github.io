@@ -126,16 +126,6 @@ const defaultTrackId = tracks[0]?.id ?? "";
           </select>
         </label>
 
-        <label class="settings-field">
-          <span>Volume</span>
-          <input
-            data-music-setting="volume"
-            type="range"
-            min="0"
-            max="100"
-            value="60"
-          />
-        </label>
       </div>
 
       <div class="settings-actions">
@@ -375,14 +365,13 @@ const defaultTrackId = tracks[0]?.id ?? "";
         if (raw)
           return {
             track: defaultTrackId,
-            volume: 0.6,
             playing: false,
             ...JSON.parse(raw),
           };
       } catch {
         // Ignore corrupt persisted settings.
       }
-      return { track: defaultTrackId, volume: 0.6, playing: false };
+      return { track: defaultTrackId, playing: false };
     }
 
     function applyPrefs(prefs) {
@@ -442,9 +431,6 @@ const defaultTrackId = tracks[0]?.id ?? "";
         );
       });
       app.querySelector('[data-music-setting="track"]').value = music.track;
-      app.querySelector('[data-music-setting="volume"]').value = String(
-        Math.round(music.volume * 100),
-      );
       app.querySelector('[data-music-setting="toggle"]').textContent =
         music.playing ? "Pause music" : "Play music";
     }
@@ -464,15 +450,6 @@ const defaultTrackId = tracks[0]?.id ?? "";
         }
 
         applyPrefs(prefs);
-        render();
-      }
-
-      if (target.dataset.musicSetting === "volume") {
-        const music = { ...loadMusic(), volume: Number(target.value) / 100 };
-        localStorage.setItem(musicKey, JSON.stringify(music));
-        document.dispatchEvent(
-          new CustomEvent("desktop:music-settings", { detail: music }),
-        );
         render();
       }
     });

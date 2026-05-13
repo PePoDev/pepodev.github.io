@@ -1,0 +1,370 @@
+<div class="app-content snake-app" data-snake-game>
+  <div class="snake-panel">
+    <div class="snake-stats" aria-live="polite">
+      <div>
+        <span>Score</span>
+        <strong data-snake-score>0</strong>
+      </div>
+      <div>
+        <span>Best</span>
+        <strong data-snake-best>0</strong>
+      </div>
+      <div>
+        <span>Status</span>
+        <strong data-snake-status>Ready</strong>
+      </div>
+    </div>
+
+    <div class="snake-stage">
+      <canvas
+        class="snake-board"
+        data-snake-board
+        width="480"
+        height="480"
+        aria-label="Snake game board"
+        role="img"></canvas>
+      <div class="snake-overlay" data-snake-overlay>
+        <strong data-snake-overlay-title>Snake Ops</strong>
+        <span data-snake-overlay-copy>Press Start or an arrow key.</span>
+      </div>
+      <div class="snake-jumpscare" data-snake-jumpscare aria-hidden="true">
+        <div class="snake-ghost">
+          <span class="snake-ghost-eye"></span>
+          <span class="snake-ghost-eye"></span>
+          <span class="snake-ghost-mouth"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="snake-controls">
+      <button type="button" data-snake-action="start">Start</button>
+      <button type="button" data-snake-action="pause">Pause</button>
+      <button type="button" data-snake-action="reset">Reset</button>
+    </div>
+
+    <div class="snake-pad" aria-label="Snake direction controls">
+      <button type="button" data-snake-dir="up" aria-label="Move up">↑</button>
+      <button type="button" data-snake-dir="left" aria-label="Move left">←</button>
+      <button type="button" data-snake-dir="down" aria-label="Move down">↓</button>
+      <button type="button" data-snake-dir="right" aria-label="Move right">→</button>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-snake-game]").forEach((root) => {
+      if (root.dataset.ready === "true") return;
+      root.dataset.ready = "true";
+
+      const canvas = root.querySelector("[data-snake-board]");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = root.querySelector("[data-snake-score]");
+      const bestEl = root.querySelector("[data-snake-best]");
+      const statusEl = root.querySelector("[data-snake-status]");
+      const overlay = root.querySelector("[data-snake-overlay]");
+      const overlayTitle = root.querySelector("[data-snake-overlay-title]");
+      const overlayCopy = root.querySelector("[data-snake-overlay-copy]");
+      const jumpscare = root.querySelector("[data-snake-jumpscare]");
+      const storageKey = "pepodev.snake.best";
+      const audioSettingsKey = "pepodev.systemAudio";
+      const size = 20;
+      const cell = canvas.width / size;
+      const tickMs = 120;
+      const defaultBest = 170;
+      const scareScore = 120;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+      let snake;
+      let food;
+      let direction;
+      let nextDirection;
+      let score;
+      let best = Number.parseInt(localStorage.getItem(storageKey) || String(defaultBest), 10);
+      let timer = null;
+      let state = "ready";
+      let scareShown = false;
+      let audioContext = null;
+      let audioSettings = loadAudioSettings();
+
+      function loadAudioSettings() {
+        try {
+          const raw = localStorage.getItem(audioSettingsKey);
+          if (raw) return { volume: 1, muted: false, ...JSON.parse(raw) };
+        } catch {
+          // Ignore corrupt persisted settings.
+        }
+        return { volume: 1, muted: false };
+      }
+
+      function outputVolume() {
+        const volume = Number.isFinite(audioSettings.volume)
+          ? Math.max(0, Math.min(1, audioSettings.volume))
+          : 1;
+        return audioSettings.muted ? 0 : volume;
+      }
+
+      function setupAudio() {
+        if (!AudioContextClass) return false;
+        if (!audioContext) audioContext = new AudioContextClass();
+        return true;
+      }
+
+      async function playScareSound() {
+        if (!setupAudio() || outputVolume() === 0) return;
+        if (audioContext.state === "suspended") await audioContext.resume();
+
+        const now = audioContext.currentTime;
+        const master = audioContext.createGain();
+        const filter = audioContext.createBiquadFilter();
+        const shriek = audioContext.createOscillator();
+        const growl = audioContext.createOscillator();
+        const tremolo = audioContext.createOscillator();
+        const tremoloGain = audioContext.createGain();
+
+        master.gain.setValueAtTime(0.0001, now);
+        master.gain.exponentialRampToValueAtTime(0.34 * outputVolume(), now + 0.035);
+        master.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(1400, now);
+        filter.frequency.exponentialRampToValueAtTime(220, now + 0.72);
+        filter.Q.value = 7;
+
+        shriek.type = "sawtooth";
+        shriek.frequency.setValueAtTime(980, now);
+        shriek.frequency.exponentialRampToValueAtTime(120, now + 0.75);
+        growl.type = "square";
+        growl.frequency.setValueAtTime(74, now);
+        growl.frequency.exponentialRampToValueAtTime(42, now + 0.75);
+        tremolo.type = "sine";
+        tremolo.frequency.value = 19;
+        tremoloGain.gain.value = 28;
+
+        tremolo.connect(tremoloGain);
+        tremoloGain.connect(shriek.frequency);
+        shriek.connect(filter);
+        growl.connect(filter);
+        filter.connect(master);
+        master.connect(audioContext.destination);
+
+        shriek.start(now);
+        growl.start(now);
+        tremolo.start(now);
+        shriek.stop(now + 0.92);
+        growl.stop(now + 0.92);
+        tremolo.stop(now + 0.92);
+      }
+
+      function showJumpScare() {
+        if (scareShown || score < scareScore) return;
+        scareShown = true;
+        jumpscare.hidden = false;
+        jumpscare.classList.add("visible");
+        void playScareSound();
+        window.setTimeout(() => {
+          jumpscare.classList.remove("visible");
+          jumpscare.hidden = true;
+        }, 1150);
+      }
+
+      function resetGame(nextState = "ready") {
+        snake = [
+          { x: 9, y: 10 },
+          { x: 8, y: 10 },
+          { x: 7, y: 10 },
+        ];
+        direction = { x: 1, y: 0 };
+        nextDirection = { x: 1, y: 0 };
+        score = 0;
+        food = { x: 14, y: 10 };
+        state = nextState;
+        scareShown = false;
+        jumpscare.hidden = true;
+        jumpscare.classList.remove("visible");
+        render();
+      }
+
+      function isWindowVisible() {
+        const windowEl = root.closest(".window");
+        return (
+          !windowEl?.hidden &&
+          windowEl?.getAttribute("aria-hidden") !== "true" &&
+          !windowEl?.classList.contains("minimized")
+        );
+      }
+
+      function setOverlay(title, copy, visible) {
+        overlayTitle.textContent = title;
+        overlayCopy.textContent = copy;
+        overlay.hidden = !visible;
+      }
+
+      function setStatus(value) {
+        statusEl.textContent = value;
+      }
+
+      function drawCell(x, y, fill, inset = 2) {
+        ctx.fillStyle = fill;
+        ctx.fillRect(x * cell + inset, y * cell + inset, cell - inset * 2, cell - inset * 2);
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(3, 7, 18, 0.72)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.08)";
+        ctx.lineWidth = 1;
+        for (let i = 1; i < size; i += 1) {
+          ctx.beginPath();
+          ctx.moveTo(i * cell, 0);
+          ctx.lineTo(i * cell, canvas.height);
+          ctx.moveTo(0, i * cell);
+          ctx.lineTo(canvas.width, i * cell);
+          ctx.stroke();
+        }
+
+        drawCell(food.x, food.y, "#ff9f0a", 4);
+        snake.forEach((segment, index) => {
+          drawCell(segment.x, segment.y, index === 0 ? "#64d2ff" : "#30d158", index === 0 ? 2 : 3);
+        });
+
+        scoreEl.textContent = String(score);
+        bestEl.textContent = String(best);
+        root.dataset.snakeState = state;
+
+        if (state === "ready") {
+          setStatus("Ready");
+          setOverlay("Snake Ops", "Press Start or an arrow key.", true);
+        } else if (state === "paused") {
+          setStatus("Paused");
+          setOverlay("Paused", "Press Start to continue.", true);
+        } else if (state === "over") {
+          setStatus("Game Over");
+          setOverlay("Incident Closed", "Press Reset or Start for a new run.", true);
+        } else {
+          setStatus("Running");
+          setOverlay("", "", false);
+        }
+      }
+
+      function placeFood() {
+        do {
+          food = {
+            x: Math.floor(Math.random() * size),
+            y: Math.floor(Math.random() * size),
+          };
+        } while (snake.some((segment) => segment.x === food.x && segment.y === food.y));
+      }
+
+      function stopTimer() {
+        if (timer) window.clearInterval(timer);
+        timer = null;
+      }
+
+      function endGame() {
+        stopTimer();
+        state = "over";
+        best = Math.max(best, score);
+        localStorage.setItem(storageKey, String(best));
+        render();
+      }
+
+      function tick() {
+        if (!isWindowVisible()) {
+          pause();
+          return;
+        }
+
+        direction = nextDirection;
+        const head = {
+          x: snake[0].x + direction.x,
+          y: snake[0].y + direction.y,
+        };
+        const hitWall = head.x < 0 || head.x >= size || head.y < 0 || head.y >= size;
+        const hitSelf = snake.some((segment) => segment.x === head.x && segment.y === head.y);
+        if (hitWall || hitSelf) {
+          endGame();
+          return;
+        }
+
+        snake.unshift(head);
+        if (head.x === food.x && head.y === food.y) {
+          score += 10;
+          best = Math.max(best, score);
+          localStorage.setItem(storageKey, String(best));
+          showJumpScare();
+          placeFood();
+        } else {
+          snake.pop();
+        }
+        render();
+      }
+
+      function start() {
+        if (state === "over") resetGame("running");
+        state = "running";
+        stopTimer();
+        timer = window.setInterval(tick, tickMs);
+        render();
+      }
+
+      function pause() {
+        if (state !== "running") return;
+        stopTimer();
+        state = "paused";
+        render();
+      }
+
+      function setDirection(x, y) {
+        if (direction.x + x === 0 && direction.y + y === 0) return;
+        nextDirection = { x, y };
+        if (state === "ready" || state === "paused") start();
+      }
+
+      root.addEventListener("click", (event) => {
+        const action = event.target.closest("[data-snake-action]")?.dataset.snakeAction;
+        const dir = event.target.closest("[data-snake-dir]")?.dataset.snakeDir;
+
+        if (action === "start") start();
+        if (action === "pause") pause();
+        if (action === "reset") {
+          stopTimer();
+          resetGame();
+        }
+
+        if (dir === "up") setDirection(0, -1);
+        if (dir === "down") setDirection(0, 1);
+        if (dir === "left") setDirection(-1, 0);
+        if (dir === "right") setDirection(1, 0);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (!isWindowVisible()) return;
+        if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
+          event.preventDefault();
+          setDirection(0, -1);
+        } else if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") {
+          event.preventDefault();
+          setDirection(0, 1);
+        } else if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+          event.preventDefault();
+          setDirection(-1, 0);
+        } else if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+          event.preventDefault();
+          setDirection(1, 0);
+        } else if (event.key === " " || event.key.toLowerCase() === "p") {
+          event.preventDefault();
+          state === "running" ? pause() : start();
+        }
+      });
+
+      document.addEventListener("desktop:audio-settings", (event) => {
+        audioSettings = { ...loadAudioSettings(), ...(event.detail || {}) };
+      });
+
+      resetGame();
+    });
+  });
+</script>

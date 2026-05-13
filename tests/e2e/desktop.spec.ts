@@ -8,7 +8,9 @@ const apps = [
   { label: "Work", appId: "work", title: "Work - Experience" },
   { label: "About Me", appId: "me", title: "About Me" },
   { label: "SRE Game", appId: "sregame", title: "SRE Game - Taming Chaos" },
+  { label: "Snake", appId: "snake", title: "Snake" },
   { label: "Music", appId: "music", title: "Music Player" },
+  { label: "Noise", appId: "whitenoise", title: "White Noise" },
   { label: "Calculator", appId: "calculator", title: "Calculator" },
   { label: "Settings", appId: "settings", title: "Settings" },
   { label: "Terminal", appId: "terminal", title: "Terminal" },
@@ -188,6 +190,27 @@ test("calculator handles arithmetic, percent, keyboard input, and clear", async 
   await expect(window.locator(".calculator-value")).toHaveText("3");
 });
 
+test("snake game starts, scores, pauses, and resets", async ({ page }) => {
+  const window = await openApp(page, "Snake", "snake");
+
+  await expect(window.locator("[data-snake-status]")).toHaveText("Ready");
+  await expect(window.locator("[data-snake-best]")).toHaveText("170");
+  await window.getByRole("button", { name: "Start" }).click();
+  await expect(window.locator("[data-snake-status]")).toHaveText("Running");
+
+  await expect
+    .poll(() => window.locator("[data-snake-score]").textContent())
+    .toBe("10");
+  await expect(window.locator("[data-snake-best]")).toHaveText("170");
+
+  await window.getByRole("button", { name: "Pause" }).click();
+  await expect(window.locator("[data-snake-status]")).toHaveText("Paused");
+
+  await window.getByRole("button", { name: "Reset" }).click();
+  await expect(window.locator("[data-snake-status]")).toHaveText("Ready");
+  await expect(window.locator("[data-snake-score]")).toHaveText("0");
+});
+
 test("settings customizes and persists desktop preferences", async ({
   page,
 }) => {
@@ -210,6 +233,7 @@ test("music player and settings music controls update state", async ({
   page,
 }) => {
   const music = await openApp(page, "Music", "music");
+  await expect(music.locator("[data-music-volume]")).toHaveCount(0);
   await music.getByRole("button", { name: "Play", exact: true }).click();
   await expect(
     music.getByRole("button", { name: "Pause", exact: true }),
@@ -226,7 +250,7 @@ test("music player and settings music controls update state", async ({
     .toMatchObject({
       muted: false,
       paused: false,
-      volume: 0.6,
+      volume: 1,
     });
   await expect
     .poll(() =>
@@ -237,13 +261,14 @@ test("music player and settings music controls update state", async ({
     .toBeGreaterThan(0);
 
   await music.locator("[data-music-track]").selectOption("late_shift_protocol");
-  await expect(music.locator("#music-title")).toHaveText("Late Shift Protocol");
+  await expect(music.locator("#music-title")).toHaveValue("late_shift_protocol");
 
   const settings = await openApp(page, "Settings", "settings");
+  await expect(settings.locator('[data-music-setting="volume"]')).toHaveCount(0);
   await settings
     .locator('[data-music-setting="track"]')
     .selectOption("late_shift_protocol");
-  await expect(music.locator("#music-title")).toHaveText("Late Shift Protocol");
+  await expect(music.locator("#music-title")).toHaveValue("late_shift_protocol");
 });
 
 test("music player recovers from stale saved playback state", async ({
@@ -254,7 +279,6 @@ test("music player recovers from stale saved playback state", async ({
       "pepodev.music",
       JSON.stringify({
         track: "late_shift_protocol",
-        volume: 0.6,
         playing: true,
       }),
     );

@@ -35,7 +35,7 @@ const { appId, label, id, class: className = "", ...rest } = Astro.props;
     const initialRects = new Map(
       desktopIcons.map((icon) => [icon, icon.getBoundingClientRect()]),
     );
-    const storagePrefix = "pepodev.desktopIcon.";
+    const storagePrefix = "pepodev.desktopIcon.v2.";
     const linkStoragePrefix = "pepodev.linkIcon.v2.";
     const gridOriginX = 20;
     const gridOriginY = 20;

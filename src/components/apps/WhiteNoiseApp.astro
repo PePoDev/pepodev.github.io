@@ -1,0 +1,199 @@
+<div class="app-content white-noise-app" data-white-noise-app>
+  <div class="noise-scene" aria-hidden="true">
+    <div class="noise-crt"></div>
+    <div class="noise-cloud noise-cloud-a"></div>
+    <div class="noise-cloud noise-cloud-b"></div>
+    <div class="noise-rain-layer noise-rain-layer-a"></div>
+    <div class="noise-rain-layer noise-rain-layer-b"></div>
+    <div class="noise-city">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="noise-panel">
+    <div>
+      <div class="music-eyebrow">White Noise</div>
+      <h2>Rain Terminal</h2>
+      <p data-noise-status aria-live="polite">Ready</p>
+    </div>
+
+    <label class="settings-field">
+      <span>Mode</span>
+      <select data-noise-mode>
+        <option value="rain">Rainy sound</option>
+      </select>
+    </label>
+
+    <div class="settings-actions">
+      <button type="button" data-noise-toggle>Start rain</button>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    const app = document.querySelector("[data-white-noise-app]");
+    if (!app) return;
+
+    const audioSettingsKey = "pepodev.systemAudio";
+    const toggle = app.querySelector("[data-noise-toggle]");
+    const mode = app.querySelector("[data-noise-mode]");
+    const status = app.querySelector("[data-noise-status]");
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioContext = null;
+    let masterGain = null;
+    let rainSource = null;
+    let rainFilter = null;
+    let dropTimer = null;
+    let playing = false;
+    let audioSettings = loadAudioSettings();
+
+    function loadAudioSettings() {
+      try {
+        const raw = localStorage.getItem(audioSettingsKey);
+        if (raw) return { volume: 1, muted: false, ...JSON.parse(raw) };
+      } catch {
+        // Ignore corrupt persisted settings.
+      }
+      return { volume: 1, muted: false };
+    }
+
+    function outputVolume() {
+      const volume = Number.isFinite(audioSettings.volume)
+        ? Math.max(0, Math.min(1, audioSettings.volume))
+        : 1;
+      return audioSettings.muted ? 0 : volume;
+    }
+
+    function applyVolume() {
+      if (!masterGain || !audioContext) return;
+      masterGain.gain.setTargetAtTime(
+        outputVolume() * 0.42,
+        audioContext.currentTime,
+        0.025,
+      );
+    }
+
+    function createNoiseBuffer() {
+      const sampleRate = audioContext.sampleRate;
+      const buffer = audioContext.createBuffer(1, sampleRate * 2, sampleRate);
+      const data = buffer.getChannelData(0);
+      let last = 0;
+
+      for (let index = 0; index < data.length; index += 1) {
+        const white = Math.random() * 2 - 1;
+        last = last * 0.82 + white * 0.18;
+        data[index] = last * 0.72 + white * 0.18;
+      }
+
+      return buffer;
+    }
+
+    function setupAudio() {
+      if (!AudioContextClass) return false;
+      if (audioContext) return true;
+
+      audioContext = new AudioContextClass();
+      masterGain = audioContext.createGain();
+      rainFilter = audioContext.createBiquadFilter();
+      rainFilter.type = "bandpass";
+      rainFilter.frequency.value = 1250;
+      rainFilter.Q.value = 0.62;
+      rainFilter.connect(masterGain);
+      masterGain.connect(audioContext.destination);
+      applyVolume();
+      return true;
+    }
+
+    function playDrop() {
+      if (!audioContext || !masterGain || !playing) return;
+      const now = audioContext.currentTime;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(650 + Math.random() * 900, now);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        180 + Math.random() * 160,
+        now + 0.08,
+      );
+      filter.type = "lowpass";
+      filter.frequency.value = 1400 + Math.random() * 900;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.05 + Math.random() * 0.05, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+
+      oscillator.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      oscillator.start(now);
+      oscillator.stop(now + 0.18);
+    }
+
+    function scheduleDrops() {
+      clearInterval(dropTimer);
+      dropTimer = window.setInterval(() => {
+        playDrop();
+        if (Math.random() > 0.55) playDrop();
+      }, 130);
+    }
+
+    async function startRain() {
+      if (!setupAudio()) {
+        status.textContent = "Audio is not available in this browser.";
+        return;
+      }
+      if (audioContext.state === "suspended") await audioContext.resume();
+      stopRain();
+
+      rainSource = audioContext.createBufferSource();
+      rainSource.buffer = createNoiseBuffer();
+      rainSource.loop = true;
+      rainSource.connect(rainFilter);
+      rainSource.start();
+      playing = true;
+      app.classList.add("noise-playing");
+      toggle.textContent = "Stop rain";
+      status.textContent = outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
+      applyVolume();
+      scheduleDrops();
+    }
+
+    function stopRain() {
+      playing = false;
+      clearInterval(dropTimer);
+      dropTimer = null;
+      if (rainSource) {
+        try {
+          rainSource.stop();
+        } catch {
+          // Source may already be stopped.
+        }
+        rainSource.disconnect();
+        rainSource = null;
+      }
+      app.classList.remove("noise-playing");
+      toggle.textContent = "Start rain";
+      status.textContent = "Ready";
+    }
+
+    toggle.addEventListener("click", () => {
+      if (playing) stopRain();
+      else void startRain();
+    });
+
+    mode.addEventListener("change", () => {
+      if (playing) void startRain();
+    });
+
+    document.addEventListener("desktop:audio-settings", (event) => {
+      audioSettings = { ...loadAudioSettings(), ...(event.detail || {}) };
+      applyVolume();
+      if (playing) {
+        status.textContent = outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
+      }
+    });
+  });
+</script>
