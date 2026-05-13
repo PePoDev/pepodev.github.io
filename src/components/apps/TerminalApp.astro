@@ -30,7 +30,7 @@ const commands = [
 
 <script define:vars={{ commands }} is:inline>
   // @ts-nocheck
-  document.addEventListener("DOMContentLoaded", () => {
+  function initTerminal() {
     const app = document.querySelector("[data-terminal-app]");
     if (!app) return;
 
@@ -65,9 +65,13 @@ const commands = [
       if (command === "help") {
         print("Available commands: " + commands.join(", "));
       } else if (command === "whoami") {
-        print("Pepo - Site Reliability Engineer focused on cloud platforms, observability, IaC, GitOps, and production resilience.");
+        print(
+          "Pepo - Site Reliability Engineer focused on cloud platforms, observability, IaC, GitOps, and production resilience.",
+        );
       } else if (command === "skills") {
-        print("Kubernetes, Terraform, AWS, GCP, Grafana, Datadog, Kafka, Vault, ArgoCD, Go, Python.");
+        print(
+          "Kubernetes, Terraform, AWS, GCP, Grafana, Datadog, Kafka, Vault, ArgoCD, Go, Python.",
+        );
       } else if (command === "projects") {
         print("Opening Projects...");
         openApp("project");
@@ -90,5 +94,11 @@ const commands = [
     });
 
     app.addEventListener("click", () => input.focus());
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTerminal);
+  } else {
+    initTerminal();
+  }
 </script>

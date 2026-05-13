@@ -137,7 +137,7 @@ const defaultTrackId = tracks[0]?.id ?? "";
 
 <script define:vars={{ defaultTrackId }} is:inline>
   // @ts-nocheck
-  document.addEventListener("DOMContentLoaded", () => {
+  function initSettings() {
     const app = document.querySelector("[data-settings-app]");
     if (!app) return;
 
@@ -503,5 +503,11 @@ const defaultTrackId = tracks[0]?.id ?? "";
     applyPrefs(loadPrefs());
     render();
     document.addEventListener("desktop:music-settings", render);
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSettings);
+  } else {
+    initSettings();
+  }
 </script>

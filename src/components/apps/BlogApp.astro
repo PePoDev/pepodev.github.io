@@ -81,7 +81,7 @@ const formatDate = (date: Date) =>
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initBlog() {
     document.querySelectorAll("[data-blog-app]").forEach((app) => {
       const listView = app.querySelector("[data-blog-list-view]");
       const reader = app.querySelector("[data-blog-reader]");
@@ -114,5 +114,11 @@ const formatDate = (date: Date) =>
         .closest("[data-window]")
         ?.addEventListener("desktop:window-close", showList);
     });
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initBlog);
+  } else {
+    initBlog();
+  }
 </script>

@@ -120,7 +120,7 @@ const resumePdfData = {
 
 <script define:vars={{ resumePdfData }} is:inline>
   // @ts-nocheck
-  document.addEventListener("DOMContentLoaded", () => {
+  function initResumeApp() {
     const button = document.getElementById("resume-download");
     if (!button) return;
 
@@ -138,7 +138,13 @@ const resumePdfData = {
       link.remove();
       URL.revokeObjectURL(url);
     });
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initResumeApp);
+  } else {
+    initResumeApp();
+  }
 
   function createResumePdf(data) {
     const width = 595;

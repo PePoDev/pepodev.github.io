@@ -27,13 +27,21 @@ const defaultTrack = tracks[0];
           loading="lazy"
         />
       ) : (
-        <div class="music-art music-art-empty" id="music-art" aria-hidden="true" />
+        <div
+          class="music-art music-art-empty"
+          id="music-art"
+          aria-hidden="true"
+        />
       )
     }
     <div>
       <label class="music-title-picker">
         <select id="music-title" data-music-track aria-label="Track">
-          {tracks.map((track) => <option value={track.id}>{track.title}</option>)}
+          {
+            tracks.map((track) => (
+              <option value={track.id}>{track.title}</option>
+            ))
+          }
         </select>
       </label>
       <div class="music-eyebrow">Now Playing</div>
@@ -60,16 +68,17 @@ const defaultTrack = tracks[0];
   </div>
 
   <div class="music-transport">
-    <button type="button" data-music-prev aria-label="Previous track">&lt;&lt;</button>
+    <button type="button" data-music-prev aria-label="Previous track"
+      >&lt;&lt;</button
+    >
     <button type="button" class="music-play" data-music-toggle>Play</button>
-    <button type="button" data-music-next aria-label="Next track">&gt;&gt;</button>
+    <button type="button" data-music-next aria-label="Next track"
+      >&gt;&gt;</button
+    >
   </div>
 
   <div class="music-visualizer" aria-hidden="true">
-    <canvas
-      data-music-visualizer
-      width="720"
-      height="160"></canvas>
+    <canvas data-music-visualizer width="720" height="160"></canvas>
     <div class="music-visualizer-glow"></div>
   </div>
 
@@ -99,7 +108,7 @@ const defaultTrack = tracks[0];
 
 <script define:vars={{ tracks }} is:inline>
   // @ts-nocheck
-  document.addEventListener("DOMContentLoaded", () => {
+  function initMusicPlayer() {
     const musicKey = "pepodev.music";
     const audioSettingsKey = "pepodev.systemAudio";
     const player = document.querySelector("[data-music-player]");
@@ -107,7 +116,10 @@ const defaultTrack = tracks[0];
 
     const defaultTrackId = tracks[0]?.id || "";
     const persistedSettings = loadMusicSettings();
-    let settings = normalizeMusicSettings({ ...persistedSettings, playing: false });
+    let settings = normalizeMusicSettings({
+      ...persistedSettings,
+      playing: false,
+    });
     let audioSettings = loadAudioSettings();
 
     const title = document.getElementById("music-title");
@@ -191,9 +203,10 @@ const defaultTrack = tracks[0];
       const currentTime = media?.currentTime || 0;
       const duration = media?.duration || 0;
       elapsedTime.textContent = formatTime(currentTime);
-      remainingTime.textContent = Number.isFinite(duration) && duration > 0
-        ? `-${formatTime(Math.max(0, duration - currentTime))}`
-        : "-0:00";
+      remainingTime.textContent =
+        Number.isFinite(duration) && duration > 0
+          ? `-${formatTime(Math.max(0, duration - currentTime))}`
+          : "-0:00";
       if (seek) {
         const canSeek = Number.isFinite(duration) && duration > 0;
         seek.disabled = !canSeek;
@@ -253,7 +266,12 @@ const defaultTrack = tracks[0];
       visualizerPhase += playing ? 0.055 : 0.025;
       visualizerContext.clearRect(0, 0, width, height);
 
-      const background = visualizerContext.createLinearGradient(0, 0, width, height);
+      const background = visualizerContext.createLinearGradient(
+        0,
+        0,
+        width,
+        height,
+      );
       background.addColorStop(0, "rgba(6, 13, 24, 0.58)");
       background.addColorStop(1, "rgba(18, 32, 48, 0.32)");
       visualizerContext.fillStyle = background;
@@ -270,7 +288,12 @@ const defaultTrack = tracks[0];
       }
       visualizerContext.globalAlpha = 1;
 
-      if (analyser && frequencyData && waveformData && audioContext?.state === "running") {
+      if (
+        analyser &&
+        frequencyData &&
+        waveformData &&
+        audioContext?.state === "running"
+      ) {
         analyser.getByteFrequencyData(frequencyData);
         analyser.getByteTimeDomainData(waveformData);
       }
@@ -280,7 +303,10 @@ const defaultTrack = tracks[0];
         let mid = 0;
         let high = 0;
         const lowLimit = Math.max(1, Math.floor(frequencyData.length * 0.18));
-        const midLimit = Math.max(lowLimit + 1, Math.floor(frequencyData.length * 0.52));
+        const midLimit = Math.max(
+          lowLimit + 1,
+          Math.floor(frequencyData.length * 0.52),
+        );
 
         frequencyData.forEach((value, index) => {
           if (index < lowLimit) low += value;
@@ -298,7 +324,10 @@ const defaultTrack = tracks[0];
               low: lowLevel,
               mid: midLevel,
               high: highLevel,
-              energy: Math.min(1, lowLevel * 0.46 + midLevel * 0.34 + highLevel * 0.2),
+              energy: Math.min(
+                1,
+                lowLevel * 0.46 + midLevel * 0.34 + highLevel * 0.2,
+              ),
             },
           }),
         );
@@ -319,16 +348,24 @@ const defaultTrack = tracks[0];
 
       for (let index = 0; index < barCount; index += 1) {
         const sourceIndex = frequencyData
-          ? Math.min(frequencyData.length - 1, Math.floor((index / barCount) * frequencyData.length))
+          ? Math.min(
+              frequencyData.length - 1,
+              Math.floor((index / barCount) * frequencyData.length),
+            )
           : index;
         const frequencyLevel = frequencyData?.[sourceIndex] ?? 0;
         const idleLevel =
           28 +
           Math.sin(visualizerPhase + index * 0.55) * 12 +
           Math.cos(visualizerPhase * 0.65 + index * 0.28) * 8;
-        const hasAudioData = playing && analyser && audioContext?.state === "running";
-        const normalizedLevel = hasAudioData ? frequencyLevel / 255 : idleLevel / 100;
-        const pulse = playing ? Math.max(0.12, normalizedLevel) : Math.max(0.08, normalizedLevel * 0.52);
+        const hasAudioData =
+          playing && analyser && audioContext?.state === "running";
+        const normalizedLevel = hasAudioData
+          ? frequencyLevel / 255
+          : idleLevel / 100;
+        const pulse = playing
+          ? Math.max(0.12, normalizedLevel)
+          : Math.max(0.08, normalizedLevel * 0.52);
         const barHeight = Math.max(8, pulse * (height - 34));
         const x = index * (barWidth + gap);
         const y = center - barHeight / 2;
@@ -346,10 +383,16 @@ const defaultTrack = tracks[0];
       visualizerContext.beginPath();
       for (let x = 0; x <= width; x += 12) {
         const waveformIndex = waveformData
-          ? Math.min(waveformData.length - 1, Math.floor((x / width) * waveformData.length))
+          ? Math.min(
+              waveformData.length - 1,
+              Math.floor((x / width) * waveformData.length),
+            )
           : 0;
         const frequencyIndex = frequencyData
-          ? Math.min(frequencyData.length - 1, Math.floor((x / width) * frequencyData.length))
+          ? Math.min(
+              frequencyData.length - 1,
+              Math.floor((x / width) * frequencyData.length),
+            )
           : 0;
         const waveform = waveformData
           ? (waveformData[waveformIndex] - 128) / 128
@@ -357,11 +400,7 @@ const defaultTrack = tracks[0];
         const energy = frequencyData?.[frequencyIndex]
           ? frequencyData[frequencyIndex] / 255
           : 0.22;
-        const y =
-          center +
-          waveform *
-            (8 + energy * 24) *
-            (playing ? 1 : 0.42);
+        const y = center + waveform * (8 + energy * 24) * (playing ? 1 : 0.42);
         if (x === 0) visualizerContext.moveTo(x, y);
         else visualizerContext.lineTo(x, y);
       }
@@ -383,7 +422,11 @@ const defaultTrack = tracks[0];
         : 1;
       const outputVolume = audioSettings.muted ? 0 : volume;
       if (outputGain && audioContext) {
-        outputGain.gain.setTargetAtTime(outputVolume, audioContext.currentTime, 0.015);
+        outputGain.gain.setTargetAtTime(
+          outputVolume,
+          audioContext.currentTime,
+          0.015,
+        );
         media.volume = 1;
         media.muted = false;
         return;
@@ -478,7 +521,8 @@ const defaultTrack = tracks[0];
       player.classList.toggle("music-playing", isActuallyPlaying);
       if (status) {
         status.textContent =
-          isActuallyPlaying && (audioSettings.muted || audioSettings.volume === 0)
+          isActuallyPlaying &&
+          (audioSettings.muted || audioSettings.volume === 0)
             ? "Playing silently. Raise system volume to hear it."
             : "";
       }
@@ -490,7 +534,10 @@ const defaultTrack = tracks[0];
     player.querySelector("[data-music-prev]").addEventListener("click", () => {
       const index = tracks.findIndex((track) => track.id === settings.track);
       if (!tracks.length) return;
-      setTrack(tracks[((index < 0 ? 0 : index) - 1 + tracks.length) % tracks.length].id);
+      setTrack(
+        tracks[((index < 0 ? 0 : index) - 1 + tracks.length) % tracks.length]
+          .id,
+      );
     });
     player.querySelector("[data-music-next]").addEventListener("click", () => {
       const index = tracks.findIndex((track) => track.id === settings.track);
@@ -499,8 +546,10 @@ const defaultTrack = tracks[0];
     });
     trackSelect.addEventListener("change", () => setTrack(trackSelect.value));
     seek?.addEventListener("input", () => {
-      if (!media || !Number.isFinite(media.duration) || media.duration <= 0) return;
-      media.currentTime = (Number(seek.value) / Number(seek.max)) * media.duration;
+      if (!media || !Number.isFinite(media.duration) || media.duration <= 0)
+        return;
+      media.currentTime =
+        (Number(seek.value) / Number(seek.max)) * media.duration;
       updatePlaybackTime();
     });
 
@@ -556,5 +605,11 @@ const defaultTrack = tracks[0];
       );
     }
     render();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMusicPlayer);
+  } else {
+    initMusicPlayer();
+  }
 </script>

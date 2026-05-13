@@ -141,7 +141,7 @@
 </style>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initWelcome() {
     const quotes = [
       {
         text: "Any sufficiently advanced technology is indistinguishable from magic.",
@@ -229,5 +229,11 @@
     quoteAuthor.style.transition = "opacity 0.2s ease";
 
     quoteBox.addEventListener("click", updateQuote);
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initWelcome);
+  } else {
+    initWelcome();
+  }
 </script>

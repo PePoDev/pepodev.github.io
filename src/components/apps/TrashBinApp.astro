@@ -74,7 +74,7 @@ const trashItems = [
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initTrashBin() {
     const app = document.querySelector("[data-trash-app]");
     if (!app) return;
 
@@ -115,5 +115,11 @@ const trashItems = [
     });
 
     renderCount();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTrashBin);
+  } else {
+    initTrashBin();
+  }
 </script>

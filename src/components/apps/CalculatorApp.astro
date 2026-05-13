@@ -30,7 +30,7 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initCalculator() {
     document.querySelectorAll("[data-calculator]").forEach((calculator) => {
       if (calculator.dataset.ready === "true") return;
       calculator.dataset.ready = "true";
@@ -121,5 +121,12 @@
         }
       });
     });
-  });
+  }
+
+  // Initialize immediately if DOM is ready, otherwise wait for DOMContentLoaded
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCalculator);
+  } else {
+    initCalculator();
+  }
 </script>

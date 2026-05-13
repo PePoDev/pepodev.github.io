@@ -118,7 +118,7 @@
 
 <script is:inline>
   // @ts-nocheck
-  document.addEventListener("DOMContentLoaded", () => {
+  function initSreGame() {
     document.querySelectorAll("[data-sre-game]").forEach((root) => {
       const shell = root.closest("[data-window]");
       const q = (selector) => root.querySelector(selector);
@@ -735,5 +735,11 @@
         stopBgm();
       });
     });
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSreGame);
+  } else {
+    initSreGame();
+  }
 </script>

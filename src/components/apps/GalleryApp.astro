@@ -69,7 +69,7 @@ const photos = [
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initGallery() {
     const app = document.querySelector("[data-gallery-app]");
     if (!app) return;
 
@@ -92,5 +92,11 @@ const photos = [
       error.textContent = "Please enter the password";
       passwordInput.select();
     });
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGallery);
+  } else {
+    initGallery();
+  }
 </script>

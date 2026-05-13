@@ -20,7 +20,7 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initWhiteNoise() {
     const app = document.querySelector("[data-white-noise-app]");
     if (!app) return;
 
@@ -188,5 +188,11 @@
           outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
       }
     });
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initWhiteNoise);
+  } else {
+    initWhiteNoise();
+  }
 </script>
