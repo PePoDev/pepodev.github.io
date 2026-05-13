@@ -3,7 +3,6 @@ import { expect, test, type Page } from "@playwright/test";
 const apps = [
   { label: "Welcome", appId: "welcome", title: "Welcome - Login" },
   { label: "Blog", appId: "blog", title: "Blog - Articles" },
-  { label: "Resume", appId: "resume", title: "Resume - CV" },
   { label: "Projects", appId: "project", title: "Projects - Showcase" },
   { label: "Work", appId: "work", title: "Work - Experience" },
   { label: "About Me", appId: "me", title: "About Me" },
