@@ -1,6 +1,5 @@
 ---
 import skills from "../../data/skills.json";
-import ContactIcon from "./ContactIcon.astro";
 ---
 
 <div class="app-content">
@@ -33,58 +32,13 @@ import ContactIcon from "./ContactIcon.astro";
   </p>
   <div class="section-divider"></div>
   <h3>Skills & Expertise</h3>
-  <div class="skill-list">
+  <div class="skill-boxes">
     {
       skills.map((skill) => (
-        <div class="skill-item">
-          <div class="skill-item-label">
-            <span>{skill.name}</span>
-            <span>{skill.level}%</span>
-          </div>
-          <div class="skill-bar">
-            <div
-              class="skill-bar-fill"
-              style="width: 0%"
-              data-level={skill.level}
-            />
-          </div>
+        <div class="skill-box">
+          <span class="skill-name">{skill.name}</span>
         </div>
       ))
     }
-  </div>
-  <div class="section-divider"></div>
-  <h3>Get in Touch</h3>
-  <div class="contact-links">
-    <a href="mailto:pepo@pepo.dev" class="contact-link">
-      <ContactIcon name="email" />
-      pepo@pepo.dev
-    </a>
-    <a
-      href="https://github.com/pepodev"
-      class="contact-link"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <ContactIcon name="github" />
-      GitHub
-    </a>
-    <a
-      href="https://linkedin.com/in/pepodev"
-      class="contact-link"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <ContactIcon name="linkedin" />
-      LinkedIn
-    </a>
-    <a
-      href="https://blog.pepo.dev"
-      class="contact-link"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <ContactIcon name="blog" />
-      Blog
-    </a>
   </div>
 </div>

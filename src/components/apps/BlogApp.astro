@@ -3,7 +3,12 @@ import { getCollection, render } from "astro:content";
 
 const posts = await Promise.all(
   (await getCollection("blog"))
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+    .filter((post) => post.data.publish !== false)
+    .sort((a, b) => {
+      const aDate = a.data.pubDate || new Date(0);
+      const bDate = b.data.pubDate || new Date(0);
+      return bDate.valueOf() - aDate.valueOf();
+    })
     .map(async (post) => {
       const { Content } = await render(post);
       return { post, Content };
@@ -29,32 +34,48 @@ const formatDate = (date: Date) =>
     </p>
     <div class="blog-list">
       {
-        posts.map(({ post }, index) => (
-          <button class="blog-item" type="button" data-blog-index={index}>
-            <div class="blog-item-title">{post.data.title}</div>
-            <div class="blog-item-meta">{formatDate(post.data.pubDate)}</div>
-            <div class="blog-item-desc">{post.data.description}</div>
-          </button>
-        ))
+        posts.map(({ post }, index) => {
+          const title = post.data.title || post.id;
+          const description =
+            post.data.description || post.data["sub-title"] || "";
+          return (
+            <button class="blog-item" type="button" data-blog-index={index}>
+              <div class="blog-item-title">{title}</div>
+              {post.data.pubDate && (
+                <div class="blog-item-meta">
+                  {formatDate(post.data.pubDate)}
+                </div>
+              )}
+              <div class="blog-item-desc">{description}</div>
+            </button>
+          );
+        })
       }
     </div>
   </div>
   <div class="blog-reader" data-blog-reader>
     {
-      posts.map(({ post, Content }, index) => (
-        <article class="blog-post-panel" data-blog-post={index} hidden>
-          <div class="blog-reader-header">
-            <button class="blog-reader-back" type="button" data-blog-back>
-              Back to articles
-            </button>
-            <h2 class="blog-reader-title">{post.data.title}</h2>
-            <div class="blog-reader-date">{formatDate(post.data.pubDate)}</div>
-          </div>
-          <div class="blog-reader-body">
-            <Content />
-          </div>
-        </article>
-      ))
+      posts.map(({ post, Content }, index) => {
+        const title = post.data.title || post.id;
+        return (
+          <article class="blog-post-panel" data-blog-post={index} hidden>
+            <div class="blog-reader-header">
+              <button class="blog-reader-back" type="button" data-blog-back>
+                Back to articles
+              </button>
+              <h2 class="blog-reader-title">{title}</h2>
+              {post.data.pubDate && (
+                <div class="blog-reader-date">
+                  {formatDate(post.data.pubDate)}
+                </div>
+              )}
+            </div>
+            <div class="blog-reader-body">
+              <Content />
+            </div>
+          </article>
+        );
+      })
     }
   </div>
 </div>

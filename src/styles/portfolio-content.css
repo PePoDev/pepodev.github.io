@@ -85,7 +85,40 @@
   flex-shrink: 0;
 }
 
-/* Skill bars */
+/* Skills display */
+.skill-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.skill-box {
+  padding: 8px 14px;
+  background: var(--glass-bg-soft);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.skill-box:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--accent-green);
+  box-shadow: 0 0 12px rgba(var(--particle-primary-rgb), 0.2);
+  transform: translateY(-1px);
+}
+
+.skill-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Legacy skill bar styles (kept for Resume app if used) */
 .skill-list {
   display: flex;
   flex-direction: column;
@@ -210,4 +243,3 @@
   width: 16px;
   height: 16px;
 }
-

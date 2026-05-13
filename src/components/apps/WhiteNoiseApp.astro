@@ -1,15 +1,4 @@
 <div class="app-content white-noise-app" data-white-noise-app>
-  <div class="noise-scene" aria-hidden="true">
-    <div class="noise-crt"></div>
-    <div class="noise-cloud noise-cloud-a"></div>
-    <div class="noise-cloud noise-cloud-b"></div>
-    <div class="noise-rain-layer noise-rain-layer-a"></div>
-    <div class="noise-rain-layer noise-rain-layer-b"></div>
-    <div class="noise-city">
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
-  </div>
-
   <div class="noise-panel">
     <div>
       <div class="music-eyebrow">White Noise</div>
@@ -122,7 +111,10 @@
       filter.type = "lowpass";
       filter.frequency.value = 1400 + Math.random() * 900;
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.05 + Math.random() * 0.05, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(
+        0.05 + Math.random() * 0.05,
+        now + 0.01,
+      );
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
 
       oscillator.connect(filter);
@@ -156,7 +148,8 @@
       playing = true;
       app.classList.add("noise-playing");
       toggle.textContent = "Stop rain";
-      status.textContent = outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
+      status.textContent =
+        outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
       applyVolume();
       scheduleDrops();
     }
@@ -192,7 +185,8 @@
       audioSettings = { ...loadAudioSettings(), ...(event.detail || {}) };
       applyVolume();
       if (playing) {
-        status.textContent = outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
+        status.textContent =
+          outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
       }
     });
   });
