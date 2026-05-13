@@ -1,4 +1,6 @@
 ---
+import { getMusicTracks } from "../../data/music";
+
 const darkBackgrounds = [
   { id: "network", label: "SRE Network" },
   { id: "aurora", label: "Aurora" },
@@ -42,11 +44,11 @@ const accents = [
   { id: "amber", label: "Amber", color: "#ff9f0a" },
 ];
 
-const tracks = [
-  { id: "datacenter", label: "Datacenter Pulse" },
-  { id: "nightshift", label: "Night Shift" },
-  { id: "incident", label: "Incident Response" },
-];
+const tracks = getMusicTracks().map((track) => ({
+  id: track.id,
+  label: track.title,
+}));
+const defaultTrackId = tracks[0]?.id ?? "";
 ---
 
 <div class="app-content settings-app" data-settings-app>
@@ -144,7 +146,7 @@ const tracks = [
   </div>
 </div>
 
-<script is:inline>
+<script define:vars={{ defaultTrackId }} is:inline>
   // @ts-nocheck
   document.addEventListener("DOMContentLoaded", () => {
     const app = document.querySelector("[data-settings-app]");
@@ -372,7 +374,7 @@ const tracks = [
         const raw = localStorage.getItem(musicKey);
         if (raw)
           return {
-            track: "datacenter",
+            track: defaultTrackId,
             volume: 0.6,
             playing: false,
             ...JSON.parse(raw),
@@ -380,7 +382,7 @@ const tracks = [
       } catch {
         // Ignore corrupt persisted settings.
       }
-      return { track: "datacenter", volume: 0.6, playing: false };
+      return { track: defaultTrackId, volume: 0.6, playing: false };
     }
 
     function applyPrefs(prefs) {

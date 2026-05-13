@@ -12,17 +12,7 @@ const apps = [
   { label: "Calculator", appId: "calculator", title: "Calculator" },
   { label: "Settings", appId: "settings", title: "Settings" },
   { label: "Terminal", appId: "terminal", title: "Terminal" },
-  { label: "Incidents", appId: "incidents", title: "Incident Timeline" },
-  { label: "Metrics", appId: "metrics", title: "Metrics Dashboard" },
-  {
-    label: "Architecture",
-    appId: "architecture",
-    title: "Architecture Viewer",
-  },
-  { label: "Runbook", appId: "runbook", title: "Runbook" },
   { label: "Certs", appId: "certs", title: "Certifications Wallet" },
-  { label: "Deploy Sim", appId: "deploysim", title: "Deploy Simulator" },
-  { label: "Monitor", appId: "monitor", title: "System Monitor" },
   { label: "Gallery", appId: "gallery", title: "Gallery" },
   { label: "Trash", appId: "trash", title: "Trash Bin" },
 ];
@@ -63,7 +53,7 @@ test("opens every desktop app window from the icon grid", async ({ page }) => {
   for (const app of apps) {
     const window = await openApp(page, app.label, app.appId);
     await expect(window.locator(".window-title")).toHaveText(app.title);
-    await window.getByRole("button", { name: `Close ${app.title}` }).click();
+    await page.keyboard.press("Escape");
     await expect(window).toBeHidden();
   }
 });
@@ -147,15 +137,17 @@ test("searches and launches apps from start menu and command palette", async ({
   page,
 }) => {
   await page.getByRole("button", { name: "Open start menu" }).click();
-  await page.locator("#start-menu-search").fill("runbook");
+  await page.locator("#start-menu-search").fill("certs");
   await page
     .locator("#start-menu")
-    .getByRole("button", { name: /Runbook/ })
+    .getByRole("button", { name: /Certs/ })
     .click();
-  const runbookWindow = page.locator("#window-runbook");
-  await expect(runbookWindow).toBeVisible();
-  await runbookWindow.getByRole("button", { name: "Close Runbook" }).click();
-  await expect(runbookWindow).toBeHidden();
+  const certsWindow = page.locator("#window-certs");
+  await expect(certsWindow).toBeVisible();
+  await certsWindow
+    .getByRole("button", { name: "Close Certifications Wallet" })
+    .click();
+  await expect(certsWindow).toBeHidden();
 
   await page.locator("#desktop").click({ position: { x: 640, y: 120 } });
   await page.keyboard.press("ControlOrMeta+K");
@@ -163,11 +155,11 @@ test("searches and launches apps from start menu and command palette", async ({
     "data-visible",
     "true",
   );
-  await page.locator("#command-palette-input").fill("metrics");
+  await page.locator("#command-palette-input").fill("gallery");
   await page
-    .getByRole("button", { name: /Metrics Open service metrics/ })
+    .getByRole("button", { name: /Gallery Open protected pictures/ })
     .click();
-  await expect(page.locator("#window-metrics")).toBeVisible();
+  await expect(page.locator("#window-gallery")).toBeVisible();
 });
 
 test("downloads a generated resume PDF", async ({ page }) => {
@@ -202,7 +194,7 @@ test("settings customizes and persists desktop preferences", async ({
   const window = await openApp(page, "Settings", "settings");
 
   await window.locator('[data-setting="theme"]').selectOption("light");
-  await window.locator('[data-setting="background"]').selectOption("ember");
+  await window.locator('[data-setting="background"]').selectOption("cloud");
   await window.locator('[data-accent="purple"]').click();
   await window.locator('[data-setting="radius"]').fill("18");
 
@@ -222,15 +214,36 @@ test("music player and settings music controls update state", async ({
   await expect(
     music.getByRole("button", { name: "Pause", exact: true }),
   ).toBeVisible();
+  await expect
+    .poll(async () =>
+      music.locator("[data-music-media]").evaluate((media: HTMLMediaElement) => ({
+        currentTime: media.currentTime,
+        muted: media.muted,
+        paused: media.paused,
+        volume: media.volume,
+      })),
+    )
+    .toMatchObject({
+      muted: false,
+      paused: false,
+      volume: 0.6,
+    });
+  await expect
+    .poll(() =>
+      music
+        .locator("[data-music-media]")
+        .evaluate((media: HTMLMediaElement) => media.currentTime),
+    )
+    .toBeGreaterThan(0);
 
-  await music.locator("[data-music-track]").selectOption("nightshift");
-  await expect(music.locator("#music-title")).toHaveText("Night Shift");
+  await music.locator("[data-music-track]").selectOption("late_shift_protocol");
+  await expect(music.locator("#music-title")).toHaveText("Late Shift Protocol");
 
   const settings = await openApp(page, "Settings", "settings");
   await settings
     .locator('[data-music-setting="track"]')
-    .selectOption("incident");
-  await expect(music.locator("#music-title")).toHaveText("Incident Response");
+    .selectOption("late_shift_protocol");
+  await expect(music.locator("#music-title")).toHaveText("Late Shift Protocol");
 });
 
 test("terminal commands print output and can open apps", async ({ page }) => {
@@ -243,9 +256,9 @@ test("terminal commands print output and can open apps", async ({ page }) => {
     "Site Reliability Engineer",
   );
 
-  await input.fill("open metrics");
+  await input.fill("open resume");
   await input.press("Enter");
-  await expect(page.locator("#window-metrics")).toBeVisible();
+  await expect(page.locator("#window-resume")).toBeVisible();
 });
 
 test("gallery requires the password before showing pictures", async ({
@@ -268,34 +281,6 @@ test("gallery requires the password before showing pictures", async ({
   await expect(gallery.locator("[data-gallery-lock]")).toBeHidden();
   await expect(gallery.locator("[data-gallery-unlocked]")).toBeVisible();
   await expect(gallery.locator(".gallery-card")).toHaveCount(4);
-});
-
-test("utility apps expose their primary interactions", async ({ page }) => {
-  const runbook = await openApp(page, "Runbook", "runbook");
-  await runbook.locator("[data-runbook-search]").fill("kafka");
-  await expect(runbook.locator("[data-runbook-card]:visible")).toHaveCount(1);
-  await expect(runbook.locator("[data-runbook-card]:visible")).toContainText(
-    "Kafka",
-  );
-
-  const architecture = await openApp(page, "Architecture", "architecture");
-  await architecture.getByRole("button", { name: "Security" }).click();
-  await expect(architecture.locator("[data-architecture-title]")).toHaveText(
-    "Security",
-  );
-
-  const deploy = await openApp(page, "Deploy Sim", "deploysim");
-  await deploy.getByRole("button", { name: "Start deploy" }).click();
-  await expect(deploy.locator("[data-deploy-console]")).toContainText(
-    "Running",
-  );
-  await deploy.getByRole("button", { name: "Rollback" }).click();
-  await expect(deploy.locator("[data-deploy-console]")).toContainText(
-    "Rollback",
-  );
-
-  const monitor = await openApp(page, "Monitor", "monitor");
-  await expect(monitor.locator('[data-monitor="cpu"]')).toContainText("%");
 });
 
 test("desktop icons snap and swap occupied grid cells", async ({ page }) => {

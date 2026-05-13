@@ -1,21 +1,14 @@
 ---
 import AboutApp from "../components/apps/AboutApp.astro";
-import ArchitectureViewerApp from "../components/apps/ArchitectureViewerApp.astro";
 import BlogApp from "../components/apps/BlogApp.astro";
 import CalculatorApp from "../components/apps/CalculatorApp.astro";
 import CertificationsWalletApp from "../components/apps/CertificationsWalletApp.astro";
-import DeploySimulatorApp from "../components/apps/DeploySimulatorApp.astro";
 import GalleryApp from "../components/apps/GalleryApp.astro";
-import IncidentTimelineApp from "../components/apps/IncidentTimelineApp.astro";
-import MetricsDashboardApp from "../components/apps/MetricsDashboardApp.astro";
 import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
-import ReliabilityArcadeApp from "../components/apps/ReliabilityArcadeApp.astro";
 import ResumeApp from "../components/apps/ResumeApp.astro";
-import RunbookApp from "../components/apps/RunbookApp.astro";
 import SettingsApp from "../components/apps/SettingsApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
-import SystemMonitorApp from "../components/apps/SystemMonitorApp.astro";
 import TerminalApp from "../components/apps/TerminalApp.astro";
 import TrashBinApp from "../components/apps/TrashBinApp.astro";
 import WelcomeApp from "../components/apps/WelcomeApp.astro";
@@ -100,62 +93,6 @@ import socialLinks from "../data/social-links.json";
           data-layout-index="1"
         />
         <DesktopIcon
-          appId="runbook"
-          label="Runbook"
-          data-default-col="center-3"
-          data-default-row="5"
-          data-layout-group="utility"
-          data-layout-index="0"
-        />
-        <DesktopIcon
-          appId="incidents"
-          label="Incidents"
-          data-default-col="center-2"
-          data-default-row="5"
-          data-layout-group="utility"
-          data-layout-index="1"
-        />
-        <DesktopIcon
-          appId="architecture"
-          label="Architecture"
-          data-default-col="center-1"
-          data-default-row="5"
-          data-layout-group="utility"
-          data-layout-index="2"
-        />
-        <DesktopIcon
-          appId="arcade"
-          label="Arcade"
-          data-default-col="center"
-          data-default-row="5"
-          data-layout-group="utility"
-          data-layout-index="3"
-        />
-        <DesktopIcon
-          appId="monitor"
-          label="Monitor"
-          data-default-col="center+1"
-          data-default-row="5"
-          data-layout-group="utility"
-          data-layout-index="4"
-        />
-        <DesktopIcon
-          appId="deploysim"
-          label="Deploy Sim"
-          data-default-col="center+2"
-          data-default-row="5"
-          data-layout-group="utility"
-          data-layout-index="5"
-        />
-        <DesktopIcon
-          appId="metrics"
-          label="Metrics"
-          data-default-col="center+3"
-          data-default-row="5"
-          data-layout-group="utility"
-          data-layout-index="6"
-        />
-        <DesktopIcon
           appId="music"
           label="Music"
           data-default-col="0"
@@ -237,14 +174,6 @@ import socialLinks from "../data/social-links.json";
         >
           <SreGameApp />
         </Window>
-        <Window
-          appId="arcade"
-          title="Reliability Arcade"
-          width={900}
-          height={640}
-        >
-          <ReliabilityArcadeApp />
-        </Window>
         <Window appId="music" title="Music Player" width={460} height={520}>
           <MusicPlayerApp />
         </Window>
@@ -258,50 +187,12 @@ import socialLinks from "../data/social-links.json";
           <TerminalApp />
         </Window>
         <Window
-          appId="incidents"
-          title="Incident Timeline"
-          width={720}
-          height={560}
-        >
-          <IncidentTimelineApp />
-        </Window>
-        <Window
-          appId="metrics"
-          title="Metrics Dashboard"
-          width={760}
-          height={560}
-        >
-          <MetricsDashboardApp />
-        </Window>
-        <Window
-          appId="architecture"
-          title="Architecture Viewer"
-          width={760}
-          height={560}
-        >
-          <ArchitectureViewerApp />
-        </Window>
-        <Window appId="runbook" title="Runbook" width={700} height={560}>
-          <RunbookApp />
-        </Window>
-        <Window
           appId="certs"
           title="Certifications Wallet"
           width={700}
           height={520}
         >
           <CertificationsWalletApp />
-        </Window>
-        <Window
-          appId="deploysim"
-          title="Deploy Simulator"
-          width={700}
-          height={500}
-        >
-          <DeploySimulatorApp />
-        </Window>
-        <Window appId="monitor" title="System Monitor" width={620} height={500}>
-          <SystemMonitorApp />
         </Window>
         <Window appId="gallery" title="Gallery" width={680} height={560}>
           <GalleryApp />

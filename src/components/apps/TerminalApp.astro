@@ -4,11 +4,9 @@ const commands = [
   "whoami",
   "skills",
   "projects",
-  "incidents",
   "uptime",
   "contact",
   "open resume",
-  "open metrics",
   "clear",
 ];
 ---
@@ -73,9 +71,6 @@ const commands = [
       } else if (command === "projects") {
         print("Opening Projects...");
         openApp("project");
-      } else if (command === "incidents") {
-        print("Opening Incident Timeline...");
-        openApp("incidents");
       } else if (command === "uptime") {
         const seconds = Math.floor((Date.now() - bootTime) / 1000);
         print("desktop uptime: " + seconds + "s");
@@ -83,8 +78,6 @@ const commands = [
         print("pepo@pepo.dev | github.com/pepodev | linkedin.com/in/pepodev");
       } else if (command === "open resume") {
         openApp("resume");
-      } else if (command === "open metrics") {
-        openApp("metrics");
       } else {
         print("command not found: " + raw, "terminal-error");
       }

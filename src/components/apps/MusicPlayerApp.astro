@@ -1,40 +1,41 @@
 ---
-const tracks = [
-  {
-    id: "datacenter",
-    title: "Datacenter Pulse",
-    detail: "Warm synth arpeggio",
-    bpm: 92,
-    notes: [196, 247, 294, 370, 330, 294, 247, 220],
-  },
-  {
-    id: "nightshift",
-    title: "Night Shift",
-    detail: "Slow ambient pads",
-    bpm: 72,
-    notes: [146.83, 196, 220, 293.66, 261.63, 220, 196, 164.81],
-  },
-  {
-    id: "incident",
-    title: "Incident Response",
-    detail: "Tense low pulse",
-    bpm: 118,
-    notes: [110, 146.83, 164.81, 196, 185, 164.81, 146.83, 123.47],
-  },
-];
+import { getMusicTracks } from "../../data/music";
+
+const tracks = getMusicTracks();
+const defaultTrack = tracks[0];
 ---
 
 <div class="app-content music-player-app" data-music-player>
   <div class="music-now">
-    <div class="music-art" aria-hidden="true">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+    {
+      defaultTrack?.mediaType === "video" ? (
+        <video
+          class="music-art"
+          id="music-art"
+          src={defaultTrack.src}
+          muted
+          playsinline
+          preload="metadata"
+          aria-hidden="true"
+        />
+      ) : defaultTrack ? (
+        <img
+          class="music-art"
+          id="music-art"
+          src=""
+          alt=""
+          loading="lazy"
+        />
+      ) : (
+        <div class="music-art music-art-empty" id="music-art" aria-hidden="true" />
+      )
+    }
     <div>
       <div class="music-eyebrow">Now Playing</div>
-      <h2 id="music-title">Datacenter Pulse</h2>
-      <p id="music-detail">Warm synth arpeggio</p>
+      <h2 id="music-title">{defaultTrack?.title ?? "No Music Found"}</h2>
+      <p id="music-detail">
+        {defaultTrack?.detail ?? "Add audio files to public/music"}
+      </p>
     </div>
   </div>
 
@@ -59,49 +60,59 @@ const tracks = [
     <span>Music volume</span>
     <input data-music-volume type="range" min="0" max="100" value="60" />
   </label>
+
+  <p class="music-status" data-music-status aria-live="polite"></p>
+
+  {
+    defaultTrack?.mediaType === "video" ? (
+      <video
+        class="music-media"
+        data-music-media
+        playsinline
+        preload="metadata"
+        src={defaultTrack.src}
+      />
+    ) : (
+      defaultTrack && (
+        <audio
+          class="music-media"
+          data-music-media
+          preload="metadata"
+          src={defaultTrack.src}
+        />
+      )
+    )
+  }
 </div>
 
 <script define:vars={{ tracks }} is:inline>
   // @ts-nocheck
   document.addEventListener("DOMContentLoaded", () => {
     const musicKey = "pepodev.music";
-    const systemAudioKey = "pepodev.systemAudio";
     const player = document.querySelector("[data-music-player]");
     if (!player || window.__pepoMusicController) return;
 
-    let audioContext = null;
-    let masterGain = null;
-    let delay = null;
-    let timer = null;
-    let step = 0;
+    const defaultTrackId = tracks[0]?.id || "";
     let settings = loadMusicSettings();
-    let systemAudio = loadSystemAudio();
 
     const title = document.getElementById("music-title");
     const detail = document.getElementById("music-detail");
+    const art = document.getElementById("music-art");
     const toggle = player.querySelector("[data-music-toggle]");
     const trackSelect = player.querySelector("[data-music-track]");
     const volume = player.querySelector("[data-music-volume]");
+    const media = player.querySelector("[data-music-media]");
+    const status = player.querySelector("[data-music-status]");
 
     function loadMusicSettings() {
       try {
         const raw = localStorage.getItem(musicKey);
         if (raw)
-          return { track: "datacenter", volume: 0.6, playing: false, ...JSON.parse(raw) };
+          return { track: defaultTrackId, volume: 0.6, playing: false, ...JSON.parse(raw) };
       } catch {
         // Ignore corrupt persisted settings.
       }
-      return { track: "datacenter", volume: 0.6, playing: false };
-    }
-
-    function loadSystemAudio() {
-      try {
-        const raw = localStorage.getItem(systemAudioKey);
-        if (raw) return { volume: 1, muted: false, ...JSON.parse(raw) };
-      } catch {
-        // Ignore corrupt persisted settings.
-      }
-      return { volume: 1, muted: false };
+      return { track: defaultTrackId, volume: 0.6, playing: false };
     }
 
     function saveMusicSettings(next) {
@@ -117,105 +128,95 @@ const tracks = [
       return tracks.find((track) => track.id === settings.track) || tracks[0];
     }
 
-    function ensureAudio() {
-      if (audioContext) return true;
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return false;
-
-      audioContext = new AudioContextClass();
-      masterGain = audioContext.createGain();
-      delay = audioContext.createDelay();
-      const feedback = audioContext.createGain();
-      delay.delayTime.value = 0.22;
-      feedback.gain.value = 0.18;
-      delay.connect(feedback);
-      feedback.connect(delay);
-      delay.connect(masterGain);
-      masterGain.connect(audioContext.destination);
-      applyVolume();
-      return true;
-    }
-
     function applyVolume() {
-      if (!masterGain || !audioContext) return;
-      const gain = settings.playing && !systemAudio.muted
-        ? settings.volume * systemAudio.volume
-        : 0;
-      masterGain.gain.setTargetAtTime(gain, audioContext.currentTime, 0.03);
+      if (!media) return;
+      media.volume = Math.max(0, Math.min(1, settings.volume));
+      media.muted = false;
     }
 
-    function playNote(frequency, duration) {
-      if (!audioContext || !masterGain) return;
-      const now = audioContext.currentTime;
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(frequency, now);
-      osc.frequency.exponentialRampToValueAtTime(frequency * 1.005, now + duration);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      osc.connect(gain);
-      gain.connect(masterGain);
-      gain.connect(delay);
-      osc.start(now);
-      osc.stop(now + duration + 0.02);
-    }
-
-    function scheduleLoop() {
-      stopLoop();
-      if (!settings.playing || !ensureAudio()) return;
+    function syncAudioSource() {
       const track = currentTrack();
-      const beatMs = 60000 / track.bpm;
-      timer = window.setInterval(() => {
-        const note = track.notes[step % track.notes.length];
-        playNote(note, Math.min(0.38, beatMs / 1000));
-        step += 1;
-      }, beatMs);
-      playNote(track.notes[step % track.notes.length], 0.35);
-      step += 1;
+      if (!track || !media) return;
+      const wasPaused = media.paused;
+      if (!media.src.endsWith(track.src)) {
+        media.src = track.src;
+        media.load();
+      }
+      if (settings.playing && !wasPaused) void startPlayback();
     }
 
-    function stopLoop() {
-      if (timer) window.clearInterval(timer);
-      timer = null;
+    async function startPlayback() {
+      if (!media) return false;
+      applyVolume();
+      try {
+        await media.play();
+        saveMusicSettings({ playing: true });
+        return true;
+      } catch (error) {
+        saveMusicSettings({ playing: false });
+        if (status) {
+          status.textContent =
+            error instanceof Error && error.name === "NotAllowedError"
+              ? "Playback was blocked by the browser."
+              : "This browser could not play the selected file.";
+        }
+        return false;
+      }
     }
 
     async function setPlaying(playing) {
-      if (playing && ensureAudio() && audioContext.state === "suspended") {
-        await audioContext.resume();
+      if (!media) return;
+      if (playing) {
+        await startPlayback();
+      } else {
+        media.pause();
+        saveMusicSettings({ playing: false });
       }
-      saveMusicSettings({ playing });
-      applyVolume();
-      if (playing) scheduleLoop();
-      else stopLoop();
     }
 
     function setTrack(trackId) {
       saveMusicSettings({ track: trackId });
-      step = 0;
-      if (settings.playing) scheduleLoop();
+      syncAudioSource();
+      if (settings.playing) void startPlayback();
     }
 
     function render() {
       const track = currentTrack();
+      if (!track) return;
       title.textContent = track.title;
       detail.textContent = track.detail;
+      if (art?.tagName === "VIDEO" && track.mediaType === "video") {
+        if (!art.src.endsWith(track.src)) {
+          art.src = track.src;
+          art.load();
+        }
+      } else if (art?.tagName === "IMG") {
+        art.removeAttribute("src");
+      }
       trackSelect.value = track.id;
       volume.value = String(Math.round(settings.volume * 100));
       toggle.textContent = settings.playing ? "Pause" : "Play";
       player.classList.toggle("music-playing", settings.playing);
+      if (status) {
+        status.textContent = settings.playing
+          ? settings.volume === 0
+            ? "Playing silently. Raise Music volume to hear it."
+            : "Playing from public/music."
+          : "";
+      }
       applyVolume();
     }
 
     toggle.addEventListener("click", () => setPlaying(!settings.playing));
     player.querySelector("[data-music-prev]").addEventListener("click", () => {
       const index = tracks.findIndex((track) => track.id === settings.track);
-      setTrack(tracks[(index - 1 + tracks.length) % tracks.length].id);
+      if (!tracks.length) return;
+      setTrack(tracks[((index < 0 ? 0 : index) - 1 + tracks.length) % tracks.length].id);
     });
     player.querySelector("[data-music-next]").addEventListener("click", () => {
       const index = tracks.findIndex((track) => track.id === settings.track);
-      setTrack(tracks[(index + 1) % tracks.length].id);
+      if (!tracks.length) return;
+      setTrack(tracks[((index < 0 ? 0 : index) + 1) % tracks.length].id);
     });
     trackSelect.addEventListener("change", () => setTrack(trackSelect.value));
     volume.addEventListener("input", () => {
@@ -223,20 +224,38 @@ const tracks = [
       applyVolume();
     });
 
-    document.addEventListener("desktop:audio-settings", (event) => {
-      systemAudio = { ...systemAudio, ...event.detail };
-      applyVolume();
-    });
-
     document.addEventListener("desktop:music-settings", (event) => {
       const wasPlaying = settings.playing;
+      const oldTrack = settings.track;
       settings = { ...settings, ...event.detail };
+      if (!currentTrack()) settings.track = defaultTrackId;
       render();
-      if (settings.playing && (!wasPlaying || event.detail.track)) scheduleLoop();
-      if (!settings.playing) stopLoop();
+      if (event.detail.track && oldTrack !== settings.track) syncAudioSource();
+      if (!media) return;
+      if (settings.playing && (!wasPlaying || event.detail.track)) {
+        void startPlayback();
+      }
+      if (!settings.playing) media.pause();
+    });
+
+    media?.addEventListener("ended", () => {
+      if (!tracks.length) return;
+      const index = tracks.findIndex((track) => track.id === settings.track);
+      setTrack(tracks[((index < 0 ? 0 : index) + 1) % tracks.length].id);
+    });
+
+    media?.addEventListener("error", () => {
+      const code = media.error?.code;
+      if (status) {
+        status.textContent = code
+          ? `This browser could not play the selected file. Media error ${code}.`
+          : "This browser could not play the selected file.";
+      }
+      saveMusicSettings({ playing: false });
     });
 
     window.__pepoMusicController = { setPlaying, setTrack };
+    syncAudioSource();
     render();
   });
 </script>
