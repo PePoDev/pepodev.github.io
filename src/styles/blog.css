@@ -138,3 +138,19 @@
   margin: 20px 0 8px;
 }
 
+.blog-reader-body a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(100, 210, 255, 0.3);
+  transition: all 0.15s ease;
+}
+
+.blog-reader-body a:hover {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+}
+
+.blog-reader-body a:visited {
+  color: var(--accent-purple);
+  border-bottom-color: rgba(191, 90, 242, 0.3);
+}

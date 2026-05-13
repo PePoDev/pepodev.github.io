@@ -36,6 +36,20 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
         padding: 1em;
         color: rgb(var(--gray-dark));
       }
+      .prose a {
+        color: var(--accent-cyan);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(100, 210, 255, 0.3);
+        transition: all 0.15s ease;
+      }
+      .prose a:hover {
+        color: var(--accent-blue);
+        border-bottom-color: var(--accent-blue);
+      }
+      .prose a:visited {
+        color: var(--accent-purple);
+        border-bottom-color: rgba(191, 90, 242, 0.3);
+      }
       .title {
         margin-bottom: 1em;
         padding: 1em 0;
