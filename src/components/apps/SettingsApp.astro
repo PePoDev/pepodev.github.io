@@ -1,42 +1,6 @@
 ---
 import { getMusicTracks } from "@data/music";
 
-const darkBackgrounds = [
-  { id: "network", label: "SRE Network" },
-  { id: "aurora", label: "Aurora" },
-  { id: "midnight", label: "Midnight" },
-  { id: "ember", label: "Ember" },
-  { id: "ocean", label: "Ocean Deep" },
-  { id: "glacier", label: "Glacier" },
-  { id: "void", label: "Void" },
-  { id: "neon", label: "Neon City" },
-  { id: "plasma", label: "Plasma" },
-  { id: "storm", label: "Storm" },
-  { id: "matrix", label: "Matrix" },
-  { id: "sakura", label: "Sakura" },
-  { id: "forest", label: "Forest" },
-  { id: "sunset", label: "Sunset" },
-  { id: "copper", label: "Copper" },
-];
-
-const lightBackgrounds = [
-  { id: "cloud", label: "Cloud" },
-  { id: "daylight", label: "Daylight" },
-  { id: "mint", label: "Mint" },
-  { id: "peach", label: "Peach" },
-  { id: "sky", label: "Sky" },
-  { id: "lavender", label: "Lavender" },
-  { id: "cream", label: "Cream" },
-  { id: "rose", label: "Rose" },
-  { id: "sage", label: "Sage" },
-  { id: "coral", label: "Coral" },
-  { id: "powder", label: "Powder Blue" },
-  { id: "lemon", label: "Lemon" },
-  { id: "blush", label: "Blush" },
-  { id: "seafoam", label: "Seafoam" },
-  { id: "sand", label: "Sand" },
-];
-
 const accents = [
   { id: "green", label: "Green", color: "#30d158" },
   { id: "cyan", label: "Cyan", color: "#64d2ff" },
@@ -152,7 +116,7 @@ const defaultTrackId = tracks[0]?.id ?? "";
     };
 
     const darkBackgroundsList = [
-      { id: "network", label: "SRE Network" },
+      { id: "network", label: "Primary" },
       { id: "aurora", label: "Aurora" },
       { id: "midnight", label: "Midnight" },
       { id: "ember", label: "Ember" },
