@@ -94,21 +94,11 @@ const resumePdfData = {
   </div>
   <div class="resume-section">
     <div class="resume-section-title">{"\\section{Technical Skills}"}</div>
-    <div class="skill-list">
+    <div class="skill-boxes">
       {
         skills.map((skill) => (
-          <div class="skill-item">
-            <div class="skill-item-label">
-              <span>{skill.name}</span>
-              <span>{skill.level}%</span>
-            </div>
-            <div class="skill-bar">
-              <div
-                class="skill-bar-fill"
-                style="width: 0%"
-                data-level={skill.level}
-              />
-            </div>
+          <div class="skill-box">
+            <span class="skill-name">{skill.name}</span>
           </div>
         ))
       }
@@ -200,7 +190,13 @@ const resumePdfData = {
       );
     }
 
-    function drawRect(x, rectY, rectWidth, rectHeight, fill = "0.96 0.97 0.98") {
+    function drawRect(
+      x,
+      rectY,
+      rectWidth,
+      rectHeight,
+      fill = "0.96 0.97 0.98",
+    ) {
       commands.push(
         `${fill} rg`,
         `${formatNumber(x)} ${formatNumber(rectY)} ${formatNumber(rectWidth)} ${formatNumber(rectHeight)} re`,
@@ -411,7 +407,9 @@ const resumePdfData = {
   }
 
   function formatNumber(value) {
-    return Number(value).toFixed(2).replace(/\.?0+$/, "");
+    return Number(value)
+      .toFixed(2)
+      .replace(/\.?0+$/, "");
   }
 
   function normalizePdfText(value) {

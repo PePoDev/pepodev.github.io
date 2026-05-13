@@ -33,5 +33,10 @@
     "label": "Email - pepo@pepo.dev",
     "href": "mailto:pepo@pepo.dev",
     "icon": "email"
+  },
+  {
+    "label": "วงแหวนเว็บ - Webring",
+    "href": "https://webring.wonderful.software#pepo.dev",
+    "icon": "webring"
   }
 ]

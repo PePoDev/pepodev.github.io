@@ -1,38 +1,142 @@
 [
   {
-    "name": "AlertRouter",
-    "description": "Smart alert routing engine that reduces pager fatigue by correlating events across services before notifying on-call engineers.",
-    "tags": ["Go", "Kafka", "Prometheus"],
-    "link": "#"
+    "name": "terraform-kind-cluster",
+    "description": "Terraform module to create Kubernetes cluster from KIND (Kubernetes IN Docker) 🧱🧱",
+    "stars": 9,
+    "tags": ["HCL", "hacktoberfest", "k8s", "kind"],
+    "archived": false,
+    "link": "https://registry.terraform.io/modules/PePoDev/cluster/kind/latest",
+    "github": "https://github.com/PePoDev/terraform-kind-cluster"
   },
   {
-    "name": "InfraDrift",
-    "description": "Continuous drift detection tool that compares actual cluster state against desired Terraform state and auto-generates PRs.",
-    "tags": ["Python", "Terraform", "GitHub Actions"],
-    "link": "#"
+    "name": "number-guesser",
+    "description": "Number guessing game 🔢",
+    "stars": 0,
+    "tags": ["TypeScript", "game"],
+    "archived": false,
+    "link": "http://number-guesser.pepo.dev/",
+    "github": "https://github.com/PePoDev/number-guesser"
   },
   {
-    "name": "CanaryBot",
-    "description": "Slack bot for progressive deployment canaries. Type /canary deploy and it runs your analysis pipeline with real-time metrics.",
-    "tags": ["Rust", "Slack API", "Datadog"],
-    "link": "#"
+    "name": "corqty",
+    "description": "Infrastructure never easy than this before.",
+    "stars": 0,
+    "tags": ["Rust"],
+    "archived": false,
+    "link": "https://github.com/PePoDev/corqty",
+    "github": "https://github.com/PePoDev/corqty"
   },
   {
-    "name": "LogSum",
-    "description": "Log aggregation dashboard that surfaces anomalies using statistical outlier detection instead of keyword matching.",
-    "tags": ["TypeScript", "Elasticsearch", "React"],
-    "link": "#"
+    "name": "super-utils",
+    "description": "Super utils is the utility containerized for multiple purposes. 🐳🐳",
+    "stars": 0,
+    "tags": ["HTML", "docker", "hacktoberfest", "utils-docker"],
+    "archived": false,
+    "link": "https://pepo.dev/super-utils",
+    "github": "https://github.com/PePoDev/super-utils"
   },
   {
-    "name": "NetPulse",
-    "description": "Synthetic monitoring framework that runs distributed health checks from 30+ global edge locations.",
-    "tags": ["Go", "eBPF", "gRPC"],
-    "link": "#"
+    "name": "autoauth",
+    "description": "Automatic Internet Portal Authentication CLI written in Go 🛰🛰",
+    "stars": 7,
+    "tags": ["Go", "authentication", "automation", "command-line-tool"],
+    "archived": true,
+    "link": "https://pepo.dev/autoauth/",
+    "github": "https://github.com/PePoDev/autoauth"
   },
   {
-    "name": "SRE-Game",
-    "description": "Interactive chaos simulation game that teaches SRE fundamentals. Play it right on this portfolio.",
-    "tags": ["JavaScript", "Canvas", "Game Dev"],
-    "link": "#"
+    "name": "egypt-bubble",
+    "description": "Bubble Puzzle game with basic logic by monogame. (👁👁)",
+    "stars": 5,
+    "tags": ["C#", "csharp", "egypt", "game"],
+    "archived": true,
+    "link": "https://github.com/PePoDev/egypt-bubble",
+    "github": "https://github.com/PePoDev/egypt-bubble"
+  },
+  {
+    "name": "aws-tags-updater",
+    "description": "AWS Tags Updater - Sync tags with all resources via sheet 🐏🐏",
+    "stars": 2,
+    "tags": ["Go", "aws", "aws-tags", "golang"],
+    "archived": true,
+    "link": "https://github.com/PePoDev/aws-tags-updater",
+    "github": "https://github.com/PePoDev/aws-tags-updater"
+  },
+  {
+    "name": "Roots-Runaway",
+    "description": "Protect the world by destroy the evil tree 👿🌲",
+    "stars": 2,
+    "tags": [
+      "C#",
+      "global-game-jam",
+      "global-game-jam-2023",
+      "multiplayer-game"
+    ],
+    "archived": true,
+    "link": "https://globalgamejam.org/2023/games/roots-runaway-9",
+    "github": "https://github.com/PePoDev/Roots-Runaway"
+  },
+  {
+    "name": "ham-city",
+    "description": "HamCity Catapult game final project in Class game programming ⛰⛰",
+    "stars": 1,
+    "tags": ["C#", "catapult", "csharp", "game"],
+    "archived": true,
+    "link": "https://github.com/PePoDev/ham-city",
+    "github": "https://github.com/PePoDev/ham-city"
+  },
+  {
+    "name": "game-price-of-growth-ggj-21",
+    "description": "Story game about growing story and lost something every grow. Finally, He will found the answer of life or not ?",
+    "stars": 0,
+    "tags": ["C#", "global-game-jam", "isometric-game", "unity2d"],
+    "archived": true,
+    "link": "https://pepodev.itch.io/price-of-growth",
+    "github": "https://github.com/PePoDev/game-price-of-growth-ggj-21"
+  },
+  {
+    "name": "little-warrior",
+    "description": "Unity game to Fight and Protect their castle 🐱‍👤🐱‍👤",
+    "stars": 0,
+    "tags": ["C#", "game", "unity"],
+    "archived": true,
+    "link": "https://github.com/PePoDev/little-warrior",
+    "github": "https://github.com/PePoDev/little-warrior"
+  },
+  {
+    "name": "black-white-fighter-ggj-22",
+    "description": "Nothing serious here. No matter what colour you are. Just shoot!!!! 🏇🏇",
+    "stars": 0,
+    "tags": ["C#", "global-game-jam-2022", "photon-pun", "unity3d"],
+    "archived": true,
+    "link": "https://github.com/PePoDev/black-white-fighter-ggj-22",
+    "github": "https://github.com/PePoDev/black-white-fighter-ggj-22"
+  },
+  {
+    "name": "cur-cli",
+    "description": "CUR is Cloud Usage Reporting for collect cloud usage data and make report to user via slack, telegram or etc. ☁☁",
+    "stars": 0,
+    "tags": ["Go", "aws", "cloud", "gcp"],
+    "archived": true,
+    "link": "https://github.com/PePoDev/cur-cli",
+    "github": "https://github.com/PePoDev/cur-cli"
+  },
+  {
+    "name": "xlog",
+    "description": "E[X]tend [Log]rus is Wrapper function for use logrus as builder design pattern and intergrate to elasticsearch in one line of code. 📜📜",
+    "stars": 0,
+    "tags": ["Go", "cli", "cloud", "golang"],
+    "archived": true,
+    "link": "https://github.com/PePoDev/xlog",
+    "github": "https://github.com/PePoDev/xlog"
+  },
+  {
+    "name": "dont-touch-my-baby",
+    "description": "Protect your child from the villains. And make your home a happy home 🏞🏞",
+    "stars": 0,
+    "tags": ["C#", "global-game-jam", "home", "unity3d"],
+    "archived": true,
+    "link": "https://globalgamejam.org/2019/games/dont-touch-my-baby",
+    "github": "https://github.com/PePoDev/dont-touch-my-baby"
   }
 ]

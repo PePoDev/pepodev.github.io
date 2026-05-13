@@ -11,15 +11,28 @@ import projects from "../../data/projects.json";
   <div class="project-grid">
     {
       projects.map((project) => (
-        <div class="project-card">
-          <div class="project-card-name">{project.name}</div>
+        <a
+          href={project.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="project-card"
+        >
+          <div class="project-card-header">
+            <div class="project-card-name">{project.name}</div>
+            <div class="project-card-meta">
+              {project.archived && (
+                <span class="project-archived-badge">Archived</span>
+              )}
+              <span class="project-stars">★ {project.stars}</span>
+            </div>
+          </div>
           <div class="project-card-desc">{project.description}</div>
           <div class="project-tags">
             {project.tags.map((tag) => (
               <span class="project-tag">{tag}</span>
             ))}
           </div>
-        </div>
+        </a>
       ))
     }
   </div>

@@ -13,6 +13,8 @@
   border-radius: 8px;
   transition: all 0.15s ease;
   cursor: pointer;
+  text-decoration: none;
+  display: block;
 }
 
 .project-card:hover {
@@ -21,11 +23,47 @@
   transform: translateY(-2px);
 }
 
+.project-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.project-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.project-archived-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 159, 10, 0.15);
+  color: var(--accent-amber);
+  border: 1px solid rgba(255, 159, 10, 0.25);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.project-stars {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .project-card-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  flex: 1;
 }
 
 .project-card-desc {
@@ -116,45 +154,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-/* Legacy skill bar styles (kept for Resume app if used) */
-.skill-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.skill-item-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 4px;
-}
-
-.skill-item-label span:first-child {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.skill-item-label span:last-child {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-}
-
-.skill-bar {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.skill-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Resume styles */
