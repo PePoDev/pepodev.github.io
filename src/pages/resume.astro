@@ -122,7 +122,20 @@ const resumePdfData = {
 
           document.querySelector("h1").textContent = "Download Started!";
           document.querySelector("p").textContent =
-            "If the download doesn't start, please check your browser settings.";
+            "Closing this page automatically...";
+
+          // Auto-close after a short delay to ensure download starts
+          setTimeout(() => {
+            // Try to close the window (works if opened via window.open)
+            window.close();
+
+            // If close didn't work (most cases), navigate back
+            setTimeout(() => {
+              if (!document.hidden) {
+                window.history.back();
+              }
+            }, 100);
+          }, 1000);
         } catch (error) {
           document.querySelector("h1").textContent = "Download Failed";
           document.querySelector("p").textContent =
