@@ -1,7 +1,7 @@
 ---
 url-slug: do-the-fun-chaos-engineering-with-gamification
 sub-title: Is Chaos Engineering fun? Nani!!
-cover-picture: ../../assets/blog/tEoT2O2Ce.png
+cover-picture: ../../assets/blog/chaos-engineering-02-kubedoom.png
 publish: true
 dg-publish: true
 ---
@@ -17,7 +17,7 @@ The meaning is relatively straightforward, In short, It's is "rude to your clust
 
 Leave it behind, Because in this article we will talk only about the **FUN** part of chaos engineering, But it might not be fun for everyone 🤣
 
-![Meme](../../assets/blog/3nVA2mppF.png)
+![Meme](../../assets/blog/chaos-engineering-01-meme.png)
 
 ## What is Gamification?
 
@@ -43,13 +43,13 @@ Are you ready? Let's get started.
 
 > KubeDoom is The next level of chaos engineering! Kill pods inside your Kubernetes cluster by shooting them in Doom! - [KubeDoom](https://github.com/storax/kubedoom)
 
-![KubeDoom](../../assets/blog/tEoT2O2Ce.png)
+![KubeDoom](../../assets/blog/chaos-engineering-02-kubedoom.png)
 
 ### 2. KubeInvaders
 
 > Gamified Chaos Engineering Tool for Kubernetes - [KubeInvaders](https://github.com/lucky-sideburn/KubeInvaders)
 
-![](../../assets/blog/8ae6b234-4f89-4e60-9d19-49f44672d9c0.png)
+![](../../assets/blog/chaos-engineering-03.png)
 
 ### 3. Kube Chaos
 

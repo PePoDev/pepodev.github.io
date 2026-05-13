@@ -31,9 +31,16 @@ Use `pnpm build` as the default verification step after code changes. Use
 - `src/components/desktop/` contains desktop shell primitives:
   `DesktopIcon.astro`, `Taskbar.astro`, `StartMenu.astro`, `Window.astro`, and `AppIcon.astro`.
 - `src/components/apps/` contains the pre-rendered desktop app bodies:
-  welcome, blog, resume, work, projects, about, SRE game, calculator, music,
-  settings, terminal, certifications wallet, gallery, and trash.
-- `src/content/blog/` contains Markdown/MDX blog posts managed by Astro content collections.
+  welcome, blog, work, projects, about, SRE game, snake, calculator, white noise,
+  music, settings, terminal, certifications wallet, gallery, and trash.
+- `src/pages/resume.astro` is a standalone page (not a desktop app) that
+  auto-generates and downloads a PDF resume when visited at `/resume`.
+- `src/content/blog/` contains Markdown/MDX blog posts managed by Astro content
+  collections. Supports both standard Astro and Obsidian frontmatter formats
+  (all fields optional).
+- `src/assets/blog/` contains local blog post images, named with blog post
+  prefixes for organization (e.g., `aws-graviton-01.png`,
+  `obsidian-multi-devices-cover.png`).
 - `src/data/` contains structured data files such as `experiences.json`,
   `projects.json`, `skills.json`, `social-links.json`, and `work-metrics.json`.
   `src/data/music.ts` discovers local tracks from `public/music/` at build time.
@@ -73,6 +80,13 @@ Use `pnpm build` as the default verification step after code changes. Use
   previews.
 - The gallery app is intentionally password-gated with the literal password
   `password`.
+- The certifications wallet displays credentials sorted by status at build time:
+  Active (≥90 days until expiry) → Expiring Soon (<90 days) → Expired. Status
+  badges update dynamically on the client every hour.
+- Blog posts reference local images from `src/assets/blog/` using relative paths.
+  Images are automatically optimized and converted to WebP during the build.
+- The White Noise app provides ambient rain sounds with a minimal UI (clouds and
+  city background only; rain animation was removed).
 
 ## Styling Notes
 

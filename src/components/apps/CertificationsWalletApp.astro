@@ -1,5 +1,5 @@
 ---
-const certifications = [
+const allCertifications = [
   {
     name: "AWS Certified Solutions Architect - Associate",
     provider: "Amazon Web Services",
@@ -58,30 +58,36 @@ const certifications = [
   },
 ];
 
-function getStatus(expirationDate: string) {
-  const expiry = new Date(expirationDate);
-  const today = new Date();
-  const daysUntilExpiry = Math.floor(
-    (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  );
+// Calculate status for each certification and sort: Active → Expiring Soon → Expired
+const today = new Date();
+const certifications = allCertifications
+  .map((cert) => {
+    const expiry = new Date(cert.expirationDate);
+    const daysUntilExpiry = Math.floor(
+      (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
-  if (daysUntilExpiry < 0) {
-    return { label: "Expired", class: "expired" };
-  } else if (daysUntilExpiry < 90) {
-    return { label: "Expiring Soon", class: "expiring" };
-  } else {
-    return { label: "Active", class: "active" };
-  }
-}
+    let statusPriority;
+    if (daysUntilExpiry < 0) {
+      statusPriority = 3; // Expired
+    } else if (daysUntilExpiry < 90) {
+      statusPriority = 2; // Expiring Soon
+    } else {
+      statusPriority = 1; // Active
+    }
 
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    return { ...cert, statusPriority, daysUntilExpiry };
+  })
+  .sort((a, b) => {
+    // Sort by status priority first (Active → Expiring Soon → Expired)
+    if (a.statusPriority !== b.statusPriority) {
+      return a.statusPriority - b.statusPriority;
+    }
+    // Within same status, sort by days until expiry (furthest first for Active/Expiring, most recent for Expired)
+    return a.statusPriority === 3
+      ? b.daysUntilExpiry - a.daysUntilExpiry
+      : b.daysUntilExpiry - a.daysUntilExpiry;
   });
-}
 ---
 
 <div class="app-content ops-app cert-wallet-app">
@@ -91,36 +97,86 @@ function formatDate(dateString: string) {
   </div>
   <div class="cert-grid">
     {
-      certifications.map((certification) => {
-        const status = getStatus(certification.expirationDate);
-        return (
-          <a
-            href={certification.credlyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="cert-card"
-          >
-            <div class="cert-mark">
-              {certification.provider.slice(0, 2).toUpperCase()}
-            </div>
-            <div class="cert-content">
-              <h3>{certification.name}</h3>
-              <p class="cert-provider">{certification.provider}</p>
-              <div class="cert-dates">
-                <span class="cert-expiry">
-                  Expires: {formatDate(certification.expirationDate)}
-                </span>
-              </div>
-              <span class={`cert-status cert-status-${status.class}`}>
-                {status.label}
+      certifications.map((certification) => (
+        <a
+          href={certification.credlyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="cert-card"
+          data-expiry={certification.expirationDate}
+        >
+          <div class="cert-mark">
+            {certification.provider.slice(0, 2).toUpperCase()}
+          </div>
+          <div class="cert-content">
+            <h3>{certification.name}</h3>
+            <p class="cert-provider">{certification.provider}</p>
+            <div class="cert-dates">
+              <span
+                class="cert-expiry"
+                data-expiry-date={certification.expirationDate}
+              >
+                Expires: {certification.expirationDate}
               </span>
             </div>
-          </a>
-        );
-      })
+            <span class="cert-status">Loading...</span>
+          </div>
+        </a>
+      ))
     }
   </div>
 </div>
+
+<script is:inline>
+  // @ts-nocheck
+  function updateCertStatuses() {
+    const certCards = document.querySelectorAll(".cert-card[data-expiry]");
+    const today = new Date();
+
+    certCards.forEach((card) => {
+      const expiryDateStr = card.getAttribute("data-expiry");
+      const expiry = new Date(expiryDateStr);
+      const daysUntilExpiry = Math.floor(
+        (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      const statusElement = card.querySelector(".cert-status");
+      const expiryElement = card.querySelector(".cert-expiry");
+
+      // Update status badge
+      let statusLabel, statusClass;
+      if (daysUntilExpiry < 0) {
+        statusLabel = "Expired";
+        statusClass = "expired";
+      } else if (daysUntilExpiry < 90) {
+        statusLabel = "Expiring Soon";
+        statusClass = "expiring";
+      } else {
+        statusLabel = "Active";
+        statusClass = "active";
+      }
+
+      statusElement.textContent = statusLabel;
+      statusElement.className = `cert-status cert-status-${statusClass}`;
+
+      // Format expiry date
+      if (expiryElement) {
+        const formattedDate = expiry.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+        expiryElement.textContent = `Expires: ${formattedDate}`;
+      }
+    });
+  }
+
+  // Update on page load
+  document.addEventListener("DOMContentLoaded", updateCertStatuses);
+
+  // Update every hour to catch expiration changes
+  setInterval(updateCertStatuses, 3600000);
+</script>
 
 <style>
   .cert-card {

@@ -10,11 +10,12 @@ player, and an SRE chaos game.
 - Interactive desktop shell with draggable, resizable, minimizable windows.
 - Desktop icons, external shortcuts, start menu, taskbar, tray controls, and
   `Ctrl`/`Cmd` + `K` command palette.
-- Server-rendered portfolio apps for About, Blog, Resume, Work, Projects,
-  Certifications, Gallery, Terminal, Calculator, Settings, Trash, Music, and
-  the SRE game.
+- Server-rendered portfolio apps for About, Blog, Work, Projects,
+  Certifications, Gallery, Terminal, Calculator, Settings, Trash, White Noise,
+  Music, and the SRE game.
+- Standalone resume download page at `/resume` with client-side PDF generation.
 - Local music library loaded at build time from `public/music`.
-- Markdown/MDX blog content with RSS and sitemap output.
+- Markdown/MDX blog content with local images in `src/assets/blog/`, RSS and sitemap output.
 - GitHub Pages deployment through Astro's GitHub Action.
 
 ## Requirements
@@ -49,16 +50,19 @@ music player, game, calculator, gallery, or other interaction changes.
 ├── public/
 │   └── music/                 # Local music files discovered at build time
 ├── src/
-│   ├── assets/                # Local fonts and static source assets
+│   ├── assets/
+│   │   ├── blog/              # Blog post images (prefixed with blog post names)
+│   │   └── fonts/             # Local fonts
 │   ├── components/
 │   │   ├── apps/              # Server-rendered desktop app bodies
 │   │   └── desktop/           # Window manager, icons, taskbar, start menu
 │   ├── content/
-│   │   └── blog/              # Markdown/MDX blog posts
+│   │   └── blog/              # Markdown/MDX blog posts (supports Obsidian format)
 │   ├── data/                  # Portfolio data JSON and music discovery helper
 │   ├── layouts/
 │   ├── pages/
-│   │   └── index.astro        # Main desktop entry point
+│   │   ├── index.astro        # Main desktop entry point
+│   │   └── resume.astro       # Standalone resume download page
 │   └── styles/                # Split CSS modules imported by global.css
 ├── tests/e2e/                 # Playwright desktop coverage
 ├── sre-game/                  # Standalone static copy of the SRE game
@@ -71,7 +75,10 @@ Do not edit generated files in `dist/`.
 
 - Add portfolio content to the relevant JSON file in `src/data/`.
 - Add blog articles to `src/content/blog/` and keep frontmatter compatible with
-  `src/content.config.ts`.
+  `src/content.config.ts`. Blog posts support both standard Astro and Obsidian
+  frontmatter formats (all fields optional).
+- Add blog images to `src/assets/blog/` with filenames prefixed by the blog
+  post name (e.g., `aws-graviton-01.png`, `obsidian-multi-devices-cover.png`).
 - Add local music files to `public/music/`; supported files are discovered by
   `src/data/music.ts` during the Astro build.
 - When adding a new desktop app, register it in `src/pages/index.astro`,

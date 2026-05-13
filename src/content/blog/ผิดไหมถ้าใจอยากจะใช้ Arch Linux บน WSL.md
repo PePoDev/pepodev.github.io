@@ -1,7 +1,7 @@
 ---
 url-slug: arch-linux-wsl
 sub-title: วิธีการติดตั้ง Linux distro ใดๆก็ตามที่เราต้องการลงบน WSL
-cover-picture: ../../assets/blog/f52421dd-89d5-4f42-a460-5e971498c57f.webp
+cover-picture: ../../assets/blog/arch-linux-wsl-cover.webp
 publish: true
 dg-publish: true
 ---
