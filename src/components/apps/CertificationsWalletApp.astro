@@ -86,8 +86,13 @@ const certifications = sortCertificationsByStatus(allCertifications);
     });
   }
 
-  // Update on page load
-  document.addEventListener("DOMContentLoaded", updateCertStatuses);
+  // Update on page load (handle case where DOMContentLoaded already fired)
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", updateCertStatuses);
+  } else {
+    // DOM is already ready, call immediately
+    updateCertStatuses();
+  }
 
   // Update every hour to catch expiration changes
   setInterval(updateCertStatuses, 3600000);
