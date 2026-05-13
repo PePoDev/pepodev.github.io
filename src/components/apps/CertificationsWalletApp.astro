@@ -1,12 +1,87 @@
 ---
 const certifications = [
-  { name: "AWS Solutions Architect Associate", provider: "AWS", status: "Active" },
-  { name: "HashiCorp Terraform Associate", provider: "HashiCorp", status: "Active" },
-  { name: "Google Professional Cloud Architect", provider: "Google Cloud", status: "Active" },
-  { name: "Certified Kubernetes Administrator", provider: "CNCF", status: "Active" },
-  { name: "Google Associate Cloud Engineer", provider: "Google Cloud", status: "Active" },
-  { name: "Google Cloud Digital Leader", provider: "Google Cloud", status: "Active" },
+  {
+    name: "AWS Certified Solutions Architect - Associate",
+    provider: "Amazon Web Services",
+    issueDate: "2023-03-15",
+    expirationDate: "2026-03-15",
+    credlyUrl:
+      "https://www.credly.com/earner/earned/badge/c54619ad-85c6-446c-993d-fd519a9f5333",
+  },
+  {
+    name: "HashiCorp Certified: Terraform Associate (003)",
+    provider: "HashiCorp",
+    issueDate: "2024-01-20",
+    expirationDate: "2026-01-20",
+    credlyUrl:
+      "https://www.credly.com/earner/earned/badge/4f047eee-ba40-43af-b4c6-0e756c9fba63",
+  },
+  {
+    name: "Google Cloud Digital Leader",
+    provider: "Google Cloud",
+    issueDate: "2022-08-10",
+    expirationDate: "2025-08-10",
+    credlyUrl:
+      "https://www.credly.com/earner/earned/badge/5a43d250-5fac-40af-9212-20bef9cd5925",
+  },
+  {
+    name: "Associate Cloud Engineer",
+    provider: "Google Cloud",
+    issueDate: "2023-06-12",
+    expirationDate: "2026-06-12",
+    credlyUrl:
+      "https://www.credly.com/earner/earned/badge/8d4c0723-4b47-499d-846b-2c9a6aded593",
+  },
+  {
+    name: "Professional Cloud Architect",
+    provider: "Google Cloud",
+    issueDate: "2024-02-05",
+    expirationDate: "2026-02-05",
+    credlyUrl:
+      "https://www.credly.com/earner/earned/badge/2e31ce37-d885-4607-b499-c4d2481319f0",
+  },
+  {
+    name: "Certified Kubernetes Administrator (CKA)",
+    provider: "Cloud Native Computing Foundation",
+    issueDate: "2023-11-22",
+    expirationDate: "2026-11-22",
+    credlyUrl:
+      "https://www.credly.com/earner/earned/badge/b163f563-7c67-46ea-902a-8f5d4b8aea96",
+  },
+  {
+    name: "Certified Kubernetes Security Specialist (CKS)",
+    provider: "Cloud Native Computing Foundation",
+    issueDate: "2024-03-18",
+    expirationDate: "2026-11-22",
+    credlyUrl:
+      "https://www.credly.com/earner/earned/badge/94ce7532-9d3e-4b67-a68c-c193d6634b1e",
+  },
 ];
+
+function getStatus(expirationDate: string) {
+  const expiry = new Date(expirationDate);
+  const today = new Date();
+  const daysUntilExpiry = Math.floor(
+    (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (daysUntilExpiry < 0) {
+    return { label: "Expired", class: "expired" };
+  } else if (daysUntilExpiry < 90) {
+    return { label: "Expiring Soon", class: "expiring" };
+  } else {
+    return { label: "Active", class: "active" };
+  }
+}
+
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 ---
 
 <div class="app-content ops-app cert-wallet-app">
@@ -15,15 +90,93 @@ const certifications = [
     <strong>{certifications.length} verified records</strong>
   </div>
   <div class="cert-grid">
-    {certifications.map((certification) => (
-      <article class="cert-card">
-        <div class="cert-mark">{certification.provider.slice(0, 2).toUpperCase()}</div>
-        <div>
-          <h3>{certification.name}</h3>
-          <p>{certification.provider}</p>
-          <span>{certification.status}</span>
-        </div>
-      </article>
-    ))}
+    {
+      certifications.map((certification) => {
+        const status = getStatus(certification.expirationDate);
+        return (
+          <a
+            href={certification.credlyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="cert-card"
+          >
+            <div class="cert-mark">
+              {certification.provider.slice(0, 2).toUpperCase()}
+            </div>
+            <div class="cert-content">
+              <h3>{certification.name}</h3>
+              <p class="cert-provider">{certification.provider}</p>
+              <div class="cert-dates">
+                <span class="cert-expiry">
+                  Expires: {formatDate(certification.expirationDate)}
+                </span>
+              </div>
+              <span class={`cert-status cert-status-${status.class}`}>
+                {status.label}
+              </span>
+            </div>
+          </a>
+        );
+      })
+    }
   </div>
 </div>
+
+<style>
+  .cert-card {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .cert-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .cert-content {
+    flex: 1;
+  }
+
+  .cert-provider {
+    margin: 4px 0 8px 0;
+  }
+
+  .cert-dates {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .cert-expiry {
+    font-family: var(--font-mono);
+  }
+
+  .cert-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .cert-status-active {
+    background: rgba(48, 209, 88, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(48, 209, 88, 0.3);
+  }
+
+  .cert-status-expiring {
+    background: rgba(255, 159, 10, 0.15);
+    color: var(--accent-amber);
+    border: 1px solid rgba(255, 159, 10, 0.3);
+  }
+
+  .cert-status-expired {
+    background: rgba(255, 69, 58, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(255, 69, 58, 0.3);
+  }
+</style>

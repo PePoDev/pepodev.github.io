@@ -35,6 +35,11 @@
     "icon": "email"
   },
   {
+    "label": "Download Resume - CV PDF",
+    "href": "/resume",
+    "icon": "resume"
+  },
+  {
     "label": "วงแหวนเว็บ - Webring",
     "href": "https://webring.wonderful.software#pepo.dev",
     "icon": "webring"

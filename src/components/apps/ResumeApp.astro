@@ -4,15 +4,16 @@ import skills from "../../data/skills.json";
 
 const certifications = [
   "AWS Certified Solutions Architect - Associate",
-  "HashiCorp Terraform Associate",
+  "HashiCorp Certified: Terraform Associate (003)",
   "Google Cloud Digital Leader",
   "Associate Cloud Engineer",
-  "Google Professional Cloud Architect",
+  "Professional Cloud Architect",
   "Certified Kubernetes Administrator (CKA)",
+  "Certified Kubernetes Security Specialist (CKS)",
 ];
 
 const resumePdfData = {
-  name: "Pepo",
+  name: "Thiwanon Chomcharoen (PePo)",
   title: "Site Reliability Engineer",
   contact: [
     "Bangkok, Thailand",
@@ -58,20 +59,6 @@ const resumePdfData = {
     Download PDF
   </a>
   <div class="resume-section">
-    <div class="resume-section-title">{"\\section{Education}"}</div>
-    <div class="resume-entry">
-      <div class="resume-entry-header">
-        <span class="resume-entry-title"
-          >Bachelor Degrees, Computer Science</span
-        >
-        <span class="resume-entry-date">2016 - 2020</span>
-      </div>
-      <div class="resume-entry-subtitle">
-        King Mongkut's Institute of Technology Ladkrabang
-      </div>
-    </div>
-  </div>
-  <div class="resume-section">
     <div class="resume-section-title">{"\\section{Experience}"}</div>
     {
       experiences.map((experience) => (
@@ -91,6 +78,20 @@ const resumePdfData = {
         </div>
       ))
     }
+  </div>
+  <div class="resume-section">
+    <div class="resume-section-title">{"\\section{Education}"}</div>
+    <div class="resume-entry">
+      <div class="resume-entry-header">
+        <span class="resume-entry-title"
+          >Bachelor Degrees, Computer Science</span
+        >
+        <span class="resume-entry-date">2016 - 2020</span>
+      </div>
+      <div class="resume-entry-subtitle">
+        King Mongkut's Institute of Technology Ladkrabang
+      </div>
+    </div>
   </div>
   <div class="resume-section">
     <div class="resume-section-title">{"\\section{Technical Skills}"}</div>
@@ -238,7 +239,7 @@ const resumePdfData = {
       });
     }
 
-    drawText(data.name.toUpperCase(), width / 2, y, {
+    drawText(data.name, width / 2, y, {
       size: 24,
       align: "center",
       color: "0.1 0.11 0.14",
@@ -280,20 +281,6 @@ const resumePdfData = {
       y -= 5;
     });
 
-    drawSection("Education");
-    ensureSpace(42);
-    drawText(data.education[0], marginX, y, { size: 10.2, bold: true });
-    drawText(data.education[2], width - marginX, y, {
-      size: 9.3,
-      align: "right",
-    });
-    y -= 12;
-    drawText(data.education[1], marginX, y, {
-      size: 9.4,
-      color: "0.32 0.33 0.37",
-    });
-    y -= 24;
-
     drawSection("Technical Skills");
     const skillLines = splitIntoColumns(
       data.skills.map((skill) => skill.replace(/\s-\s\d+%$/, "")),
@@ -308,9 +295,22 @@ const resumePdfData = {
     });
     y -= 8;
 
+    drawSection("Education");
+    ensureSpace(42);
+    drawText(data.education[0], marginX, y, { size: 10.2, bold: true });
+    drawText(data.education[2], width - marginX, y, {
+      size: 9.3,
+      align: "right",
+    });
+    y -= 12;
+    drawText(data.education[1], marginX, y, {
+      size: 9.4,
+      color: "0.32 0.33 0.37",
+    });
+    y -= 24;
+
     drawSection("Certifications");
     drawBulletList(data.certifications, data.certifications.length);
-
     if (commands.length) pages.push(commands.join("\n"));
 
     const objects = [];

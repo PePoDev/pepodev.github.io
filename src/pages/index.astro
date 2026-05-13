@@ -6,7 +6,6 @@ import CertificationsWalletApp from "../components/apps/CertificationsWalletApp.
 import GalleryApp from "../components/apps/GalleryApp.astro";
 import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
-import ResumeApp from "../components/apps/ResumeApp.astro";
 import SettingsApp from "../components/apps/SettingsApp.astro";
 import SnakeApp from "../components/apps/SnakeApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
@@ -49,27 +48,21 @@ import socialLinks from "../data/social-links.json";
           data-default-row="0"
         />
         <DesktopIcon
-          appId="resume"
-          label="Resume"
-          data-default-col="2"
-          data-default-row="0"
-        />
-        <DesktopIcon
           appId="work"
           label="Work"
-          data-default-col="3"
+          data-default-col="2"
           data-default-row="0"
         />
         <DesktopIcon
           appId="project"
           label="Projects"
-          data-default-col="4"
+          data-default-col="3"
           data-default-row="0"
         />
         <DesktopIcon
           appId="certs"
           label="Certs"
-          data-default-col="5"
+          data-default-col="4"
           data-default-row="0"
         />
         <DesktopIcon
@@ -162,9 +155,6 @@ import socialLinks from "../data/social-links.json";
         </Window>
         <Window appId="blog" title="Blog - Articles" width={700} height={520}>
           <BlogApp />
-        </Window>
-        <Window appId="resume" title="Resume - CV" width={650} height={580}>
-          <ResumeApp />
         </Window>
         <Window
           appId="project"
@@ -462,7 +452,13 @@ import socialLinks from "../data/social-links.json";
           const ambientBlobs = [];
           const count = 70;
           let desktopPrefs = {};
-          let musicAudio = { playing: false, low: 0, mid: 0, high: 0, energy: 0 };
+          let musicAudio = {
+            playing: false,
+            low: 0,
+            mid: 0,
+            high: 0,
+            energy: 0,
+          };
           let smoothedAudio = { low: 0, mid: 0, high: 0, energy: 0 };
           let lastAudioRingAt = 0;
 
@@ -539,7 +535,8 @@ import socialLinks from "../data/social-links.json";
             smoothedAudio.low += (musicAudio.low - smoothedAudio.low) * 0.16;
             smoothedAudio.mid += (musicAudio.mid - smoothedAudio.mid) * 0.12;
             smoothedAudio.high += (musicAudio.high - smoothedAudio.high) * 0.18;
-            smoothedAudio.energy += (musicAudio.energy - smoothedAudio.energy) * 0.14;
+            smoothedAudio.energy +=
+              (musicAudio.energy - smoothedAudio.energy) * 0.14;
             const audioEnergy = musicAudio.playing ? smoothedAudio.energy : 0;
             const lowEnergy = musicAudio.playing ? smoothedAudio.low : 0;
             const midEnergy = musicAudio.playing ? smoothedAudio.mid : 0;
@@ -568,7 +565,11 @@ import socialLinks from "../data/social-links.json";
                   : desktopPrefs.primary;
               grad.addColorStop(
                 0,
-                "rgba(" + color + ", " + (blob.alpha + audioEnergy * 0.045) + ")",
+                "rgba(" +
+                  color +
+                  ", " +
+                  (blob.alpha + audioEnergy * 0.045) +
+                  ")",
               );
               grad.addColorStop(1, "rgba(" + color + ", 0)");
               ctx.fillStyle = grad;
@@ -586,7 +587,8 @@ import socialLinks from "../data/social-links.json";
                   ? Math.sin(time * 2 + particle.glowPhase) * lowEnergy * 0.35
                   : 0;
               particle.x += particle.vx * (1 + highEnergy * 3.8) + audioDrift;
-              particle.y += particle.vy * (1 + highEnergy * 3.8) + audioDrift * 0.45;
+              particle.y +=
+                particle.vy * (1 + highEnergy * 3.8) + audioDrift * 0.45;
               if (particle.x < 0) particle.x = canvas.width;
               if (particle.x > canvas.width) particle.x = 0;
               if (particle.y < 0) particle.y = canvas.height;
@@ -606,7 +608,10 @@ import socialLinks from "../data/social-links.json";
                     other.x - particle.x,
                     other.y - particle.y,
                   );
-                  if (distance < reactiveConnectionDist && distance < nearestDist) {
+                  if (
+                    distance < reactiveConnectionDist &&
+                    distance < nearestDist
+                  ) {
                     nearest = other;
                     nearestDist = distance;
                   }
@@ -634,7 +639,8 @@ import socialLinks from "../data/social-links.json";
               time - lastAudioRingAt > 0.18
             ) {
               lastAudioRingAt = time;
-              const source = particles[Math.floor(Math.random() * particles.length)];
+              const source =
+                particles[Math.floor(Math.random() * particles.length)];
               if (source) {
                 audioRings.push({
                   x: source.x,
