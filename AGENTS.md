@@ -31,13 +31,17 @@ Use `pnpm build` as the default verification step after code changes. Use
 - `src/components/desktop/` contains desktop shell primitives:
   `DesktopIcon.astro`, `Taskbar.astro`, `StartMenu.astro`, `Window.astro`, and `AppIcon.astro`.
 - `src/components/apps/` contains the pre-rendered desktop app bodies:
-  blog, resume, work, projects, about, connect, SRE game, calculator, music,
-  settings, terminal, incident timeline, metrics dashboard, architecture viewer,
-  runbook, certifications wallet, deploy simulator, system monitor, and gallery.
+  welcome, blog, resume, work, projects, about, SRE game, calculator, music,
+  settings, terminal, certifications wallet, gallery, and trash.
 - `src/content/blog/` contains Markdown/MDX blog posts managed by Astro content collections.
 - `src/data/` contains structured data files such as `experiences.json`,
   `projects.json`, `skills.json`, `social-links.json`, and `work-metrics.json`.
-- `src/styles/global.css` contains the shared desktop visual system and app styling.
+  `src/data/music.ts` discovers local tracks from `public/music/` at build time.
+- `src/styles/global.css` imports split CSS modules for the shared desktop visual
+  system and app styling.
+- `public/music/` contains local media files used by the music player. Browser
+  playback can differ between VS Code previews and real browsers; verify audio
+  behavior in a browser when changing the player.
 - `tests/e2e/desktop.spec.ts` contains Playwright coverage for the desktop shell,
   app launchers, windows, and major app interactions.
 - `sre-game/` is a standalone static copy of the SRE game and is separate from the Astro desktop app.
@@ -64,6 +68,9 @@ Use `pnpm build` as the default verification step after code changes. Use
 - The settings app persists desktop preferences under `pepodev.desktopPrefs` and
   music state under `pepodev.music`. The taskbar and SRE game use
   `pepodev.systemAudio`.
+- The music player should treat the real media element state as authoritative;
+  persisted `pepodev.music.playing` can be stale after reloads or embedded
+  previews.
 - The gallery app is intentionally password-gated with the literal password
   `password`.
 
