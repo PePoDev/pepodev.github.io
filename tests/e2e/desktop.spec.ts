@@ -246,6 +246,51 @@ test("music player and settings music controls update state", async ({
   await expect(music.locator("#music-title")).toHaveText("Late Shift Protocol");
 });
 
+test("music player recovers from stale saved playback state", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    localStorage.setItem(
+      "pepodev.music",
+      JSON.stringify({
+        track: "late_shift_protocol",
+        volume: 0.6,
+        playing: true,
+      }),
+    );
+  });
+  await page.reload();
+
+  const music = await openApp(page, "Music", "music");
+  await expect(
+    music.getByRole("button", { name: "Play", exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      music
+        .locator("[data-music-media]")
+        .evaluate((media: HTMLMediaElement) => media.paused),
+    )
+    .toBe(true);
+
+  await music.getByRole("button", { name: "Play", exact: true }).click();
+  await expect(
+    music.getByRole("button", { name: "Pause", exact: true }),
+  ).toBeVisible();
+
+  await music.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(
+    music.getByRole("button", { name: "Play", exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      music
+        .locator("[data-music-media]")
+        .evaluate((media: HTMLMediaElement) => media.paused),
+    )
+    .toBe(true);
+});
+
 test("terminal commands print output and can open apps", async ({ page }) => {
   const terminal = await openApp(page, "Terminal", "terminal");
   const input = terminal.locator("[data-terminal-input]");

@@ -93,7 +93,8 @@ const defaultTrack = tracks[0];
     if (!player || window.__pepoMusicController) return;
 
     const defaultTrackId = tracks[0]?.id || "";
-    let settings = loadMusicSettings();
+    const persistedSettings = loadMusicSettings();
+    let settings = normalizeMusicSettings({ ...persistedSettings, playing: false });
 
     const title = document.getElementById("music-title");
     const detail = document.getElementById("music-detail");
@@ -103,6 +104,7 @@ const defaultTrack = tracks[0];
     const volume = player.querySelector("[data-music-volume]");
     const media = player.querySelector("[data-music-media]");
     const status = player.querySelector("[data-music-status]");
+    let playbackRequestId = 0;
 
     function loadMusicSettings() {
       try {
@@ -115,8 +117,18 @@ const defaultTrack = tracks[0];
       return { track: defaultTrackId, volume: 0.6, playing: false };
     }
 
+    function normalizeMusicSettings(next) {
+      const track = tracks.some((item) => item.id === next.track)
+        ? next.track
+        : defaultTrackId;
+      const volume = Number.isFinite(next.volume)
+        ? Math.max(0, Math.min(1, next.volume))
+        : 0.6;
+      return { track, volume, playing: Boolean(next.playing) };
+    }
+
     function saveMusicSettings(next) {
-      settings = { ...settings, ...next };
+      settings = normalizeMusicSettings({ ...settings, ...next });
       localStorage.setItem(musicKey, JSON.stringify(settings));
       document.dispatchEvent(
         new CustomEvent("desktop:music-settings", { detail: settings }),
@@ -126,6 +138,10 @@ const defaultTrack = tracks[0];
 
     function currentTrack() {
       return tracks.find((track) => track.id === settings.track) || tracks[0];
+    }
+
+    function isMediaPlaying() {
+      return Boolean(media && !media.paused && !media.ended);
     }
 
     function applyVolume() {
@@ -139,6 +155,7 @@ const defaultTrack = tracks[0];
       if (!track || !media) return;
       const wasPaused = media.paused;
       if (!media.src.endsWith(track.src)) {
+        playbackRequestId += 1;
         media.src = track.src;
         media.load();
       }
@@ -146,13 +163,21 @@ const defaultTrack = tracks[0];
     }
 
     async function startPlayback() {
-      if (!media) return false;
+      const requestId = playbackRequestId + 1;
+      playbackRequestId = requestId;
+      if (!media || !currentTrack()) {
+        saveMusicSettings({ playing: false });
+        if (status) status.textContent = "Add playable files to public/music.";
+        return false;
+      }
       applyVolume();
       try {
         await media.play();
+        if (requestId !== playbackRequestId || !isMediaPlaying()) return false;
         saveMusicSettings({ playing: true });
         return true;
       } catch (error) {
+        if (requestId !== playbackRequestId) return false;
         saveMusicSettings({ playing: false });
         if (status) {
           status.textContent =
@@ -169,6 +194,7 @@ const defaultTrack = tracks[0];
       if (playing) {
         await startPlayback();
       } else {
+        playbackRequestId += 1;
         media.pause();
         saveMusicSettings({ playing: false });
       }
@@ -182,7 +208,17 @@ const defaultTrack = tracks[0];
 
     function render() {
       const track = currentTrack();
-      if (!track) return;
+      const isActuallyPlaying = isMediaPlaying();
+      if (!track) {
+        title.textContent = "No Music Found";
+        detail.textContent = "Add audio files to public/music";
+        trackSelect.disabled = true;
+        volume.disabled = true;
+        toggle.disabled = true;
+        player.classList.remove("music-playing");
+        if (status) status.textContent = "Add playable files to public/music.";
+        return;
+      }
       title.textContent = track.title;
       detail.textContent = track.detail;
       if (art?.tagName === "VIDEO" && track.mediaType === "video") {
@@ -195,10 +231,13 @@ const defaultTrack = tracks[0];
       }
       trackSelect.value = track.id;
       volume.value = String(Math.round(settings.volume * 100));
-      toggle.textContent = settings.playing ? "Pause" : "Play";
-      player.classList.toggle("music-playing", settings.playing);
+      trackSelect.disabled = false;
+      volume.disabled = false;
+      toggle.disabled = false;
+      toggle.textContent = isActuallyPlaying ? "Pause" : "Play";
+      player.classList.toggle("music-playing", isActuallyPlaying);
       if (status) {
-        status.textContent = settings.playing
+        status.textContent = isActuallyPlaying
           ? settings.volume === 0
             ? "Playing silently. Raise Music volume to hear it."
             : "Playing from public/music."
@@ -207,7 +246,7 @@ const defaultTrack = tracks[0];
       applyVolume();
     }
 
-    toggle.addEventListener("click", () => setPlaying(!settings.playing));
+    toggle.addEventListener("click", () => setPlaying(!isMediaPlaying()));
     player.querySelector("[data-music-prev]").addEventListener("click", () => {
       const index = tracks.findIndex((track) => track.id === settings.track);
       if (!tracks.length) return;
@@ -227,8 +266,7 @@ const defaultTrack = tracks[0];
     document.addEventListener("desktop:music-settings", (event) => {
       const wasPlaying = settings.playing;
       const oldTrack = settings.track;
-      settings = { ...settings, ...event.detail };
-      if (!currentTrack()) settings.track = defaultTrackId;
+      settings = normalizeMusicSettings({ ...settings, ...event.detail });
       render();
       if (event.detail.track && oldTrack !== settings.track) syncAudioSource();
       if (!media) return;
@@ -244,6 +282,9 @@ const defaultTrack = tracks[0];
       setTrack(tracks[((index < 0 ? 0 : index) + 1) % tracks.length].id);
     });
 
+    media?.addEventListener("play", render);
+    media?.addEventListener("pause", render);
+
     media?.addEventListener("error", () => {
       const code = media.error?.code;
       if (status) {
@@ -256,6 +297,12 @@ const defaultTrack = tracks[0];
 
     window.__pepoMusicController = { setPlaying, setTrack };
     syncAudioSource();
+    if (persistedSettings.playing) {
+      localStorage.setItem(musicKey, JSON.stringify(settings));
+      document.dispatchEvent(
+        new CustomEvent("desktop:music-settings", { detail: settings }),
+      );
+    }
     render();
   });
 </script>
