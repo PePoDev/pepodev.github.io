@@ -922,6 +922,12 @@ import socialLinks from "../data/social-links.json";
           setTimeout(() => toast.remove(), 300);
         }
 
+        // Listen for custom toast events
+        document.addEventListener("desktop:show-toast", (event) => {
+          const { message, duration } = (event as CustomEvent).detail;
+          showToast(message, duration);
+        });
+
         // Show command palette hint on first visit or periodically
         const hintKey = "pepodev.commandPaletteHintShown";
         const lastShown = localStorage.getItem(hintKey);

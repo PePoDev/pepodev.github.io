@@ -74,6 +74,30 @@ const formatDate = (date: Date) =>
               <button class="blog-reader-back" type="button" data-blog-back>
                 Back to articles
               </button>
+              <button
+                class="blog-reader-share"
+                type="button"
+                data-blog-share
+                data-blog-slug-share={post.id}
+                title="Share article"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              </button>
               <h2 class="blog-reader-title">{title}</h2>
               {post.data.pubDate && (
                 <div class="blog-reader-date">
@@ -171,6 +195,38 @@ const formatDate = (date: Date) =>
 
       app.querySelectorAll("[data-blog-back]").forEach((button) => {
         button.addEventListener("click", showList);
+      });
+
+      app.querySelectorAll("[data-blog-share]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const slug = (button as HTMLElement).dataset.blogSlugShare;
+          if (!slug) return;
+
+          const url = `${window.location.origin}${window.location.pathname}?blog=${slug}`;
+
+          navigator.clipboard
+            .writeText(url)
+            .then(() => {
+              // Show toast notification
+              const event = new CustomEvent("desktop:show-toast", {
+                detail: {
+                  message: "Link copied to clipboard!",
+                  duration: 3000,
+                },
+              });
+              document.dispatchEvent(event);
+            })
+            .catch((err) => {
+              console.error("Failed to copy link:", err);
+              const event = new CustomEvent("desktop:show-toast", {
+                detail: {
+                  message: "Failed to copy link",
+                  duration: 3000,
+                },
+              });
+              document.dispatchEvent(event);
+            });
+        });
       });
 
       app

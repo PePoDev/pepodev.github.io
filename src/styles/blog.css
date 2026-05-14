@@ -65,6 +65,7 @@
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--glass-border);
+  position: relative;
 }
 
 .blog-reader-back {
@@ -83,6 +84,34 @@
 
 .blog-reader-back:hover {
   color: var(--text-primary);
+}
+
+.blog-reader-share {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.blog-reader-share:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.blog-reader-share svg {
+  width: 16px;
+  height: 16px;
 }
 
 .blog-reader-title {
