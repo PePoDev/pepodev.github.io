@@ -154,3 +154,22 @@
   color: var(--accent-purple);
   border-bottom-color: rgba(191, 90, 242, 0.3);
 }
+
+.blog-reader-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 16px 0;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+}
+
+.blog-reader-body ul,
+.blog-reader-body ol {
+  margin-bottom: 12px;
+  padding-left: 24px;
+}
+
+.blog-reader-body li {
+  margin-bottom: 6px;
+}
