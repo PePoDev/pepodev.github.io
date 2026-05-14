@@ -4,6 +4,7 @@ sub-title: ภาพรวมของ AWS Graviton ที่ให้ประ�
 cover-picture: ../../assets/blog/aws-graviton-cover.png
 publish: true
 dg-publish: true
+tags: ["AWS", "Graviton", "ARM", "Cloud", "Performance"]
 ---
 เห็นคำว่า Graviton นี่เราไม่ได้หมายถึงแรงโน้มถ่วงควอนตัมแต่อย่างใด แต่เรากำลังพูดถึง AWS Graviton กันอยู่ ซึ่งถ้าเอาแบบง่ายๆ AWS Graviton ก็คือ CPU Arm-based processors ของทาง AWS ซึ่งเป็นหนึ่งใน [AWS custom chips](https://aws.amazon.com/silicon-innovation/) ที่มีจุดเด่นในด้านของราคาต่อประสิทธิภาพ
 

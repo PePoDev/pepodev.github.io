@@ -4,6 +4,7 @@ sub-title: Is Chaos Engineering fun? Nani!!
 cover-picture: ../../assets/blog/chaos-engineering-02-kubedoom.png
 publish: true
 dg-publish: true
+tags: ["Chaos Engineering", "Kubernetes", "DevOps", "SRE", "Gamification"]
 ---
 > _disclaimer: This post focuses on how fun chaos engineering can be. This does not cover the principal and real practicalities of chaos engineering._
 

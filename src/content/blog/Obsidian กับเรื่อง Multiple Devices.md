@@ -4,6 +4,7 @@ sub-title: การเซ็ทอัพ Obsidian ให้ใช้งาน�
 cover-picture: ../../assets/blog/obsidian-multi-devices-cover.png
 publish: true
 dg-publish: true
+tags: ["Obsidian", "Productivity", "Note-taking", "Sync", "Markdown"]
 ---
 ## เกริ่นนำกันซักนิด
 ถ้าหากคุณหลงเข้ามาโดยที่ยังไม่รู้ว่าเจ้า [Obsidian](https://obsidian.md/) คืออะไร เราขอสรุปสั้นๆว่า Obsidian ก็คือ Note taking เจ้านึงที่เน้นเรื่อง Privacy first หรือก็คือ note ของเรา เราดูแลเอง บวกกับการจด Note ในแบบที่ Developer ชอบก็คือ Markdown style นั่นเอง เท่านั้นยังไม่พอ community ยังช่วยกันทำ plugin เพื่อให้เจ้า Obsidian มีความสามารถที่มากขึ้น ถือเป็น note taking app ที่มี feature ที่หลากหลาย ทำงานแบบ offline ได้ ที่สำคัญ ทั้งหมดที่กล่าวมานั้น ฟรี!!!!!!!!

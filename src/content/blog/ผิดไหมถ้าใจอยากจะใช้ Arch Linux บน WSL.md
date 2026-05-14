@@ -4,6 +4,7 @@ sub-title: วิธีการติดตั้ง Linux distro ใดๆก�
 cover-picture: ../../assets/blog/arch-linux-wsl-cover.webp
 publish: true
 dg-publish: true
+tags: ["Arch Linux", "WSL", "Windows", "Linux", "Tutorial"]
 ---
 ## เกริ่นนำ
 มีช่วงนึงที่เราหันไปใช้ Linux แบบจริงๆจังๆ จนเราได้ไปลอง Distro ตัวหนึ่งที่ชื่อ Arch Linux ในตอนนั้นเราก็ตกหลุมรักเข้ากับมนต์เสน่ห์แปลกๆของมัน ไม่ว่าจะการอัพเดตที่มีมาบ่อยจนรู้สึกหวาดกลัว หรือ package manager ที่แสนจะอัจฉริยะอย่างเจ้า pacman ทำให้เราต้องการนำมันกลับมาใช้งานใน WSL บนคอมเครื่องหลักของเรา แต่หลังจากที่ลอง search บน Windows Store เราเจอแต่ unofficial package ที่ไม่ได้อัพเดตมาหลายเดือนแล้ว เลยไปลองหาข้อมูลเพิ่มจนได้ใจความว่า ในปัจจุบันมี project open-source อยู่ตัวหนึ่งชื่อว่า [wsldl](https://github.com/yuk7/wsldl) ที่เราไว้ติดตั้ง rootfs หรือ disk image (ext4 vhdx) ใดๆก็ตามลงใน WSL ซึ่งเขาก็ได้ทำ rootfs สำหรับ Arch Linux ไว้ด้วยให้เราใช้ติดตั้งลงบน WSL ได้เลย ซึ่ง Package บน Windows Store ที่เราเจอก็เอาอันนี้ไปใช้นี่แหละ แต่เดี๋ยวเราจะมาลงกันเองเพื่อความ up-to-date!

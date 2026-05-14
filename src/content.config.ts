@@ -14,6 +14,7 @@ const blog = defineCollection({
       pubDate: z.coerce.date().optional(),
       updatedDate: z.coerce.date().optional(),
       heroImage: z.optional(image()),
+      tags: z.array(z.string()).optional(),
       // Legacy Obsidian fields
       "url-slug": z.string().optional(),
       "sub-title": z.string().optional(),

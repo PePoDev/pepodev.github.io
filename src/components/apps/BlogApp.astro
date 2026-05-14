@@ -36,7 +36,7 @@ const formatDate = (date: Date) =>
     <div class="blog-list">
       {
         posts.map(({ post }, index) => {
-          const title = post.data.title || post.id;
+          const title = post.id;
           const description =
             post.data.description || post.data["sub-title"] || "";
           return (
@@ -53,6 +53,13 @@ const formatDate = (date: Date) =>
                 </div>
               )}
               <div class="blog-item-desc">{description}</div>
+              {post.data.tags && post.data.tags.length > 0 && (
+                <div class="blog-item-tags">
+                  {post.data.tags.map((tag) => (
+                    <span class="blog-tag">{tag}</span>
+                  ))}
+                </div>
+              )}
             </button>
           );
         })
@@ -62,7 +69,7 @@ const formatDate = (date: Date) =>
   <div class="blog-reader" data-blog-reader>
     {
       posts.map(({ post, Content }, index) => {
-        const title = post.data.title || post.id;
+        const title = post.id;
         return (
           <article
             class="blog-post-panel"
@@ -102,6 +109,13 @@ const formatDate = (date: Date) =>
               {post.data.pubDate && (
                 <div class="blog-reader-date">
                   {formatDate(post.data.pubDate)}
+                </div>
+              )}
+              {post.data.tags && post.data.tags.length > 0 && (
+                <div class="blog-reader-tags">
+                  {post.data.tags.map((tag) => (
+                    <span class="blog-tag">{tag}</span>
+                  ))}
                 </div>
               )}
             </div>

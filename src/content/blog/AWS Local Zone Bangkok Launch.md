@@ -4,6 +4,7 @@ sub-title: Local zone คืออะไรและเมื่อไหร่�
 cover-picture: ../../assets/blog/aws-local-zone-cover.png
 publish: true
 dg-publish: true
+tags: ["AWS", "Local Zone", "Bangkok", "Cloud", "Latency"]
 ---
 พอดีได้มีโอกาสไปร่วมงานเปิดตัว AWS Bangkok Local zone ที่โรงแรม Anantara Siam Bangkok Hotel เมื่อวันที่ 31 มกราที่ผ่านมา เลยลองสรุปสาระสำคัญจากงานมาฝากครับ
 
