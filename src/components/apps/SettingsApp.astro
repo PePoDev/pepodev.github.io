@@ -42,7 +42,7 @@ const defaultTrackId = tracks[0]?.id ?? "";
             type="range"
             min="6"
             max="20"
-            value="12"
+            value="6"
           />
         </label>
 
@@ -53,7 +53,7 @@ const defaultTrackId = tracks[0]?.id ?? "";
             type="range"
             min="55"
             max="90"
-            value="72"
+            value="55"
           />
         </label>
 
@@ -121,8 +121,8 @@ const defaultTrackId = tracks[0]?.id ?? "";
       theme: localStorage.getItem("pepodev.theme") || "dark",
       background: "network",
       accent: "green",
-      radius: 12,
-      glass: 72,
+      radius: 6,
+      glass: 55,
       backgroundEffect: true,
       windowGlass: true,
     };
@@ -132,8 +132,7 @@ const defaultTrackId = tracks[0]?.id ?? "";
       const min = Number(input.min || 0);
       const max = Number(input.max || 100);
       const value = Number(input.value || min);
-      const progress =
-        max > min ? ((value - min) / (max - min)) * 100 : 0;
+      const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
       input.style.setProperty(
         "--range-progress",
         Math.max(0, Math.min(100, progress)) + "%",
@@ -417,8 +416,9 @@ const defaultTrackId = tracks[0]?.id ?? "";
       app.querySelector('[data-setting="background"]').value = prefs.background;
       app.querySelector('[data-setting="radius"]').value = String(prefs.radius);
       app.querySelector('[data-setting="glass"]').value = String(prefs.glass);
-      app.querySelector('[data-setting="backgroundEffect"]').checked =
-        Boolean(prefs.backgroundEffect);
+      app.querySelector('[data-setting="backgroundEffect"]').checked = Boolean(
+        prefs.backgroundEffect,
+      );
       app.querySelector('[data-setting="windowGlass"]').checked = Boolean(
         prefs.windowGlass,
       );
