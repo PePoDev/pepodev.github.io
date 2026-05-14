@@ -30,13 +30,39 @@
       aria-pressed="false"
       aria-controls="tray-panel"
     >
-      <svg class="audio-icon audio-icon-on" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
-        <path d="M16 8c1.3 1.2 1.3 6.8 0 8M19 5c2.7 3 2.7 11 0 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+      <svg
+        class="audio-icon audio-icon-on"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M4 9v6h4l5 4V5L8 9H4z"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"></path>
+        <path
+          d="M16 8c1.3 1.2 1.3 6.8 0 8M19 5c2.7 3 2.7 11 0 14"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"></path>
       </svg>
-      <svg class="audio-icon audio-icon-muted" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
-        <path d="M17 9l4 4m0-4l-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+      <svg
+        class="audio-icon audio-icon-muted"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M4 9v6h4l5 4V5L8 9H4z"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"></path>
+        <path
+          d="M17 9l4 4m0-4l-4 4"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"></path>
       </svg>
     </button>
     <button
@@ -56,26 +82,6 @@
         <div id="tray-date"></div>
       </div>
       <span class="tray-status">Nominal</span>
-    </div>
-
-    <div class="tray-section">
-      <div class="tray-section-title">Notifications</div>
-      <div class="notification-list">
-        <div class="notification-item">
-          <div class="notification-dot"></div>
-          <div>
-            <strong>Desktop refactor active</strong>
-            <span>Astro windows are server-rendered and ready.</span>
-          </div>
-        </div>
-        <div class="notification-item">
-          <div class="notification-dot notification-dot-warn"></div>
-          <div>
-            <strong>SRE game audio</strong>
-            <span>Volume and mute follow the system controls below.</span>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="tray-section">
@@ -151,8 +157,7 @@
       const min = Number(input.min || 0);
       const max = Number(input.max || 100);
       const value = Number(input.value || min);
-      const progress =
-        max > min ? ((value - min) / (max - min)) * 100 : 0;
+      const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
       input.style.setProperty(
         "--range-progress",
         Math.max(0, Math.min(100, progress)) + "%",
@@ -172,7 +177,10 @@
         "aria-label",
         settings.muted ? "System audio muted" : "System audio enabled",
       );
-      audioStatusButton?.setAttribute("title", settings.muted ? "Muted" : "Audio on");
+      audioStatusButton?.setAttribute(
+        "title",
+        settings.muted ? "Muted" : "Audio on",
+      );
       audioStatusButton?.classList.toggle("muted", settings.muted);
       document.dispatchEvent(
         new CustomEvent("desktop:audio-settings", { detail: settings }),
