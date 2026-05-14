@@ -33,8 +33,10 @@ Use `pnpm build` as the default verification step after code changes. Use
 - `src/components/apps/` contains the pre-rendered desktop app bodies:
   welcome, blog, work, projects, about, SRE game, snake, calculator, white noise,
   music, settings, terminal, certifications wallet, gallery, and trash.
+  Note: `ResumeApp.astro` is no longer used as a desktop app.
 - `src/pages/resume.astro` is a standalone page (not a desktop app) that
   auto-generates and downloads a PDF resume when visited at `/resume`.
+  Resume functionality is available via this standalone page and external links.
 - `src/content/blog/` contains Markdown/MDX blog posts managed by Astro content
   collections. Supports both standard Astro and Obsidian frontmatter formats
   (all fields optional).
@@ -105,6 +107,9 @@ Use `pnpm build` as the default verification step after code changes. Use
   Images are automatically optimized and converted to WebP during the build.
 - The White Noise app provides ambient rain sounds with a minimal UI (clouds and
   city background only; rain animation was removed).
+- The command palette tutorial notification (toast) is hidden on mobile devices
+  (viewport width ≤ 768px) to improve mobile UX. Desktop users see the tip about
+  Ctrl/Cmd+K on first visit or every 7 days.
 
 ## Styling Notes
 
