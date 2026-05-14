@@ -24,8 +24,9 @@ const formatDate = (date: Date) =>
 ---
 
 <div class="app-content" data-blog-app>
-  <div class="terminal-heading">
-    <span class="prompt">~/blog $</span> ls articles/
+  <div class="terminal-heading" data-blog-terminal>
+    <span class="prompt">~/blog $</span>
+    <span data-blog-command>ls articles/</span>
   </div>
   <div class="blog-list-view" data-blog-list-view>
     <h2>Latest Articles</h2>
@@ -100,6 +101,19 @@ const formatDate = (date: Date) =>
         "[data-blog-reader]",
       ) as HTMLElement | null;
       const panels = app.querySelectorAll("[data-blog-post]");
+      const terminalCommand = app.querySelector(
+        "[data-blog-command]",
+      ) as HTMLElement | null;
+
+      function updateTerminalPath(slug?: string) {
+        if (terminalCommand) {
+          if (slug) {
+            terminalCommand.textContent = `cat articles/${slug}`;
+          } else {
+            terminalCommand.textContent = "ls articles/";
+          }
+        }
+      }
 
       function showList() {
         if (listView) listView.style.display = "";
@@ -107,6 +121,7 @@ const formatDate = (date: Date) =>
         panels.forEach((panel) => {
           (panel as HTMLElement).hidden = true;
         });
+        updateTerminalPath();
       }
 
       function openArticleBySlug(slug: string) {
@@ -133,6 +148,7 @@ const formatDate = (date: Date) =>
           (p as HTMLElement).hidden =
             (p as HTMLElement).dataset.blogPost !== index;
         });
+        updateTerminalPath(slug);
         return true;
       }
 
@@ -142,12 +158,14 @@ const formatDate = (date: Date) =>
       app.querySelectorAll("[data-blog-index]").forEach((item) => {
         item.addEventListener("click", () => {
           const index = (item as HTMLElement).dataset.blogIndex;
+          const slug = (item as HTMLElement).dataset.blogSlug;
           if (listView) listView.style.display = "none";
           if (reader) reader.classList.add("active");
           panels.forEach((panel) => {
             (panel as HTMLElement).hidden =
               (panel as HTMLElement).dataset.blogPost !== index;
           });
+          updateTerminalPath(slug);
         });
       });
 
