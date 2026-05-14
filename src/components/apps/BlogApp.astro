@@ -39,7 +39,12 @@ const formatDate = (date: Date) =>
           const description =
             post.data.description || post.data["sub-title"] || "";
           return (
-            <button class="blog-item" type="button" data-blog-index={index}>
+            <button
+              class="blog-item"
+              type="button"
+              data-blog-index={index}
+              data-blog-slug={post.id}
+            >
               <div class="blog-item-title">{title}</div>
               {post.data.pubDate && (
                 <div class="blog-item-meta">
@@ -58,7 +63,12 @@ const formatDate = (date: Date) =>
       posts.map(({ post, Content }, index) => {
         const title = post.data.title || post.id;
         return (
-          <article class="blog-post-panel" data-blog-post={index} hidden>
+          <article
+            class="blog-post-panel"
+            data-blog-post={index}
+            data-blog-slug={post.id}
+            hidden
+          >
             <div class="blog-reader-header">
               <button class="blog-reader-back" type="button" data-blog-back>
                 Back to articles
@@ -83,25 +93,60 @@ const formatDate = (date: Date) =>
 <script>
   function initBlog() {
     document.querySelectorAll("[data-blog-app]").forEach((app) => {
-      const listView = app.querySelector("[data-blog-list-view]");
-      const reader = app.querySelector("[data-blog-reader]");
+      const listView = app.querySelector(
+        "[data-blog-list-view]",
+      ) as HTMLElement | null;
+      const reader = app.querySelector(
+        "[data-blog-reader]",
+      ) as HTMLElement | null;
       const panels = app.querySelectorAll("[data-blog-post]");
 
       function showList() {
         if (listView) listView.style.display = "";
         if (reader) reader.classList.remove("active");
         panels.forEach((panel) => {
-          panel.hidden = true;
+          (panel as HTMLElement).hidden = true;
         });
       }
 
+      function openArticleBySlug(slug: string) {
+        console.log("Opening article with slug:", slug);
+        const panel = app.querySelector(
+          `[data-blog-slug="${slug}"]`,
+        ) as HTMLElement;
+        console.log("Found panel:", panel);
+        if (!panel) {
+          console.log(
+            "Available slugs:",
+            Array.from(panels).map((p) => (p as HTMLElement).dataset.blogSlug),
+          );
+          return false;
+        }
+
+        const index = panel.dataset.blogPost;
+        console.log("Panel index:", index);
+        if (!index) return false;
+
+        if (listView) listView.style.display = "none";
+        if (reader) reader.classList.add("active");
+        panels.forEach((p) => {
+          (p as HTMLElement).hidden =
+            (p as HTMLElement).dataset.blogPost !== index;
+        });
+        return true;
+      }
+
+      // Expose the function globally for URL deep linking
+      (window as any).__pepodevBlogOpenSlug = openArticleBySlug;
+
       app.querySelectorAll("[data-blog-index]").forEach((item) => {
         item.addEventListener("click", () => {
-          const index = item.dataset.blogIndex;
+          const index = (item as HTMLElement).dataset.blogIndex;
           if (listView) listView.style.display = "none";
           if (reader) reader.classList.add("active");
           panels.forEach((panel) => {
-            panel.hidden = panel.dataset.blogPost !== index;
+            (panel as HTMLElement).hidden =
+              (panel as HTMLElement).dataset.blogPost !== index;
           });
         });
       });
