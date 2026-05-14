@@ -121,4 +121,4 @@ dg-publish: true
 ขอพลังของ ARM จงสถิตอยู่กับทุกคนครับ ⚔️
 ### Continue readings
 - [https://github.com/aws/aws-graviton-getting-started](https://github.com/aws/aws-graviton-getting-started)
-- [https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html](https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html) %%
+- [https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html](https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html)
