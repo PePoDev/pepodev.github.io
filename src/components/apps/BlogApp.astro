@@ -127,7 +127,7 @@ const formatDate = (date: Date) =>
       function openArticleBySlug(slug: string) {
         console.log("Opening article with slug:", slug);
         const panel = app.querySelector(
-          `[data-blog-slug="${slug}"]`,
+          `[data-blog-post][data-blog-slug="${slug}"]`,
         ) as HTMLElement;
         console.log("Found panel:", panel);
         if (!panel) {
