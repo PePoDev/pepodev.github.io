@@ -5,6 +5,22 @@
       ></path>
     </svg>
   </button>
+  <button
+    id="taskbar-command-palette"
+    type="button"
+    aria-label="Open command palette"
+    title="Open command palette"
+  >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.8"
+      ></circle>
+      <path
+        d="M16 16l4 4"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"></path>
+    </svg>
+  </button>
   <div id="taskbar-apps"></div>
   <div id="taskbar-tray">
     <button
@@ -107,6 +123,9 @@
     const volumeValue = document.getElementById("audio-volume-value");
     const muteButton = document.getElementById("audio-mute");
     const audioStatusButton = document.getElementById("taskbar-audio-status");
+    const commandPaletteButton = document.getElementById(
+      "taskbar-command-palette",
+    );
     let trayOpen = false;
     let visibleMonth = new Date();
 
@@ -246,6 +265,12 @@
     audioStatusButton?.addEventListener("click", (event) => {
       event.stopPropagation();
       setTrayOpen(!trayOpen);
+    });
+
+    commandPaletteButton?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setTrayOpen(false);
+      document.dispatchEvent(new CustomEvent("desktop:open-command-palette"));
     });
 
     trayPanel?.addEventListener("click", (event) => event.stopPropagation());
