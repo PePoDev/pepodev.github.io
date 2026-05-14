@@ -438,6 +438,14 @@ import socialLinks from "../data/social-links.json";
           "--particle-secondary-rgb",
           background.secondary,
         );
+        document.documentElement.setAttribute(
+          "data-background-effect",
+          savedPrefs.backgroundEffect === false ? "off" : "on",
+        );
+        document.documentElement.setAttribute(
+          "data-window-glass",
+          savedPrefs.windowGlass === false ? "off" : "on",
+        );
       })();
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -461,6 +469,8 @@ import socialLinks from "../data/social-links.json";
           };
           let smoothedAudio = { low: 0, mid: 0, high: 0, energy: 0 };
           let lastAudioRingAt = 0;
+          let backgroundEffectEnabled = true;
+          let animationId = 0;
 
           function getCssVar(name, fallback) {
             return (
@@ -478,6 +488,21 @@ import socialLinks from "../data/social-links.json";
             };
           }
 
+          function readBackgroundEffectPref() {
+            try {
+              const prefs = JSON.parse(
+                localStorage.getItem("pepodev.desktopPrefs") || "{}",
+              );
+              backgroundEffectEnabled = prefs.backgroundEffect !== false;
+            } catch {
+              backgroundEffectEnabled = true;
+            }
+            document.documentElement.setAttribute(
+              "data-background-effect",
+              backgroundEffectEnabled ? "on" : "off",
+            );
+          }
+
           function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -485,8 +510,22 @@ import socialLinks from "../data/social-links.json";
 
           resize();
           readDesktopPrefs();
+          readBackgroundEffectPref();
           window.addEventListener("resize", resize);
-          document.addEventListener("desktop:preferences", readDesktopPrefs);
+          document.addEventListener("desktop:preferences", (event) => {
+            readDesktopPrefs();
+            backgroundEffectEnabled =
+              event.detail?.backgroundEffect !== false;
+            document.documentElement.setAttribute(
+              "data-background-effect",
+              backgroundEffectEnabled ? "on" : "off",
+            );
+            if (backgroundEffectEnabled) {
+              startAnimation();
+            } else {
+              stopAnimation();
+            }
+          });
           document.addEventListener("desktop:music-audio-frame", (event) => {
             const detail = event.detail || {};
             musicAudio = {
@@ -810,10 +849,28 @@ import socialLinks from "../data/social-links.json";
             ctx.fillStyle = vignetteGrad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            requestAnimationFrame(draw);
+            animationId = requestAnimationFrame(draw);
           }
 
-          draw();
+          function startAnimation() {
+            if (animationId || !backgroundEffectEnabled) return;
+            draw();
+          }
+
+          function stopAnimation() {
+            if (animationId) {
+              cancelAnimationFrame(animationId);
+              animationId = 0;
+            }
+            ctx.fillStyle = desktopPrefs.bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+
+          if (backgroundEffectEnabled) {
+            startAnimation();
+          } else {
+            stopAnimation();
+          }
         }
 
         initParticleNetwork();

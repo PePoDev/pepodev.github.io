@@ -19,6 +19,16 @@
   min-height: 200px;
 }
 
+[data-window-glass="off"] .window {
+  background: var(--bg-secondary);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+[data-window-glass="off"] .window-titlebar {
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .window[hidden] {
   display: none;
 }
@@ -231,6 +241,11 @@
 [data-theme="light"] .window {
   backdrop-filter: blur(40px) saturate(1.2) brightness(1.05);
   -webkit-backdrop-filter: blur(40px) saturate(1.2) brightness(1.05);
+}
+
+[data-theme="light"][data-window-glass="off"] .window {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 [data-theme="light"] .window.focused {

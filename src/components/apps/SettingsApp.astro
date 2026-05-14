@@ -56,6 +56,16 @@ const defaultTrackId = tracks[0]?.id ?? "";
             value="72"
           />
         </label>
+
+        <label class="settings-field settings-checkbox">
+          <input data-setting="backgroundEffect" type="checkbox" />
+          <span>Background effect</span>
+        </label>
+
+        <label class="settings-field settings-checkbox">
+          <input data-setting="windowGlass" type="checkbox" />
+          <span>Window glass style</span>
+        </label>
       </div>
 
       <div
@@ -113,7 +123,22 @@ const defaultTrackId = tracks[0]?.id ?? "";
       accent: "green",
       radius: 12,
       glass: 72,
+      backgroundEffect: true,
+      windowGlass: true,
     };
+
+    function updateRangeFill(input) {
+      if (!input) return;
+      const min = Number(input.min || 0);
+      const max = Number(input.max || 100);
+      const value = Number(input.value || min);
+      const progress =
+        max > min ? ((value - min) / (max - min)) * 100 : 0;
+      input.style.setProperty(
+        "--range-progress",
+        Math.max(0, Math.min(100, progress)) + "%",
+      );
+    }
 
     const darkBackgroundsList = [
       { id: "network", label: "Primary" },
@@ -358,6 +383,11 @@ const defaultTrackId = tracks[0]?.id ?? "";
       root.style.setProperty("--desktop-bg-color", background.bg);
       root.style.setProperty("--particle-primary-rgb", background.primary);
       root.style.setProperty("--particle-secondary-rgb", background.secondary);
+      root.setAttribute(
+        "data-background-effect",
+        prefs.backgroundEffect ? "on" : "off",
+      );
+      root.setAttribute("data-window-glass", prefs.windowGlass ? "on" : "off");
       localStorage.setItem("pepodev.theme", prefs.theme);
       localStorage.setItem(prefsKey, JSON.stringify(prefs));
       document.dispatchEvent(
@@ -387,6 +417,14 @@ const defaultTrackId = tracks[0]?.id ?? "";
       app.querySelector('[data-setting="background"]').value = prefs.background;
       app.querySelector('[data-setting="radius"]').value = String(prefs.radius);
       app.querySelector('[data-setting="glass"]').value = String(prefs.glass);
+      app.querySelector('[data-setting="backgroundEffect"]').checked =
+        Boolean(prefs.backgroundEffect);
+      app.querySelector('[data-setting="windowGlass"]').checked = Boolean(
+        prefs.windowGlass,
+      );
+      app
+        .querySelectorAll('input[type="range"]')
+        .forEach((input) => updateRangeFill(input));
       app.querySelectorAll("[data-accent]").forEach((button) => {
         button.setAttribute(
           "aria-pressed",
@@ -404,7 +442,11 @@ const defaultTrackId = tracks[0]?.id ?? "";
         const prefs = loadPrefs();
         const oldTheme = prefs.theme;
         prefs[target.dataset.setting] =
-          target.type === "range" ? Number(target.value) : target.value;
+          target.type === "range"
+            ? Number(target.value)
+            : target.type === "checkbox"
+              ? target.checked
+              : target.value;
 
         // If theme changed, switch to appropriate default background
         if (target.dataset.setting === "theme" && oldTheme !== prefs.theme) {

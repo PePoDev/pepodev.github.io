@@ -185,6 +185,8 @@ const externalLinks = socialLinks.map((link) => ({
       input.blur();
     }
 
+    document.addEventListener("desktop:open-command-palette", openPalette);
+
     function filterItems(query) {
       const lowerQuery = query.toLowerCase();
       const allItems = results.querySelectorAll(".command-palette-item");
@@ -278,6 +280,8 @@ const externalLinks = socialLinks.map((link) => ({
           accent: "green",
           radius: 12,
           glass: 72,
+          backgroundEffect: true,
+          windowGlass: true,
         };
 
         let prefs = { ...defaults };
@@ -480,6 +484,11 @@ const externalLinks = socialLinks.map((link) => ({
           "--particle-secondary-rgb",
           background.secondary,
         );
+        root.setAttribute(
+          "data-background-effect",
+          prefs.backgroundEffect ? "on" : "off",
+        );
+        root.setAttribute("data-window-glass", prefs.windowGlass ? "on" : "off");
 
         localStorage.setItem("pepodev.theme", prefs.theme);
         localStorage.setItem(prefsKey, JSON.stringify(prefs));

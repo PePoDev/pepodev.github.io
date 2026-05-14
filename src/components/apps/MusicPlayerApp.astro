@@ -198,6 +198,19 @@ const defaultTrack = tracks[0];
       return `${minutes}:${remainder}`;
     }
 
+    function updateRangeFill(input) {
+      if (!input) return;
+      const min = Number(input.min || 0);
+      const max = Number(input.max || 100);
+      const value = Number(input.value || min);
+      const progress =
+        max > min ? ((value - min) / (max - min)) * 100 : 0;
+      input.style.setProperty(
+        "--range-progress",
+        Math.max(0, Math.min(100, progress)) + "%",
+      );
+    }
+
     function updatePlaybackTime() {
       if (!elapsedTime || !remainingTime) return;
       const currentTime = media?.currentTime || 0;
@@ -213,6 +226,7 @@ const defaultTrack = tracks[0];
         seek.value = canSeek
           ? String(Math.round((currentTime / duration) * Number(seek.max)))
           : "0";
+        updateRangeFill(seek);
       }
     }
 
