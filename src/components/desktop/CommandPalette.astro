@@ -7,7 +7,6 @@ const apps = [
   { id: "project", name: "Projects", description: "Browse project showcase" },
   { id: "work", name: "Work", description: "Career timeline" },
   { id: "me", name: "About Me", description: "Learn more about me" },
-  { id: "resume", name: "Resume", description: "Download PDF resume" },
   { id: "sregame", name: "SRE Game", description: "Play the chaos game" },
   { id: "snake", name: "Snake", description: "Play the classic grid game" },
   { id: "music", name: "Music", description: "Play ambient desktop music" },
@@ -489,7 +488,10 @@ const externalLinks = socialLinks.map((link) => ({
           "data-background-effect",
           prefs.backgroundEffect ? "on" : "off",
         );
-        root.setAttribute("data-window-glass", prefs.windowGlass ? "on" : "off");
+        root.setAttribute(
+          "data-window-glass",
+          prefs.windowGlass ? "on" : "off",
+        );
 
         localStorage.setItem("pepodev.theme", prefs.theme);
         localStorage.setItem(prefsKey, JSON.stringify(prefs));

@@ -6,7 +6,6 @@ import CertificationsWalletApp from "../components/apps/CertificationsWalletApp.
 import GalleryApp from "../components/apps/GalleryApp.astro";
 import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
-import ResumeApp from "../components/apps/ResumeApp.astro";
 import SettingsApp from "../components/apps/SettingsApp.astro";
 import SnakeApp from "../components/apps/SnakeApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
@@ -64,12 +63,6 @@ import socialLinks from "../data/social-links.json";
           appId="certs"
           label="Certs"
           data-default-col="4"
-          data-default-row="0"
-        />
-        <DesktopIcon
-          appId="resume"
-          label="Resume"
-          data-default-col="5"
           data-default-row="0"
         />
         <DesktopIcon
@@ -212,9 +205,6 @@ import socialLinks from "../data/social-links.json";
           height={520}
         >
           <CertificationsWalletApp />
-        </Window>
-        <Window appId="resume" title="Resume" width={520} height={360}>
-          <ResumeApp />
         </Window>
         <Window appId="gallery" title="Gallery" width={680} height={560}>
           <GalleryApp />
@@ -526,8 +516,7 @@ import socialLinks from "../data/social-links.json";
           window.addEventListener("resize", resize);
           document.addEventListener("desktop:preferences", (event) => {
             readDesktopPrefs();
-            backgroundEffectEnabled =
-              event.detail?.backgroundEffect !== false;
+            backgroundEffectEnabled = event.detail?.backgroundEffect !== false;
             document.documentElement.setAttribute(
               "data-background-effect",
               backgroundEffectEnabled ? "on" : "off",
@@ -941,8 +930,11 @@ import socialLinks from "../data/social-links.json";
           ? (now - Number(lastShown)) / (1000 * 60 * 60 * 24)
           : Infinity;
 
-        // Show hint if never shown or if it's been more than 7 days
-        if (!lastShown || daysSinceLastShown > 7) {
+        // Check if device is mobile
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+        // Show hint if never shown or if it's been more than 7 days (skip on mobile)
+        if (!isMobile && (!lastShown || daysSinceLastShown > 7)) {
           setTimeout(() => {
             const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
             const key = isMac ? "Cmd" : "Ctrl";

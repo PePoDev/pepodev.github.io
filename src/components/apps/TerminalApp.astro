@@ -6,7 +6,6 @@ const commands = [
   "projects",
   "uptime",
   "contact",
-  "open resume",
   "clear",
 ];
 ---
@@ -80,8 +79,6 @@ const commands = [
         print("desktop uptime: " + seconds + "s");
       } else if (command === "contact") {
         print("pepo@pepo.dev | github.com/pepodev | linkedin.com/in/pepodev");
-      } else if (command === "open resume") {
-        openApp("resume");
       } else {
         print("command not found: " + raw, "terminal-error");
       }
