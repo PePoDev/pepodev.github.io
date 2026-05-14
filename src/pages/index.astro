@@ -6,6 +6,7 @@ import CertificationsWalletApp from "../components/apps/CertificationsWalletApp.
 import GalleryApp from "../components/apps/GalleryApp.astro";
 import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
+import ResumeApp from "../components/apps/ResumeApp.astro";
 import SettingsApp from "../components/apps/SettingsApp.astro";
 import SnakeApp from "../components/apps/SnakeApp.astro";
 import SreGameApp from "../components/apps/SreGameApp.astro";
@@ -63,6 +64,12 @@ import socialLinks from "../data/social-links.json";
           appId="certs"
           label="Certs"
           data-default-col="4"
+          data-default-row="0"
+        />
+        <DesktopIcon
+          appId="resume"
+          label="Resume"
+          data-default-col="5"
           data-default-row="0"
         />
         <DesktopIcon
@@ -132,17 +139,19 @@ import socialLinks from "../data/social-links.json";
       </div>
 
       <!-- External Link Shortcuts -->
-      {
-        socialLinks.map((link, index) => (
-          <ExternalLinkIcon
-            id={`link-${link.icon}`}
-            iconName={link.icon}
-            label={link.label.split(" - ")[0]}
-            href={link.href}
-            data-shortcut-index={link.icon === "webring" ? 0 : index + 1}
-          />
-        ))
-      }
+      <div id="desktop-links" aria-label="External shortcuts">
+        {
+          socialLinks.map((link, index) => (
+            <ExternalLinkIcon
+              id={`link-${link.icon}`}
+              iconName={link.icon}
+              label={link.label.split(" - ")[0]}
+              href={link.href}
+              data-shortcut-index={link.icon === "webring" ? 0 : index + 1}
+            />
+          ))
+        }
+      </div>
 
       <div id="windows-container">
         <Window
@@ -203,6 +212,9 @@ import socialLinks from "../data/social-links.json";
           height={520}
         >
           <CertificationsWalletApp />
+        </Window>
+        <Window appId="resume" title="Resume" width={520} height={360}>
+          <ResumeApp />
         </Window>
         <Window appId="gallery" title="Gallery" width={680} height={560}>
           <GalleryApp />

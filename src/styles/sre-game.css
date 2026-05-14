@@ -516,3 +516,23 @@
   font-size: 12px;
   font-style: italic;
 }
+
+@media (max-width: 768px) {
+  .sre-game-container .sre-game-screen {
+    justify-content: flex-start;
+    padding: 14px;
+  }
+
+  .sre-game-hud {
+    gap: 10px;
+    justify-content: flex-start;
+  }
+
+  .sre-game-area {
+    max-height: none;
+  }
+
+  .sre-game-actions {
+    width: 100%;
+  }
+}

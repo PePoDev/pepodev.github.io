@@ -154,6 +154,73 @@
   }
 }
 
+@media (max-width: 768px) {
+  #start-menu {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: calc(var(--mobile-taskbar-height, 56px) + 8px);
+    left: max(10px, env(safe-area-inset-left));
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - var(--mobile-taskbar-height, 56px) - 24px);
+    border-radius: 14px;
+    transform: translateY(14px) scale(1);
+  }
+
+  #start-menu.visible {
+    transform: translateY(0) scale(1);
+  }
+
+  #start-menu-header {
+    padding: 16px 16px 12px;
+  }
+
+  #start-menu-search {
+    min-height: 42px;
+    font-size: 16px;
+  }
+
+  #start-menu-apps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .start-menu-app {
+    min-height: 64px;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .start-menu-app svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .start-menu-app-text {
+    min-width: 0;
+  }
+
+  .start-menu-app-text strong,
+  .start-menu-app-text small {
+    overflow-wrap: anywhere;
+  }
+
+  #start-menu-footer {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  #start-menu-apps {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Light Theme Overrides */
 [data-theme="light"] #start-menu {
   box-shadow:

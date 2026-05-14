@@ -105,7 +105,12 @@ const { appId, title, width, height } = Astro.props;
     window.__pepodevWindowManagerReady = true;
 
     const taskbarApps = document.getElementById("taskbar-apps");
+    const taskbar = document.getElementById("taskbar");
+    const mobileQuery = window.matchMedia("(max-width: 768px)");
+    let mobileMode = mobileQuery.matches;
     let topZ = 100;
+    let userOpenedWindow = false;
+    let userInteracted = false;
     const windows = new Map();
 
     document.querySelectorAll("[data-window]").forEach((element) => {
@@ -127,7 +132,18 @@ const { appId, title, width, height } = Astro.props;
     });
 
     document.addEventListener("desktop:open-app", (event) => {
+      userOpenedWindow = true;
       openWindow(event.detail.appId);
+    });
+
+    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
+      document.addEventListener(
+        eventName,
+        () => {
+          userInteracted = true;
+        },
+        { capture: true, once: true },
+      );
     });
 
     document.addEventListener("desktop:close-all-windows", () => {
@@ -149,6 +165,15 @@ const { appId, title, width, height } = Astro.props;
       closeWindow(activeWindow.appId);
     });
 
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", syncViewportMode);
+    } else {
+      mobileQuery.addListener(syncViewportMode);
+    }
+
+    window.addEventListener("resize", syncViewportMode);
+    syncViewportMode();
+
     function openWindow(appId) {
       const state = windows.get(appId);
       if (!state) return;
@@ -163,20 +188,6 @@ const { appId, title, width, height } = Astro.props;
         return;
       }
 
-      const availableWidth = Math.max(280, window.innerWidth - 24);
-      const availableHeight = Math.max(220, window.innerHeight - 72);
-      const targetWidth = Math.min(state.width, availableWidth);
-      const targetHeight = Math.min(state.height, availableHeight);
-      const x = Math.max(
-        12,
-        (window.innerWidth - targetWidth) / 2 + (Math.random() * 40 - 20),
-      );
-      const y = Math.max(
-        12,
-        (window.innerHeight - targetHeight - 48) / 2 +
-          (Math.random() * 30 - 15),
-      );
-
       state.open = true;
       state.minimized = false;
       state.maximized = false;
@@ -185,10 +196,11 @@ const { appId, title, width, height } = Astro.props;
       state.element.setAttribute("aria-hidden", "false");
       state.element.classList.remove("minimized", "maximized", "closing");
       state.element.classList.add("opening");
-      state.element.style.width = targetWidth + "px";
-      state.element.style.height = targetHeight + "px";
-      state.element.style.left = x + "px";
-      state.element.style.top = y + "px";
+      if (isMobileMode()) {
+        applyMobileWindowBounds(state);
+      } else {
+        applyDesktopInitialBounds(state);
+      }
       state.element.style.zIndex = ++topZ;
 
       window.setTimeout(() => state.element.classList.remove("opening"), 300);
@@ -230,6 +242,7 @@ const { appId, title, width, height } = Astro.props;
       let wasMaximized = false;
 
       titlebar?.addEventListener("mousedown", (event) => {
+        if (isMobileMode()) return;
         if (event.target.closest(".window-controls")) return;
 
         dragStartX = event.clientX;
@@ -242,6 +255,7 @@ const { appId, title, width, height } = Astro.props;
       });
 
       titlebar?.addEventListener("dblclick", (event) => {
+        if (isMobileMode()) return;
         if (event.target.closest(".window-controls")) return;
         toggleMaximize(state.appId);
       });
@@ -256,7 +270,8 @@ const { appId, title, width, height } = Astro.props;
       resizeHandles.forEach((handle) => {
         handle.addEventListener("mousedown", (event) => {
           event.stopPropagation();
-          if (state.maximized) return;
+          if (state.maximized || isMobileMode()) return;
+          event.preventDefault();
           isResizing = true;
           resizeDirection = handle.dataset.resizeDirection || "corner";
           resizeStartX = event.clientX;
@@ -268,6 +283,13 @@ const { appId, title, width, height } = Astro.props;
       });
 
       document.addEventListener("mousemove", (event) => {
+        if ((isDragging || isResizing) && event.buttons === 0) {
+          endInteraction();
+          return;
+        }
+
+        if (isMobileMode()) return;
+
         if (isDragging) {
           const deltaX = event.clientX - dragStartX;
           const deltaY = event.clientY - dragStartY;
@@ -307,14 +329,18 @@ const { appId, title, width, height } = Astro.props;
         }
       });
 
-      document.addEventListener("mouseup", () => {
+      function endInteraction() {
         if (isDragging || isResizing) {
           isDragging = false;
           isResizing = false;
           wasMaximized = false;
           document.body.style.userSelect = "";
         }
-      });
+      }
+
+      document.addEventListener("mouseup", endInteraction);
+      window.addEventListener("mouseup", endInteraction);
+      window.addEventListener("blur", endInteraction);
     }
 
     function focusWindow(appId) {
@@ -390,6 +416,7 @@ const { appId, title, width, height } = Astro.props;
       state.minimized = false;
       state.element.hidden = false;
       state.element.classList.remove("minimized");
+      if (isMobileMode()) applyMobileWindowBounds(state);
       focusWindow(appId);
       animateSkillBars(state.element);
       updateTaskbar();
@@ -398,6 +425,12 @@ const { appId, title, width, height } = Astro.props;
     function toggleMaximize(appId) {
       const state = windows.get(appId);
       if (!state || !state.open) return;
+
+      if (isMobileMode()) {
+        applyMobileWindowBounds(state);
+        focusWindow(appId);
+        return;
+      }
 
       if (!state.maximized) {
         state.prevBounds = getWindowBounds(state.element);
@@ -413,6 +446,82 @@ const { appId, title, width, height } = Astro.props;
       }
 
       focusWindow(appId);
+    }
+
+    function isMobileMode() {
+      return mobileMode;
+    }
+
+    function getTaskbarHeight() {
+      return Math.max(48, taskbar?.offsetHeight || 56);
+    }
+
+    function updateViewportAttributes() {
+      document.documentElement.dataset.viewportMode = mobileMode
+        ? "mobile"
+        : "desktop";
+      document.documentElement.style.setProperty(
+        "--mobile-taskbar-height",
+        getTaskbarHeight() + "px",
+      );
+    }
+
+    function getCenteredWindowBounds(state) {
+      const availableWidth = Math.max(280, window.innerWidth - 24);
+      const availableHeight = Math.max(220, window.innerHeight - 72);
+      const width = Math.min(state.width, availableWidth);
+      const height = Math.min(state.height, availableHeight);
+
+      return {
+        left: Math.max(
+          12,
+          (window.innerWidth - width) / 2 + (Math.random() * 40 - 20),
+        ),
+        top: Math.max(
+          12,
+          (window.innerHeight - height - 48) / 2 +
+            (Math.random() * 30 - 15),
+        ),
+        width,
+        height,
+      };
+    }
+
+    function applyDesktopInitialBounds(state) {
+      state.element.classList.remove("mobile-window", "maximized");
+      state.maximized = false;
+      state.prevBounds = null;
+      applyWindowBounds(state.element, getCenteredWindowBounds(state));
+    }
+
+    function applyMobileWindowBounds(state) {
+      state.prevBounds = null;
+      state.maximized = true;
+      state.element.classList.add("mobile-window", "maximized");
+      state.element.style.left = "0";
+      state.element.style.top = "0";
+      state.element.style.width = "100vw";
+      state.element.style.height =
+        "calc(100dvh - var(--mobile-taskbar-height, 56px))";
+    }
+
+    function syncViewportMode() {
+      const wasMobile = mobileMode;
+      mobileMode = mobileQuery.matches;
+      updateViewportAttributes();
+
+      windows.forEach((state) => {
+        state.element.classList.toggle("mobile-window", mobileMode);
+        if (!state.open || state.minimized) return;
+
+        if (mobileMode) {
+          applyMobileWindowBounds(state);
+        } else if (wasMobile) {
+          applyDesktopInitialBounds(state);
+        }
+      });
+
+      updateTaskbar();
     }
 
     function getWindowBounds(element) {
@@ -460,6 +569,8 @@ const { appId, title, width, height } = Astro.props;
         btn.addEventListener("click", () => {
           if (state.minimized) {
             restoreWindow(state.appId);
+          } else if (isMobileMode()) {
+            focusWindow(state.appId);
           } else if (state.element.classList.contains("focused")) {
             minimizeWindow(state.appId);
           } else {
@@ -485,9 +596,14 @@ const { appId, title, width, height } = Astro.props;
     if (!hasVisited) {
       // Delay slightly to ensure DOM is fully ready
       setTimeout(() => {
+        if (userInteracted || userOpenedWindow || getActiveWindow()) {
+          localStorage.setItem(firstVisitKey, "true");
+          return;
+        }
+
         openWindow("welcome");
         localStorage.setItem(firstVisitKey, "true");
-      }, 500);
+      }, 1500);
     }
   });
 </script>

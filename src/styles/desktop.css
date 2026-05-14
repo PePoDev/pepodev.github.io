@@ -34,6 +34,11 @@
   z-index: 5;
 }
 
+#desktop-links {
+  position: relative;
+  z-index: 4;
+}
+
 /* Social Connect Icon (top-right) */
 #desktop-social-icon {
   position: fixed;
@@ -66,6 +71,14 @@
   touch-action: none;
 }
 
+.desktop-icon[data-open-app] {
+  z-index: 6;
+}
+
+.desktop-link-icon {
+  z-index: 4;
+}
+
 @media (max-width: 560px) {
   #desktop-icons {
     grid-template-columns: repeat(2, 80px);
@@ -75,6 +88,83 @@
 @media (max-width: 360px) {
   #desktop-icons {
     grid-template-columns: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  #desktop {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: max(16px, env(safe-area-inset-top)) 14px
+      calc(var(--mobile-taskbar-height, 56px) + 24px);
+  }
+
+  #bg-canvas {
+    opacity: 0.72;
+  }
+
+  #desktop-icons,
+  #desktop-links {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(64px, 1fr));
+    grid-auto-rows: auto;
+    gap: 12px 8px;
+    align-items: start;
+    justify-items: center;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  #desktop-links {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .desktop-icon {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: 5 !important;
+    width: 100%;
+    max-width: 82px;
+    height: 82px;
+    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .desktop-icon svg,
+  .desktop-icon img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .desktop-icon span {
+    display: block;
+    width: 100%;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.75),
+      0 0 14px rgba(0, 0, 0, 0.5);
+  }
+
+  .desktop-icon:hover {
+    transform: none;
   }
 }
 

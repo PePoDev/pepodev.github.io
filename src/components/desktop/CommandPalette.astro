@@ -7,6 +7,7 @@ const apps = [
   { id: "project", name: "Projects", description: "Browse project showcase" },
   { id: "work", name: "Work", description: "Career timeline" },
   { id: "me", name: "About Me", description: "Learn more about me" },
+  { id: "resume", name: "Resume", description: "Download PDF resume" },
   { id: "sregame", name: "SRE Game", description: "Play the chaos game" },
   { id: "snake", name: "Snake", description: "Play the classic grid game" },
   { id: "music", name: "Music", description: "Play ambient desktop music" },
@@ -752,5 +753,47 @@ const externalLinks = socialLinks.map((link) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .command-palette {
+      align-items: flex-end;
+      padding: 12px max(10px, env(safe-area-inset-right))
+        calc(var(--mobile-taskbar-height, 56px) + 8px)
+        max(10px, env(safe-area-inset-left));
+    }
+
+    .command-palette-container {
+      width: 100%;
+      max-width: none;
+      max-height: calc(100dvh - var(--mobile-taskbar-height, 56px) - 24px);
+      border-radius: 14px;
+      transform: translateY(20px);
+    }
+
+    .command-palette-header {
+      padding: 14px 16px;
+    }
+
+    .command-palette-input {
+      min-height: 32px;
+      font-size: 16px;
+    }
+
+    .command-palette-hint {
+      display: none;
+    }
+
+    .command-palette-results {
+      max-height: calc(100dvh - var(--mobile-taskbar-height, 56px) - 92px);
+    }
+
+    .command-palette-item {
+      min-height: 48px;
+    }
+
+    .command-palette-item-desc {
+      white-space: normal;
+    }
   }
 </style>

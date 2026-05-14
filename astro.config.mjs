@@ -15,6 +15,9 @@ export default defineConfig({
     inlineStylesheets: "auto",
   },
   compressHTML: true,
+  devToolbar: {
+    enabled: false,
+  },
   image: {
     domains: [],
     remotePatterns: [],

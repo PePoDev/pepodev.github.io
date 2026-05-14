@@ -46,6 +46,9 @@ const {
 <script is:inline>
   // @ts-nocheck
   document.addEventListener("DOMContentLoaded", () => {
+    if (window.__pepodevExternalLinkIconsReady) return;
+    window.__pepodevExternalLinkIconsReady = true;
+
     const linkIcons = Array.from(
       document.querySelectorAll(".desktop-link-icon"),
     );
@@ -58,6 +61,20 @@ const {
     const gridOriginY = 20;
     const gridColumnStep = 88;
     const gridRowStep = 98;
+    const mobileQuery = window.matchMedia("(max-width: 768px)");
+
+    function isMobileShortcutMode() {
+      return mobileQuery.matches;
+    }
+
+    function clearIconPosition(icon) {
+      icon.style.position = "";
+      icon.style.left = "";
+      icon.style.top = "";
+      icon.style.right = "";
+      icon.style.bottom = "";
+      icon.style.zIndex = "";
+    }
 
     function loadIconPosition(iconId) {
       try {
@@ -182,10 +199,19 @@ const {
 
       const saved = loadIconPosition(iconId);
       const initial = saved || calculateDefaultPosition();
-      snapIconPosition(icon, initial.x, initial.y);
+      if (isMobileShortcutMode()) {
+        clearIconPosition(icon);
+      } else {
+        snapIconPosition(icon, initial.x, initial.y);
+      }
 
       // Reposition on window resize if no saved position
       window.addEventListener("resize", () => {
+        if (isMobileShortcutMode()) {
+          clearIconPosition(icon);
+          return;
+        }
+
         if (!loadIconPosition(iconId)) {
           const defaultPos = calculateDefaultPosition();
           snapIconPosition(icon, defaultPos.x, defaultPos.y);
@@ -201,6 +227,7 @@ const {
       let wasDragging = false; // Track if we just finished dragging
 
       icon.addEventListener("pointerdown", (event) => {
+        if (isMobileShortcutMode()) return;
         if (event.button !== 0) return;
 
         const rect = icon.getBoundingClientRect();
@@ -217,6 +244,7 @@ const {
       });
 
       icon.addEventListener("pointermove", (event) => {
+        if (isMobileShortcutMode()) return;
         if (!isPointerDown) return;
 
         const deltaX = event.clientX - pointerStartX;
@@ -229,6 +257,7 @@ const {
       });
 
       icon.addEventListener("pointerup", (event) => {
+        if (isMobileShortcutMode()) return;
         if (!isPointerDown) return;
 
         icon.releasePointerCapture?.(event.pointerId);
@@ -277,6 +306,37 @@ const {
         // Otherwise allow normal link navigation
       });
     });
+
+    function syncShortcutLayout() {
+      linkIcons.forEach((icon) => {
+        const iconId = icon.id;
+        if (!iconId) return;
+
+        if (isMobileShortcutMode()) {
+          clearIconPosition(icon);
+          return;
+        }
+
+        const saved = loadIconPosition(iconId);
+        if (saved) {
+          snapIconPosition(icon, saved.x, saved.y);
+          return;
+        }
+
+        const shortcutIndex = parseInt(icon.dataset.shortcutIndex || "0");
+        snapIconPosition(
+          icon,
+          window.innerWidth - 100,
+          20 + shortcutIndex * gridRowStep,
+        );
+      });
+    }
+
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", syncShortcutLayout);
+    } else {
+      mobileQuery.addListener(syncShortcutLayout);
+    }
   });
 </script>
 

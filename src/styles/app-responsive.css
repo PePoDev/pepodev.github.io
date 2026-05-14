@@ -36,6 +36,48 @@
   }
 }
 
+@media (max-width: 768px) {
+  .app-content {
+    padding: 16px;
+  }
+
+  .terminal-output {
+    padding: 14px;
+    font-size: 12px;
+  }
+
+  .terminal-input-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
+  .cert-wallet-header,
+  .trash-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .trash-item {
+    grid-template-columns: 42px 1fr;
+  }
+
+  .trash-item button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .work-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .snake-stage {
+    width: min(100%, 320px);
+  }
+}
+
 /* Selection color */
 ::selection {
   background: rgba(6, 182, 212, 0.3);
