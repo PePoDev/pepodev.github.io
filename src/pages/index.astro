@@ -139,7 +139,7 @@ import socialLinks from "../data/social-links.json";
             iconName={link.icon}
             label={link.label.split(" - ")[0]}
             href={link.href}
-            data-shortcut-index={index}
+            data-shortcut-index={link.icon === "webring" ? 0 : index + 1}
           />
         ))
       }
