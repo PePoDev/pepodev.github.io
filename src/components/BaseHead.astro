@@ -3,18 +3,40 @@
 // all pages through the use of the <BaseHead /> component.
 import "@styles/global.css";
 import type { ImageMetadata } from "astro";
-import { SITE_TITLE } from "@/consts";
+import {
+  SITE_OG_IMAGE,
+  SITE_OG_IMAGE_ALT,
+  SITE_TITLE,
+  SITE_URL,
+} from "@/consts";
 import { Font } from "astro:assets";
+
+type SocialImage = ImageMetadata | string;
 
 interface Props {
   title: string;
   description: string;
-  image?: ImageMetadata;
+  image?: SocialImage;
+  imageAlt?: string;
+  type?: "website" | "article";
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const siteURL = Astro.site ?? new URL(SITE_URL);
+const canonicalURL = new URL(Astro.url.pathname, siteURL);
 
-const { title, description, image } = Astro.props;
+const {
+  title,
+  description,
+  image = SITE_OG_IMAGE,
+  imageAlt = SITE_OG_IMAGE_ALT,
+  type = "website",
+} = Astro.props;
+const socialImageURL = new URL(
+  typeof image === "string" ? image : image.src,
+  siteURL,
+);
+const socialImageWidth = typeof image === "string" ? 1200 : image.width;
+const socialImageHeight = typeof image === "string" ? 630 : image.height;
 ---
 
 <!-- Global Metadata -->
@@ -27,7 +49,7 @@ const { title, description, image } = Astro.props;
   rel="alternate"
   type="application/rss+xml"
   title={SITE_TITLE}
-  href={new URL("rss.xml", Astro.site)}
+  href={new URL("rss.xml", siteURL)}
 />
 <meta name="generator" content={Astro.generator} />
 
@@ -47,22 +69,24 @@ const { title, description, image } = Astro.props;
 <meta name="description" content={description} />
 
 <!-- Open Graph / Facebook -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content={Astro.url} />
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE_TITLE} />
+<meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-{image && <meta property="og:image" content={new URL(image.src, Astro.url)} />}
+<meta property="og:image" content={socialImageURL.href} />
+<meta property="og:image:secure_url" content={socialImageURL.href} />
+<meta property="og:image:width" content={socialImageWidth} />
+<meta property="og:image:height" content={socialImageHeight} />
+<meta property="og:image:alt" content={imageAlt} />
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content={Astro.url} />
-<meta property="twitter:title" content={title} />
-<meta property="twitter:description" content={description} />
-{
-  image && (
-    <meta property="twitter:image" content={new URL(image.src, Astro.url)} />
-  )
-}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalURL} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImageURL.href} />
+<meta name="twitter:image:alt" content={imageAlt} />
 
 <!-- Structured Data -->
 <script
@@ -72,7 +96,8 @@ const { title, description, image } = Astro.props;
     "@type": "Person",
     name: "Thiwanon Chomcharoen (PePo)",
     jobTitle: "Site Reliability Engineer",
-    url: Astro.site,
+    url: siteURL.href,
+    image: socialImageURL.href,
     sameAs: [
       "https://github.com/pepodev",
       "https://linkedin.com/in/pepodev",
