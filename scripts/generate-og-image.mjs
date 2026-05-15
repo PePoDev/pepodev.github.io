@@ -61,9 +61,9 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
     <path d="M1020 0V630"/>
   </g>
 
-  <text x="600" y="352" text-anchor="middle" fill="#64d2ff" opacity="0.2" filter="url(#wordGlow)" font-family="Inter, Atkinson, Arial, sans-serif" font-size="164" font-weight="800" letter-spacing="-8">PePoDev</text>
-  <text x="600" y="352" text-anchor="middle" fill="url(#wordGradient)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" paint-order="stroke fill" filter="url(#wordShadow)" font-family="Inter, Atkinson, Arial, sans-serif" font-size="164" font-weight="800" letter-spacing="-8">PePoDev</text>
-  <text x="600" y="352" text-anchor="middle" fill="url(#wordHighlight)" opacity="0.34" font-family="Inter, Atkinson, Arial, sans-serif" font-size="164" font-weight="800" letter-spacing="-8">PePoDev</text>
+  <text x="600" y="358" text-anchor="middle" fill="#64d2ff" opacity="0.2" filter="url(#wordGlow)" font-family="Georgia, 'DejaVu Serif', serif" font-size="154" font-weight="700" letter-spacing="-4">PePoDev</text>
+  <text x="600" y="358" text-anchor="middle" fill="url(#wordGradient)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" paint-order="stroke fill" filter="url(#wordShadow)" font-family="Georgia, 'DejaVu Serif', serif" font-size="154" font-weight="700" letter-spacing="-4">PePoDev</text>
+  <text x="600" y="358" text-anchor="middle" fill="url(#wordHighlight)" opacity="0.26" font-family="Georgia, 'DejaVu Serif', serif" font-size="154" font-weight="700" letter-spacing="-4">PePoDev</text>
 </svg>`;
 
 await mkdir(dirname(outputPath), { recursive: true });
