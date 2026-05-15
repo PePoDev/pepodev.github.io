@@ -23,8 +23,8 @@ pnpm preview
 pnpm astro --help
 ```
 
-Use `pnpm build` as the default verification step after code changes. Use
-`pnpm test:e2e` for desktop/window/app interaction changes.
+Use `pnpm build` as the default verification step after code changes.
+Use `pnpm test:e2e` for desktop/window/app interaction changes.
 
 ## Current Structure
 
