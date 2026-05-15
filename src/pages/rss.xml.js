@@ -21,6 +21,10 @@ function getPostDate(post) {
   return post.data.pubDate ?? post.data.updatedDate;
 }
 
+function getPostLink(post) {
+  return `/?blog=${encodeURIComponent(post.id)}`;
+}
+
 export async function GET(context) {
   const posts = (await getCollection("blog"))
     .filter((post) => post.data.publish !== false)
@@ -34,12 +38,13 @@ export async function GET(context) {
     title: `${SITE_TITLE} Blog`,
     description: SITE_DESCRIPTION,
     site: context.site ?? SITE_URL,
+    trailingSlash: false,
     items: posts.map((post) => ({
       title: getPostTitle(post),
       description: getPostDescription(post),
       pubDate: getPostDate(post),
       categories: post.data.tags,
-      link: `/blog/${post.id}/`,
+      link: getPostLink(post),
     })),
   });
 }
