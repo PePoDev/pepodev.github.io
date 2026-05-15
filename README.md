@@ -10,12 +10,13 @@ player, and an SRE chaos game.
 - Interactive desktop shell with draggable, resizable, minimizable windows.
 - Desktop icons, external shortcuts, start menu, taskbar, tray controls, and
   `Ctrl`/`Cmd` + `K` command palette.
-- Server-rendered portfolio apps for About, Blog, Work, Projects,
+- Server-rendered desktop apps for Welcome, Blog, Work, Projects, About,
   Certifications, Gallery, Terminal, Calculator, Settings, Trash, White Noise,
-  Music, and the SRE game.
+  Music, Snake, and the SRE game.
 - Standalone resume download page at `/resume` with client-side PDF generation.
 - Local music library loaded at build time from `public/music`.
-- Markdown/MDX blog content with local images in `src/assets/blog/`, RSS and sitemap output.
+- Markdown/MDX blog content with local images in `src/assets/blog/`,
+  standalone `/blog` routes, RSS, and sitemap output.
 - GitHub Pages deployment through Astro's GitHub Action.
 
 ## Requirements
@@ -54,22 +55,24 @@ music player, game, calculator, gallery, or other interaction changes.
 │   │   ├── blog/              # Blog post images (prefixed with blog post names)
 │   │   └── fonts/             # Local fonts
 │   ├── components/
-│   │   ├── apps/              # Server-rendered desktop app bodies
-│   │   └── desktop/           # Window manager, icons, taskbar, start menu
+│   │   ├── apps/              # Server-rendered desktop app bodies and helpers
+│   │   └── desktop/           # Window manager, icons, command palette, menus
 │   ├── content/
 │   │   └── blog/              # Markdown/MDX blog posts (supports Obsidian format)
 │   ├── data/                  # Portfolio data JSON (projects, skills, certifications, etc.)
 │   ├── layouts/
 │   ├── pages/
+│   │   ├── blog/              # Standalone blog index and static post pages
 │   │   ├── index.astro        # Main desktop entry point
-│   │   └── resume.astro       # Standalone resume download page
+│   │   ├── resume.astro       # Standalone resume download page
+│   │   └── rss.xml.js         # RSS feed
 │   ├── styles/                # Split CSS modules imported by global.css
 │   ├── types/                 # TypeScript type definitions for data structures
 │   └── utils/                 # Utility functions (certifications sorting, etc.)
+├── scripts/
+│   └── generate-og-image.mjs  # Regenerates public/og-image.png
 ├── tests/e2e/                 # Playwright desktop coverage
-├── sre-game/                  # Standalone static copy of the SRE game
 ├── .deployment-config.md      # Security headers and deployment guide
-├── .script-optimization.md    # Script directive best practices
 ├── .env.example               # Environment variables template
 └── dist/                      # Generated production build output
 ```
@@ -87,6 +90,8 @@ Do not edit generated files in `dist/`.
   post name (e.g., `aws-graviton-01.png`, `obsidian-multi-devices-cover.png`).
 - Add local music files to `public/music/`; supported files are discovered by
   `src/data/music.ts` during the Astro build.
+- Run `node scripts/generate-og-image.mjs` when regenerating the default
+  Open Graph image at `public/og-image.png`.
 - When adding a new desktop app, register it in `src/pages/index.astro`,
   `src/components/desktop/StartMenu.astro`,
   `src/components/desktop/CommandPalette.astro`, and
@@ -100,8 +105,11 @@ The project supports environment variable overrides. Copy `.env.example` to `.en
 to customize:
 
 - `PUBLIC_SITE_URL` - Site URL (default: `https://pepo.dev`)
+- `PUBLIC_SITE_LOCALE` - Open Graph locale (default: `en_US`)
 - `PUBLIC_SITE_TITLE` - Site title
 - `PUBLIC_SITE_DESCRIPTION` - Meta description
+- `PUBLIC_SITE_OG_IMAGE` - Default social preview image path
+- `PUBLIC_SITE_OG_IMAGE_ALT` - Default social preview image alt text
 
 ### Path Aliases
 

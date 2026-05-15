@@ -29,14 +29,19 @@ Use `pnpm build` as the default verification step after code changes. Use
 ## Current Structure
 
 - `src/components/desktop/` contains desktop shell primitives:
-  `DesktopIcon.astro`, `Taskbar.astro`, `StartMenu.astro`, `Window.astro`, and `AppIcon.astro`.
-- `src/components/apps/` contains the pre-rendered desktop app bodies:
+  `DesktopIcon.astro`, `ExternalLinkIcon.astro`, `Taskbar.astro`,
+  `StartMenu.astro`, `CommandPalette.astro`, `Window.astro`, and
+  `AppIcon.astro`.
+- `src/components/apps/` contains the pre-rendered desktop app bodies and small
+  app-local helpers:
   welcome, blog, work, projects, about, SRE game, snake, calculator, white noise,
   music, settings, terminal, certifications wallet, gallery, and trash.
   Note: `ResumeApp.astro` is no longer used as a desktop app.
 - `src/pages/resume.astro` is a standalone page (not a desktop app) that
   auto-generates and downloads a PDF resume when visited at `/resume`.
   Resume functionality is available via this standalone page and external links.
+- `src/pages/blog/` contains standalone blog index and static blog post routes.
+- `src/pages/rss.xml.js` generates the RSS feed from the Astro blog collection.
 - `src/content/blog/` contains Markdown/MDX blog posts managed by Astro content
   collections. Supports both standard Astro and Obsidian frontmatter formats
   (all fields optional).
@@ -56,14 +61,13 @@ Use `pnpm build` as the default verification step after code changes. Use
 - `public/music/` contains local media files used by the music player. Browser
   playback can differ between VS Code previews and real browsers; verify audio
   behavior in a browser when changing the player.
+- `scripts/generate-og-image.mjs` regenerates the default social preview image at
+  `public/og-image.png`.
 - `tests/e2e/desktop.spec.ts` contains Playwright coverage for the desktop shell,
   app launchers, windows, and major app interactions.
-- `sre-game/` is a standalone static copy of the SRE game and is separate from the Astro desktop app.
 - `.deployment-config.md` contains security headers configuration for various
   hosting platforms (GitHub Pages, Cloudflare, Netlify, Vercel) and caching
   strategies.
-- `.script-optimization.md` documents script directive best practices, when to use
-  regular `<script>` vs `is:inline` vs `is:raw`, and current component audit.
 
 ## Implementation Rules
 
@@ -83,11 +87,12 @@ Use `pnpm build` as the default verification step after code changes. Use
   `src/pages/index.astro` imports/window/icon, `StartMenu.astro`,
   `CommandPalette.astro`, and `AppIcon.astro`.
 - App windows are managed by `Window.astro`. Keep app bodies server-rendered and
-  use regular `<script>` tags (bundled by Vite) for behavior. Only use `is:inline`
-  when accessing `define:vars` or preventing critical render path issues. See
-  `.script-optimization.md` for best practices.
-- Desktop icon positions are persisted in `localStorage` and snap to the desktop
-  grid. If editing drag/drop behavior, preserve swap-on-occupied-cell behavior.
+  use regular `<script>` tags when the script can stay scoped and bundled by
+  Astro/Vite. Use `is:inline` for scripts that coordinate global desktop state,
+  depend on `define:vars`, or need immediate execution.
+- Desktop icon and external shortcut positions are persisted in `localStorage`
+  and snap to the desktop grid. If editing drag/drop behavior, preserve
+  swap-on-occupied-cell behavior across app icons and external shortcut icons.
 - `Escape` closes the focused window. Overlays such as the command palette, start
   menu, and tray panel should continue to handle their own Escape behavior first.
 - The settings app persists desktop preferences under `pepodev.desktopPrefs` and

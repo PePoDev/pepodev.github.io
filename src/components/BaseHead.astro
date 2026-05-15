@@ -4,6 +4,7 @@
 import "@styles/global.css";
 import type { ImageMetadata } from "astro";
 import {
+  SITE_LOCALE,
   SITE_OG_IMAGE,
   SITE_OG_IMAGE_ALT,
   SITE_TITLE,
@@ -72,6 +73,7 @@ const socialImageHeight = typeof image === "string" ? 630 : image.height;
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={type} />
 <meta property="og:site_name" content={SITE_TITLE} />
+<meta property="og:locale" content={SITE_LOCALE} />
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
