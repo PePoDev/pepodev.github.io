@@ -79,7 +79,7 @@ Use `pnpm build` as the default verification step after code changes. Use
   - Extract reusable logic to utility functions in `src/utils/`.
 - Add blog articles to `src/content/blog/` and keep frontmatter compatible with `src/content.config.ts`.
 - Use TypeScript path aliases (`@components/*`, `@data/*`, `@utils/*`, `@app-types/*`, etc.) for imports.
-- Define environment-specific values in `.env` files (never commit secrets).
+- Define site metadata in `src/consts.ts` instead of `.env` files.
 - Reuse existing desktop classes and CSS variables before adding new styling patterns.
 - Avoid broad refactors in shared components unless the requested change requires them.
 - Do not reintroduce a hardcoded app content module under `src/content/apps.ts`.

@@ -73,7 +73,6 @@ music player, game, calculator, gallery, or other interaction changes.
 │   └── generate-og-image.mjs  # Regenerates public/og-image.png
 ├── tests/e2e/                 # Playwright desktop coverage
 ├── .deployment-config.md      # Security headers and deployment guide
-├── .env.example               # Environment variables template
 └── dist/                      # Generated production build output
 ```
 
@@ -99,17 +98,9 @@ Do not edit generated files in `dist/`.
 
 ## Configuration
 
-### Environment Variables
+### Site Constants
 
-The project supports environment variable overrides. Copy `.env.example` to `.env`
-to customize:
-
-- `PUBLIC_SITE_URL` - Site URL (default: `https://pepo.dev`)
-- `PUBLIC_SITE_LOCALE` - Open Graph locale (default: `en_US`)
-- `PUBLIC_SITE_TITLE` - Site title
-- `PUBLIC_SITE_DESCRIPTION` - Meta description
-- `PUBLIC_SITE_OG_IMAGE` - Default social preview image path
-- `PUBLIC_SITE_OG_IMAGE_ALT` - Default social preview image alt text
+Site metadata is configured in `src/consts.ts`.
 
 ### Path Aliases
 
