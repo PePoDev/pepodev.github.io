@@ -1,6 +1,6 @@
 # Agents Guide
 
-This repository is an Astro site for an interactive SRE desktop portfolio. Treat it as a static site first: content should be rendered at build time where possible, with small client scripts only for desktop/window interactions.
+This repository is an Astro site for an interactive desktop. Treat it as a static site first: content should be rendered at build time where possible, with small client scripts only for desktop/window interactions.
 
 ## Project Basics
 
@@ -118,7 +118,7 @@ Use `pnpm build` as the default verification step after code changes. Use
 
 ## Styling Notes
 
-- The desktop UI uses a dark glassmorphism style with terminal/SRE accents.
+- The desktop UI uses a dark glassmorphism style with terminal accents.
 - Window and app layouts depend on stable class names in `global.css`; check existing selectors before renaming markup.
 - Use scoped component scripts where practical, but shared desktop styling currently lives in `global.css`.
 - Keep interactive controls keyboard-accessible when adding new launchers or buttons.
