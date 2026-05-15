@@ -924,7 +924,7 @@ import socialLinks from "../data/social-links.json";
 
         // Listen for custom toast events
         document.addEventListener("desktop:show-toast", (event) => {
-          const { message, duration } = (event as CustomEvent).detail;
+          const { message, duration } = event.detail || {};
           showToast(message, duration);
         });
 
@@ -954,57 +954,78 @@ import socialLinks from "../data/social-links.json";
 
         // URL Deep Linking - Handle blog post URLs
         const urlParams = new URLSearchParams(window.location.search);
-        const blogSlug = urlParams.get("blog");
+        const blogSlug = (urlParams.get("blog") || "").trim();
 
         if (blogSlug) {
+          const openBlogDeepLink = () => {
+            const blogWindow = document.querySelector('[data-app-id="blog"]');
+            if (!blogWindow) {
+              console.warn("Blog window not found for deep link");
+              return;
+            }
+
+            let warnedMissingPost = false;
+            let warnedMissingHandler = false;
+
+            const maximizeBlogWindow = () => {
+              if (blogWindow.classList.contains("maximized")) return;
+
+              const maximizeBtn = blogWindow.querySelector(".max-btn");
+              if (maximizeBtn) {
+                maximizeBtn.click();
+              }
+            };
+
+            const openArticle = () => {
+              if (typeof window.__pepodevBlogOpenSlug !== "function") {
+                return false;
+              }
+
+              const opened = window.__pepodevBlogOpenSlug(blogSlug);
+              if (!opened && !warnedMissingPost) {
+                console.warn(`Blog post with slug "${blogSlug}" not found`);
+                warnedMissingPost = true;
+              }
+
+              return opened;
+            };
+
+            document.dispatchEvent(
+              new CustomEvent("desktop:open-app", {
+                detail: { appId: "blog" },
+              }),
+            );
+
+            const startedAt = Date.now();
+            const retryOpenArticle = () => {
+              if (blogWindow.getAttribute("aria-hidden") === "false") {
+                maximizeBlogWindow();
+              }
+
+              if (openArticle()) return;
+
+              if (Date.now() - startedAt < 5000) {
+                setTimeout(retryOpenArticle, 100);
+                return;
+              }
+
+              if (
+                typeof window.__pepodevBlogOpenSlug !== "function" &&
+                !warnedMissingHandler
+              ) {
+                console.error("Blog open function not available");
+                warnedMissingHandler = true;
+              }
+            };
+
+            retryOpenArticle();
+          };
+
           // Wait for window manager to be ready
           const checkWindowManager = setInterval(() => {
             if (window.__pepodevWindowManagerReady) {
               clearInterval(checkWindowManager);
-
-              const blogWindow = document.querySelector('[data-app-id="blog"]');
-
-              // Listen for the window open event
-              const handleWindowOpen = (event) => {
-                if (event.detail.appId === "blog") {
-                  blogWindow.removeEventListener(
-                    "desktop:window-open",
-                    handleWindowOpen,
-                  );
-
-                  // Maximize the window
-                  const maximizeBtn = blogWindow.querySelector(".max-btn");
-                  if (maximizeBtn) {
-                    setTimeout(() => maximizeBtn.click(), 50);
-                  }
-
-                  // Open the specific article by slug after window is fully open
-                  setTimeout(() => {
-                    if (window.__pepodevBlogOpenSlug) {
-                      const opened = window.__pepodevBlogOpenSlug(blogSlug);
-                      if (!opened) {
-                        console.warn(
-                          `Blog post with slug "${blogSlug}" not found`,
-                        );
-                      }
-                    } else {
-                      console.error("Blog open function not available");
-                    }
-                  }, 300);
-                }
-              };
-
-              blogWindow?.addEventListener(
-                "desktop:window-open",
-                handleWindowOpen,
-              );
-
-              // Open the blog window
-              document.dispatchEvent(
-                new CustomEvent("desktop:open-app", {
-                  detail: { appId: "blog" },
-                }),
-              );
+              openBlogDeepLink();
             }
           }, 50);
 

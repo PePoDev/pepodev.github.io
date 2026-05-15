@@ -175,22 +175,15 @@ const formatTitle = (id: string) => {
       }
 
       function openArticleBySlug(slug: string) {
-        console.log("Opening article with slug:", slug);
-        const panel = app.querySelector(
-          `[data-blog-post][data-blog-slug="${slug}"]`,
-        ) as HTMLElement;
-        console.log("Found panel:", panel);
+        const panel = Array.from(panels).find(
+          (p) => (p as HTMLElement).dataset.blogSlug === slug,
+        ) as HTMLElement | undefined;
         if (!panel) {
-          console.log(
-            "Available slugs:",
-            Array.from(panels).map((p) => (p as HTMLElement).dataset.blogSlug),
-          );
           return false;
         }
 
         const index = panel.dataset.blogPost;
-        console.log("Panel index:", index);
-        if (!index) return false;
+        if (typeof index === "undefined") return false;
 
         if (listView) listView.style.display = "none";
         if (reader) reader.classList.add("active");
@@ -228,7 +221,9 @@ const formatTitle = (id: string) => {
           const slug = (button as HTMLElement).dataset.blogSlugShare;
           if (!slug) return;
 
-          const url = `${window.location.origin}${window.location.pathname}?blog=${slug}`;
+          const url = `${window.location.origin}${window.location.pathname}?blog=${encodeURIComponent(
+            slug,
+          )}`;
 
           navigator.clipboard
             .writeText(url)

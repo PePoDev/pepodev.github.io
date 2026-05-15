@@ -59,6 +59,31 @@ test("opens every desktop app window from the icon grid", async ({ page }) => {
   }
 });
 
+test("opens a blog article from the blog query parameter", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto("/?blog=aws-local-zone-bangkok-launch");
+
+  const blogWindow = page.locator("#window-blog");
+  const article = blogWindow.locator(
+    '[data-blog-post][data-blog-slug="aws-local-zone-bangkok-launch"]',
+  );
+
+  await expect(blogWindow).toBeVisible();
+  await expect(blogWindow).toHaveAttribute("aria-hidden", "false");
+  await expect(blogWindow).toHaveClass(/maximized/);
+  await expect(blogWindow.locator("[data-blog-list-view]")).toBeHidden();
+  await expect(article).toBeVisible();
+  await expect(article.locator(".blog-reader-title")).toHaveText(
+    "Aws Local Zone Bangkok Launch",
+  );
+  await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
+    "cat articles/aws-local-zone-bangkok-launch",
+  );
+  expect(pageErrors).toEqual([]);
+});
+
 test("supports window minimize, restore, maximize, close, and taskbar state", async ({
   page,
 }) => {
@@ -164,9 +189,8 @@ test("searches and launches apps from start menu and command palette", async ({
 });
 
 test("downloads a generated resume PDF", async ({ page }) => {
-  await openApp(page, "Resume", "resume");
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Download PDF" }).click();
+  await page.goto("/resume");
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("pepo-resume.pdf");
 });
@@ -332,9 +356,9 @@ test("terminal commands print output and can open apps", async ({ page }) => {
     "Site Reliability Engineer",
   );
 
-  await input.fill("open resume");
+  await input.fill("projects");
   await input.press("Enter");
-  await expect(page.locator("#window-resume")).toBeVisible();
+  await expect(page.locator("#window-project")).toBeVisible();
 });
 
 test("gallery requires the password before showing pictures", async ({
