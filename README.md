@@ -115,6 +115,7 @@ The project uses TypeScript path aliases for cleaner imports:
 - `@styles/*` → `src/styles/*`
 
 Example:
+
 ```typescript
 import { Project } from '@app-types/data';
 import projects from '@data/projects.json';

@@ -13,7 +13,7 @@ const apps = [
   { label: "Calculator", appId: "calculator", title: "Calculator" },
   { label: "Settings", appId: "settings", title: "Settings" },
   { label: "Terminal", appId: "terminal", title: "Terminal" },
-  { label: "Certs", appId: "certs", title: "Certifications Wallet" },
+  { label: "Certs", appId: "certs", title: "Certifications" },
   { label: "Gallery", appId: "gallery", title: "Gallery" },
   { label: "Trash", appId: "trash", title: "Trash Bin" },
 ];
@@ -82,6 +82,63 @@ test("opens a blog article from the blog query parameter", async ({ page }) => {
     "cat articles/aws-local-zone-bangkok-launch",
   );
   expect(pageErrors).toEqual([]);
+});
+
+test("blog reader supports article navigation, sharing, and close reset", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (window as typeof window & { __copiedText?: string }).__copiedText =
+            text;
+        },
+      },
+    });
+  });
+
+  const blogWindow = await openApp(page, "Blog", "blog");
+  const firstArticleButton = blogWindow.locator("[data-blog-index]").first();
+  const slug = await firstArticleButton.getAttribute("data-blog-slug");
+  expect(slug).toBeTruthy();
+
+  await firstArticleButton.click();
+  await expect(blogWindow.locator("[data-blog-list-view]")).toBeHidden();
+  await expect(
+    blogWindow.locator(`[data-blog-post][data-blog-slug="${slug}"]`),
+  ).toBeVisible();
+  await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
+    `cat articles/${slug}`,
+  );
+
+  await blogWindow.locator("[data-blog-share]").first().click();
+  await expect(page.locator("#toast-container")).toContainText(
+    "Link copied to clipboard!",
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as typeof window & { __copiedText?: string }).__copiedText,
+      ),
+    )
+    .toContain(`/?blog=${encodeURIComponent(slug!)}`);
+
+  await blogWindow.getByRole("button", { name: "Back to articles" }).click();
+  await expect(blogWindow.locator("[data-blog-list-view]")).toBeVisible();
+  await expect(blogWindow.locator("[data-blog-reader].active")).toHaveCount(0);
+  await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
+    "ls articles/",
+  );
+
+  await firstArticleButton.click();
+  await blogWindow.getByRole("button", { name: "Close Blog - Articles" }).click();
+  await openApp(page, "Blog", "blog");
+  await expect(blogWindow.locator("[data-blog-list-view]")).toBeVisible();
+  await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
+    "ls articles/",
+  );
 });
 
 test("supports window minimize, restore, maximize, close, and taskbar state", async ({
@@ -171,7 +228,7 @@ test("searches and launches apps from start menu and command palette", async ({
   const certsWindow = page.locator("#window-certs");
   await expect(certsWindow).toBeVisible();
   await certsWindow
-    .getByRole("button", { name: "Close Certifications Wallet" })
+    .getByRole("button", { name: "Close Certifications" })
     .click();
   await expect(certsWindow).toBeHidden();
 
@@ -186,6 +243,47 @@ test("searches and launches apps from start menu and command palette", async ({
     .getByRole("button", { name: /Gallery Open protected pictures/ })
     .click();
   await expect(page.locator("#window-gallery")).toBeVisible();
+});
+
+test("command palette keyboard navigation runs desktop commands", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    localStorage.setItem("pepodev.someTransientState", "remove-me");
+  });
+
+  await openApp(page, "Projects", "project");
+  await openApp(page, "Work", "work");
+
+  await page.keyboard.press("ControlOrMeta+K");
+  await page.locator("#command-palette-input").fill("close all");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#command-palette")).toHaveAttribute(
+    "data-visible",
+    "false",
+  );
+  await expect(page.locator("#window-project")).toBeHidden();
+  await expect(page.locator("#window-work")).toBeHidden();
+
+  await page.keyboard.press("ControlOrMeta+K");
+  await page.locator("#command-palette-input").fill("toggle theme");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator("html")).toHaveCSS(
+    "--desktop-bg-color",
+    "#f0f4f8",
+  );
+
+  await page.keyboard.press("ControlOrMeta+K");
+  await page.locator("#command-palette-input").fill("reset desktop");
+  await page.keyboard.press("Enter");
+  await page.waitForLoadState("domcontentloaded");
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("pepodev.someTransientState")),
+    )
+    .toBeNull();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
 test("downloads a generated resume PDF", async ({ page }) => {
@@ -250,6 +348,42 @@ test("settings customizes and persists desktop preferences", async ({
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(page.locator("html")).toHaveCSS("--window-radius", "18px");
+});
+
+test("taskbar tray calendar and system audio controls update persisted state", async ({
+  page,
+}) => {
+  await page.locator("#taskbar-clock-button").click();
+  const tray = page.locator("#tray-panel");
+  await expect(tray).toHaveAttribute("aria-hidden", "false");
+  await expect(page.locator("#calendar-grid .calendar-day")).not.toHaveCount(0);
+
+  const initialMonth = await page.locator("#calendar-title").textContent();
+  await page.getByRole("button", { name: "Next month" }).click();
+  await expect(page.locator("#calendar-title")).not.toHaveText(
+    initialMonth ?? "",
+  );
+  await page.getByRole("button", { name: "Previous month" }).click();
+  await expect(page.locator("#calendar-title")).toHaveText(initialMonth ?? "");
+
+  await page.locator("#audio-volume").fill("35");
+  await expect(page.locator("#audio-volume-value")).toHaveText("35%");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        JSON.parse(localStorage.getItem("pepodev.systemAudio") || "{}"),
+      ),
+    )
+    .toMatchObject({ volume: 0.35, muted: false });
+
+  await page.getByRole("button", { name: "Mute" }).click();
+  await expect(page.locator("#audio-volume-value")).toHaveText("Muted");
+  await expect(page.locator("#taskbar-audio-status")).toHaveAttribute(
+    "aria-label",
+    "System audio muted",
+  );
+  await page.keyboard.press("Escape");
+  await expect(tray).toHaveAttribute("aria-hidden", "true");
 });
 
 test("music player and settings music controls update state", async ({
@@ -359,6 +493,16 @@ test("terminal commands print output and can open apps", async ({ page }) => {
   await input.fill("projects");
   await input.press("Enter");
   await expect(page.locator("#window-project")).toBeVisible();
+
+  await input.fill("unknown-command");
+  await input.press("Enter");
+  await expect(terminal.locator("[data-terminal-output]")).toContainText(
+    "command not found: unknown-command",
+  );
+
+  await input.fill("clear");
+  await input.press("Enter");
+  await expect(terminal.locator("[data-terminal-output] > div")).toHaveCount(0);
 });
 
 test("gallery requires the password before showing pictures", async ({
@@ -381,6 +525,67 @@ test("gallery requires the password before showing pictures", async ({
   await expect(gallery.locator("[data-gallery-lock]")).toBeHidden();
   await expect(gallery.locator("[data-gallery-unlocked]")).toBeVisible();
   await expect(gallery.locator(".gallery-card")).toHaveCount(4);
+});
+
+test("certifications wallet renders sorted dynamic status badges", async ({
+  page,
+}) => {
+  const certs = await openApp(page, "Certs", "certs");
+  const cards = certs.locator(".cert-card");
+  await expect(cards).toHaveCount(7);
+  await expect(certs.locator(".cert-wallet-header")).toHaveText(
+    "7 verified records",
+  );
+  await expect
+    .poll(() => certs.locator(".cert-status").allTextContents())
+    .not.toContain("Loading...");
+
+  const statuses = await certs.locator(".cert-status").allTextContents();
+  expect(statuses).toEqual([
+    "Active",
+    "Active",
+    "Expiring Soon",
+    "Expired",
+    "Expired",
+    "Expired",
+    "Expired",
+  ]);
+
+  await expect(cards.first()).toHaveAttribute("target", "_blank");
+  await expect(cards.first()).toHaveAttribute("rel", /noopener/);
+});
+
+test("white noise starts, responds to system mute events, and stops", async ({
+  page,
+}) => {
+  const noise = await openApp(page, "Noise", "whitenoise");
+  const noiseApp = noise.locator("[data-white-noise-app]");
+  await expect(noise.locator("[data-noise-status]")).toHaveText("Ready");
+
+  await noise.getByRole("button", { name: "Start rain" }).click();
+  await expect(noiseApp).toHaveClass(/noise-playing/);
+  await expect(noise.locator("[data-noise-status]")).toHaveText(
+    "Rain loop active",
+  );
+
+  await page.evaluate(() => {
+    localStorage.setItem(
+      "pepodev.systemAudio",
+      JSON.stringify({ volume: 1, muted: true }),
+    );
+    document.dispatchEvent(
+      new CustomEvent("desktop:audio-settings", {
+        detail: { volume: 1, muted: true },
+      }),
+    );
+  });
+  await expect(noise.locator("[data-noise-status]")).toHaveText(
+    "Muted by system audio",
+  );
+
+  await noise.getByRole("button", { name: "Stop rain" }).click();
+  await expect(noiseApp).not.toHaveClass(/noise-playing/);
+  await expect(noise.locator("[data-noise-status]")).toHaveText("Ready");
 });
 
 test("desktop icons snap and swap occupied grid cells", async ({ page }) => {
