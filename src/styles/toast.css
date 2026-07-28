@@ -34,7 +34,7 @@
   transition:
     opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: all;
+  pointer-events: none;
 }
 
 .toast-show {
@@ -92,6 +92,7 @@
   font-weight: 700;
   transition: all 0.15s ease;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 
 .toast-close:hover {
