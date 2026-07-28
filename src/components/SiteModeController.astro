@@ -1,0 +1,98 @@
+<script is:inline>
+  (() => {
+    const storageKey = "pepodev.viewMode";
+    let mode = "desktop";
+
+    try {
+      const storedMode = localStorage.getItem(storageKey);
+      if (storedMode === "desktop" || storedMode === "website") {
+        mode = storedMode;
+      }
+    } catch {
+      mode = "desktop";
+    }
+
+    const blogSlug = new URLSearchParams(window.location.search)
+      .get("blog")
+      ?.trim();
+    if (blogSlug) mode = "desktop";
+
+    document.documentElement.dataset.siteMode = mode;
+  })();
+</script>
+
+<script>
+  type SiteMode = "desktop" | "website";
+
+  const storageKey = "pepodev.viewMode";
+
+  function normalizeMode(value: string | undefined): SiteMode {
+    return value === "website" ? "website" : "desktop";
+  }
+
+  function initializeSiteMode() {
+    const root = document.documentElement;
+    const panels = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-site-mode-panel]"),
+    );
+    const switches = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("[data-site-mode-toggle]"),
+    );
+
+    function applyMode(mode: SiteMode, persist: boolean) {
+      root.dataset.siteMode = mode;
+
+      panels.forEach((panel) => {
+        const active = panel.dataset.siteModePanel === mode;
+        panel.hidden = !active;
+        panel.toggleAttribute("inert", !active);
+        panel.setAttribute("aria-hidden", String(!active));
+      });
+
+      const nextMode: SiteMode = mode === "desktop" ? "website" : "desktop";
+      const actionLabel = `Switch to ${nextMode} mode`;
+      const visibleLabel =
+        nextMode === "website" ? "Website mode" : "Desktop mode";
+
+      switches.forEach((button) => {
+        button.setAttribute("aria-label", actionLabel);
+        button.setAttribute("title", actionLabel);
+        button.setAttribute("aria-pressed", String(mode === "website"));
+        const label = button.querySelector<HTMLElement>(
+          "[data-site-mode-label]",
+        );
+        if (label) label.textContent = visibleLabel;
+      });
+
+      if (persist) {
+        try {
+          localStorage.setItem(storageKey, mode);
+        } catch {
+          // The selected mode still applies for this page.
+        }
+      }
+
+      document.dispatchEvent(
+        new CustomEvent("site:mode-change", { detail: { mode } }),
+      );
+    }
+
+    switches.forEach((button) => {
+      button.addEventListener("click", () => {
+        const currentMode = normalizeMode(root.dataset.siteMode);
+        const nextMode = currentMode === "desktop" ? "website" : "desktop";
+        applyMode(nextMode, true);
+      });
+    });
+
+    applyMode(normalizeMode(root.dataset.siteMode), false);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeSiteMode, {
+      once: true,
+    });
+  } else {
+    initializeSiteMode();
+  }
+</script>

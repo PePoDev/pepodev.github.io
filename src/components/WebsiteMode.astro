@@ -1,0 +1,20 @@
+---
+import ModeSwitch from "@components/ModeSwitch.astro";
+import "@styles/website-mode.css";
+---
+
+<div
+  id="website"
+  class="website-shell"
+  data-site-mode-panel="website"
+  aria-hidden="true"
+>
+  <a class="website-skip-link" href="#website-main">Skip to content</a>
+  <header class="website-header">
+    <div class="website-header-inner">
+      <a class="website-brand" href="#website-main">PePoDev</a>
+      <ModeSwitch variant="website" />
+    </div>
+  </header>
+  <main id="website-main" class="website-main"></main>
+</div>

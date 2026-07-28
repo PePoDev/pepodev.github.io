@@ -21,17 +21,24 @@ import StartMenu from "../components/desktop/StartMenu.astro";
 import Taskbar from "../components/desktop/Taskbar.astro";
 import Window from "../components/desktop/Window.astro";
 import BaseHead from "../components/BaseHead.astro";
+import SiteModeController from "../components/SiteModeController.astro";
+import WebsiteMode from "../components/WebsiteMode.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
 import socialLinks from "../data/social-links.json";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-site-mode="desktop">
   <head>
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <SiteModeController />
   </head>
   <body>
-    <div id="desktop">
+    <div
+      id="desktop"
+      data-site-mode-panel="desktop"
+      aria-hidden="false"
+    >
       <canvas id="bg-canvas"></canvas>
 
       <div id="desktop-icons">
@@ -216,6 +223,8 @@ import socialLinks from "../data/social-links.json";
       <!-- Toast Notification -->
       <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
     </div>
+
+    <WebsiteMode />
 
     <script is:inline>
       // @ts-nocheck

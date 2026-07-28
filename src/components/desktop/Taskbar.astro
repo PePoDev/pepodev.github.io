@@ -1,3 +1,7 @@
+---
+import ModeSwitch from "@components/ModeSwitch.astro";
+---
+
 <div id="taskbar">
   <button id="taskbar-start" type="button" aria-label="Open start menu">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -23,6 +27,7 @@
   </button>
   <div id="taskbar-apps"></div>
   <div id="taskbar-tray">
+    <ModeSwitch id="taskbar-site-mode" variant="taskbar" />
     <button
       id="taskbar-audio-status"
       type="button"

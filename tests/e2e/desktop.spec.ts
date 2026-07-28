@@ -50,6 +50,85 @@ test("renders the desktop and all launchers", async ({ page }) => {
   }
 });
 
+test("switches modes from the taskbar and website header and persists each choice", async ({
+  page,
+}) => {
+  const desktop = page.locator("#desktop");
+  const website = page.locator("#website");
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-mode",
+    "desktop",
+  );
+  await expect(desktop).toBeVisible();
+  await expect(desktop).toHaveAttribute("aria-hidden", "false");
+  await expect(website).toBeAttached();
+  await expect(website).toBeHidden();
+  await expect(website).toHaveAttribute("aria-hidden", "true");
+
+  const taskbarSwitch = page
+    .locator("#taskbar")
+    .getByRole("button", { name: "Switch to website mode" });
+  await taskbarSwitch.click();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-mode",
+    "website",
+  );
+  await expect(desktop).toBeHidden();
+  await expect(desktop).toHaveAttribute("aria-hidden", "true");
+  await expect(website).toBeVisible();
+  await expect(website).toHaveAttribute("aria-hidden", "false");
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("pepodev.viewMode")),
+    )
+    .toBe("website");
+
+  await page.reload();
+  await expect(desktop).toBeHidden();
+  await expect(website).toBeVisible();
+
+  const websiteSwitch = website
+    .locator("header")
+    .getByRole("button", { name: "Switch to desktop mode" });
+  await expect(websiteSwitch).toHaveAttribute("aria-pressed", "true");
+  await websiteSwitch.click();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-mode",
+    "desktop",
+  );
+  await expect(desktop).toBeVisible();
+  await expect(website).toBeHidden();
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("pepodev.viewMode")),
+    )
+    .toBe("desktop");
+
+  await page.reload();
+  await expect(desktop).toBeVisible();
+  await expect(website).toBeHidden();
+});
+
+test("falls back to desktop mode when the saved mode is invalid", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    localStorage.setItem("pepodev.viewMode", "invalid");
+  });
+  await page.reload();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-mode",
+    "desktop",
+  );
+  await expect(page.locator("#desktop")).toBeVisible();
+  await expect(page.locator("#website")).toBeAttached();
+  await expect(page.locator("#website")).toBeHidden();
+});
+
 test("opens every desktop app window from the icon grid", async ({ page }) => {
   for (const app of apps) {
     const window = await openApp(page, app.label, app.appId);
@@ -59,11 +138,20 @@ test("opens every desktop app window from the icon grid", async ({ page }) => {
   }
 });
 
-test("opens a blog article from the blog query parameter", async ({ page }) => {
+test("opens a blog article in desktop mode from the blog query parameter", async ({
+  page,
+}) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
+  await page.evaluate(() => {
+    localStorage.setItem("pepodev.viewMode", "website");
+  });
   await page.goto("/?blog=aws-local-zone-bangkok-launch");
+
+  await expect(page.locator("#desktop")).toBeVisible();
+  await expect(page.locator("#website")).toBeAttached();
+  await expect(page.locator("#website")).toBeHidden();
 
   const blogWindow = page.locator("#window-blog");
   const article = blogWindow.locator(
@@ -81,6 +169,11 @@ test("opens a blog article from the blog query parameter", async ({ page }) => {
   await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
     "cat articles/aws-local-zone-bangkok-launch",
   );
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("pepodev.viewMode")),
+    )
+    .toBe("website");
   expect(pageErrors).toEqual([]);
 });
 

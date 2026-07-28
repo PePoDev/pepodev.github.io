@@ -19,7 +19,8 @@
 }
 
 #taskbar-start,
-#taskbar-command-palette {
+#taskbar-command-palette,
+#taskbar-site-mode {
   width: 40px;
   height: 40px;
   display: flex;
@@ -34,13 +35,15 @@
 }
 
 #taskbar-start:hover,
-#taskbar-command-palette:hover {
+#taskbar-command-palette:hover,
+#taskbar-site-mode:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
 }
 
 #taskbar-start svg,
-#taskbar-command-palette svg {
+#taskbar-command-palette svg,
+#taskbar-site-mode svg {
   width: 20px;
   height: 20px;
 }
@@ -524,6 +527,7 @@
 
 [data-theme="light"] #taskbar-start:hover,
 [data-theme="light"] #taskbar-command-palette:hover,
+[data-theme="light"] #taskbar-site-mode:hover,
 [data-theme="light"] .taskbar-app:hover,
 [data-theme="light"] #taskbar-audio-status:hover,
 [data-theme="light"] #taskbar-clock-button:hover {
@@ -565,6 +569,7 @@
 
   #taskbar-start,
   #taskbar-command-palette,
+  #taskbar-site-mode,
   #taskbar-audio-status,
   #taskbar-clock-button {
     width: 44px;
