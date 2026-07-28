@@ -1,6 +1,36 @@
 ---
+import ContactIcon from "@components/apps/ContactIcon.astro";
+import FormattedDate from "@components/FormattedDate.astro";
 import ModeSwitch from "@components/ModeSwitch.astro";
+import { SITE_DESCRIPTION } from "@/consts";
+import experiences from "@data/experiences.json";
+import projects from "@data/projects.json";
+import skills from "@data/skills.json";
+import socialLinks from "@data/social-links.json";
+import workMetrics from "@data/work-metrics.json";
 import "@styles/website-mode.css";
+import { getCollection } from "astro:content";
+
+const latestPosts = (await getCollection("blog"))
+  .filter(({ data }) => data.publish !== false)
+  .sort(
+    (a, b) =>
+      (b.data.pubDate?.valueOf() ?? 0) - (a.data.pubDate?.valueOf() ?? 0),
+  )
+  .slice(0, 3);
+const featuredProjects = projects.filter(({ archived }) => !archived);
+const socialIcons = new Set(["github", "linkedin", "email", "blog", "garden"]);
+const primarySocials = socialLinks.filter(({ icon }) => socialIcons.has(icon));
+const emailHref =
+  socialLinks.find(({ icon }) => icon === "email")?.href ??
+  "mailto:pepo@pepo.dev";
+const resumeHref =
+  socialLinks.find(({ icon }) => icon === "resume")?.href ?? "/resume";
+const currentYear = new Date().getFullYear();
+const getPostTitle = (post: (typeof latestPosts)[number]) =>
+  post.data.title ??
+  post.id.split("/").at(-1)?.replace(/[-_]+/g, " ") ??
+  post.id;
 ---
 
 <div
@@ -10,11 +40,268 @@ import "@styles/website-mode.css";
   aria-hidden="true"
 >
   <a class="website-skip-link" href="#website-main">Skip to content</a>
+
   <header class="website-header">
     <div class="website-header-inner">
-      <a class="website-brand" href="#website-main">PePoDev</a>
-      <ModeSwitch variant="website" />
+      <a class="website-brand" href="#website-hero">PePoDev</a>
+      <nav class="website-nav" aria-label="Portfolio sections">
+        <a href="#website-about">About</a>
+        {
+          experiences.length > 0 && (
+            <a href="#website-experience">Experience</a>
+          )
+        }
+        {
+          featuredProjects.length > 0 && (
+            <a href="#website-projects">Projects</a>
+          )
+        }
+        {latestPosts.length > 0 && <a href="#website-writing">Writing</a>}
+        <a href="#website-contact">Contact</a>
+      </nav>
+      <div class="website-header-actions">
+        <a class="website-resume-link" href={resumeHref}>Resume</a>
+        <ModeSwitch variant="website" />
+      </div>
     </div>
   </header>
-  <main id="website-main" class="website-main"></main>
+
+  <main id="website-main" class="website-main">
+    <section
+      id="website-hero"
+      class="website-section website-hero"
+      aria-labelledby="website-title"
+    >
+      <div class="website-hero-copy">
+        <p class="website-eyebrow">
+          Site Reliability Engineer · Bangkok, Thailand
+        </p>
+        <h1 id="website-title">Thiwanon Chomcharoen (PePoDev)</h1>
+        <p class="website-lede">{SITE_DESCRIPTION}</p>
+        <div class="website-actions">
+          <a
+            class="website-button website-button--primary"
+            href="#website-projects"
+          >
+            Explore projects
+          </a>
+          <a class="website-button" href={emailHref}>Start a conversation</a>
+        </div>
+        <p class="website-status">
+          <span aria-hidden="true"></span>
+          Available for opportunities
+        </p>
+      </div>
+      {
+        workMetrics.length > 0 && (
+          <div class="website-metrics" aria-label="Career highlights">
+            {workMetrics.map((metric) => (
+              <div class="website-metric">
+                <strong>{metric.value}</strong>
+                <span>{metric.label}</span>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </section>
+
+    <section
+      id="website-about"
+      class="website-section"
+      aria-labelledby="website-about-title"
+    >
+      <div class="website-section-heading">
+        <p class="website-eyebrow">About</p>
+        <h2 id="website-about-title">Reliable systems, practical outcomes</h2>
+      </div>
+      <div class="website-about-grid">
+        <div class="website-copy">
+          <p>
+            I design and operate cloud platforms with Kubernetes, Terraform,
+            observability, and open-source tooling. My work focuses on making
+            infrastructure dependable, understandable, and efficient.
+          </p>
+          <p>
+            I also build tools, games, and experiments that turn operational
+            lessons into useful experiences for other engineers.
+          </p>
+        </div>
+        <ul class="website-skills" aria-label="Core expertise">
+          {skills.map((skill) => <li>{skill.name}</li>)}
+        </ul>
+      </div>
+    </section>
+
+    {
+      experiences.length > 0 && (
+        <section
+          id="website-experience"
+          class="website-section"
+          aria-labelledby="website-experience-title"
+        >
+          <div class="website-section-heading">
+            <p class="website-eyebrow">Work</p>
+            <h2 id="website-experience-title">Experience</h2>
+          </div>
+          <div class="website-timeline">
+            {experiences.map((experience) => (
+              <article class="website-experience-card">
+                <div class="website-experience-meta">
+                  <span>{experience.period}</span>
+                </div>
+                <div>
+                  <h3>{experience.role}</h3>
+                  <p class="website-company">{experience.company}</p>
+                  <ul>
+                    {experience.details.map((detail) => (
+                      <li>{detail}</li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      featuredProjects.length > 0 && (
+        <section
+          id="website-projects"
+          class="website-section"
+          aria-labelledby="website-projects-title"
+        >
+          <div class="website-section-heading">
+            <p class="website-eyebrow">Build</p>
+            <h2 id="website-projects-title">Selected projects</h2>
+          </div>
+          <div class="website-project-grid">
+            {featuredProjects.map((project) => (
+              <article class="website-project-card">
+                <div class="website-project-heading">
+                  <h3>{project.name}</h3>
+                  <span aria-label={`${project.stars} GitHub stars`}>
+                    ★ {project.stars}
+                  </span>
+                </div>
+                <p>{project.description}</p>
+                <ul
+                  class="website-tags"
+                  aria-label={`${project.name} technologies`}
+                >
+                  {project.tags.map((tag) => (
+                    <li>{tag}</li>
+                  ))}
+                </ul>
+                <div class="website-project-links">
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Visit project
+                  </a>
+                  {project.github !== project.link && (
+                    <a
+                      href={project.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Source
+                    </a>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      latestPosts.length > 0 && (
+        <section
+          id="website-writing"
+          class="website-section"
+          aria-labelledby="website-writing-title"
+        >
+          <div class="website-section-heading website-section-heading--split">
+            <div>
+              <p class="website-eyebrow">Learn</p>
+              <h2 id="website-writing-title">Latest writing</h2>
+            </div>
+            <a href="/blog/">View all articles</a>
+          </div>
+          <div class="website-writing-grid">
+            {latestPosts.map((post) => (
+              <article class="website-writing-card">
+                {post.data.pubDate && (
+                  <FormattedDate date={post.data.pubDate} />
+                )}
+                <h3>
+                  <a href={`/blog/${post.id}/`}>{getPostTitle(post)}</a>
+                </h3>
+                <p>
+                  {post.data.description ?? post.data["sub-title"] ?? ""}
+                </p>
+                {post.data.tags && post.data.tags.length > 0 && (
+                  <ul class="website-tags" aria-label="Article tags">
+                    {post.data.tags.slice(0, 3).map((tag) => (
+                      <li>{tag}</li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <section
+      id="website-contact"
+      class="website-section website-contact"
+      aria-labelledby="website-contact-title"
+    >
+      <div>
+        <p class="website-eyebrow">Connect</p>
+        <h2 id="website-contact-title">Let's build something reliable</h2>
+        <p>Reach out about infrastructure, SRE, open source, or collaboration.</p>
+      </div>
+      <div class="website-contact-actions">
+        <a class="website-button website-button--primary" href={emailHref}>
+          Email me
+        </a>
+        <a class="website-button" href={resumeHref} aria-label="View resume">
+          View resume
+        </a>
+      </div>
+      <ul class="website-socials" aria-label="Social links">
+        {
+          primarySocials.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                target={link.href.startsWith("http") ? "_blank" : undefined}
+                rel={
+                  link.href.startsWith("http")
+                    ? "noopener noreferrer"
+                    : undefined
+                }
+              >
+                <ContactIcon name={link.icon} />
+                <span>{link.label.split(" - ")[0]}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </main>
+
+  <footer class="website-footer">
+    <p>© {currentYear} PePoDev. Built as a static Astro site.</p>
+  </footer>
 </div>

@@ -112,6 +112,54 @@ test("switches modes from the taskbar and website header and persists each choic
   await expect(website).toBeHidden();
 });
 
+test("renders current portfolio content in website mode", async ({ page }) => {
+  await page
+    .locator("#taskbar")
+    .getByRole("button", { name: "Switch to website mode" })
+    .click();
+
+  const website = page.locator("#website");
+  await expect(
+    website.getByRole("heading", {
+      level: 1,
+      name: "Thiwanon Chomcharoen (PePoDev)",
+    }),
+  ).toBeVisible();
+
+  const navigation = website.getByRole("navigation", {
+    name: "Portfolio sections",
+  });
+  for (const link of [
+    { name: "About", href: "#website-about" },
+    { name: "Experience", href: "#website-experience" },
+    { name: "Projects", href: "#website-projects" },
+    { name: "Writing", href: "#website-writing" },
+    { name: "Contact", href: "#website-contact" },
+  ]) {
+    await expect(
+      navigation.getByRole("link", { name: link.name }),
+    ).toHaveAttribute("href", link.href);
+  }
+
+  await expect(
+    website.getByRole("heading", { level: 2, name: "Experience" }),
+  ).toBeVisible();
+  await expect(website.locator("#website-experience article")).not.toHaveCount(
+    0,
+  );
+  await expect(
+    website.getByRole("heading", { level: 2, name: "Selected projects" }),
+  ).toBeVisible();
+  await expect(website.locator("#website-projects article")).not.toHaveCount(0);
+  await expect(
+    website.getByRole("heading", { level: 2, name: "Latest writing" }),
+  ).toBeVisible();
+  await expect(website.locator('a[href^="/blog/"]').first()).toBeVisible();
+  await expect(
+    website.getByRole("link", { name: "View resume" }),
+  ).toHaveAttribute("href", "/resume");
+});
+
 test("falls back to desktop mode when the saved mode is invalid", async ({
   page,
 }) => {
