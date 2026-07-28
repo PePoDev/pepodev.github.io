@@ -160,6 +160,142 @@ test("renders current portfolio content in website mode", async ({ page }) => {
   ).toHaveAttribute("href", "/resume");
 });
 
+test("preserves desktop window state and ignores desktop shortcuts in website mode", async ({
+  page,
+}) => {
+  const aboutWindow = await openApp(page, "About Me", "me");
+
+  await page
+    .locator("#taskbar")
+    .getByRole("button", { name: "Switch to website mode" })
+    .click();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+k");
+  await expect(page.locator("#command-palette")).toHaveAttribute(
+    "data-visible",
+    "false",
+  );
+
+  await page
+    .locator("#website")
+    .locator("header")
+    .getByRole("button", { name: "Switch to desktop mode" })
+    .click();
+
+  await expect(aboutWindow).toBeVisible();
+  await expect(aboutWindow).toHaveAttribute("aria-hidden", "false");
+});
+
+test("pauses the desktop animation loop in website mode and resumes it", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const probe = window as typeof window & {
+      __modeRafCallbacks?: Record<string, number>;
+    };
+    const requestFrame = window.requestAnimationFrame.bind(window);
+    probe.__modeRafCallbacks = {};
+    window.requestAnimationFrame = (callback) => {
+      const name = callback.name || "anonymous";
+      probe.__modeRafCallbacks[name] =
+        (probe.__modeRafCallbacks[name] ?? 0) + 1;
+      return requestFrame(callback);
+    };
+  });
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as typeof window & {
+              __modeRafCallbacks?: Record<string, number>;
+            }
+          ).__modeRafCallbacks?.draw ?? 0,
+      ),
+    )
+    .toBeGreaterThan(2);
+
+  await page
+    .locator("#taskbar")
+    .getByRole("button", { name: "Switch to website mode" })
+    .click();
+  await page.waitForTimeout(80);
+  const pausedCount = await page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __modeRafCallbacks?: Record<string, number>;
+        }
+      ).__modeRafCallbacks?.draw ?? 0,
+  );
+  await page.waitForTimeout(120);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as typeof window & {
+              __modeRafCallbacks?: Record<string, number>;
+            }
+          ).__modeRafCallbacks?.draw ?? 0,
+      ),
+    )
+    .toBe(pausedCount);
+
+  await page
+    .locator("#website")
+    .locator("header")
+    .getByRole("button", { name: "Switch to desktop mode" })
+    .click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as typeof window & {
+              __modeRafCallbacks?: Record<string, number>;
+            }
+          ).__modeRafCallbacks?.draw ?? 0,
+      ),
+    )
+    .toBeGreaterThan(pausedCount);
+});
+
+test("defers the desktop command-palette hint while website mode is active", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    localStorage.setItem("pepodev.viewMode", "website");
+    localStorage.removeItem("pepodev.commandPaletteHintShown");
+  });
+  await page.reload();
+
+  await page.waitForTimeout(3200);
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        localStorage.getItem("pepodev.commandPaletteHintShown"),
+      ),
+    )
+    .toBeNull();
+
+  await page
+    .locator("#website")
+    .locator("header")
+    .getByRole("button", { name: "Switch to desktop mode" })
+    .click();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() =>
+          localStorage.getItem("pepodev.commandPaletteHintShown"),
+        ),
+      { timeout: 4_000 },
+    )
+    .not.toBeNull();
+});
+
 test("falls back to desktop mode when the saved mode is invalid", async ({
   page,
 }) => {

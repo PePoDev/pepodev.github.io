@@ -112,6 +112,10 @@ const { appId, title, width, height } = Astro.props;
     let userInteracted = false;
     const windows = new Map();
 
+    function isDesktopSiteMode() {
+      return document.documentElement.dataset.siteMode !== "website";
+    }
+
     document.querySelectorAll("[data-window]").forEach((element) => {
       const state = {
         id: element.id,
@@ -131,6 +135,7 @@ const { appId, title, width, height } = Astro.props;
     });
 
     document.addEventListener("desktop:open-app", (event) => {
+      if (!isDesktopSiteMode()) return;
       userOpenedWindow = true;
       openWindow(event.detail.appId);
     });
@@ -154,6 +159,7 @@ const { appId, title, width, height } = Astro.props;
     });
 
     document.addEventListener("keydown", (event) => {
+      if (!isDesktopSiteMode()) return;
       if (event.key !== "Escape" || event.defaultPrevented) return;
       if (isEscapeOwnedByOverlay()) return;
 
@@ -171,6 +177,12 @@ const { appId, title, width, height } = Astro.props;
     }
 
     window.addEventListener("resize", syncViewportMode);
+    document.addEventListener("site:mode-change", (event) => {
+      if (event.detail?.mode === "desktop") {
+        syncViewportMode();
+        scheduleWelcomeWindow();
+      }
+    });
     syncViewportMode();
 
     function openWindow(appId) {
@@ -505,6 +517,8 @@ const { appId, title, width, height } = Astro.props;
     }
 
     function syncViewportMode() {
+      if (!isDesktopSiteMode()) return;
+
       const wasMobile = mobileMode;
       mobileMode = mobileQuery.matches;
       updateViewportAttributes();
@@ -588,21 +602,32 @@ const { appId, title, width, height } = Astro.props;
       }, 300);
     }
 
-    // Open welcome window on first visit
     const firstVisitKey = "pepodev.hasVisited";
-    const hasVisited = localStorage.getItem(firstVisitKey);
+    let hasVisited = localStorage.getItem(firstVisitKey) === "true";
+    let welcomeTimerId = 0;
 
-    if (!hasVisited) {
-      // Delay slightly to ensure DOM is fully ready
-      setTimeout(() => {
+    function markVisited() {
+      hasVisited = true;
+      localStorage.setItem(firstVisitKey, "true");
+    }
+
+    function scheduleWelcomeWindow() {
+      if (hasVisited || welcomeTimerId || !isDesktopSiteMode()) return;
+
+      welcomeTimerId = window.setTimeout(() => {
+        welcomeTimerId = 0;
+        if (!isDesktopSiteMode()) return;
+
         if (userInteracted || userOpenedWindow || getActiveWindow()) {
-          localStorage.setItem(firstVisitKey, "true");
+          markVisited();
           return;
         }
 
         openWindow("welcome");
-        localStorage.setItem(firstVisitKey, "true");
+        markVisited();
       }, 1500);
     }
+
+    scheduleWelcomeWindow();
   });
 </script>

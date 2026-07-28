@@ -477,6 +477,10 @@ import socialLinks from "../data/social-links.json";
           let lastAudioRingAt = 0;
           let backgroundEffectEnabled = true;
           let animationId = 0;
+          let siteMode =
+            document.documentElement.dataset.siteMode === "website"
+              ? "website"
+              : "desktop";
 
           function getCssVar(name, fallback) {
             return (
@@ -525,12 +529,15 @@ import socialLinks from "../data/social-links.json";
               "data-background-effect",
               backgroundEffectEnabled ? "on" : "off",
             );
-            if (backgroundEffectEnabled) {
-              startAnimation();
-            } else {
-              stopAnimation();
-            }
+            syncAnimation();
           });
+          document.addEventListener("site:mode-change", (event) => {
+            siteMode =
+              event.detail?.mode === "website" ? "website" : "desktop";
+            if (siteMode === "desktop") resize();
+            syncAnimation();
+          });
+          document.addEventListener("visibilitychange", syncAnimation);
           document.addEventListener("desktop:music-audio-frame", (event) => {
             const detail = event.detail || {};
             musicAudio = {
@@ -857,25 +864,34 @@ import socialLinks from "../data/social-links.json";
             animationId = requestAnimationFrame(draw);
           }
 
+          function shouldAnimate() {
+            return (
+              backgroundEffectEnabled &&
+              siteMode === "desktop" &&
+              !document.hidden
+            );
+          }
+
           function startAnimation() {
-            if (animationId || !backgroundEffectEnabled) return;
+            if (animationId || !shouldAnimate()) return;
             draw();
           }
 
-          function stopAnimation() {
-            if (animationId) {
-              cancelAnimationFrame(animationId);
-              animationId = 0;
-            }
-            ctx.fillStyle = desktopPrefs.bg;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          function pauseAnimation() {
+            if (!animationId) return;
+            cancelAnimationFrame(animationId);
+            animationId = 0;
           }
 
-          if (backgroundEffectEnabled) {
-            startAnimation();
-          } else {
-            stopAnimation();
+          function syncAnimation() {
+            if (shouldAnimate()) {
+              startAnimation();
+            } else {
+              pauseAnimation();
+            }
           }
+
+          syncAnimation();
         }
 
         initParticleNetwork();
@@ -934,27 +950,47 @@ import socialLinks from "../data/social-links.json";
 
         // Show command palette hint on first visit or periodically
         const hintKey = "pepodev.commandPaletteHintShown";
-        const lastShown = localStorage.getItem(hintKey);
-        const now = Date.now();
-        const daysSinceLastShown = lastShown
-          ? (now - Number(lastShown)) / (1000 * 60 * 60 * 24)
-          : Infinity;
+        let hintTimerId = 0;
 
-        // Check if device is mobile
-        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        function scheduleCommandPaletteHint() {
+          const isMobile = window.matchMedia("(max-width: 768px)").matches;
+          const isDesktopMode =
+            document.documentElement.dataset.siteMode === "desktop";
+          if (isMobile || !isDesktopMode || hintTimerId) return;
 
-        // Show hint if never shown or if it's been more than 7 days (skip on mobile)
-        if (!isMobile && (!lastShown || daysSinceLastShown > 7)) {
-          setTimeout(() => {
-            const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+          const lastShown = localStorage.getItem(hintKey);
+          const now = Date.now();
+          const daysSinceLastShown = lastShown
+            ? (now - Number(lastShown)) / (1000 * 60 * 60 * 24)
+            : Infinity;
+          if (lastShown && daysSinceLastShown <= 7) return;
+
+          hintTimerId = window.setTimeout(() => {
+            hintTimerId = 0;
+            if (document.documentElement.dataset.siteMode !== "desktop") return;
+
+            const isMac = navigator.platform.toUpperCase().includes("MAC");
             const key = isMac ? "Cmd" : "Ctrl";
             showToast(
               `Quick tip: Press <kbd>${key} + K</kbd> to open the command palette`,
-              0, // Don't auto-dismiss tutorial notification
+              0,
             );
-            localStorage.setItem(hintKey, String(now));
+            localStorage.setItem(hintKey, String(Date.now()));
           }, 3000);
         }
+
+        scheduleCommandPaletteHint();
+        document.addEventListener("site:mode-change", (event) => {
+          if (event.detail?.mode === "desktop") {
+            scheduleCommandPaletteHint();
+            return;
+          }
+
+          if (hintTimerId) {
+            clearTimeout(hintTimerId);
+            hintTimerId = 0;
+          }
+        });
 
         // URL Deep Linking - Handle blog post URLs
         const urlParams = new URLSearchParams(window.location.search);
