@@ -75,6 +75,8 @@ Run commands from the repository root. Use `pnpm build` after code changes and
   changes and extract reusable logic to `src/utils/`.
 - Store posts in `src/content/blog/` using `src/content.config.ts`. Reference
   prefixed local images from `src/assets/blog/`; builds optimize them to WebP.
+  `cover-picture` and `heroImage` are validated as images, so they must be
+  relative paths to existing files.
 - Put audio in `public/music/`; `src/data/music.ts` discovers it at build time.
   Verify playback in a real browser.
 - Regenerate `public/og-image.png` with

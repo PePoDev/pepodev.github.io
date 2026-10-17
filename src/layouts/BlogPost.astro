@@ -7,7 +7,6 @@ import FormattedDate from "../components/FormattedDate.astro";
 type Props = CollectionEntry<"blog">["data"];
 
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
-const socialImage = typeof heroImage === "string" ? undefined : heroImage;
 ---
 
 <html lang="en">
@@ -15,7 +14,7 @@ const socialImage = typeof heroImage === "string" ? undefined : heroImage;
     <BaseHead
       title={title}
       description={description}
-      image={socialImage}
+      image={heroImage}
       type="article"
     />
     <style>
@@ -78,24 +77,15 @@ const socialImage = typeof heroImage === "string" ? undefined : heroImage;
       <article>
         <div class="hero-image">
           {
-            heroImage && typeof heroImage === "string" ? (
-              <img
-                width="1020"
-                height="510"
+            heroImage && (
+              <Image
+                width={1020}
+                height={510}
                 src={heroImage}
                 alt={`Hero image for ${title}`}
+                loading="eager"
                 fetchpriority="high"
               />
-            ) : (
-              heroImage && (
-                <Image
-                  width={1020}
-                  height={510}
-                  src={heroImage}
-                  alt={`Hero image for ${title}`}
-                  loading="eager"
-                />
-              )
             )
           }
         </div>

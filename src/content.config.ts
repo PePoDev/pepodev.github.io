@@ -18,7 +18,7 @@ const blog = defineCollection({
       // Legacy Obsidian fields
       "url-slug": z.string().optional(),
       "sub-title": z.string().optional(),
-      "cover-picture": z.string().optional(),
+      "cover-picture": z.optional(image()),
       publish: z.boolean().optional(),
       "dg-publish": z.boolean().optional(),
     }),
