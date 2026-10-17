@@ -1,0 +1,296 @@
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.__pepodevExternalLinkIconsReady) return;
+    window.__pepodevExternalLinkIconsReady = true;
+
+    const linkIcons = Array.from(
+      document.querySelectorAll(".desktop-link-icon"),
+    );
+    const initialRects = new Map(
+      linkIcons.map((icon) => [icon, icon.getBoundingClientRect()]),
+    );
+    const storagePrefix = "pepodev.linkIcon.v3."; // v3 moves Webring to the top-right corner
+    const appStoragePrefix = "pepodev.desktopIcon.v2.";
+    const gridOriginX = 20;
+    const gridOriginY = 20;
+    const gridColumnStep = 88;
+    const gridRowStep = 98;
+    const mobileQuery = window.matchMedia("(max-width: 768px)");
+
+    function isMobileShortcutMode() {
+      return mobileQuery.matches;
+    }
+
+    function clearIconPosition(icon) {
+      icon.style.position = "";
+      icon.style.left = "";
+      icon.style.top = "";
+      icon.style.right = "";
+      icon.style.bottom = "";
+      icon.style.zIndex = "";
+    }
+
+    function loadIconPosition(iconId) {
+      try {
+        const raw = localStorage.getItem(storagePrefix + iconId);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveIconPosition(iconId, position) {
+      try {
+        localStorage.setItem(storagePrefix + iconId, JSON.stringify(position));
+      } catch {
+        // Ignore storage failures
+      }
+    }
+
+    function saveAnyIconPosition(icon, position) {
+      try {
+        if (icon.classList.contains("desktop-link-icon") && icon.id) {
+          localStorage.setItem(storagePrefix + icon.id, JSON.stringify(position));
+        } else if (icon.dataset.openApp) {
+          localStorage.setItem(
+            appStoragePrefix + icon.dataset.openApp,
+            JSON.stringify(position),
+          );
+        }
+      } catch {
+        // Ignore storage failures
+      }
+    }
+
+    function clampIconPosition(icon, x, y) {
+      const margin = 8;
+      const taskbarReserve = 56;
+      const maxX = Math.max(
+        margin,
+        window.innerWidth - icon.offsetWidth - margin,
+      );
+      const maxY = Math.max(
+        margin,
+        window.innerHeight - icon.offsetHeight - taskbarReserve,
+      );
+
+      return {
+        x: Math.min(Math.max(margin, x), maxX),
+        y: Math.min(Math.max(margin, y), maxY),
+      };
+    }
+
+    function setIconPosition(icon, x, y) {
+      const next = clampIconPosition(icon, x, y);
+      icon.style.position = "fixed";
+      icon.style.left = next.x + "px";
+      icon.style.top = next.y + "px";
+      icon.style.right = "auto";
+      icon.style.bottom = "auto";
+      return next;
+    }
+
+    function getSnappedPosition(icon, x, y) {
+      const current = clampIconPosition(icon, x, y);
+      const snappedX =
+        gridOriginX +
+        Math.round((current.x - gridOriginX) / gridColumnStep) *
+          gridColumnStep;
+      const snappedY =
+        gridOriginY +
+        Math.round((current.y - gridOriginY) / gridRowStep) * gridRowStep;
+
+      return clampIconPosition(icon, snappedX, snappedY);
+    }
+
+    function snapIconPosition(icon, x, y) {
+      const next = getSnappedPosition(icon, x, y);
+      return setIconPosition(icon, next.x, next.y);
+    }
+
+    function findIconAtPosition(sourceIcon, position) {
+      return Array.from(document.querySelectorAll(".desktop-icon")).find(
+        (icon) => {
+          if (icon === sourceIcon) return false;
+
+          const rect = icon.getBoundingClientRect();
+          return (
+            Math.abs(rect.left - position.x) < 2 &&
+            Math.abs(rect.top - position.y) < 2
+          );
+        },
+      );
+    }
+
+    function snapIconPositionWithSwap(icon, x, y, previousX, previousY) {
+      const position = getSnappedPosition(icon, x, y);
+      const occupiedIcon = findIconAtPosition(icon, position);
+
+      if (occupiedIcon) {
+        const swappedPosition = snapIconPosition(occupiedIcon, previousX, previousY);
+        saveAnyIconPosition(occupiedIcon, swappedPosition);
+      }
+
+      return setIconPosition(icon, position.x, position.y);
+    }
+
+    linkIcons.forEach((icon) => {
+      const iconId = icon.id;
+      if (!iconId) return;
+
+      // Initialize position from top-right
+      const shortcutIndex = parseInt(icon.dataset.shortcutIndex || "0");
+      const iconSpacing = gridRowStep;
+      const rightMargin = 20;
+      const topMargin = 20;
+
+      function calculateDefaultPosition() {
+        return {
+          x: window.innerWidth - 80 - rightMargin, // Position from right
+          y: topMargin + shortcutIndex * iconSpacing, // Stack vertically
+        };
+      }
+
+      const saved = loadIconPosition(iconId);
+      const initial = saved || calculateDefaultPosition();
+      if (isMobileShortcutMode()) {
+        clearIconPosition(icon);
+      } else {
+        snapIconPosition(icon, initial.x, initial.y);
+      }
+
+      // Reposition on window resize if no saved position
+      window.addEventListener("resize", () => {
+        if (isMobileShortcutMode()) {
+          clearIconPosition(icon);
+          return;
+        }
+
+        if (!loadIconPosition(iconId)) {
+          const defaultPos = calculateDefaultPosition();
+          snapIconPosition(icon, defaultPos.x, defaultPos.y);
+        }
+      });
+
+      let pointerStartX = 0;
+      let pointerStartY = 0;
+      let iconStartX = 0;
+      let iconStartY = 0;
+      let isPointerDown = false;
+      let isDragging = false;
+      let wasDragging = false; // Track if we just finished dragging
+
+      icon.addEventListener("pointerdown", (event) => {
+        if (isMobileShortcutMode()) return;
+        if (event.button !== 0) return;
+
+        const rect = icon.getBoundingClientRect();
+        pointerStartX = event.clientX;
+        pointerStartY = event.clientY;
+        iconStartX = rect.left;
+        iconStartY = rect.top;
+        isPointerDown = true;
+        isDragging = false;
+        wasDragging = false;
+        icon.style.zIndex = "30";
+        icon.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      });
+
+      icon.addEventListener("pointermove", (event) => {
+        if (isMobileShortcutMode()) return;
+        if (!isPointerDown) return;
+
+        const deltaX = event.clientX - pointerStartX;
+        const deltaY = event.clientY - pointerStartY;
+        if (!isDragging && Math.hypot(deltaX, deltaY) < 4) return;
+
+        isDragging = true;
+        icon.classList.add("dragging");
+        setIconPosition(icon, iconStartX + deltaX, iconStartY + deltaY);
+      });
+
+      icon.addEventListener("pointerup", (event) => {
+        if (isMobileShortcutMode()) return;
+        if (!isPointerDown) return;
+
+        icon.releasePointerCapture?.(event.pointerId);
+        isPointerDown = false;
+        icon.style.zIndex = "5";
+
+        if (isDragging) {
+          const rect = icon.getBoundingClientRect();
+          const position = snapIconPositionWithSwap(
+            icon,
+            rect.left,
+            rect.top,
+            iconStartX,
+            iconStartY,
+          );
+          saveIconPosition(iconId, position);
+          icon.classList.remove("dragging");
+
+          // Set flag to prevent click event
+          wasDragging = true;
+          isDragging = false;
+
+          // Prevent link navigation after drag
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        // If not dragging, allow normal link behavior
+      });
+
+      icon.addEventListener("pointercancel", () => {
+        isPointerDown = false;
+        isDragging = false;
+        icon.style.zIndex = "5";
+        icon.classList.remove("dragging");
+      });
+
+      // Prevent default link behavior if we just finished dragging
+      icon.addEventListener("click", (e) => {
+        if (wasDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          wasDragging = false; // Reset flag after preventing click
+        }
+        // Otherwise allow normal link navigation
+      });
+    });
+
+    function syncShortcutLayout() {
+      linkIcons.forEach((icon) => {
+        const iconId = icon.id;
+        if (!iconId) return;
+
+        if (isMobileShortcutMode()) {
+          clearIconPosition(icon);
+          return;
+        }
+
+        const saved = loadIconPosition(iconId);
+        if (saved) {
+          snapIconPosition(icon, saved.x, saved.y);
+          return;
+        }
+
+        const shortcutIndex = parseInt(icon.dataset.shortcutIndex || "0");
+        snapIconPosition(
+          icon,
+          window.innerWidth - 100,
+          20 + shortcutIndex * gridRowStep,
+        );
+      });
+    }
+
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", syncShortcutLayout);
+    } else {
+      mobileQuery.addListener(syncShortcutLayout);
+    }
+  });
+</script>

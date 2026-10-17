@@ -1,0 +1,368 @@
+<script is:inline>
+  // @ts-nocheck
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.__pepodevDesktopIconsReady) return;
+    window.__pepodevDesktopIconsReady = true;
+
+    const desktopIcons = Array.from(
+      document.querySelectorAll(".desktop-icon[data-open-app]"),
+    );
+    const initialRects = new Map(
+      desktopIcons.map((icon) => [icon, icon.getBoundingClientRect()]),
+    );
+    const storagePrefix = "pepodev.desktopIcon.v2.";
+    const linkStoragePrefix = "pepodev.linkIcon.v2.";
+    const gridOriginX = 20;
+    const gridOriginY = 20;
+    const gridColumnStep = 88;
+    const gridRowStep = 98;
+    const mobileQuery = window.matchMedia("(max-width: 768px)");
+
+    function isMobileLauncherMode() {
+      return mobileQuery.matches;
+    }
+
+    function clearIconPosition(icon) {
+      icon.style.position = "";
+      icon.style.left = "";
+      icon.style.top = "";
+      icon.style.right = "";
+      icon.style.bottom = "";
+      icon.style.zIndex = "";
+    }
+
+    function loadIconPosition(appId) {
+      try {
+        const raw = localStorage.getItem(storagePrefix + appId);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveIconPosition(appId, position) {
+      try {
+        localStorage.setItem(storagePrefix + appId, JSON.stringify(position));
+      } catch {
+        // Ignore storage failures; dragging still works for the current session.
+      }
+    }
+
+    function saveAnyIconPosition(icon, position) {
+      try {
+        if (icon.dataset.openApp) {
+          localStorage.setItem(
+            storagePrefix + icon.dataset.openApp,
+            JSON.stringify(position),
+          );
+        } else if (icon.classList.contains("desktop-link-icon") && icon.id) {
+          localStorage.setItem(
+            linkStoragePrefix + icon.id,
+            JSON.stringify(position),
+          );
+        }
+      } catch {
+        // Ignore storage failures; dragging still works for the current session.
+      }
+    }
+
+    function clampIconPosition(icon, x, y) {
+      const margin = 8;
+      const taskbarReserve = 56;
+      const maxX = Math.max(
+        margin,
+        window.innerWidth - icon.offsetWidth - margin,
+      );
+      const maxY = Math.max(
+        margin,
+        window.innerHeight - icon.offsetHeight - taskbarReserve,
+      );
+
+      return {
+        x: Math.min(Math.max(margin, x), maxX),
+        y: Math.min(Math.max(margin, y), maxY),
+      };
+    }
+
+    function setIconPosition(icon, x, y) {
+      const next = clampIconPosition(icon, x, y);
+      icon.style.position = "fixed";
+      icon.style.left = next.x + "px";
+      icon.style.top = next.y + "px";
+      icon.style.right = "auto";
+      icon.style.bottom = "auto";
+      return next;
+    }
+
+    function getSnappedPosition(icon, x, y) {
+      const current = clampIconPosition(icon, x, y);
+      const snappedX =
+        gridOriginX +
+        Math.round((current.x - gridOriginX) / gridColumnStep) *
+          gridColumnStep;
+      const snappedY =
+        gridOriginY +
+        Math.round((current.y - gridOriginY) / gridRowStep) * gridRowStep;
+
+      return clampIconPosition(icon, snappedX, snappedY);
+    }
+
+    function snapIconPosition(icon, x, y) {
+      const next = getSnappedPosition(icon, x, y);
+      return setIconPosition(icon, next.x, next.y);
+    }
+
+    function getGridIndex(value, maxIndex, fallback) {
+      const centerIndex = Math.round(maxIndex / 2);
+      const centerMatch = String(value || "").match(/^center([+-]\d+)?$/);
+      if (centerMatch) {
+        const offset = Number.parseInt(centerMatch[1] || "0", 10);
+        return Math.min(Math.max(0, centerIndex + offset), maxIndex);
+      }
+      if (value === "right" || value === "bottom") return maxIndex;
+
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isFinite(parsed)) {
+        return Math.min(Math.max(0, parsed), maxIndex);
+      }
+
+      return fallback;
+    }
+
+    function getUtilityPosition(icon, maxColumn, maxRow) {
+      const index = Number.parseInt(icon.dataset.layoutIndex || "0", 10);
+      const shortViewportPositions = [
+        { column: maxColumn - 2, row: 0 },
+        { column: maxColumn - 2, row: 1 },
+        { column: maxColumn - 2, row: 2 },
+        { column: maxColumn - 2, row: 3 },
+        { column: maxColumn - 1, row: 0 },
+        { column: maxColumn - 1, row: 1 },
+        { column: maxColumn - 1, row: 2 },
+      ];
+      const position = shortViewportPositions[index] || {
+        column: index,
+        row: 0,
+      };
+
+      return {
+        column: Math.min(Math.max(0, position.column), maxColumn),
+        row: Math.min(Math.max(0, position.row), maxRow),
+      };
+    }
+
+    function getDefaultIconPosition(icon, fallbackRect) {
+      const maxX = window.innerWidth - icon.offsetWidth - 8;
+      const maxY = window.innerHeight - icon.offsetHeight - 56;
+      const maxColumn = Math.max(
+        0,
+        Math.floor((maxX - gridOriginX) / gridColumnStep),
+      );
+      const maxRow = Math.max(
+        0,
+        Math.floor((maxY - gridOriginY) / gridRowStep),
+      );
+      const fallbackColumn = Math.round(
+        ((fallbackRect?.left || gridOriginX) - gridOriginX) / gridColumnStep,
+      );
+      const fallbackRow = Math.round(
+        ((fallbackRect?.top || gridOriginY) - gridOriginY) / gridRowStep,
+      );
+      let column = getGridIndex(
+        icon.dataset.defaultCol,
+        maxColumn,
+        fallbackColumn,
+      );
+      let row = getGridIndex(icon.dataset.defaultRow, maxRow, fallbackRow);
+
+      if (icon.dataset.layoutGroup === "utility" && maxRow <= 6) {
+        const utilityPosition = getUtilityPosition(icon, maxColumn, maxRow);
+        column = utilityPosition.column;
+        row = utilityPosition.row;
+      } else if (icon.dataset.layoutGroup === "left-mid" && maxRow <= 6) {
+        const offset = Number.parseInt(icon.dataset.layoutIndex || "0", 10);
+        row = Math.max(2, maxRow - 2 + offset);
+      }
+
+      return {
+        x: gridOriginX + column * gridColumnStep,
+        y: gridOriginY + row * gridRowStep,
+      };
+    }
+
+    function findIconAtPosition(sourceIcon, position) {
+      const targetCenterX = position.x + sourceIcon.offsetWidth / 2;
+      const targetCenterY = position.y + sourceIcon.offsetHeight / 2;
+
+      return Array.from(document.querySelectorAll(".desktop-icon")).find(
+        (icon) => {
+          if (icon === sourceIcon) return false;
+
+          const rect = icon.getBoundingClientRect();
+          const iconCenterX = rect.left + rect.width / 2;
+          const iconCenterY = rect.top + rect.height / 2;
+          return (
+            Math.abs(iconCenterX - targetCenterX) < gridColumnStep / 2 &&
+            Math.abs(iconCenterY - targetCenterY) < gridRowStep / 2
+          );
+        },
+      );
+    }
+
+    function snapIconPositionWithSwap(icon, x, y, previousX, previousY) {
+      const position = getSnappedPosition(icon, x, y);
+      const occupiedIcon = findIconAtPosition(icon, position);
+
+      if (occupiedIcon) {
+        const swappedPosition = snapIconPosition(occupiedIcon, previousX, previousY);
+        saveAnyIconPosition(occupiedIcon, swappedPosition);
+      }
+
+      return setIconPosition(icon, position.x, position.y);
+    }
+
+    function initializeDesktopIcon(icon) {
+      if (isMobileLauncherMode()) {
+        clearIconPosition(icon);
+        icon.dataset.desktopIconReady = "true";
+        return;
+      }
+
+      const appId = icon.dataset.openApp;
+      const initialRect = initialRects.get(icon);
+      const saved = loadIconPosition(appId);
+      const initial = saved || getDefaultIconPosition(icon, initialRect);
+
+      snapIconPosition(icon, initial.x, initial.y);
+      icon.dataset.desktopIconReady = "true";
+    }
+
+    desktopIcons.forEach(initializeDesktopIcon);
+
+    document.querySelectorAll("[data-open-app]").forEach((trigger) => {
+      if (trigger.dataset.launcherBound === "true") return;
+      trigger.dataset.launcherBound = "true";
+
+      const openApp = () => {
+        document.dispatchEvent(
+          new CustomEvent("desktop:open-app", {
+            detail: { appId: trigger.dataset.openApp },
+          }),
+        );
+      };
+
+      if (trigger.classList.contains("desktop-icon")) {
+        let pointerStartX = 0;
+        let pointerStartY = 0;
+        let iconStartX = 0;
+        let iconStartY = 0;
+        let isPointerDown = false;
+        let isDragging = false;
+
+        trigger.addEventListener("pointerdown", (event) => {
+          if (isMobileLauncherMode()) return;
+          if (event.button !== 0) return;
+
+          const rect = trigger.getBoundingClientRect();
+          pointerStartX = event.clientX;
+          pointerStartY = event.clientY;
+          iconStartX = rect.left;
+          iconStartY = rect.top;
+          isPointerDown = true;
+          isDragging = false;
+          trigger.style.zIndex = "30";
+          trigger.setPointerCapture?.(event.pointerId);
+        });
+
+        trigger.addEventListener("pointermove", (event) => {
+          if (isMobileLauncherMode()) return;
+          if (!isPointerDown) return;
+
+          const deltaX = event.clientX - pointerStartX;
+          const deltaY = event.clientY - pointerStartY;
+          if (!isDragging && Math.hypot(deltaX, deltaY) < 4) return;
+
+          isDragging = true;
+          trigger.classList.add("dragging");
+          setIconPosition(trigger, iconStartX + deltaX, iconStartY + deltaY);
+        });
+
+        trigger.addEventListener("pointerup", (event) => {
+          if (isMobileLauncherMode()) return;
+          if (!isPointerDown) return;
+
+          trigger.releasePointerCapture?.(event.pointerId);
+          isPointerDown = false;
+          trigger.style.zIndex = "5";
+
+          if (isDragging) {
+            const rect = trigger.getBoundingClientRect();
+            const position = snapIconPositionWithSwap(
+              trigger,
+              rect.left,
+              rect.top,
+              iconStartX,
+              iconStartY,
+            );
+            saveIconPosition(trigger.dataset.openApp, position);
+            trigger.classList.remove("dragging");
+            isDragging = false;
+            return;
+          }
+
+          openApp();
+        });
+
+        trigger.addEventListener("pointercancel", () => {
+          isPointerDown = false;
+          isDragging = false;
+          trigger.style.zIndex = "5";
+          trigger.classList.remove("dragging");
+        });
+
+        trigger.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openApp();
+          }
+        });
+
+        trigger.addEventListener("click", (event) => {
+          if (!isMobileLauncherMode()) return;
+          event.preventDefault();
+          openApp();
+        });
+      } else {
+        trigger.addEventListener("click", openApp);
+      }
+    });
+
+    function syncLauncherLayout() {
+      if (isMobileLauncherMode()) {
+        desktopIcons.forEach(clearIconPosition);
+        return;
+      }
+
+      desktopIcons.forEach(initializeDesktopIcon);
+    }
+
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", syncLauncherLayout);
+    } else {
+      mobileQuery.addListener(syncLauncherLayout);
+    }
+
+    window.addEventListener("resize", () => {
+      if (isMobileLauncherMode()) {
+        desktopIcons.forEach(clearIconPosition);
+        return;
+      }
+
+      desktopIcons.forEach((icon) => {
+        const rect = icon.getBoundingClientRect();
+        const position = snapIconPosition(icon, rect.left, rect.top);
+        saveIconPosition(icon.dataset.openApp, position);
+      });
+    });
+  });
+</script>

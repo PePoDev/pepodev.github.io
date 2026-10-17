@@ -59,8 +59,12 @@ Run commands from the repository root. Use `pnpm build` after code changes and
 - Define site metadata in `src/consts.ts`, not `.env`.
 - Avoid broad shared-component refactors and do not recreate
   `src/content/apps.ts`.
-- `Window.astro` manages app windows. Prefer bundled `<script>` tags; use
-  `is:inline` only for global coordination, `define:vars`, or immediate setup.
+- `Window.astro` renders app windows; `WindowController.astro` manages them.
+  Prefer bundled `<script>` tags; use `is:inline` only for global coordination,
+  `define:vars`, or immediate setup.
+- Astro emits an `is:inline` script once per component instance. Keep scripts
+  for repeated components (windows, desktop icons, link shortcuts) in a
+  `*Controller.astro` rendered once in `src/pages/index.astro`.
 - Preserve keyboard access, stable `global.css` selectors, command-palette
   stacking, and case-insensitive `Ctrl`/`Cmd` + `K`.
 - Explicit `display` rules on hidden panels require a `[hidden]` override.

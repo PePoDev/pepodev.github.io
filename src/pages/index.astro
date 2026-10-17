@@ -15,11 +15,14 @@ import WelcomeApp from "../components/apps/WelcomeApp.astro";
 import WhiteNoiseApp from "../components/apps/WhiteNoiseApp.astro";
 import WorkApp from "../components/apps/WorkApp.astro";
 import DesktopIcon from "../components/desktop/DesktopIcon.astro";
+import DesktopIconController from "../components/desktop/DesktopIconController.astro";
 import ExternalLinkIcon from "../components/desktop/ExternalLinkIcon.astro";
+import ExternalLinkIconController from "../components/desktop/ExternalLinkIconController.astro";
 import CommandPalette from "../components/desktop/CommandPalette.astro";
 import StartMenu from "../components/desktop/StartMenu.astro";
 import Taskbar from "../components/desktop/Taskbar.astro";
 import Window from "../components/desktop/Window.astro";
+import WindowController from "../components/desktop/WindowController.astro";
 import BaseHead from "../components/BaseHead.astro";
 import SiteModeController from "../components/SiteModeController.astro";
 import WebsiteMode from "../components/WebsiteMode.astro";
@@ -137,6 +140,7 @@ import socialLinks from "../data/social-links.json";
           data-default-row="bottom"
         />
       </div>
+      <DesktopIconController />
 
       <!-- External Link Shortcuts -->
       <div id="desktop-links" aria-label="External shortcuts">
@@ -152,7 +156,9 @@ import socialLinks from "../data/social-links.json";
           ))
         }
       </div>
+      <ExternalLinkIconController />
 
+      <WindowController />
       <div id="windows-container">
         <Window
           appId="welcome"
