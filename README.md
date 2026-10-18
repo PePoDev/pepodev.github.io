@@ -49,7 +49,7 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 | `src/types/`, `src/utils/` | Data types and reusable logic |
 | `src/styles/global.css` | Shared desktop and app styles |
 | `public/music/` | Local audio library |
-| `tests/e2e/desktop.spec.ts` | Desktop and app Playwright coverage |
+| `tests/e2e/*.spec.ts` | Playwright coverage, one spec per area |
 | `scripts/generate-og-image.mjs` | Default Open Graph image generator |
 | `.deployment-config.md` | Security headers and caching guidance |
 | `dist/` | Generated build output; never edit directly |
@@ -96,11 +96,17 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 
 ### Interaction Invariants
 
-- Persisted icons snap to the grid and swap across app and external shortcut
-  icons when a cell is occupied.
+- App and external shortcut icons share one grid in
+  `DesktopIconController.astro`: saved positions first, then app defaults,
+  then links down the right edge (Webring first), each taking the nearest free
+  cell. Dropping an icon on an occupied cell swaps the two icons.
+- Only a drag saves an icon position. Resizes re-clamp in memory, and layout
+  waits while the desktop is hidden.
 - `Escape` closes the focused window after overlays handle it.
-- Storage keys are `pepodev.desktopPrefs`, `pepodev.music`, and
-  `pepodev.systemAudio`.
+- Storage keys are `pepodev.desktopPrefs`, `pepodev.music`,
+  `pepodev.systemAudio`, `pepodev.desktopIcon.v3.<appId>`, and
+  `pepodev.linkIcon.v4.<link id>`. Older icon key versions are removed on
+  load; bump the version to discard saved layouts.
 - `pepodev.viewMode` stores `desktop` or `website`; first visits default to
   desktop, while a non-empty `?blog=` deep link temporarily opens desktop mode
   without overwriting the saved preference.

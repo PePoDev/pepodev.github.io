@@ -4,22 +4,42 @@
     if (window.__pepodevDesktopIconsReady) return;
     window.__pepodevDesktopIconsReady = true;
 
+    // App icons and external link icons share one grid and one occupancy map,
+    // so neither kind can be placed on top of the other.
     const desktopIcons = Array.from(
       document.querySelectorAll(".desktop-icon[data-open-app]"),
     );
-    const initialRects = new Map(
-      desktopIcons.map((icon) => [icon, icon.getBoundingClientRect()]),
-    );
-    const storagePrefix = "pepodev.desktopIcon.v2.";
-    const linkStoragePrefix = "pepodev.linkIcon.v2.";
+    // Links are placed in shortcut order, so Webring keeps the top-right cell.
+    const linkIcons = Array.from(
+      document.querySelectorAll(".desktop-link-icon[id]"),
+    ).sort((a, b) => getShortcutIndex(a) - getShortcutIndex(b));
+    const allIcons = [...desktopIcons, ...linkIcons];
+    // v3/v4 drop layouts that older versions re-saved on every resize.
+    const storagePrefix = "pepodev.desktopIcon.v3.";
+    const linkStoragePrefix = "pepodev.linkIcon.v4.";
     const gridOriginX = 20;
     const gridOriginY = 20;
     const gridColumnStep = 88;
     const gridRowStep = 98;
+    const iconMargin = 8;
+    const taskbarReserve = 56;
+    // Keeps "center" icons clear of the left-hand app group on narrow screens.
+    const minCenterColumn = 6;
     const mobileQuery = window.matchMedia("(max-width: 768px)");
+    const savedPositions = new Map();
+    let occupiedCells = new Map();
+    let iconCells = new Map();
 
     function isMobileLauncherMode() {
       return mobileQuery.matches;
+    }
+
+    // A hidden desktop measures as 0x0, so layout waits until it is shown.
+    function isDesktopShown() {
+      return (
+        document.documentElement.dataset.siteMode === "desktop" &&
+        allIcons[0]?.offsetWidth > 0
+      );
     }
 
     function clearIconPosition(icon) {
@@ -31,56 +51,69 @@
       icon.style.zIndex = "";
     }
 
-    function loadIconPosition(appId) {
+    function getShortcutIndex(icon) {
+      return Number.parseInt(icon.dataset.shortcutIndex || "0", 10);
+    }
+
+    function getStorageKey(icon) {
+      return icon.dataset.openApp
+        ? storagePrefix + icon.dataset.openApp
+        : linkStoragePrefix + icon.id;
+    }
+
+    function removeStaleIconPositions() {
       try {
-        const raw = localStorage.getItem(storagePrefix + appId);
-        return raw ? JSON.parse(raw) : null;
+        const staleKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (
+            /^pepodev\.(desktopIcon|linkIcon)\.v\d+\./.test(key) &&
+            !key.startsWith(storagePrefix) &&
+            !key.startsWith(linkStoragePrefix)
+          ) {
+            staleKeys.push(key);
+          }
+        }
+        staleKeys.forEach((key) => localStorage.removeItem(key));
+      } catch {
+        // Ignore storage failures; stale keys are never read.
+      }
+    }
+
+    function loadIconPosition(icon) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(getStorageKey(icon)));
+        return Number.isFinite(saved?.x) && Number.isFinite(saved?.y)
+          ? saved
+          : null;
       } catch {
         return null;
       }
     }
 
-    function saveIconPosition(appId, position) {
+    // Only an explicit drag saves a position; resizes re-clamp in memory.
+    function saveIconPosition(icon, position) {
+      savedPositions.set(icon, position);
       try {
-        localStorage.setItem(storagePrefix + appId, JSON.stringify(position));
-      } catch {
-        // Ignore storage failures; dragging still works for the current session.
-      }
-    }
-
-    function saveAnyIconPosition(icon, position) {
-      try {
-        if (icon.dataset.openApp) {
-          localStorage.setItem(
-            storagePrefix + icon.dataset.openApp,
-            JSON.stringify(position),
-          );
-        } else if (icon.classList.contains("desktop-link-icon") && icon.id) {
-          localStorage.setItem(
-            linkStoragePrefix + icon.id,
-            JSON.stringify(position),
-          );
-        }
+        localStorage.setItem(getStorageKey(icon), JSON.stringify(position));
       } catch {
         // Ignore storage failures; dragging still works for the current session.
       }
     }
 
     function clampIconPosition(icon, x, y) {
-      const margin = 8;
-      const taskbarReserve = 56;
       const maxX = Math.max(
-        margin,
-        window.innerWidth - icon.offsetWidth - margin,
+        iconMargin,
+        window.innerWidth - icon.offsetWidth - iconMargin,
       );
       const maxY = Math.max(
-        margin,
+        iconMargin,
         window.innerHeight - icon.offsetHeight - taskbarReserve,
       );
 
       return {
-        x: Math.min(Math.max(margin, x), maxX),
-        y: Math.min(Math.max(margin, y), maxY),
+        x: Math.min(Math.max(iconMargin, x), maxX),
+        y: Math.min(Math.max(iconMargin, y), maxY),
       };
     }
 
@@ -94,26 +127,71 @@
       return next;
     }
 
-    function getSnappedPosition(icon, x, y) {
-      const current = clampIconPosition(icon, x, y);
-      const snappedX =
-        gridOriginX +
-        Math.round((current.x - gridOriginX) / gridColumnStep) *
-          gridColumnStep;
-      const snappedY =
-        gridOriginY +
-        Math.round((current.y - gridOriginY) / gridRowStep) * gridRowStep;
+    // Columns fit between equal side margins. Columns right of the center
+    // column are anchored to the right edge, so spare width stays in the
+    // middle and the link column sits against the right edge.
+    function getGrid() {
+      const icon = allIcons[0];
+      const rightColumnX = window.innerWidth - icon.offsetWidth - gridOriginX;
+      const maxY = window.innerHeight - icon.offsetHeight - taskbarReserve;
+      const maxColumn = Math.max(
+        0,
+        Math.floor((rightColumnX - gridOriginX) / gridColumnStep),
+      );
 
-      return clampIconPosition(icon, snappedX, snappedY);
+      return {
+        maxColumn,
+        maxRow: Math.max(0, Math.floor((maxY - gridOriginY) / gridRowStep)),
+        centerColumn: Math.min(
+          maxColumn,
+          Math.max(minCenterColumn, Math.round(maxColumn / 2)),
+        ),
+        rightColumnX,
+      };
     }
 
-    function snapIconPosition(icon, x, y) {
-      const next = getSnappedPosition(icon, x, y);
-      return setIconPosition(icon, next.x, next.y);
+    function getCellKey(cell) {
+      return cell.column + "," + cell.row;
     }
 
-    function getGridIndex(value, maxIndex, fallback) {
-      const centerIndex = Math.round(maxIndex / 2);
+    function getColumnX(column, grid) {
+      return column > grid.centerColumn
+        ? grid.rightColumnX - (grid.maxColumn - column) * gridColumnStep
+        : gridOriginX + column * gridColumnStep;
+    }
+
+    function getCellPosition(cell, grid) {
+      return {
+        x: getColumnX(cell.column, grid),
+        y: gridOriginY + cell.row * gridRowStep,
+      };
+    }
+
+    // Column spacing is uneven around the middle, so pick the nearest column.
+    function getCellFromPosition(position, grid) {
+      let column = 0;
+      for (let next = 1; next <= grid.maxColumn; next++) {
+        if (
+          Math.abs(getColumnX(next, grid) - position.x) <
+          Math.abs(getColumnX(column, grid) - position.x)
+        ) {
+          column = next;
+        }
+      }
+      const row = Math.round((position.y - gridOriginY) / gridRowStep);
+
+      return {
+        column,
+        row: Math.min(Math.max(0, row), grid.maxRow),
+      };
+    }
+
+    function getGridIndex(
+      value,
+      maxIndex,
+      fallback,
+      centerIndex = Math.round(maxIndex / 2),
+    ) {
       const centerMatch = String(value || "").match(/^center([+-]\d+)?$/);
       if (centerMatch) {
         const offset = Number.parseInt(centerMatch[1] || "0", 10);
@@ -151,29 +229,25 @@
       };
     }
 
-    function getDefaultIconPosition(icon, fallbackRect) {
-      const maxX = window.innerWidth - icon.offsetWidth - 8;
-      const maxY = window.innerHeight - icon.offsetHeight - 56;
-      const maxColumn = Math.max(
-        0,
-        Math.floor((maxX - gridOriginX) / gridColumnStep),
-      );
-      const maxRow = Math.max(
-        0,
-        Math.floor((maxY - gridOriginY) / gridRowStep),
-      );
-      const fallbackColumn = Math.round(
-        ((fallbackRect?.left || gridOriginX) - gridOriginX) / gridColumnStep,
-      );
-      const fallbackRow = Math.round(
-        ((fallbackRect?.top || gridOriginY) - gridOriginY) / gridRowStep,
-      );
+    function getDefaultCell(icon, grid) {
+      const { maxColumn, maxRow } = grid;
+
+      if (!icon.dataset.openApp) {
+        // Links stack down the right edge and wrap into the column to its left.
+        const index = getShortcutIndex(icon);
+        return {
+          column: Math.max(0, maxColumn - Math.floor(index / (maxRow + 1))),
+          row: index % (maxRow + 1),
+        };
+      }
+
       let column = getGridIndex(
         icon.dataset.defaultCol,
         maxColumn,
-        fallbackColumn,
+        0,
+        grid.centerColumn,
       );
-      let row = getGridIndex(icon.dataset.defaultRow, maxRow, fallbackRow);
+      let row = getGridIndex(icon.dataset.defaultRow, maxRow, 0);
 
       if (icon.dataset.layoutGroup === "utility" && maxRow <= 6) {
         const utilityPosition = getUtilityPosition(icon, maxColumn, maxRow);
@@ -184,60 +258,118 @@
         row = Math.max(2, maxRow - 2 + offset);
       }
 
-      return {
-        x: gridOriginX + column * gridColumnStep,
-        y: gridOriginY + row * gridRowStep,
-      };
+      return { column, row };
     }
 
-    function findIconAtPosition(sourceIcon, position) {
-      const targetCenterX = position.x + sourceIcon.offsetWidth / 2;
-      const targetCenterY = position.y + sourceIcon.offsetHeight / 2;
+    // Nearest by grid steps, preferring the same column; the target cell
+    // itself is returned when every cell is taken.
+    function findNearestFreeCell(target, grid) {
+      let nearest = target;
+      let nearestDistance = Infinity;
+      let nearestColumnDistance = Infinity;
 
-      return Array.from(document.querySelectorAll(".desktop-icon")).find(
-        (icon) => {
-          if (icon === sourceIcon) return false;
+      for (let row = 0; row <= grid.maxRow; row++) {
+        for (let column = 0; column <= grid.maxColumn; column++) {
+          if (occupiedCells.has(getCellKey({ column, row }))) continue;
 
-          const rect = icon.getBoundingClientRect();
-          const iconCenterX = rect.left + rect.width / 2;
-          const iconCenterY = rect.top + rect.height / 2;
-          return (
-            Math.abs(iconCenterX - targetCenterX) < gridColumnStep / 2 &&
-            Math.abs(iconCenterY - targetCenterY) < gridRowStep / 2
-          );
-        },
-      );
-    }
-
-    function snapIconPositionWithSwap(icon, x, y, previousX, previousY) {
-      const position = getSnappedPosition(icon, x, y);
-      const occupiedIcon = findIconAtPosition(icon, position);
-
-      if (occupiedIcon) {
-        const swappedPosition = snapIconPosition(occupiedIcon, previousX, previousY);
-        saveAnyIconPosition(occupiedIcon, swappedPosition);
+          const columnDistance = Math.abs(column - target.column);
+          const distance = columnDistance + Math.abs(row - target.row);
+          if (
+            distance < nearestDistance ||
+            (distance === nearestDistance &&
+              columnDistance < nearestColumnDistance)
+          ) {
+            nearest = { column, row };
+            nearestDistance = distance;
+            nearestColumnDistance = columnDistance;
+          }
+        }
       }
 
-      return setIconPosition(icon, position.x, position.y);
+      return nearest;
     }
 
-    function initializeDesktopIcon(icon) {
-      if (isMobileLauncherMode()) {
-        clearIconPosition(icon);
-        icon.dataset.desktopIconReady = "true";
-        return;
-      }
+    function placeIcon(icon, target, grid) {
+      const cell = occupiedCells.has(getCellKey(target))
+        ? findNearestFreeCell(target, grid)
+        : target;
+      const position = getCellPosition(cell, grid);
 
-      const appId = icon.dataset.openApp;
-      const initialRect = initialRects.get(icon);
-      const saved = loadIconPosition(appId);
-      const initial = saved || getDefaultIconPosition(icon, initialRect);
-
-      snapIconPosition(icon, initial.x, initial.y);
+      occupiedCells.set(getCellKey(cell), icon);
+      iconCells.set(icon, cell);
+      setIconPosition(icon, position.x, position.y);
       icon.dataset.desktopIconReady = "true";
     }
 
-    desktopIcons.forEach(initializeDesktopIcon);
+    function layoutDesktopIcons() {
+      if (isMobileLauncherMode()) {
+        allIcons.forEach(clearIconPosition);
+        return;
+      }
+      if (!isDesktopShown()) return;
+
+      const grid = getGrid();
+      occupiedCells = new Map();
+      iconCells = new Map();
+
+      // Saved positions claim their cells first, then app defaults, then links.
+      allIcons
+        .filter((icon) => savedPositions.has(icon))
+        .forEach((icon) =>
+          placeIcon(
+            icon,
+            getCellFromPosition(savedPositions.get(icon), grid),
+            grid,
+          ),
+        );
+      allIcons
+        .filter((icon) => !savedPositions.has(icon))
+        .forEach((icon) => placeIcon(icon, getDefaultCell(icon, grid), grid));
+    }
+
+    // Snaps a dragged icon to the nearest cell. An icon already in that cell,
+    // app or link, swaps into the dragged icon's previous cell.
+    function dropIcon(icon, x, y) {
+      const grid = getGrid();
+      const cell = getCellFromPosition({ x, y }, grid);
+      const occupiedIcon = occupiedCells.get(getCellKey(cell));
+      const previousCell = iconCells.get(icon);
+      const dropKeys = new Set([getCellKey(cell)]);
+      if (previousCell) dropKeys.add(getCellKey(previousCell));
+
+      // A saved icon displaced on this screen size would reclaim a cell of
+      // this drop on the next layout; pin it where it is shown instead.
+      savedPositions.forEach((position, other) => {
+        if (other === icon || other === occupiedIcon) return;
+        const shownCell = iconCells.get(other);
+        const savedKey = getCellKey(getCellFromPosition(position, grid));
+        if (
+          shownCell &&
+          dropKeys.has(savedKey) &&
+          savedKey !== getCellKey(shownCell)
+        ) {
+          saveIconPosition(other, getCellPosition(shownCell, grid));
+        }
+      });
+
+      if (occupiedIcon && occupiedIcon !== icon && previousCell) {
+        saveIconPosition(occupiedIcon, getCellPosition(previousCell, grid));
+      }
+      saveIconPosition(icon, getCellPosition(cell, grid));
+      layoutDesktopIcons();
+    }
+
+    window.__pepodevDesktopIconGrid = {
+      move: setIconPosition,
+      drop: dropIcon,
+    };
+
+    removeStaleIconPositions();
+    allIcons.forEach((icon) => {
+      const saved = loadIconPosition(icon);
+      if (saved) savedPositions.set(icon, saved);
+    });
+    layoutDesktopIcons();
 
     document.querySelectorAll("[data-open-app]").forEach((trigger) => {
       if (trigger.dataset.launcherBound === "true") return;
@@ -297,14 +429,7 @@
 
           if (isDragging) {
             const rect = trigger.getBoundingClientRect();
-            const position = snapIconPositionWithSwap(
-              trigger,
-              rect.left,
-              rect.top,
-              iconStartX,
-              iconStartY,
-            );
-            saveIconPosition(trigger.dataset.openApp, position);
+            dropIcon(trigger, rect.left, rect.top);
             trigger.classList.remove("dragging");
             isDragging = false;
             return;
@@ -337,32 +462,15 @@
       }
     });
 
-    function syncLauncherLayout() {
-      if (isMobileLauncherMode()) {
-        desktopIcons.forEach(clearIconPosition);
-        return;
-      }
-
-      desktopIcons.forEach(initializeDesktopIcon);
-    }
-
     if (mobileQuery.addEventListener) {
-      mobileQuery.addEventListener("change", syncLauncherLayout);
+      mobileQuery.addEventListener("change", layoutDesktopIcons);
     } else {
-      mobileQuery.addListener(syncLauncherLayout);
+      mobileQuery.addListener(layoutDesktopIcons);
     }
 
-    window.addEventListener("resize", () => {
-      if (isMobileLauncherMode()) {
-        desktopIcons.forEach(clearIconPosition);
-        return;
-      }
-
-      desktopIcons.forEach((icon) => {
-        const rect = icon.getBoundingClientRect();
-        const position = snapIconPosition(icon, rect.left, rect.top);
-        saveIconPosition(icon.dataset.openApp, position);
-      });
+    window.addEventListener("resize", layoutDesktopIcons);
+    document.addEventListener("site:mode-change", (event) => {
+      if (event.detail?.mode === "desktop") layoutDesktopIcons();
     });
   });
 </script>
