@@ -1,4 +1,6 @@
 ---
+title: Obsidian กับเรื่อง Multiple-Devices
+pubDate: 2023-12-22T10:07:41Z
 url-slug: obsidian-multiple-device
 sub-title: การเซ็ทอัพ Obsidian ให้ใช้งานได้ในหลายๆอุปกรณ์
 cover-picture: ../../assets/blog/obsidian-multi-devices-cover.png

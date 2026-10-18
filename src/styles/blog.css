@@ -32,7 +32,7 @@
 
 .blog-item-meta {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
 }
 
@@ -155,7 +155,7 @@
 
 .blog-reader-date {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
 }
 
@@ -170,6 +170,7 @@
   font-size: 14px;
   line-height: 1.7;
   color: var(--text-secondary);
+  overflow-wrap: break-word;
 }
 
 .blog-reader-body p {
@@ -205,19 +206,22 @@
   margin: 20px 0 8px;
 }
 
-.blog-reader-body a {
+.blog-reader-body a,
+.prose a {
   color: var(--accent-cyan);
   text-decoration: none;
   border-bottom: 1px solid rgba(100, 210, 255, 0.3);
   transition: all 0.15s ease;
 }
 
-.blog-reader-body a:hover {
+.blog-reader-body a:hover,
+.prose a:hover {
   color: var(--accent-blue);
   border-bottom-color: var(--accent-blue);
 }
 
-.blog-reader-body a:visited {
+.blog-reader-body a:visited,
+.prose a:visited {
   color: var(--accent-purple);
   border-bottom-color: rgba(191, 90, 242, 0.3);
 }
@@ -259,4 +263,113 @@
 .blog-reader-body th,
 .prose th {
   color: var(--text-primary);
+}
+
+/* Standalone article pages (BlogPost.astro). Markdown renders through
+   <slot />, which scoped component styles never reach, so they live here. */
+.prose {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: color-mix(in srgb, var(--text-primary) 85%, var(--bg-primary));
+  overflow-wrap: break-word;
+}
+
+.prose :is(p, ul, ol, blockquote, pre, table) {
+  margin: 0 0 1.25em;
+}
+
+.prose :is(h2, h3, h4),
+.prose strong {
+  color: var(--text-primary);
+}
+
+.prose :is(h2, h3, h4) {
+  line-height: 1.4;
+}
+
+.prose h2 {
+  margin: 2em 0 0.6em;
+  font-size: 1.5rem;
+}
+
+.prose h3 {
+  margin: 1.6em 0 0.5em;
+  font-size: 1.25rem;
+}
+
+.prose h4 {
+  margin: 1.4em 0 0.4em;
+  font-size: 1.0625rem;
+}
+
+.prose :is(ul, ol) {
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin-bottom: 0.4em;
+}
+
+.prose li > :is(ul, ol) {
+  margin: 0.4em 0 0;
+}
+
+.prose li::marker {
+  color: var(--text-secondary);
+}
+
+.prose blockquote {
+  padding-left: 1em;
+  border-left: 3px solid var(--accent-cyan);
+  color: var(--text-secondary);
+}
+
+.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.prose code {
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-green);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.prose pre {
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+}
+
+.prose :is(th, td) {
+  line-height: 1.5;
+}
+
+.prose hr {
+  margin: 2em 0;
+  border: 0;
+  border-top: 1px solid var(--glass-border);
 }

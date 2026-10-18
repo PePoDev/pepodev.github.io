@@ -348,7 +348,7 @@ test("opens a blog article in desktop mode from the blog query parameter", async
   await expect(blogWindow.locator("[data-blog-list-view]")).toBeHidden();
   await expect(article).toBeVisible();
   await expect(article.locator(".blog-reader-title")).toHaveText(
-    "Aws Local Zone Bangkok Launch",
+    "AWS Local Zone Bangkok Launch",
   );
   await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
     "cat articles/aws-local-zone-bangkok-launch",

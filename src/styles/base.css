@@ -11,12 +11,18 @@
 html,
 body {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
   font-family: var(--font-sans);
   color: var(--text-primary);
   background: var(--bg-primary);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Lock the desktop shell to one screen. Website mode (website-mode.css) and
+   the standalone blog pages, which have no data-site-mode, scroll normally. */
+html[data-site-mode="desktop"],
+html[data-site-mode="desktop"] body {
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Selection color */

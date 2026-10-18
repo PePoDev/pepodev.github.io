@@ -390,9 +390,17 @@ html[data-site-mode="website"] body {
 
 .website-project-heading span,
 .website-writing-card time {
-  color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.75rem;
+}
+
+.website-project-heading span {
+  color: var(--text-muted);
+}
+
+/* --text-muted is about 3:1 on the card; dates need 4.5:1. */
+.website-writing-card time {
+  color: var(--text-secondary);
 }
 
 .website-project-card > p,

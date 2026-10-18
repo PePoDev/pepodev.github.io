@@ -1,38 +1,14 @@
 ---
-import { getCollection, render } from "astro:content";
+import { render } from "astro:content";
+import FormattedDate from "@components/FormattedDate.astro";
+import { getPostDescription, getPublishedPosts } from "@utils/blog";
 
 const posts = await Promise.all(
-  (await getCollection("blog"))
-    .filter((post) => post.data.publish !== false)
-    .sort((a, b) => {
-      const aDate = a.data.pubDate || new Date(0);
-      const bDate = b.data.pubDate || new Date(0);
-      return bDate.valueOf() - aDate.valueOf();
-    })
-    .map(async (post) => {
-      const { Content } = await render(post);
-      return { post, Content };
-    }),
+  (await getPublishedPosts()).map(async (post) => {
+    const { Content } = await render(post);
+    return { post, Content };
+  }),
 );
-
-const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat("en", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  }).format(date);
-
-// Convert slug/id to readable title
-const formatTitle = (id: string) => {
-  return id
-    .split("-")
-    .map((word) => {
-      // Capitalize first letter of each word, preserve the rest (for Thai, etc.)
-      if (word.length === 0) return word;
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join(" ");
-};
 ---
 
 <div class="app-content" data-blog-app>
@@ -48,9 +24,7 @@ const formatTitle = (id: string) => {
     <div class="blog-list">
       {
         posts.map(({ post }, index) => {
-          const title = formatTitle(post.id);
-          const description =
-            post.data.description || post.data["sub-title"] || "";
+          const description = getPostDescription(post);
           return (
             <button
               class="blog-item"
@@ -58,12 +32,10 @@ const formatTitle = (id: string) => {
               data-blog-index={index}
               data-blog-slug={post.id}
             >
-              <div class="blog-item-title">{title}</div>
-              {post.data.pubDate && (
-                <div class="blog-item-meta">
-                  {formatDate(post.data.pubDate)}
-                </div>
-              )}
+              <div class="blog-item-title">{post.data.title}</div>
+              <div class="blog-item-meta">
+                <FormattedDate date={post.data.pubDate} />
+              </div>
               <div class="blog-item-desc">{description}</div>
               {post.data.tags && post.data.tags.length > 0 && (
                 <div class="blog-item-tags">
@@ -81,7 +53,6 @@ const formatTitle = (id: string) => {
   <div class="blog-reader" data-blog-reader>
     {
       posts.map(({ post, Content }, index) => {
-        const title = formatTitle(post.id);
         return (
           <article
             class="blog-post-panel"
@@ -117,12 +88,10 @@ const formatTitle = (id: string) => {
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
               </button>
-              <h2 class="blog-reader-title">{title}</h2>
-              {post.data.pubDate && (
-                <div class="blog-reader-date">
-                  {formatDate(post.data.pubDate)}
-                </div>
-              )}
+              <h2 class="blog-reader-title">{post.data.title}</h2>
+              <div class="blog-reader-date">
+                <FormattedDate date={post.data.pubDate} />
+              </div>
               {post.data.tags && post.data.tags.length > 0 && (
                 <div class="blog-reader-tags">
                   {post.data.tags.map((tag) => (

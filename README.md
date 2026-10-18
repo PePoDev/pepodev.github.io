@@ -73,6 +73,11 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 - Preserve keyboard access, stable `global.css` selectors, command-palette
   stacking, and case-insensitive `Ctrl`/`Cmd` + `K`.
 - Explicit `display` rules on hidden panels require a `[hidden]` override.
+- `base.css` locks only `html[data-site-mode="desktop"]` to one screen; every
+  other page must scroll.
+- Markdown article styles are global in `src/styles/blog.css`: `.prose` on post
+  pages, `.blog-reader-body` in the desktop reader. Scoped component styles do
+  not reach Markdown rendered through `<slot />` or `<Content />`.
 - List a new desktop overlay in both `isEscapeOwnedByOverlay`
   (`WindowController.astro`) and `isDesktopOverlayOpen`
   (`src/utils/app-keyboard.ts`).
@@ -88,6 +93,13 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
   prefixed local images from `src/assets/blog/`; builds optimize them to WebP.
   `cover-picture` and `heroImage` are validated as images, so they must be
   relative paths to existing files.
+- Every post needs `title` and `pubDate` frontmatter next to its Obsidian
+  fields. List posts through `src/utils/blog.ts`, not `getCollection("blog")`,
+  so drafts, sort order, and fallbacks match everywhere. Post ids, URLs, and RSS
+  links come from file names; do not change them.
+- `image.layout: "constrained"` in `astro.config.mjs` gives Markdown and
+  `<Image>` output a srcset. Every article is also rendered in
+  `dist/index.html`, so check its size after adding breakpoints or many images.
 - Put audio in `public/music/`; `src/data/music.ts` discovers it at build time.
   Verify playback in a real browser.
 - Regenerate `public/og-image.png` with
@@ -139,7 +151,7 @@ For substantial changes:
 4. Manually test window opening, minimizing, maximizing, closing, dragging, and
    taskbar behavior when interaction code changes.
 5. Confirm affected `/`, `/blog/`, and `/rss.xml` routes build for content
-   changes.
+   changes, and blog pages scroll without sideways overflow at phone width.
 
 ## Deployment and Git
 

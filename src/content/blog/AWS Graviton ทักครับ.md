@@ -1,4 +1,6 @@
 ---
+title: AWS Graviton ทักครับ 👋
+pubDate: 2024-01-14T13:14:03Z
 url-slug: aws-graviton-introduction
 sub-title: ภาพรวมของ AWS Graviton ที่ให้ประสิทธิภาพแรงขึ้นแต่ราคาถูกลง บ้าไปแล้ววววว
 cover-picture: ../../assets/blog/aws-graviton-cover.png

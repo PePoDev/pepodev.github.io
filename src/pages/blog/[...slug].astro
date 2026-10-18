@@ -1,26 +1,32 @@
 ---
-import { type CollectionEntry, getCollection, render } from "astro:content";
+import { render } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
+import {
+  type BlogEntry,
+  getPostDescription,
+  getPostHeroImage,
+  getPublishedPosts,
+} from "@utils/blog";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog");
+  const posts = await getPublishedPosts();
   return posts.map((post) => ({
     params: { slug: post.id },
     props: post,
   }));
 }
-type Props = CollectionEntry<"blog">;
+type Props = BlogEntry;
 
 const post = Astro.props;
 const { Content } = await render(post);
 
 // Map Obsidian fields to expected format
 const mappedData = {
-  title: post.data.title || post.id,
-  description: post.data.description || post.data["sub-title"] || "",
+  title: post.data.title,
+  description: getPostDescription(post),
   pubDate: post.data.pubDate,
   updatedDate: post.data.updatedDate,
-  heroImage: post.data.heroImage || post.data["cover-picture"],
+  heroImage: getPostHeroImage(post),
 };
 ---
 

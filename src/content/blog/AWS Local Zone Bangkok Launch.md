@@ -1,4 +1,6 @@
 ---
+title: AWS Local Zone Bangkok Launch
+pubDate: 2023-03-13T14:22:51Z
 url-slug: aws-local-zone-bangkok-launch
 sub-title: Local zone คืออะไรและเมื่อไหร่ถึงควรใช้กันนะ?
 cover-picture: ../../assets/blog/aws-local-zone-cover.png

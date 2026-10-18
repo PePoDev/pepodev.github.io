@@ -1,4 +1,6 @@
 ---
+title: Do the Fun Chaos Engineering with Gamification!
+pubDate: 2023-03-13T14:24:06Z
 url-slug: do-the-fun-chaos-engineering-with-gamification
 sub-title: Is Chaos Engineering fun? Nani!!
 cover-picture: ../../assets/blog/chaos-engineering-02-kubedoom.png

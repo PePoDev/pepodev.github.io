@@ -12,6 +12,8 @@ const { date } = Astro.props;
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric',
+			// Render the same calendar day whatever the build machine's time zone.
+			timeZone: 'UTC',
 		})
 	}
 </time>

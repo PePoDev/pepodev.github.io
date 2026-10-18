@@ -8,10 +8,11 @@ const blog = defineCollection({
   // Type-check frontmatter using a schema
   schema: ({ image }) =>
     z.object({
-      // Support both new format and legacy Obsidian format
-      title: z.string().optional(),
+      // Required on every post; Obsidian edits them as properties alongside
+      // the legacy fields below.
+      title: z.string(),
       description: z.string().optional(),
-      pubDate: z.coerce.date().optional(),
+      pubDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
       heroImage: z.optional(image()),
       tags: z.array(z.string()).optional(),

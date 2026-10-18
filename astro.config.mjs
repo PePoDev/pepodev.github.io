@@ -21,6 +21,11 @@ export default defineConfig({
   image: {
     domains: [],
     remotePatterns: [],
+    // Give Markdown and <Image> output a srcset, so readers download a
+    // screen-sized file instead of the original (up to 4000px wide). Keep the
+    // breakpoint list short: every article is also rendered in index.html.
+    layout: "constrained",
+    breakpoints: [640, 960, 1280, 1920],
   },
   vite: {
     build: {

@@ -1,4 +1,6 @@
 ---
+title: ผิดไหมถ้าใจอยากจะใช้ Arch Linux บน WSL
+pubDate: 2023-12-22T17:40:22Z
 url-slug: arch-linux-wsl
 sub-title: วิธีการติดตั้ง Linux distro ใดๆก็ตามที่เราต้องการลงบน WSL
 cover-picture: ../../assets/blog/arch-linux-wsl-cover.webp

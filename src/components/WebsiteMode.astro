@@ -9,15 +9,9 @@ import skills from "@data/skills.json";
 import socialLinks from "@data/social-links.json";
 import workMetrics from "@data/work-metrics.json";
 import "@styles/website-mode.css";
-import { getCollection } from "astro:content";
+import { getPostDescription, getPublishedPosts } from "@utils/blog";
 
-const latestPosts = (await getCollection("blog"))
-  .filter(({ data }) => data.publish !== false)
-  .sort(
-    (a, b) =>
-      (b.data.pubDate?.valueOf() ?? 0) - (a.data.pubDate?.valueOf() ?? 0),
-  )
-  .slice(0, 3);
+const latestPosts = (await getPublishedPosts()).slice(0, 3);
 const featuredProjects = projects.filter(({ archived }) => !archived);
 const socialIcons = new Set(["github", "linkedin", "email", "blog", "garden"]);
 const primarySocials = socialLinks.filter(({ icon }) => socialIcons.has(icon));
@@ -27,10 +21,6 @@ const emailHref =
 const resumeHref =
   socialLinks.find(({ icon }) => icon === "resume")?.href ?? "/resume";
 const currentYear = new Date().getFullYear();
-const getPostTitle = (post: (typeof latestPosts)[number]) =>
-  post.data.title ??
-  post.id.split("/").at(-1)?.replace(/[-_]+/g, " ") ??
-  post.id;
 ---
 
 <div
@@ -237,15 +227,11 @@ const getPostTitle = (post: (typeof latestPosts)[number]) =>
           <div class="website-writing-grid">
             {latestPosts.map((post) => (
               <article class="website-writing-card">
-                {post.data.pubDate && (
-                  <FormattedDate date={post.data.pubDate} />
-                )}
+                <FormattedDate date={post.data.pubDate} />
                 <h3>
-                  <a href={`/blog/${post.id}/`}>{getPostTitle(post)}</a>
+                  <a href={`/blog/${post.id}/`}>{post.data.title}</a>
                 </h3>
-                <p>
-                  {post.data.description ?? post.data["sub-title"] ?? ""}
-                </p>
+                <p>{getPostDescription(post)}</p>
                 {post.data.tags && post.data.tags.length > 0 && (
                   <ul class="website-tags" aria-label="Article tags">
                     {post.data.tags.slice(0, 3).map((tag) => (
