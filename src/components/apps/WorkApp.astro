@@ -1,7 +1,8 @@
 ---
-import type { Experience, WorkMetric } from "@app-types/data";
 import experiences from "@data/experiences.json";
-import workMetrics from "@data/work-metrics.json";
+import { getCareerSummary, getWorkMetrics } from "@utils/experience";
+
+const workMetrics = getWorkMetrics(getCareerSummary(experiences));
 ---
 
 <div class="app-content">

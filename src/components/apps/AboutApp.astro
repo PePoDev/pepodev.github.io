@@ -1,6 +1,11 @@
 ---
-import type { Skill } from "@app-types/data";
+import education from "@data/education.json";
+import experiences from "@data/experiences.json";
 import skills from "@data/skills.json";
+import { formatDegree, formatEducationYears } from "@utils/education";
+import { getCareerSummary, numberToWords } from "@utils/experience";
+
+const { years } = getCareerSummary(experiences);
 ---
 
 <div class="app-content">
@@ -20,7 +25,7 @@ import skills from "@data/skills.json";
   </div>
   <h3>Who Am I</h3>
   <p>
-    Experienced and energetic DevOps Engineer with over four years of experience
+    Experienced and energetic DevOps Engineer with over {numberToWords(years)} years of experience
     effectively managing infrastructure projects from conception to completion.
     I specialize in using Kubernetes, Terraform, and many open-source
     technologies to deliver an efficient and reliable platform.
@@ -48,15 +53,11 @@ import skills from "@data/skills.json";
     <div
       style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;"
     >
-      <strong style="font-size: 1rem;"
-        >Bachelor Degrees, Computer Science</strong
-      >
+      <strong style="font-size: 1rem;">{formatDegree(education)}</strong>
       <span style="color: var(--text-secondary); font-size: 0.9rem;"
-        >2016 - 2020</span
+        >{formatEducationYears(education)}</span
       >
     </div>
-    <p style="color: var(--text-secondary); margin: 0;">
-      King Mongkut's Institute of Technology Ladkrabang
-    </p>
+    <p style="color: var(--text-secondary); margin: 0;">{education.school}</p>
   </div>
 </div>

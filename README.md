@@ -89,6 +89,11 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 
 - Store portfolio content in `src/data/`; update `src/types/data.ts` for schema
   changes and extract reusable logic to `src/utils/`.
+- Years of experience, company count, tenure, and the career-uptime strip are
+  computed at build time by `src/utils/experience.ts` from each
+  `experiences.json` period (`"May 2020 - June 2022"` or
+  `"February 2024 - Present"`); do not hard-code them. Education lives in
+  `education.json`.
 - Store posts in `src/content/blog/` using `src/content.config.ts`. Reference
   prefixed local images from `src/assets/blog/`; builds optimize them to WebP.
   `cover-picture` and `heroImage` are validated as images, so they must be
@@ -108,8 +113,9 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
   `CommandPalette.astro`, and `AppIcon.astro`.
 - The resume remains a standalone `/resume` page; do not restore
   `ResumeApp.astro`. It renders as HTML from `experiences.json`,
-  `skills.json`, and `certifications.json`, and Download PDF builds the PDF
-  from the same data. Never auto-download, close the window, or navigate away.
+  `skills.json`, `education.json`, and `certifications.json`, and Download PDF
+  builds the PDF from the same data. Never auto-download, close the window, or
+  navigate away.
 
 ### Interaction Invariants
 
@@ -160,7 +166,8 @@ For substantial changes:
 ## Deployment and Git
 
 GitHub Pages deploys `main` through `.github/workflows/deploy.yaml` using
-`withastro/action` and `actions/deploy-pages`.
+`withastro/action` and `actions/deploy-pages`. It also rebuilds on the first of
+every month so the computed experience values stay current.
 
 Preserve existing worktree changes, avoid destructive Git commands unless
 explicitly requested, and do not commit generated artifacts unless tracked.

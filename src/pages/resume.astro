@@ -1,9 +1,10 @@
 ---
 import BaseHead from "@components/BaseHead.astro";
 import certifications from "@data/certifications.json";
+import education from "@data/education.json";
 import experiences from "@data/experiences.json";
 import skills from "@data/skills.json";
-import "@styles/website-mode.css";
+import { formatDegree, formatEducationYears } from "@utils/education";
 
 const contactLinks = [
   { label: "Bangkok, Thailand" },
@@ -25,9 +26,9 @@ const resumePdfData = {
   summary:
     "Site Reliability Engineer specializing in cloud infrastructure, Kubernetes platforms, observability, infrastructure as code, GitOps delivery, and reliability practices for production systems.",
   education: [
-    "Bachelor Degrees, Computer Science",
-    "King Mongkut's Institute of Technology Ladkrabang",
-    "2016 - 2020",
+    formatDegree(education),
+    education.school,
+    formatEducationYears(education),
   ],
   experiences,
   skills: skills.map((skill) => `${skill.name} - ${skill.level}%`),
@@ -49,11 +50,147 @@ const currentYear = new Date().getFullYear();
     />
     <style>
       .resume-page {
-        --website-content-width: 920px;
+        --resume-content-width: 920px;
+        min-height: 100dvh;
+        background:
+          radial-gradient(
+            circle at 15% 0%,
+            color-mix(in srgb, var(--accent-primary) 14%, transparent),
+            transparent 32rem
+          ),
+          var(--bg-primary);
+        color: var(--text-primary);
+      }
+
+      /* Global, so :where() keeps it at element specificity and class
+         rules such as .resume-skip-link win (a scoped rule would add the
+         component's attribute selector and outrank them). */
+      :global(:where(.resume-page) a) {
+        color: inherit;
+      }
+
+      .resume-skip-link {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        z-index: 10001;
+        transform: translateY(-160%);
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .resume-skip-link:focus {
+        transform: translateY(0);
+      }
+
+      .resume-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 1px solid var(--glass-border);
+        background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+      }
+
+      .resume-header-inner,
+      .resume-footer {
+        width: min(calc(100% - 32px), var(--resume-content-width));
+        margin-inline: auto;
+      }
+
+      .resume-header-inner {
+        min-height: 68px;
+        display: flex;
+        align-items: center;
+      }
+
+      @media (max-width: 860px) {
+        .resume-header-inner {
+          min-height: 64px;
+          padding-block: 10px;
+        }
+      }
+
+      .resume-brand {
+        color: var(--text-primary);
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .resume-eyebrow {
+        margin-bottom: 14px;
+        color: var(--accent-primary);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .resume-button {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 18px;
+        border: 1px solid var(--accent-primary);
+        border-radius: 999px;
+        background: var(--accent-primary);
+        color: #07110a;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .resume-skills {
+        display: flex;
+        align-content: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+        list-style: none;
+      }
+
+      .resume-skills li {
+        padding: 7px 10px;
+        border: 1px solid var(--glass-border);
+        border-radius: 999px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+      }
+
+      .resume-footer {
+        padding-block: 28px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      .resume-page :is(a, button):focus-visible {
+        outline: 3px solid var(--accent-secondary);
+        outline-offset: 3px;
+      }
+
+      @media (hover: hover) {
+        .resume-button {
+          transition:
+            transform 0.18s ease,
+            border-color 0.18s ease;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .resume-button {
+          transition: none;
+        }
       }
 
       .resume-main {
-        width: min(calc(100% - 32px), var(--website-content-width));
+        width: min(calc(100% - 32px), var(--resume-content-width));
         margin-inline: auto;
         padding-block: clamp(40px, 7vw, 72px);
       }
@@ -223,9 +360,9 @@ const currentYear = new Date().getFullYear();
           background: none;
         }
 
-        .website-header,
+        .resume-header,
         .resume-actions,
-        .website-footer {
+        .resume-footer {
           display: none;
         }
 
@@ -246,18 +383,18 @@ const currentYear = new Date().getFullYear();
     </style>
   </head>
   <body>
-    <div class="website-shell resume-page">
-      <a class="website-skip-link" href="#resume-main">Skip to content</a>
+    <div class="resume-page">
+      <a class="resume-skip-link" href="#resume-main">Skip to content</a>
 
-      <header class="website-header">
-        <div class="website-header-inner">
-          <a class="website-brand" href="/">PePoDev</a>
+      <header class="resume-header">
+        <div class="resume-header-inner">
+          <a class="resume-brand" href="/">PePoDev</a>
         </div>
       </header>
 
       <main id="resume-main" class="resume-main">
         <header class="resume-intro">
-          <p class="website-eyebrow">Resume</p>
+          <p class="resume-eyebrow">Resume</p>
           <h1>{resumePdfData.name}</h1>
           <p class="resume-title">{resumePdfData.title}</p>
           <ul class="resume-contact" aria-label="Contact">
@@ -271,7 +408,7 @@ const currentYear = new Date().getFullYear();
           <div class="resume-actions">
             <button
               type="button"
-              class="website-button website-button--primary resume-download"
+              class="resume-button resume-download"
               data-resume-download
               hidden
             >
@@ -310,7 +447,7 @@ const currentYear = new Date().getFullYear();
 
         <section class="resume-section" aria-labelledby="resume-skills">
           <h2 id="resume-skills">Technical Skills</h2>
-          <ul class="website-skills">
+          <ul class="resume-skills">
             {skills.map((skill) => <li>{skill.name}</li>)}
           </ul>
         </section>
@@ -347,7 +484,7 @@ const currentYear = new Date().getFullYear();
         </section>
       </main>
 
-      <footer class="website-footer">
+      <footer class="resume-footer">
         <p>© {currentYear} PePoDev. Built as a static Astro site.</p>
       </footer>
     </div>

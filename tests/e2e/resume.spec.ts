@@ -73,6 +73,17 @@ test("resume page renders the resume as HTML without auto-downloading", async ({
   await expect(page).toHaveURL(/\/resume\/?$/);
 });
 
+test("resume skip link keeps dark text on the accent", async ({ page }) => {
+  await page.goto("/resume");
+  await page.keyboard.press("Tab");
+  const skip = page.getByRole("link", { name: "Skip to content" });
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeInViewport();
+  // --bg-primary text on --accent-primary, about 8.4:1 in the default theme.
+  await expect(skip).toHaveCSS("color", "rgb(28, 28, 30)");
+  await expect(skip).toHaveCSS("background-color", "rgb(48, 209, 88)");
+});
+
 test("resume lists certifications as earned history in HTML and PDF", async ({
   page,
 }) => {

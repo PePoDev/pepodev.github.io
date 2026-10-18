@@ -3,6 +3,8 @@
 export interface Project {
   name: string;
   description: string;
+  /** Edited one-line copy for website mode; falls back to `description`. */
+  summary?: string;
   stars: number;
   tags: string[];
   archived: boolean;
@@ -13,15 +15,24 @@ export interface Project {
 export interface Experience {
   company: string;
   role: string;
+  /** "February 2024 - Present"; parsed by src/utils/experience.ts. */
   period: string;
-  description: string;
-  achievements: string[];
-  technologies: string[];
+  details: string[];
 }
 
 export interface Skill {
-  category: string;
-  items: string[];
+  name: string;
+  level: number;
+}
+
+export interface Education {
+  degree: string;
+  degreeShort: string;
+  field: string;
+  school: string;
+  schoolShort: string;
+  startYear: number;
+  endYear: number;
 }
 
 export interface SocialLink {
