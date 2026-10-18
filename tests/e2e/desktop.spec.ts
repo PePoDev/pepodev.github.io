@@ -122,22 +122,25 @@ test("renders current portfolio content in website mode", async ({ page }) => {
   await expect(
     website.getByRole("heading", {
       level: 1,
-      name: "Thiwanon Chomcharoen (PePoDev)",
+      name: /cloud platforms reliable, observable and cost.efficient/,
     }),
   ).toBeVisible();
+  await expect(website.locator(".ws-identity b")).toHaveText(
+    "Thiwanon Chomcharoen",
+  );
 
   const navigation = website.getByRole("navigation", {
     name: "Portfolio sections",
   });
   for (const link of [
-    { name: "About", href: "#website-about" },
+    { name: "Overview", href: "#website-overview" },
     { name: "Experience", href: "#website-experience" },
     { name: "Projects", href: "#website-projects" },
     { name: "Writing", href: "#website-writing" },
     { name: "Contact", href: "#website-contact" },
   ]) {
     await expect(
-      navigation.getByRole("link", { name: link.name }),
+      navigation.getByRole("link", { name: link.name, exact: true }),
     ).toHaveAttribute("href", link.href);
   }
 
@@ -148,15 +151,18 @@ test("renders current portfolio content in website mode", async ({ page }) => {
     0,
   );
   await expect(
-    website.getByRole("heading", { level: 2, name: "Selected projects" }),
+    website.getByRole("heading", { level: 2, name: "Projects" }),
   ).toBeVisible();
   await expect(website.locator("#website-projects article")).not.toHaveCount(0);
   await expect(
-    website.getByRole("heading", { level: 2, name: "Latest writing" }),
+    website.getByRole("heading", { level: 2, name: "Writing" }),
   ).toBeVisible();
   await expect(website.locator('a[href^="/blog/"]').first()).toBeVisible();
   await expect(
     website.getByRole("link", { name: "View resume" }),
+  ).toHaveAttribute("href", "/resume");
+  await expect(
+    website.locator("header").getByRole("link", { name: "Resume" }),
   ).toHaveAttribute("href", "/resume");
 });
 

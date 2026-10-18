@@ -28,13 +28,32 @@ import SiteModeController from "../components/SiteModeController.astro";
 import WebsiteMode from "../components/WebsiteMode.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
 import socialLinks from "../data/social-links.json";
+import { Font } from "astro:assets";
 ---
 
 <!doctype html>
 <html lang="en" data-site-mode="desktop">
   <head>
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <!-- Website mode type. Not preloaded: desktop mode never uses them. -->
+    <Font cssVariable="--font-plex-sans" />
+    <Font cssVariable="--font-plex-thai" />
+    <Font cssVariable="--font-plex-mono" />
     <SiteModeController />
+    <script is:inline>
+      // Apply the saved theme before first paint so website mode does not
+      // flash dark for light-theme visitors. The rest of the preferences
+      // (accent, background, glass) are applied at the end of <body>.
+      try {
+        const prefs = JSON.parse(
+          localStorage.getItem("pepodev.desktopPrefs") || "{}",
+        );
+        document.documentElement.dataset.theme =
+          prefs.theme || localStorage.getItem("pepodev.theme") || "dark";
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
   </head>
   <body>
     <div

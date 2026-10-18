@@ -49,6 +49,38 @@ export default defineConfig({
     },
   },
   fonts: [
+    // Website mode only (src/styles/website-mode.css). Astro downloads these
+    // at build time and serves them from /_astro/fonts/; browsers fetch them
+    // only when website mode renders text in them.
+    {
+      provider: fontProviders.google(),
+      name: "IBM Plex Sans",
+      cssVariable: "--font-plex-sans",
+      weights: [400, 500, 600],
+      styles: ["normal"],
+      subsets: ["latin"],
+      // Bare family names, so website-mode.css can put IBM Plex Sans Thai
+      // second for Thai glyphs, ahead of the system fallbacks.
+      fallbacks: [],
+    },
+    {
+      provider: fontProviders.google(),
+      name: "IBM Plex Sans Thai",
+      cssVariable: "--font-plex-thai",
+      weights: [400, 500, 600],
+      styles: ["normal"],
+      subsets: ["thai"],
+      fallbacks: [],
+    },
+    {
+      provider: fontProviders.google(),
+      name: "IBM Plex Mono",
+      cssVariable: "--font-plex-mono",
+      weights: [400, 500, 600],
+      styles: ["normal"],
+      subsets: ["latin"],
+      fallbacks: ["monospace"],
+    },
     {
       provider: fontProviders.local(),
       name: "Atkinson",

@@ -1,0 +1,25 @@
+---
+// The pepo.dev "P" mark used in website mode. Colors come from the website
+// shell's --ws-mark-* tokens and the Settings accent.
+interface Props {
+  size: number;
+}
+
+const { size } = Astro.props;
+---
+
+<svg
+  class="ws-mark"
+  width={size}
+  height={size}
+  viewBox="0 0 28 28"
+  aria-hidden="true"
+  focusable="false"
+>
+  <rect width="28" height="28" rx="7" fill="var(--ws-mark-bg)"></rect>
+  <path
+    fill="var(--ws-mark-fg)"
+    d="M7 6h10v1.5h1.5V9H20v5h-1.5v1.5H17V17h-7v5H7zM10 9v5h7V9z"></path>
+  <rect x="14" y="19.5" width="7" height="2.5" fill="var(--accent-primary)"
+  ></rect>
+</svg>

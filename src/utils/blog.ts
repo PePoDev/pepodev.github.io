@@ -22,3 +22,12 @@ export function getPostDescription(post: BlogEntry): string {
 export function getPostHeroImage(post: BlogEntry) {
   return post.data.heroImage || post.data["cover-picture"];
 }
+
+/** "th" when the title or description uses Thai script, otherwise "en". */
+export function getPostLanguage(post: BlogEntry): "th" | "en" {
+  return /[\u0E00-\u0E7F]/.test(
+    `${post.data.title} ${getPostDescription(post)}`,
+  )
+    ? "th"
+    : "en";
+}

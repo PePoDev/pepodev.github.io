@@ -164,8 +164,8 @@ test("the Blog app and website mode list real titles and dates", async ({
     .locator("#taskbar")
     .getByRole("button", { name: "Switch to website mode" })
     .click();
-  await expect(page.locator(".website-writing-card h3")).toHaveText(
-    posts.slice(0, 3).map((p) => p.title),
+  await expect(page.locator("#website .ws-post-title")).toHaveText(
+    posts.slice(0, 5).map((p) => p.title),
   );
 });
 

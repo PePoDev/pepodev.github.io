@@ -53,10 +53,14 @@ export function getCertificationStatus(
   return "active";
 }
 
-// "2023-05-14" -> "May 2023". Dates are UTC midnight, so format in UTC.
-export function formatCertificationMonth(date: string): string {
+// "2023-05-14" -> "May 2023" ("May 2023" or "Aug 2024" with "short").
+// Dates are UTC midnight, so format in UTC.
+export function formatCertificationMonth(
+  date: string,
+  month: "long" | "short" = "long",
+): string {
   return new Date(date).toLocaleDateString("en-US", {
-    month: "long",
+    month,
     year: "numeric",
     timeZone: "UTC",
   });
@@ -89,4 +93,59 @@ export function sortCertificationsByStatus(
         ? b.daysUntilExpiry - a.daysUntilExpiry
         : b.daysUntilExpiry - a.daysUntilExpiry;
     });
+}
+
+// Badge abbreviations for providers; other names fall back to their initials.
+const PROVIDER_ABBREVIATIONS: Record<string, string> = {
+  "Amazon Web Services": "AWS",
+  "Cloud Native Computing Foundation": "CNCF",
+  "Google Cloud": "GCP",
+  HashiCorp: "HCP",
+};
+
+/** A 2-4 letter badge for a provider, e.g. "CNCF". */
+export function getProviderBadge(provider: string): string {
+  return (
+    PROVIDER_ABBREVIATIONS[provider] ??
+    provider
+      .split(/\s+/)
+      .map((word) => word[0])
+      .join("")
+      .slice(0, 4)
+      .toUpperCase()
+  );
+}
+
+/** "Amazon Web Services" -> "AWS"; two-word names stay readable. */
+export function getProviderShortName(provider: string): string {
+  const words = provider.split(/\s+/);
+  return words.length >= 3 ? words.map((word) => word[0]).join("") : provider;
+}
+
+export interface CertificationSummary {
+  count: number;
+  firstYear?: number;
+  lastYear?: number;
+  /** Newest first. */
+  providers: string[];
+}
+
+/** Counts every certification ever earned, expired ones included. */
+export function summarizeCertifications(
+  certifications: Certification[],
+): CertificationSummary {
+  const newestFirst = [...certifications].sort((a, b) =>
+    b.issueDate.localeCompare(a.issueDate),
+  );
+  const years = newestFirst.map((cert) => Number(cert.issueDate.slice(0, 4)));
+  return {
+    count: newestFirst.length,
+    firstYear: years.length ? Math.min(...years) : undefined,
+    lastYear: years.length ? Math.max(...years) : undefined,
+    providers: [
+      ...new Set(
+        newestFirst.map((cert) => getProviderShortName(cert.provider)),
+      ),
+    ],
+  };
 }

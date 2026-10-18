@@ -1,26 +1,177 @@
 ---
-import ContactIcon from "@components/apps/ContactIcon.astro";
-import FormattedDate from "@components/FormattedDate.astro";
+import BrandMark from "@components/BrandMark.astro";
 import ModeSwitch from "@components/ModeSwitch.astro";
-import { SITE_DESCRIPTION } from "@/consts";
+import MonitorIcon from "@components/MonitorIcon.astro";
+import certifications from "@data/certifications.json";
+import education from "@data/education.json";
 import experiences from "@data/experiences.json";
 import projects from "@data/projects.json";
 import skills from "@data/skills.json";
 import socialLinks from "@data/social-links.json";
-import workMetrics from "@data/work-metrics.json";
 import "@styles/website-mode.css";
-import { getPostDescription, getPublishedPosts } from "@utils/blog";
+import {
+  getPostDescription,
+  getPostLanguage,
+  getPublishedPosts,
+} from "@utils/blog";
+import {
+  formatCertificationMonth,
+  getProviderBadge,
+  summarizeCertifications,
+} from "@utils/certifications";
+import { formatDegreeShort, formatEducationYears } from "@utils/education";
+import {
+  formatIsoMonth,
+  formatMonth,
+  getCareerSummary,
+  monthIndex,
+  numberToWords,
+  type TimelineSegment,
+} from "@utils/experience";
+import {
+  getGameJamYear,
+  getLanguageColor,
+  getProjectLanguage,
+  getProjectLinkLabel,
+  getProjectSummary,
+  getProjectTopics,
+  isGameJamProject,
+} from "@utils/projects";
 
-const latestPosts = (await getPublishedPosts()).slice(0, 3);
-const featuredProjects = projects.filter(({ archived }) => !archived);
-const socialIcons = new Set(["github", "linkedin", "email", "blog", "garden"]);
-const primarySocials = socialLinks.filter(({ icon }) => socialIcons.has(icon));
-const emailHref =
-  socialLinks.find(({ icon }) => icon === "email")?.href ??
-  "mailto:pepo@pepo.dev";
-const resumeHref =
-  socialLinks.find(({ icon }) => icon === "resume")?.href ?? "/resume";
-const currentYear = new Date().getFullYear();
+const now = new Date();
+const career = getCareerSummary(experiences, now);
+const { roles, current, firstStart, today } = career;
+const previousCompanies = roles
+  .filter((role) => !role.current)
+  .slice(0, 2)
+  .map((role) => role.companyShortName);
+const currentLine = current
+  ? `Currently at ${current.companyName}${
+      previousCompanies.length > 0
+        ? `, previously ${previousCompanies.join(" and ")}`
+        : ""
+    }.`
+  : "";
+const certSummary = summarizeCertifications(certifications);
+const certYears =
+  certSummary.firstYear === certSummary.lastYear
+    ? `${certSummary.lastYear ?? ""}`
+    : `${certSummary.firstYear}–${certSummary.lastYear}`;
+const certificationsNewestFirst = [...certifications].sort((a, b) =>
+  b.issueDate.localeCompare(a.issueDate),
+);
+
+// "Terraform / Terramate / IaC" -> Terraform + "Terramate · IaC";
+// "Cloud (AWS, GCP)" -> Cloud + "AWS · GCP".
+const stack = skills.map(({ name }) => {
+  const paren = name.match(/^(.*?)\s*\((.*)\)$/);
+  if (paren) {
+    return { name: paren[1], detail: paren[2].split(/,\s*/).join(" · ") };
+  }
+  const [first, ...rest] = name.split(" / ");
+  return { name: first, detail: rest.join(" · ") };
+});
+const coreStack = stack.slice(0, 5).map(({ name }) => name);
+
+const allPosts = await getPublishedPosts();
+const posts = allPosts.slice(0, 5).map((post) => ({
+  post,
+  lang: getPostLanguage(post),
+  date: post.data.pubDate.toISOString().slice(0, 10),
+}));
+// Writing is numbered 04 only when there are posts to show.
+const contactIndex = posts.length > 0 ? "05" : "04";
+const thaiPosts = allPosts.filter(
+  (post) => getPostLanguage(post) === "th",
+).length;
+const topics = [
+  ...new Set(allPosts.map((post) => post.data.tags?.[0]).filter(Boolean)),
+] as string[];
+const topicList =
+  topics.length > 1
+    ? `${topics.slice(0, -1).join(", ")} and ${topics.at(-1)}`
+    : topics.join("");
+
+const activeProjects = projects.filter(({ archived }) => !archived);
+const archivedProjects = projects.filter(({ archived }) => archived);
+const gameJams = archivedProjects.filter(isGameJamProject).length;
+const archiveLine = `${archivedProjects.length} projects${
+  gameJams > 0
+    ? `, including ${numberToWords(gameJams)} Global Game Jam entries`
+    : ""
+}`;
+const originLine = `I started out writing game backends in Go${
+  gameJams > 0
+    ? `, and I've built games at ${numberToWords(gameJams)} Global Game Jams`
+    : ""
+}.`;
+
+const socialByIcon = new Map(socialLinks.map((link) => [link.icon, link]));
+const emailHref = socialByIcon.get("email")?.href ?? "mailto:pepo@pepo.dev";
+const email = emailHref.replace(/^mailto:/, "");
+const resumeHref = socialByIcon.get("resume")?.href ?? "/resume";
+const issueLink = socialByIcon.get("issue");
+const webringLink = socialByIcon.get("webring");
+const isExternal = (href: string) => /^https?:/.test(href);
+const channels = ["github", "linkedin", "resume", "blog", "garden", "facebook"]
+  .map((icon) => socialByIcon.get(icon))
+  .filter((link) => link !== undefined)
+  .map((link) => {
+    const [label, handle] = link.label.split(" - ");
+    const name =
+      label === label.toUpperCase()
+        ? label.charAt(0) + label.slice(1).toLowerCase()
+        : label;
+    return {
+      ...link,
+      name: name.replace(/^Digital Garden$/, "Digital garden"),
+      handle: handle ?? `pepo.dev${link.href}`,
+      external: isExternal(link.href),
+    };
+  });
+
+// Bangkok has no daylight saving time, so ICT is always UTC+7. The script
+// below keeps this current; the build-time value stands in without JS.
+const bangkokTime = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Bangkok",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+}).format(now);
+const buildDate = now.toISOString().slice(0, 10);
+
+const segmentLabel = (segment: TimelineSegment) => {
+  const from = formatMonth(segment.start, "long");
+  const span = segment.role?.current
+    ? `${from} to present`
+    : `${from} to ${formatMonth(segment.end, "long")}`;
+  return segment.role
+    ? `${segment.role.companyName}, ${segment.role.role}, ${span}`
+    : `Between roles, ${span}`;
+};
+const yearSpan = (segment: TimelineSegment) => {
+  const start = segment.start.year;
+  if (segment.role?.current) return `${start}–now`;
+  const end = segment.end.year;
+  return end === start ? `${start}` : `${start}–${String(end).slice(2)}`;
+};
+const roleSegments = career.timeline.filter((segment) => segment.role);
+
+// "Built observability platform with…" -> tag "Built" + "Observability
+// platform with…". When the rest would start mid-phrase ("Deployed and
+// managed…", "Contributed to…"), the whole bullet follows the tag instead.
+// Only the display changes; experiences.json keeps its wording.
+const CONNECTIVES = new Set(
+  "a an and as at by for from in into of on or the to with".split(" "),
+);
+const changeOf = (detail: string) => {
+  const [verb, ...words] = detail.split(" ");
+  const text = CONNECTIVES.has(words[0]?.toLowerCase() ?? "")
+    ? detail
+    : words.join(" ");
+  return { verb, text: text.charAt(0).toUpperCase() + text.slice(1) };
+};
+const visibleChanges = 4;
 ---
 
 <div
@@ -32,215 +183,640 @@ const currentYear = new Date().getFullYear();
   <a class="website-skip-link" href="#website-main">Skip to content</a>
 
   <header class="website-header">
-    <div class="website-header-inner">
-      <a class="website-brand" href="#website-hero">PePoDev</a>
-      <nav class="website-nav" aria-label="Portfolio sections">
-        <a href="#website-about">About</a>
+    <div class="ws-header-inner">
+      <a class="ws-brand" href="#website-hero" aria-label="pepo.dev, back to top">
+        <BrandMark size={26} />
+        <span>pepo.dev</span>
+      </a>
+      <nav class="ws-nav" aria-label="Portfolio sections">
+        <a href="#website-overview"><span aria-hidden="true">01</span>Overview</a>
+        <a href="#website-experience"
+          ><span aria-hidden="true">02</span>Experience</a
+        >
+        <a href="#website-projects"><span aria-hidden="true">03</span>Projects</a>
         {
-          experiences.length > 0 && (
-            <a href="#website-experience">Experience</a>
+          posts.length > 0 && (
+            <a href="#website-writing">
+              <span aria-hidden="true">04</span>Writing
+            </a>
           )
         }
-        {
-          featuredProjects.length > 0 && (
-            <a href="#website-projects">Projects</a>
-          )
-        }
-        {latestPosts.length > 0 && <a href="#website-writing">Writing</a>}
-        <a href="#website-contact">Contact</a>
+        <a href="#website-contact"
+          ><span aria-hidden="true">{contactIndex}</span
+          >Contact</a
+        >
       </nav>
-      <div class="website-header-actions">
-        <a class="website-resume-link" href={resumeHref}>Resume</a>
+      <div class="ws-header-actions">
+        <a class="ws-resume-link" href={resumeHref}>Resume</a>
         <ModeSwitch variant="website" />
       </div>
     </div>
   </header>
 
-  <main id="website-main" class="website-main">
+  <main id="website-main" class="ws-main" tabindex="-1">
     <section
       id="website-hero"
-      class="website-section website-hero"
+      class="ws-hero ws-wrap"
       aria-labelledby="website-title"
     >
-      <div class="website-hero-copy">
-        <p class="website-eyebrow">
-          Site Reliability Engineer · Bangkok, Thailand
-        </p>
-        <h1 id="website-title">Thiwanon Chomcharoen (PePoDev)</h1>
-        <p class="website-lede">{SITE_DESCRIPTION}</p>
-        <div class="website-actions">
-          <a
-            class="website-button website-button--primary"
-            href="#website-projects"
-          >
-            Explore projects
-          </a>
-          <a class="website-button" href={emailHref}>Start a conversation</a>
-        </div>
-        <p class="website-status">
-          <span aria-hidden="true"></span>
-          Available for opportunities
-        </p>
-      </div>
-      {
-        workMetrics.length > 0 && (
-          <div class="website-metrics" aria-label="Career highlights">
-            {workMetrics.map((metric) => (
-              <div class="website-metric">
-                <strong>{metric.value}</strong>
-                <span>{metric.label}</span>
-              </div>
-            ))}
+      <div class="ws-hero-grid">
+        <div class="ws-hero-copy">
+          <div class="ws-identity">
+            <BrandMark size={44} />
+            <p>
+              <b>Thiwanon Chomcharoen</b>
+              <span>PePoDev · {current?.role ?? roles[0]?.role}</span>
+            </p>
           </div>
+          <h1 id="website-title">
+            I keep cloud platforms reliable, observable and <span
+              class="ws-keep">cost-efficient.</span
+            >
+          </h1>
+          <p class="ws-lede">
+            {current?.role ?? "Engineer"} in Bangkok with <strong
+              >{career.yearsLabel} years of experience</strong
+            >, running Kubernetes, Terraform and AWS/GCP infrastructure in
+            production. {currentLine}
+          </p>
+          <div class="ws-cta-row">
+            <a class="ws-btn ws-btn--primary" href={emailHref}>Email me</a>
+            <a class="ws-btn" href={resumeHref}>View resume</a>
+            <a class="ws-text-link" href="#website-experience"
+              >Read the changelog <span aria-hidden="true">↓</span></a
+            >
+          </div>
+        </div>
+
+        <div class="ws-hero-side">
+          <aside class="ws-status-card" aria-label="Profile at a glance">
+            <div class="ws-sc-head">
+              <p class="ws-sc-state">
+                <span class="ws-pulse" aria-hidden="true"></span>Open to
+                opportunities
+              </p>
+              <p class="ws-sc-time">
+                <span class="ws-sr">Local time in Bangkok: </span><time
+                  data-bkk-time
+                  datetime={bangkokTime}>{bangkokTime}</time
+                > ICT
+              </p>
+            </div>
+            <dl class="ws-sc-list">
+              {
+                current && (
+                  <>
+                    <div>
+                      <dt>Role</dt>
+                      <dd>{current.role}</dd>
+                    </div>
+                    <div>
+                      <dt>Company</dt>
+                      <dd>
+                        {current.companyName}{" "}
+                        <span class="ws-dim">
+                          since {formatMonth(current.start)}
+                        </span>
+                      </dd>
+                    </div>
+                  </>
+                )
+              }
+              <div data-experience-years>
+                <dt>Experience</dt>
+                <dd>
+                  {career.yearsLabel} years{" "}
+                  <span class="ws-dim">
+                    {career.companies} companies since {firstStart?.year}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>Based in</dt>
+                <dd>Bangkok, Thailand <span class="ws-dim">UTC+7</span></dd>
+              </div>
+              <div>
+                <dt>Studied</dt>
+                <dd>
+                  {formatDegreeShort(education)}{" "}
+                  <span class="ws-dim">
+                    <abbr title={education.school}>{education.schoolShort}</abbr>
+                    · {formatEducationYears(education, "–")}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>Core stack</dt>
+                <dd class="ws-dots">
+                  {coreStack.map((name) => <span>{name}</span>)}
+                </dd>
+              </div>
+              {
+                certSummary.count > 0 && (
+                  <div>
+                    <dt>Certified</dt>
+                    <dd>
+                      {certSummary.count} earned{" "}
+                      <span class="ws-dim">{certYears}</span>
+                      <span class="ws-dim ws-dd-line">
+                        {certSummary.providers.join(", ")}
+                      </span>
+                    </dd>
+                  </div>
+                )
+              }
+            </dl>
+          </aside>
+
+          <div class="ws-bridge">
+            <div class="ws-mini ws-mini--sm" aria-hidden="true">
+              <div class="ws-mini-icons">
+                <i style="--c:#0a84ff"></i><i style="--c:#30d158"></i><i
+                  style="--c:#ff9f0a"></i>
+              </div>
+              <div class="ws-mini-win">
+                <div class="ws-mw-bar"><b></b><b></b><b></b></div>
+              </div>
+              <div class="ws-mini-task"></div>
+            </div>
+            <div class="ws-bridge-copy">
+              <p class="ws-bridge-title">This portfolio is also a desktop.</p>
+              <p class="ws-bridge-sub">
+                Windows, a terminal and games, with the same content.
+              </p>
+            </div>
+            <button
+              class="ws-btn ws-btn--bridge"
+              type="button"
+              data-site-mode-target="desktop"
+            >
+              <MonitorIcon size={16} />Open desktop mode
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {
+        firstStart && (
+          <figure class="ws-uptime" aria-labelledby="website-uptime-title">
+            <figcaption class="ws-uptime-head">
+              <h2 id="website-uptime-title">Career uptime</h2>
+              <p class="ws-dots" data-uptime-summary>
+                <span>{`${formatMonth(firstStart)} – ${formatMonth(today)}`}</span>
+                <span>{`${career.totalMonths} months`}</span>
+                <span>{`${career.companies} companies`}</span>
+              </p>
+              <p class="ws-uptime-key">
+                <span>
+                  <i class="ws-key ws-key--on" aria-hidden="true" />
+                  In role
+                </span>
+                <span>
+                  <i class="ws-key ws-key--gap" aria-hidden="true" />
+                  Between roles
+                </span>
+                <span class="ws-key-scale">1 bar = 1 month</span>
+              </p>
+            </figcaption>
+            <div
+              class="ws-uptime-chart"
+              style={`--months: ${career.totalMonths}`}
+            >
+              {career.timeline.map((segment) => (
+                <span
+                  class:list={[
+                    "ws-seg",
+                    segment.kind === "gap" && "ws-seg--gap",
+                    segment.role?.current && "ws-seg--current",
+                  ]}
+                  style={`--start: ${segment.offset + 1}; --n: ${segment.months}`}
+                  role="img"
+                  aria-label={segmentLabel(segment)}
+                  title={segmentLabel(segment)}
+                >
+                  {Array.from({ length: segment.months }, (_, index) => (
+                    <i
+                      class:list={{
+                        "ws-ye":
+                          (monthIndex(segment.start) + index) % 12 === 11,
+                      }}
+                    />
+                  ))}
+                </span>
+              ))}
+              {roleSegments.map((segment, index) => (
+                <span
+                  class:list={["ws-lab", index % 2 === 0 && "ws-lab--alt"]}
+                  style={`--start: ${segment.offset + 1}; --n: ${segment.months}`}
+                  aria-hidden="true"
+                >
+                  <b>
+                    <span class="ws-l-full">{segment.role!.companyShortName}</span>
+                    <span class="ws-l-tiny">
+                      {segment.role!.companyShortName.split(" ")[0]}
+                    </span>
+                  </b>
+                  <span>{yearSpan(segment)}</span>
+                </span>
+              ))}
+            </div>
+            <div class="ws-uptime-foot" aria-hidden="true">
+              <span>{formatMonth(firstStart)}</span>
+              <span>{formatMonth(today)}</span>
+            </div>
+          </figure>
         )
       }
     </section>
 
     <section
-      id="website-about"
-      class="website-section"
-      aria-labelledby="website-about-title"
+      id="website-overview"
+      class="ws-section ws-wrap"
+      aria-labelledby="website-overview-title"
     >
-      <div class="website-section-heading">
-        <p class="website-eyebrow">About</p>
-        <h2 id="website-about-title">Reliable systems, practical outcomes</h2>
+      <div class="ws-sec-head">
+        <span class="ws-sec-idx" aria-hidden="true">01</span>
+        <h2 id="website-overview-title">Overview</h2>
+        <p class="ws-sec-meta">What I do, and what I work with</p>
       </div>
-      <div class="website-about-grid">
-        <div class="website-copy">
-          <p>
-            I design and operate cloud platforms with Kubernetes, Terraform,
-            observability, and open-source tooling. My work focuses on making
-            infrastructure dependable, understandable, and efficient.
-          </p>
-          <p>
-            I also build tools, games, and experiments that turn operational
-            lessons into useful experiences for other engineers.
-          </p>
+      <div class="ws-ov-grid">
+        <div class="ws-ov-main">
+          <div class="ws-ov-copy">
+            <p class="ws-big">
+              I design and operate cloud platforms on Kubernetes, Terraform, AWS
+              and Google Cloud. The job, as I see it: keep them dependable, easy
+              to understand, and no more expensive than they need to be.
+            </p>
+            <p>
+              {originLine} I still like turning operational lessons into things
+              other engineers enjoy, from small Go CLIs to chaos engineering played
+              as a game.
+            </p>
+          </div>
+
+          <div class="ws-panel ws-stack">
+            <div class="ws-panel-head">
+              <h3>Core stack</h3>
+              <small>{stack.length} areas</small>
+            </div>
+            <ul class="ws-stack-list">
+              {
+                stack.map((item) => (
+                  <li>
+                    <b>{item.name}</b>
+                    {item.detail && <span>{item.detail}</span>}
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
         </div>
-        <ul class="website-skills" aria-label="Core expertise">
-          {skills.map((skill) => <li>{skill.name}</li>)}
-        </ul>
-      </div>
-    </section>
 
-    {
-      experiences.length > 0 && (
-        <section
-          id="website-experience"
-          class="website-section"
-          aria-labelledby="website-experience-title"
-        >
-          <div class="website-section-heading">
-            <p class="website-eyebrow">Work</p>
-            <h2 id="website-experience-title">Experience</h2>
-          </div>
-          <div class="website-timeline">
-            {experiences.map((experience) => (
-              <article class="website-experience-card">
-                <div class="website-experience-meta">
-                  <span>{experience.period}</span>
-                </div>
-                <div>
-                  <h3>{experience.role}</h3>
-                  <p class="website-company">{experience.company}</p>
-                  <ul>
-                    {experience.details.map((detail) => (
-                      <li>{detail}</li>
-                    ))}
-                  </ul>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      )
-    }
-
-    {
-      featuredProjects.length > 0 && (
-        <section
-          id="website-projects"
-          class="website-section"
-          aria-labelledby="website-projects-title"
-        >
-          <div class="website-section-heading">
-            <p class="website-eyebrow">Build</p>
-            <h2 id="website-projects-title">Selected projects</h2>
-          </div>
-          <div class="website-project-grid">
-            {featuredProjects.map((project) => (
-              <article class="website-project-card">
-                <div class="website-project-heading">
-                  <h3>{project.name}</h3>
-                  <span aria-label={`${project.stars} GitHub stars`}>
-                    ★ {project.stars}
-                  </span>
-                </div>
-                <p>{project.description}</p>
-                <ul
-                  class="website-tags"
-                  aria-label={`${project.name} technologies`}
-                >
-                  {project.tags.map((tag) => (
-                    <li>{tag}</li>
-                  ))}
-                </ul>
-                <div class="website-project-links">
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Visit project
-                  </a>
-                  {project.github !== project.link && (
+        {
+          certSummary.count > 0 && (
+            <div class="ws-panel ws-certs">
+              <div class="ws-panel-head">
+                <h3>Certifications</h3>
+                <small>
+                  {certSummary.count} earned · {certYears}
+                </small>
+              </div>
+              <ul>
+                {certificationsNewestFirst.map((cert) => (
+                  <li>
                     <a
-                      href={project.github}
+                      href={cert.credlyUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Source
+                      <span class="ws-prov" aria-hidden="true">
+                        {getProviderBadge(cert.provider)}
+                      </span>
+                      <span class="ws-cert-name">
+                        <b>{cert.name}</b>
+                        <small>{cert.provider}</small>
+                      </span>
+                      <span class="ws-cert-date">
+                        Earned {formatCertificationMonth(cert.issueDate, "short")}
+                        <span class="ws-ext" aria-hidden="true">↗</span>
+                        <span class="ws-sr"> (opens Credly)</span>
+                      </span>
                     </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+    </section>
+
+    <section
+      id="website-experience"
+      class="ws-section ws-wrap"
+      aria-labelledby="website-experience-title"
+    >
+      <div class="ws-sec-head">
+        <span class="ws-sec-idx" aria-hidden="true">02</span>
+        <h2 id="website-experience-title">Experience</h2>
+        <p class="ws-sec-meta">
+          <span>Changelog · newest first</span>
+          <a class="ws-head-link" href={resumeHref}
+            >Full résumé <span aria-hidden="true">→</span></a
+          >
+        </p>
+      </div>
+      <div class="ws-changelog">
+        {
+          roles.map((role) => {
+            const shown = role.details.slice(0, visibleChanges);
+            const more = role.details.slice(visibleChanges);
+            return (
+              <article
+                class:list={["ws-release", role.current && "ws-release--current"]}
+              >
+                <div class="ws-rel-meta">
+                  <p class="ws-rel-company">{role.companyName}</p>
+                  <p class="ws-rel-period">
+                    <time datetime={formatIsoMonth(role.start)}>
+                      {formatMonth(role.start)}
+                    </time>{" "}
+                    <span aria-hidden="true">→</span>
+                    <span class="ws-sr">to</span>{" "}
+                    {role.current ? (
+                      "Present"
+                    ) : (
+                      <time datetime={formatIsoMonth(role.end)}>
+                        {formatMonth(role.end)}
+                      </time>
+                    )}
+                  </p>
+                  <p class="ws-rel-dur">
+                    <span data-tenure>{role.tenure}</span>
+                    {role.current && (
+                      <span class="ws-pill ws-pill--live">Current</span>
+                    )}
+                  </p>
+                </div>
+                <div class="ws-rel-body">
+                  <h3>
+                    {role.role}
+                    <span class="ws-sr"> at {role.companyName}</span>
+                  </h3>
+                  <ul class="ws-changes">
+                    {shown.map((detail) => {
+                      const { verb, text } = changeOf(detail);
+                      return (
+                        <li>
+                          <span class="ws-tag">{verb}</span> <span>{text}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {more.length > 0 && (
+                    <details class="ws-more">
+                      <summary>
+                        <span class="ws-more-closed">+{more.length} more</span>
+                        <span class="ws-more-open">Show fewer</span>
+                        <span class="ws-sr"> at {role.companyName}</span>
+                      </summary>
+                      <ul class="ws-changes">
+                        {more.map((detail) => {
+                          const { verb, text } = changeOf(detail);
+                          return (
+                            <li>
+                              <span class="ws-tag">{verb}</span>{" "}
+                              <span>{text}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </details>
                   )}
                 </div>
               </article>
-            ))}
-          </div>
-        </section>
-      )
-    }
+            );
+          })
+        }
+      </div>
+    </section>
+
+    <section
+      id="website-projects"
+      class="ws-section ws-wrap"
+      aria-labelledby="website-projects-title"
+    >
+      <div class="ws-sec-head">
+        <span class="ws-sec-idx" aria-hidden="true">03</span>
+        <h2 id="website-projects-title">Projects</h2>
+        <p class="ws-sec-meta">
+          {activeProjects.length} active · {archivedProjects.length} archived
+        </p>
+      </div>
+      <div class="ws-svc-grid">
+        {
+          activeProjects.map((project) => {
+            const language = getProjectLanguage(project);
+            const linkLabel = getProjectLinkLabel(project);
+            return (
+              <article class="ws-svc">
+                <div class="ws-svc-top">
+                  <span class="ws-state">Active</span>
+                  {project.stars > 0 && (
+                    <span class="ws-stars">
+                      <span aria-hidden="true">★</span> {project.stars}
+                      <span class="ws-sr"> GitHub stars</span>
+                    </span>
+                  )}
+                </div>
+                <h3>{project.name}</h3>
+                <p>{getProjectSummary(project)}</p>
+                <p class="ws-svc-meta">
+                  {language && (
+                    <span
+                      class="ws-lang"
+                      style={`--lang: ${getLanguageColor(language)}`}
+                    >
+                      {language}
+                    </span>
+                  )}
+                  {getProjectTopics(project).map((topic) => (
+                    <span>{topic}</span>
+                  ))}
+                </p>
+                <div class="ws-svc-links">
+                  {linkLabel && (
+                    <a href={project.link} target="_blank" rel="noopener noreferrer">
+                      {linkLabel}
+                      <span class="ws-sr">: {project.name}</span>
+                      <span class="ws-ext" aria-hidden="true">↗</span>
+                    </a>
+                  )}
+                  <a href={project.github} target="_blank" rel="noopener noreferrer">
+                    Source
+                    <span class="ws-sr">: {project.name} on GitHub</span>
+                    <span class="ws-ext" aria-hidden="true">↗</span>
+                  </a>
+                </div>
+              </article>
+            );
+          })
+        }
+      </div>
+      {
+        archivedProjects.length > 0 && (
+          <details class="ws-panel ws-archive" data-archive>
+            <summary>
+              <span class="ws-arch-title">Archived</span>
+              <span class="ws-arch-meta">{archiveLine}</span>
+              <span class="ws-chev" aria-hidden="true" />
+            </summary>
+            <table class="ws-arch-table">
+              <caption class="ws-sr">Archived projects</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Project</th>
+                  <th scope="col">What it was</th>
+                  <th scope="col">Stack</th>
+                  <th scope="col" class="ws-a-stars">
+                    Stars
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {archivedProjects.map((project) => {
+                  const jamYear = getGameJamYear(project);
+                  return (
+                    <tr>
+                      <th scope="row">
+                        <a
+                          href={project.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {project.name}
+                        </a>
+                      </th>
+                      <td class="ws-a-desc">
+                        {getProjectSummary(project)}
+                        {jamYear && (
+                          <span class="ws-ggj">
+                            <abbr title="Global Game Jam">GGJ</abbr> {jamYear}
+                          </span>
+                        )}
+                      </td>
+                      <td class="ws-a-lang">{getProjectLanguage(project)}</td>
+                      <td class="ws-a-stars">
+                        {project.stars > 0 && (
+                          <>
+                            <span aria-hidden="true">★</span> {project.stars}
+                            <span class="ws-sr"> GitHub stars</span>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </details>
+        )
+      }
+    </section>
 
     {
-      latestPosts.length > 0 && (
+      posts.length > 0 && (
         <section
           id="website-writing"
-          class="website-section"
+          class="ws-section ws-wrap"
           aria-labelledby="website-writing-title"
         >
-          <div class="website-section-heading website-section-heading--split">
-            <div>
-              <p class="website-eyebrow">Learn</p>
-              <h2 id="website-writing-title">Latest writing</h2>
-            </div>
-            <a href="/blog/">View all articles</a>
+          <div class="ws-sec-head">
+            <span class="ws-sec-idx" aria-hidden="true">
+              04
+            </span>
+            <h2 id="website-writing-title">Writing</h2>
+            <p class="ws-sec-meta">
+              {`${allPosts.length} posts${thaiPosts > 0 ? ` · ${thaiPosts} in Thai` : ""}`}
+            </p>
           </div>
-          <div class="website-writing-grid">
-            {latestPosts.map((post) => (
-              <article class="website-writing-card">
-                <FormattedDate date={post.data.pubDate} />
-                <h3>
-                  <a href={`/blog/${post.id}/`}>{post.data.title}</a>
-                </h3>
-                <p>{getPostDescription(post)}</p>
-                {post.data.tags && post.data.tags.length > 0 && (
-                  <ul class="website-tags" aria-label="Article tags">
-                    {post.data.tags.slice(0, 3).map((tag) => (
-                      <li>{tag}</li>
-                    ))}
-                  </ul>
-                )}
-              </article>
-            ))}
+          <div class="ws-wr-grid">
+            <div class="ws-panel ws-posts">
+              <div class="ws-panel-head">
+                <h3>Latest posts</h3>
+                <a class="ws-head-link" href="/blog/">
+                  All articles <span aria-hidden="true">→</span>
+                </a>
+              </div>
+              <ol>
+                {posts.map(({ post, lang, date }) => (
+                  <li class="ws-post">
+                    <time datetime={date}>{date}</time>
+                    <span class="ws-post-main" lang={lang}>
+                      <a class="ws-post-title" href={`/blog/${post.id}/`}>
+                        {post.data.title}
+                      </a>
+                      <span>{getPostDescription(post)}</span>
+                    </span>
+                    <span class="ws-post-tags">
+                      <span
+                        class="ws-lang-tag"
+                        title={lang === "th" ? "Written in Thai" : "Written in English"}
+                      >
+                        {lang.toUpperCase()}
+                      </span>
+                      <span class="ws-post-topics">
+                        {post.data.tags?.slice(0, 2).map((tag) => (
+                          <span>{tag}</span>
+                        ))}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div class="ws-panel ws-elsewhere">
+              <div class="ws-panel-head">
+                <h3>Read elsewhere</h3>
+              </div>
+              <ul>
+                {[socialByIcon.get("blog"), socialByIcon.get("garden")]
+                  .filter((link) => link !== undefined)
+                  .map((link) => {
+                    const [label, host] = link.label.split(" - ");
+                    return (
+                      <li>
+                        <a href={link.href} target="_blank" rel="noopener noreferrer">
+                          <b>
+                            {label === "Blog"
+                              ? "Engineering blog"
+                              : "Digital garden"}
+                          </b>
+                          <span>{host}</span>
+                          <i aria-hidden="true">↗</i>
+                        </a>
+                      </li>
+                    );
+                  })}
+                <li>
+                  <a href="/blog/">
+                    <b>Articles on this site</b>
+                    <span>pepo.dev/blog</span>
+                    <i aria-hidden="true">→</i>
+                  </a>
+                </li>
+                <li>
+                  <a href="/rss.xml">
+                    <b>RSS feed</b>
+                    <span>pepo.dev/rss.xml</span>
+                    <i aria-hidden="true">→</i>
+                  </a>
+                </li>
+              </ul>
+              {topicList && (
+                <p class="ws-note">Topics so far: {topicList}.</p>
+              )}
+            </div>
           </div>
         </section>
       )
@@ -248,46 +824,194 @@ const currentYear = new Date().getFullYear();
 
     <section
       id="website-contact"
-      class="website-section website-contact"
+      class="ws-section ws-wrap"
       aria-labelledby="website-contact-title"
     >
-      <div>
-        <p class="website-eyebrow">Connect</p>
-        <h2 id="website-contact-title">Let's build something reliable</h2>
-        <p>Reach out about infrastructure, SRE, open source, or collaboration.</p>
+      <div class="ws-sec-head">
+        <span class="ws-sec-idx" aria-hidden="true">{contactIndex}</span>
+        <h2 id="website-contact-title">Contact</h2>
+        <p class="ws-sec-meta">Bangkok · UTC+7</p>
       </div>
-      <div class="website-contact-actions">
-        <a class="website-button website-button--primary" href={emailHref}>
-          Email me
-        </a>
-        <a class="website-button" href={resumeHref} aria-label="View resume">
-          View resume
-        </a>
+      <div class="ws-ct-grid">
+        <div class="ws-panel ws-contact">
+          <h3 class="ws-contact-title">Let's build something reliable.</h3>
+          <p class="ws-contact-copy">
+            Reach out about infrastructure, SRE, open source, or collaboration.
+          </p>
+          <div class="ws-email-row">
+            <a class="ws-email" href={emailHref}>{email}</a>
+            <button class="ws-copy" type="button" data-copy-email={email} hidden>
+              Copy<span class="ws-sr"> email address</span>
+            </button>
+            <span class="ws-sr" role="status" data-copy-status></span>
+          </div>
+          <ul class="ws-channels" aria-label="Elsewhere">
+            {
+              channels.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noopener noreferrer" : undefined}
+                  >
+                    <b>{link.name}</b>
+                    <span>{link.handle}</span>
+                    <i aria-hidden="true">{link.external ? "↗" : "→"}</i>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="ws-desk-card">
+          <div class="ws-mini" aria-hidden="true">
+            <svg class="ws-mini-net" viewBox="0 0 320 200" preserveAspectRatio="none">
+              <g stroke="currentColor" stroke-opacity=".3" stroke-width=".6" fill="none">
+                <path d="M18 150 L52 128 L70 170 M52 128 L96 112"></path>
+                <path d="M228 22 L262 48 L300 30 M262 48 L250 90"></path>
+                <path d="M150 178 L196 160 L232 182"></path>
+                <path d="M110 40 L140 18"></path>
+              </g>
+              <g fill="currentColor" fill-opacity=".75">
+                <circle cx="18" cy="150" r="1.6"></circle>
+                <circle cx="52" cy="128" r="2"></circle>
+                <circle cx="70" cy="170" r="1.4"></circle>
+                <circle cx="96" cy="112" r="1.4"></circle>
+                <circle cx="228" cy="22" r="1.6"></circle>
+                <circle cx="262" cy="48" r="2.2"></circle>
+                <circle cx="250" cy="90" r="1.4"></circle>
+                <circle cx="150" cy="178" r="1.4"></circle>
+                <circle cx="196" cy="160" r="2"></circle>
+                <circle cx="110" cy="40" r="1.3"></circle>
+              </g>
+              <g fill="#e8edf3" fill-opacity=".55">
+                <circle cx="300" cy="30" r="1.6"></circle>
+                <circle cx="232" cy="182" r="1.6"></circle>
+                <circle cx="140" cy="18" r="1.4"></circle>
+              </g>
+            </svg>
+            <div class="ws-mini-icons">
+              <i style="--c:#0a84ff"></i><i style="--c:#30d158"></i><i
+                style="--c:#ff9f0a"></i><i style="--c:#bf5af2"></i><i
+                style="--c:#30d158"></i>
+            </div>
+            <div class="ws-mini-icons ws-mini-icons--col">
+              <i style="--c:#64d2ff"></i><i style="--c:#bf5af2"></i><i
+                style="--c:#0a84ff"></i><i style="--c:#30d158"></i>
+            </div>
+            <div class="ws-mini-win">
+              <div class="ws-mw-bar">
+                <span>Work — Experience</span><b></b><b></b><b></b>
+              </div>
+              <div class="ws-mw-body">
+                <p class="ws-mw-cmd">~/work $ cat career_history.md</p>
+                <p class="ws-mw-h">Career Timeline</p>
+                <span style="width:82%"></span><span style="width:64%"></span><span
+                  style="width:74%"></span>
+              </div>
+            </div>
+            <div class="ws-mini-task">
+              <span class="ws-mt-start"></span><span class="ws-mt-app">Work</span
+              ><span class="ws-mt-clock" data-bkk-time>{bangkokTime}</span>
+            </div>
+          </div>
+          <div class="ws-desk-copy">
+            <h3 class="ws-desk-title">pepo.dev is also a desktop.</h3>
+            <p>
+              Draggable windows, a terminal, Snake and an SRE game, with this same
+              portfolio inside. Same content, different shape.
+            </p>
+            <button
+              class="ws-btn ws-btn--desk"
+              type="button"
+              data-site-mode-target="desktop"
+            >
+              <MonitorIcon size={16} />Launch desktop mode
+            </button>
+          </div>
+        </div>
       </div>
-      <ul class="website-socials" aria-label="Social links">
-        {
-          primarySocials.map((link) => (
-            <li>
-              <a
-                href={link.href}
-                target={link.href.startsWith("http") ? "_blank" : undefined}
-                rel={
-                  link.href.startsWith("http")
-                    ? "noopener noreferrer"
-                    : undefined
-                }
-              >
-                <ContactIcon name={link.icon} />
-                <span>{link.label.split(" - ")[0]}</span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
     </section>
   </main>
 
-  <footer class="website-footer">
-    <p>© {currentYear} PePoDev. Built as a static Astro site.</p>
+  <footer class="ws-footer ws-wrap">
+    <p>
+      © {now.getFullYear()} Thiwanon Chomcharoen · Static Astro build,
+      <time datetime={buildDate}>{buildDate}</time>
+    </p>
+    <p class="ws-foot-links">
+      <a href="/rss.xml">RSS</a>
+      {
+        issueLink && (
+          <a href={issueLink.href} target="_blank" rel="noopener noreferrer">
+            Report an issue<span class="ws-ext" aria-hidden="true">↗</span>
+          </a>
+        )
+      }
+      {
+        webringLink && (
+          <a
+            href={webringLink.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            lang="th"
+          >
+            {webringLink.label.split(" - ")[0]}
+            <span class="ws-ext" aria-hidden="true">↗</span>
+          </a>
+        )
+      }
+    </p>
   </footer>
 </div>
+
+<script>
+  // Live Bangkok time (ICT is UTC+7 all year) over the build-time value.
+  const clockFormat = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bangkok",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+
+  function tickBangkokClock() {
+    const time = clockFormat.format(new Date());
+    document
+      .querySelectorAll<HTMLElement>("#website [data-bkk-time]")
+      .forEach((element) => {
+        if (element.textContent !== time) element.textContent = time;
+        if (element instanceof HTMLTimeElement) element.dateTime = time;
+      });
+  }
+
+  tickBangkokClock();
+  window.setInterval(tickBangkokClock, 15_000);
+
+  const copyButton = document.querySelector<HTMLButtonElement>(
+    "#website [data-copy-email]",
+  );
+  const copyStatus = document.querySelector<HTMLElement>(
+    "#website [data-copy-status]",
+  );
+  if (copyButton && navigator.clipboard) {
+    copyButton.hidden = false;
+    const label = copyButton.firstChild;
+    let resetTimer = 0;
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(copyButton.dataset.copyEmail ?? "");
+      } catch {
+        if (copyStatus) copyStatus.textContent = "Copy failed";
+        return;
+      }
+      if (label) label.textContent = "Copied";
+      if (copyStatus) copyStatus.textContent = "Email address copied";
+      window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(() => {
+        if (label) label.textContent = "Copy";
+        if (copyStatus) copyStatus.textContent = "";
+      }, 2000);
+    });
+  }
+</script>

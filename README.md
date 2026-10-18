@@ -48,6 +48,7 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 | `src/data/` | Portfolio JSON and build-time music discovery |
 | `src/types/`, `src/utils/` | Data types and reusable logic |
 | `src/styles/global.css` | Shared desktop and app styles |
+| `src/styles/website-mode.css` | Website-mode styles (`ws-*` classes) |
 | `public/music/` | Local audio library |
 | `tests/e2e/*.spec.ts` | Playwright coverage, one spec per area |
 | `scripts/generate-og-image.mjs` | Default Open Graph image generator |
@@ -84,6 +85,15 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 - Put a `-webkit-` declaration before its standard property. CSS minification
   drops a standard property followed by its prefixed twin, and keeps prefixes
   only for browsers in `vite.build.cssTarget` (`astro.config.mjs`).
+- Website mode is dark by default and follows the Settings theme
+  (`data-theme="light"` on `<html>`) and accent. Size its text in `rem` and set
+  its breakpoints in `em`, so it follows the browser's text size. Rows that
+  run edge to edge inside a panel or scroller use inset focus rings, which
+  the panel cannot clip.
+- Website mode uses IBM Plex Sans, Sans Thai, and Mono from the Fonts API
+  Google provider (`astro.config.mjs`). Astro downloads them at build time; if
+  Google Fonts is unreachable, the build still passes with fallback fonts, so
+  re-run the deploy.
 
 ### Content and Apps
 
@@ -93,7 +103,8 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
   computed at build time by `src/utils/experience.ts` from each
   `experiences.json` period (`"May 2020 - June 2022"` or
   `"February 2024 - Present"`); do not hard-code them. Education lives in
-  `education.json`.
+  `education.json`. A project's optional `summary` in `projects.json` is the
+  website-mode copy; it falls back to `description`.
 - Store posts in `src/content/blog/` using `src/content.config.ts`. Reference
   prefixed local images from `src/assets/blog/`; builds optimize them to WebP.
   `cover-picture` and `heroImage` are validated as images, so they must be

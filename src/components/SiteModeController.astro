@@ -85,6 +85,23 @@
       });
     });
 
+    // One-way buttons (e.g. "Open desktop mode" in website content) keep
+    // their own visible label and hand focus to the new panel's mode switch.
+    document
+      .querySelectorAll<HTMLButtonElement>("[data-site-mode-target]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          const mode = normalizeMode(button.dataset.siteModeTarget);
+          if (mode === normalizeMode(root.dataset.siteMode)) return;
+          applyMode(mode, true);
+          document
+            .querySelector<HTMLElement>(
+              `[data-site-mode-panel="${mode}"] [data-site-mode-toggle]`,
+            )
+            ?.focus({ preventScroll: true });
+        });
+      });
+
     applyMode(normalizeMode(root.dataset.siteMode), false);
   }
 
