@@ -240,3 +240,23 @@
 .blog-reader-body li {
   margin-bottom: 6px;
 }
+
+.blog-reader-body table,
+.prose table {
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.blog-reader-body th,
+.blog-reader-body td,
+.prose th,
+.prose td {
+  padding: 6px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.blog-reader-body th,
+.prose th {
+  color: var(--text-primary);
+}
