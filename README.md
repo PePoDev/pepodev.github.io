@@ -26,8 +26,8 @@ Requires Node `>=22.22.0` and `pnpm`.
 Run commands from the repository root. Use `pnpm build` after code changes and
 `pnpm test:e2e` after desktop, window, or app interaction changes.
 
-When Astro detects an AI agent, `pnpm dev` and `pnpm preview` start a
-background server and return. Manage it with `pnpm astro dev status`, `logs`,
+When Astro detects an AI agent (except on Windows), `pnpm dev` and
+`pnpm preview` start a background server and return. Manage it with `pnpm astro dev status`, `logs`,
 or `stop` (or `pnpm astro preview ...`), or add `--ignore-lock` to run in the
 foreground. Playwright starts its own dev server with `--ignore-lock`.
 
