@@ -57,13 +57,16 @@
   </div>
 </div>
 
-<script is:inline>
+<script>
   // @ts-nocheck
+  import { isAppKeyboardEvent, isAppKeyboardOwner } from "@utils/app-keyboard";
+
   function initSnakeGame() {
     document.querySelectorAll("[data-snake-game]").forEach((root) => {
       if (root.dataset.ready === "true") return;
       root.dataset.ready = "true";
 
+      const windowEl = root.closest(".window");
       const canvas = root.querySelector("[data-snake-board]");
       const ctx = canvas.getContext("2d");
       const scoreEl = root.querySelector("[data-snake-score]");
@@ -198,15 +201,6 @@
         render();
       }
 
-      function isWindowVisible() {
-        const windowEl = root.closest(".window");
-        return (
-          !windowEl?.hidden &&
-          windowEl?.getAttribute("aria-hidden") !== "true" &&
-          !windowEl?.classList.contains("minimized")
-        );
-      }
-
       function setOverlay(title, copy, visible) {
         overlayTitle.textContent = title;
         overlayCopy.textContent = copy;
@@ -301,7 +295,9 @@
       }
 
       function tick() {
-        if (!isWindowVisible()) {
+        // Pause whenever the game can't hear its keys, so it never runs on
+        // while the player can't steer or pause it.
+        if (!isAppKeyboardOwner(windowEl)) {
           pause();
           return;
         }
@@ -374,7 +370,7 @@
       });
 
       document.addEventListener("keydown", (event) => {
-        if (!isWindowVisible()) return;
+        if (!isAppKeyboardEvent(event, windowEl)) return;
         if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
           event.preventDefault();
           setDirection(0, -1);

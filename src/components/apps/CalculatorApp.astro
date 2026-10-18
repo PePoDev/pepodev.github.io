@@ -30,6 +30,8 @@
 </div>
 
 <script>
+  import { isAppKeyboardEvent } from "@utils/app-keyboard";
+
   function initCalculator() {
     document.querySelectorAll("[data-calculator]").forEach((calculator) => {
       if (calculator.dataset.ready === "true") return;
@@ -98,14 +100,9 @@
       });
 
       document.addEventListener("keydown", (event) => {
-        const windowEl = calculator.closest(".window");
-        if (
-          windowEl?.hidden ||
-          windowEl?.getAttribute("aria-hidden") === "true"
-        )
-          return;
+        if (!isAppKeyboardEvent(event, calculator.closest(".window"))) return;
 
-        if (/[\d+\-*/%.]/.test(event.key)) {
+        if (/^[\d+\-*/%.]$/.test(event.key)) {
           event.preventDefault();
           appendToken(event.key);
         } else if (event.key === "Enter" || event.key === "=") {

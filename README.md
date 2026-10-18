@@ -73,6 +73,9 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 - Preserve keyboard access, stable `global.css` selectors, command-palette
   stacking, and case-insensitive `Ctrl`/`Cmd` + `K`.
 - Explicit `display` rules on hidden panels require a `[hidden]` override.
+- List a new desktop overlay in both `isEscapeOwnedByOverlay`
+  (`WindowController.astro`) and `isDesktopOverlayOpen`
+  (`src/utils/app-keyboard.ts`).
 - Put a `-webkit-` declaration before its standard property. CSS minification
   drops a standard property followed by its prefixed twin, and keeps prefixes
   only for browsers in `vite.build.cssTarget` (`astro.config.mjs`).
@@ -102,7 +105,14 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
   cell. Dropping an icon on an occupied cell swaps the two icons.
 - Only a drag saves an icon position. Resizes re-clamp in memory, and layout
   waits while the desktop is hidden.
-- `Escape` closes the focused window after overlays handle it.
+- `Escape` closes the focused window after overlays handle it. Closing or
+  minimizing the focused window hands focus to the topmost remaining one, and
+  tabbing into a window focuses it.
+- Calculator and Snake take keys only while their window is focused in desktop
+  mode with no overlay open and no Ctrl, Meta, or Alt (AltGr is allowed). Form
+  fields and controls outside the window keep their keys, and Snake pauses
+  whenever it loses the keyboard. The shared guard is
+  `src/utils/app-keyboard.ts`.
 - Storage keys are `pepodev.desktopPrefs`, `pepodev.music`,
   `pepodev.systemAudio`, `pepodev.desktopIcon.v3.<appId>`, and
   `pepodev.linkIcon.v4.<link id>`. Older icon key versions are removed on

@@ -136,6 +136,12 @@
         if (state.open && !state.minimized) focusWindow(state.appId);
       });
 
+      // Tabbing into a window gives it the keyboard, just like clicking.
+      win.addEventListener("focusin", () => {
+        if (state.open && !state.minimized && !win.classList.contains("focused"))
+          focusWindow(state.appId);
+      });
+
       win
         .querySelector(".close-btn")
         ?.addEventListener("click", () => closeWindow(state.appId));
@@ -272,11 +278,13 @@
       state.element.dispatchEvent(
         new CustomEvent("desktop:window-close", { detail: { appId } }),
       );
+      const wasFocused = state.element.classList.contains("focused");
       state.open = false;
       state.minimized = false;
       state.maximized = false;
       state.element.classList.add("closing");
       state.element.classList.remove("focused", "minimized", "maximized");
+      releaseWindowFocus(state, wasFocused);
       window.setTimeout(() => {
         state.element.hidden = true;
         state.element.setAttribute("aria-hidden", "true");
@@ -304,6 +312,20 @@
         )[0];
     }
 
+    // A closed or minimized window drops DOM focus and hands window focus to
+    // the next one, so app keys and Escape agree on the active window.
+    function releaseWindowFocus(state, wasFocused) {
+      const active = document.activeElement;
+      if (
+        state.element.contains(active) ||
+        active?.closest?.(`[data-open-app="${state.appId}"]`)
+      ) {
+        active.blur();
+      }
+      const next = wasFocused && getActiveWindow();
+      if (next) focusWindow(next.appId);
+    }
+
     function isEscapeOwnedByOverlay() {
       return (
         document.getElementById("command-palette")?.dataset.visible ===
@@ -316,9 +338,11 @@
     function minimizeWindow(appId) {
       const state = windows.get(appId);
       if (!state || !state.open) return;
+      const wasFocused = state.element.classList.contains("focused");
       state.minimized = true;
       state.element.classList.add("minimized");
       state.element.classList.remove("focused");
+      releaseWindowFocus(state, wasFocused);
       updateTaskbar();
     }
 
