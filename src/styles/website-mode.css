@@ -54,8 +54,8 @@ html[data-site-mode="website"] body {
   z-index: 100;
   border-bottom: 1px solid var(--glass-border);
   background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 
 .website-header-inner {

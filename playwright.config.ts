@@ -11,7 +11,7 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   webServer: {
-    command: "pnpm dev --host 127.0.0.1 --port 4323",
+    command: "pnpm dev --host 127.0.0.1 --port 4323 --ignore-lock",
     url: "http://127.0.0.1:4323",
     reuseExistingServer: true,
     timeout: 120_000,

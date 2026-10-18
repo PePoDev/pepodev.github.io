@@ -23,6 +23,12 @@ export default defineConfig({
     remotePatterns: [],
   },
   vite: {
+    build: {
+      // Astro builds with an "esnext" target, so Lightning CSS minification
+      // would merge vendor-prefixed declarations away. Use Vite's
+      // baseline-widely-available browsers to keep prefixes Safari needs.
+      cssTarget: ["chrome111", "edge111", "firefox114", "safari16.4", "ios16.4"],
+    },
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),

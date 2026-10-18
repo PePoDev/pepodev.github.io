@@ -5,8 +5,8 @@
   display: flex;
   flex-direction: column;
   background: var(--glass-bg);
-  backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
   -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
   border: 1px solid var(--glass-border);
   border-radius: var(--window-radius);
   box-shadow: var(--window-shadow);
@@ -21,8 +21,8 @@
 
 [data-window-glass="off"] .window {
   background: var(--bg-secondary);
-  backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 [data-window-glass="off"] .window-titlebar {
@@ -274,13 +274,13 @@
 
 /* Light Theme Overrides */
 [data-theme="light"] .window {
-  backdrop-filter: blur(40px) saturate(1.2) brightness(1.05);
   -webkit-backdrop-filter: blur(40px) saturate(1.2) brightness(1.05);
+  backdrop-filter: blur(40px) saturate(1.2) brightness(1.05);
 }
 
 [data-theme="light"][data-window-glass="off"] .window {
-  backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 [data-theme="light"] .window.focused {

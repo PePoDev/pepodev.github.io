@@ -11,7 +11,7 @@ scripts only for desktop, window, media, and app interactions.
 
 ## Setup
 
-Requires Node `>=22.12.0` and `pnpm`.
+Requires Node `>=22.22.0` and `pnpm`.
 
 | Command | Purpose |
 | --- | --- |
@@ -25,6 +25,11 @@ Requires Node `>=22.12.0` and `pnpm`.
 
 Run commands from the repository root. Use `pnpm build` after code changes and
 `pnpm test:e2e` after desktop, window, or app interaction changes.
+
+When Astro detects an AI agent, `pnpm dev` and `pnpm preview` start a
+background server and return. Manage it with `pnpm astro dev status`, `logs`,
+or `stop` (or `pnpm astro preview ...`), or add `--ignore-lock` to run in the
+foreground. Playwright starts its own dev server with `--ignore-lock`.
 
 ## Project Map
 
@@ -68,6 +73,9 @@ Run commands from the repository root. Use `pnpm build` after code changes and
 - Preserve keyboard access, stable `global.css` selectors, command-palette
   stacking, and case-insensitive `Ctrl`/`Cmd` + `K`.
 - Explicit `display` rules on hidden panels require a `[hidden]` override.
+- Put a `-webkit-` declaration before its standard property. CSS minification
+  drops a standard property followed by its prefixed twin, and keeps prefixes
+  only for browsers in `vite.build.cssTarget` (`astro.config.mjs`).
 
 ### Content and Apps
 
