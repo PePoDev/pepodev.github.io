@@ -38,7 +38,7 @@ tags: ["AWS", "Local Zone", "Bangkok", "Cloud", "Latency"]
 
 พูดกันมาถึงขนาดนี้ หลายๆท่านคงเตรียมเปิด console ไปกดสร้างหรือเตรียมแผนงานย้ายระบบมาอยู่บน Local zone กันเป็นแน่แท้ แต่ก่อนจะไปขั้นนั้น ลองมาดูค่าใช้จ่ายเมื่อเทียบกับ compute ทั่วไปบน region กันก่อน
 
-|EC2 (Region)|EC2 (Local Zone)|
+| |EC2 (Region)|EC2 (Local Zone)|
 |---|---|---|
 |Instance (c5.2xlarge) / hours|$0.392|$0.549|
 |EBS (gp2) / GB|$0.12|$0.246|
