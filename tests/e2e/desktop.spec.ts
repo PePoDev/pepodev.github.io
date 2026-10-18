@@ -564,8 +564,9 @@ test("command palette keyboard navigation runs desktop commands", async ({
 });
 
 test("downloads a generated resume PDF", async ({ page }) => {
-  const downloadPromise = page.waitForEvent("download");
   await page.goto("/resume");
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download PDF" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("pepo-resume.pdf");
 });
@@ -811,17 +812,38 @@ test("certifications wallet renders sorted dynamic status badges", async ({
   const cards = certs.locator(".cert-card");
   await expect(cards).toHaveCount(6);
   await expect(certs.locator(".cert-wallet-header")).toHaveText(
-    "6 verified records",
+    "6 certifications earned",
   );
-  await expect
-    .poll(() => certs.locator(".cert-status").allTextContents())
-    .not.toContain("Loading...");
 
-  const statuses = await certs.locator(".cert-status").allTextContents();
+  // Statuses are date-sensitive; verify valid values in sorted order
+  const priorities = { active: 1, expiring: 2, expired: 3 };
+  const statuses = await cards.evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute("data-status")),
+  );
   expect(statuses).toHaveLength(6);
-  // Statuses are date-sensitive; just verify they are valid values
-  for (const status of statuses) {
-    expect(["Active", "Expiring Soon", "Expired"]).toContain(status);
+  const order = statuses.map(
+    (status) => priorities[status as keyof typeof priorities],
+  );
+  expect(order).not.toContain(undefined);
+  expect(order).toEqual([...order].sort((a, b) => a - b));
+
+  for (const [index, status] of statuses.entries()) {
+    const card = cards.nth(index);
+    await expect(card.locator(".cert-earned")).toHaveText(
+      /^Earned [A-Z][a-z]+ \d{4}$/,
+      { useInnerText: true },
+    );
+    if (status === "expired") {
+      await expect(card.locator(".cert-expiry")).toHaveText(
+        /^Expired [A-Z][a-z]+ \d{4}$/,
+        { useInnerText: true },
+      );
+      await expect(card.locator(".cert-status")).toBeHidden();
+    } else {
+      await expect(card.locator(".cert-status")).toHaveText(
+        status === "active" ? "Active" : "Expiring Soon",
+      );
+    }
   }
 
   await expect(cards.first()).toHaveAttribute("target", "_blank");

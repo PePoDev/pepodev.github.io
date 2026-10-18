@@ -122,12 +122,6 @@
   font-weight: 700;
 }
 
-.cert-card span {
-  color: var(--accent-green);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
 .trash-app {
   color: var(--text-primary);
 }

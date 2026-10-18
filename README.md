@@ -3,8 +3,8 @@
 An Astro-based static portfolio and engineering blog with two presentation
 modes: an interactive desktop and a conventional responsive website. The
 desktop includes draggable windows, shortcuts, a command palette, work and
-project content, Markdown/MDX posts, a resume generator, music, tools, and
-games.
+project content, Markdown/MDX posts, a resume page with PDF download, music,
+tools, and games.
 
 Keep it **static-first**: render content at build time and use small client
 scripts only for desktop, window, media, and app interactions.
@@ -41,7 +41,7 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 | `src/components/desktop/` | Windows, icons, taskbar, menus, and command palette |
 | `src/components/apps/` | Server-rendered desktop app bodies |
 | `src/pages/blog/` | Static blog index and post routes |
-| `src/pages/resume.astro` | Standalone PDF resume download page |
+| `src/pages/resume.astro` | Standalone HTML resume page with PDF download |
 | `src/pages/rss.xml.js` | RSS feed |
 | `src/content/blog/` | Markdown/MDX posts; standard and Obsidian frontmatter |
 | `src/assets/blog/` | Local post images |
@@ -107,7 +107,9 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 - Register new apps in `src/pages/index.astro`, `StartMenu.astro`,
   `CommandPalette.astro`, and `AppIcon.astro`.
 - The resume remains a standalone `/resume` page; do not restore
-  `ResumeApp.astro`.
+  `ResumeApp.astro`. It renders as HTML from `experiences.json`,
+  `skills.json`, and `certifications.json`, and Download PDF builds the PDF
+  from the same data. Never auto-download, close the window, or navigate away.
 
 ### Interaction Invariants
 
@@ -136,7 +138,9 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 - Gallery password is intentionally the literal `password`.
 - Certifications sort as Active (at least 90 days remaining), Expiring Soon,
   then Expired; badges refresh hourly. Data and sorting live in
-  `src/data/certifications.json` and `src/utils/certifications.ts`.
+  `src/data/certifications.json` and `src/utils/certifications.ts`. Expired
+  ones read as earned history: "Earned <Month YYYY>" with a muted "Expired
+  <Month YYYY>" and no badge. The resume lists "<name>, earned <YYYY>".
 - White Noise intentionally has no rain animation.
 - Hide the command-palette tutorial toast at widths `<=768px`; otherwise show
   it on first visit or every seven days.

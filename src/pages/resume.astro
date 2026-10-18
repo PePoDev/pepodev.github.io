@@ -1,25 +1,27 @@
 ---
-import experiences from "../data/experiences.json";
-import skills from "../data/skills.json";
+import BaseHead from "@components/BaseHead.astro";
+import certifications from "@data/certifications.json";
+import experiences from "@data/experiences.json";
+import skills from "@data/skills.json";
+import "@styles/website-mode.css";
 
-const certifications = [
-  "AWS Certified Solutions Architect - Associate",
-  "HashiCorp Certified: Terraform Associate (002)",
-  "Google Cloud Digital Leader",
-  "Associate Cloud Engineer",
-  "Professional Cloud Architect",
-  "Certified Kubernetes Administrator (CKA)",
+const contactLinks = [
+  { label: "Bangkok, Thailand" },
+  { label: "pepo@pepo.dev", href: "mailto:pepo@pepo.dev" },
+  { label: "github.com/pepodev", href: "https://github.com/pepodev" },
+  { label: "linkedin.com/in/pepodev", href: "https://linkedin.com/in/pepodev" },
 ];
+
+// Listed as earned history so lapsed certifications never read as current.
+const earnedCertifications = certifications.map((certification) => ({
+  ...certification,
+  earnedYear: certification.issueDate.slice(0, 4),
+}));
 
 const resumePdfData = {
   name: "Thiwanon Chomcharoen (PePo)",
   title: "Site Reliability Engineer",
-  contact: [
-    "Bangkok, Thailand",
-    "pepo@pepo.dev",
-    "github.com/pepodev",
-    "linkedin.com/in/pepodev",
-  ],
+  contact: contactLinks.map(({ label }) => label),
   summary:
     "Site Reliability Engineer specializing in cloud infrastructure, Kubernetes platforms, observability, infrastructure as code, GitOps delivery, and reliability practices for production systems.",
   education: [
@@ -29,83 +31,337 @@ const resumePdfData = {
   ],
   experiences,
   skills: skills.map((skill) => `${skill.name} - ${skill.level}%`),
-  certifications,
+  certifications: earnedCertifications.map(
+    ({ name, earnedYear }) => `${name}, earned ${earnedYear}`,
+  ),
 };
+
+const [degree, school, educationPeriod] = resumePdfData.education;
+const currentYear = new Date().getFullYear();
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="resume-document">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Downloading Resume - PePoDev</title>
+    <BaseHead
+      title={`Resume - ${resumePdfData.name}`}
+      description="Resume of Thiwanon Chomcharoen (PePo), a Site Reliability Engineer in Bangkok: experience, technical skills, education, and certifications, with a PDF download."
+    />
     <style>
-      body {
-        margin: 0;
-        padding: 0;
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
-        color: #e5e7eb;
+      .resume-page {
+        --website-content-width: 920px;
+      }
+
+      .resume-main {
+        width: min(calc(100% - 32px), var(--website-content-width));
+        margin-inline: auto;
+        padding-block: clamp(40px, 7vw, 72px);
+      }
+
+      .resume-intro {
+        padding-bottom: 40px;
+      }
+
+      .resume-intro h1 {
+        font-size: clamp(2.25rem, 6vw, 3.75rem);
+        line-height: 1.04;
+        letter-spacing: -0.04em;
+      }
+
+      .resume-title {
+        margin-top: 10px;
+        color: var(--accent-secondary);
+        font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+        font-weight: 700;
+      }
+
+      .resume-contact {
         display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        margin-top: 18px;
+        list-style: none;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+      }
+
+      .resume-page a {
+        text-underline-offset: 3px;
+      }
+
+      .resume-contact a,
+      .resume-certifications a {
+        color: var(--text-primary);
+      }
+
+      .resume-summary {
+        max-width: 720px;
+        margin-top: 22px;
+        color: var(--text-secondary);
+        font-size: 1.05rem;
+        line-height: 1.7;
+      }
+
+      .resume-actions {
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        justify-content: center;
-        min-height: 100vh;
+        gap: 10px 16px;
+        margin-top: 28px;
       }
-      .container {
-        text-align: center;
-        padding: 2rem;
+
+      .resume-download {
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 1rem;
       }
-      h1 {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        color: #64d2ff;
+
+      .resume-download-status {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
       }
-      p {
-        font-size: 1.125rem;
-        opacity: 0.8;
-        margin-bottom: 2rem;
+
+      .resume-section {
+        display: grid;
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 32px;
+        padding-block: 32px;
+        border-top: 1px solid var(--glass-border);
       }
-      .spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(100, 210, 255, 0.2);
-        border-top-color: #64d2ff;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 2rem;
+
+      .resume-section h2 {
+        color: var(--accent-primary);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: 1.9;
+        text-transform: uppercase;
       }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
+
+      .resume-entries {
+        display: grid;
+        gap: 28px;
+      }
+
+      .resume-entry-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 4px 16px;
+      }
+
+      .resume-entry h3 {
+        font-size: 1.15rem;
+      }
+
+      .resume-period,
+      .resume-provider {
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+      }
+
+      .resume-org {
+        margin-top: 4px;
+        color: var(--text-secondary);
+        font-weight: 700;
+      }
+
+      .resume-entry ul {
+        display: grid;
+        gap: 7px;
+        margin-top: 14px;
+        padding-left: 20px;
+        color: var(--text-secondary);
+        line-height: 1.55;
+      }
+
+      .resume-certifications {
+        display: grid;
+        gap: 14px;
+        list-style: none;
+        line-height: 1.5;
+      }
+
+      .resume-certifications a {
+        font-weight: 700;
+      }
+
+      .resume-earned {
+        color: var(--text-secondary);
+      }
+
+      .resume-download[hidden] {
+        display: none;
+      }
+
+      .resume-provider {
+        display: block;
+      }
+
+      @media (max-width: 720px) {
+        .resume-section {
+          grid-template-columns: 1fr;
+          gap: 16px;
         }
       }
-      a {
-        color: #64d2ff;
-        text-decoration: none;
-        padding: 0.75rem 1.5rem;
-        border: 1px solid #64d2ff;
-        border-radius: 8px;
-        display: inline-block;
-        transition: all 0.2s;
-      }
-      a:hover {
-        background: #64d2ff;
-        color: #0a0e27;
+
+      @media print {
+        :global(html.resume-document) {
+          --bg-primary: #fff;
+          --text-primary: #111;
+          --text-secondary: #444;
+          --accent-primary: #111;
+          --accent-secondary: #333;
+          --glass-border: #ccc;
+        }
+
+        .resume-page {
+          background: none;
+        }
+
+        .website-header,
+        .resume-actions,
+        .website-footer {
+          display: none;
+        }
+
+        .resume-main {
+          width: auto;
+          padding: 0;
+        }
+
+        .resume-page a {
+          text-decoration: none;
+        }
+
+        .resume-entry,
+        .resume-certifications li {
+          break-inside: avoid;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="spinner"></div>
-      <h1>Generating Resume...</h1>
-      <p>Your download should start automatically.</p>
-      <a href="/">← Back to Home</a>
+    <div class="website-shell resume-page">
+      <a class="website-skip-link" href="#resume-main">Skip to content</a>
+
+      <header class="website-header">
+        <div class="website-header-inner">
+          <a class="website-brand" href="/">PePoDev</a>
+        </div>
+      </header>
+
+      <main id="resume-main" class="resume-main">
+        <header class="resume-intro">
+          <p class="website-eyebrow">Resume</p>
+          <h1>{resumePdfData.name}</h1>
+          <p class="resume-title">{resumePdfData.title}</p>
+          <ul class="resume-contact" aria-label="Contact">
+            {
+              contactLinks.map(({ label, href }) => (
+                <li>{href ? <a href={href}>{label}</a> : label}</li>
+              ))
+            }
+          </ul>
+          <p class="resume-summary">{resumePdfData.summary}</p>
+          <div class="resume-actions">
+            <button
+              type="button"
+              class="website-button website-button--primary resume-download"
+              data-resume-download
+              hidden
+            >
+              Download PDF
+            </button>
+            <p
+              class="resume-download-status"
+              role="status"
+              data-resume-download-status
+            >
+            </p>
+          </div>
+        </header>
+
+        <section class="resume-section" aria-labelledby="resume-experience">
+          <h2 id="resume-experience">Experience</h2>
+          <div class="resume-entries">
+            {
+              experiences.map((experience) => (
+                <article class="resume-entry">
+                  <div class="resume-entry-heading">
+                    <h3>{experience.role}</h3>
+                    <p class="resume-period">{experience.period}</p>
+                  </div>
+                  <p class="resume-org">{experience.company}</p>
+                  <ul>
+                    {experience.details.map((detail) => (
+                      <li>{detail}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="resume-section" aria-labelledby="resume-skills">
+          <h2 id="resume-skills">Technical Skills</h2>
+          <ul class="website-skills">
+            {skills.map((skill) => <li>{skill.name}</li>)}
+          </ul>
+        </section>
+
+        <section class="resume-section" aria-labelledby="resume-education">
+          <h2 id="resume-education">Education</h2>
+          <div class="resume-entry">
+            <div class="resume-entry-heading">
+              <h3>{degree}</h3>
+              <p class="resume-period">{educationPeriod}</p>
+            </div>
+            <p class="resume-org">{school}</p>
+          </div>
+        </section>
+
+        <section class="resume-section" aria-labelledby="resume-certifications">
+          <h2 id="resume-certifications">Certifications</h2>
+          <ul class="resume-certifications">
+            {
+              earnedCertifications.map((certification) => (
+                <li>
+                  <a
+                    href={certification.credlyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >{certification.name}</a><span class="resume-earned"
+                    >, earned {certification.earnedYear}</span
+                  >
+                  <span class="resume-provider">{certification.provider}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </main>
+
+      <footer class="website-footer">
+        <p>© {currentYear} PePoDev. Built as a static Astro site.</p>
+      </footer>
     </div>
 
     <script define:vars={{ resumePdfData }} is:inline>
       // @ts-nocheck
-      document.addEventListener("DOMContentLoaded", () => {
+      const downloadButton = document.querySelector("[data-resume-download]");
+      const downloadStatus = document.querySelector(
+        "[data-resume-download-status]",
+      );
+      // The PDF is generated client-side, so only offer it once JS runs.
+      downloadButton.hidden = false;
+
+      downloadButton.addEventListener("click", () => {
         try {
           const pdf = createResumePdf(resumePdfData);
           const url = URL.createObjectURL(
@@ -117,28 +373,13 @@ const resumePdfData = {
           document.body.appendChild(link);
           link.click();
           link.remove();
-          URL.revokeObjectURL(url);
+          // Revoking right after click() can cancel the download in some browsers.
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
 
-          document.querySelector("h1").textContent = "Download Started!";
-          document.querySelector("p").textContent =
-            "Closing this page automatically...";
-
-          // Auto-close after a short delay to ensure download starts
-          setTimeout(() => {
-            // Try to close the window (works if opened via window.open)
-            window.close();
-
-            // If close didn't work (most cases), navigate back
-            setTimeout(() => {
-              if (!document.hidden) {
-                window.history.back();
-              }
-            }, 100);
-          }, 1000);
+          downloadStatus.textContent = "Download started.";
         } catch (error) {
-          document.querySelector("h1").textContent = "Download Failed";
-          document.querySelector("p").textContent =
-            "An error occurred while generating the PDF. Please try again.";
+          downloadStatus.textContent =
+            "Could not generate the PDF. Please try again.";
           console.error("PDF generation error:", error);
         }
       });
