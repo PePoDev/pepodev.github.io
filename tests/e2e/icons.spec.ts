@@ -353,6 +353,8 @@ test("reset desktop and reset all settings clear saved icon positions", async ({
   let reloaded = page.waitForEvent("load");
   await page.keyboard.press("ControlOrMeta+K");
   await page.locator("#command-palette-input").fill("reset desktop");
+  // The first Enter only asks for confirmation.
+  await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   await reloaded;
   expect(await getSavedIconKeys(page)).toEqual([]);

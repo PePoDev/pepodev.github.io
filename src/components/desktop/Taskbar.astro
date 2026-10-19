@@ -3,7 +3,14 @@ import ModeSwitch from "@components/ModeSwitch.astro";
 ---
 
 <div id="taskbar">
-  <button id="taskbar-start" type="button" aria-label="Open start menu">
+  <button
+    id="taskbar-start"
+    type="button"
+    aria-label="Open start menu"
+    aria-haspopup="dialog"
+    aria-expanded="false"
+    aria-controls="start-menu"
+  >
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"
       ></path>
@@ -33,6 +40,7 @@ import ModeSwitch from "@components/ModeSwitch.astro";
       type="button"
       aria-label="System audio enabled"
       aria-pressed="false"
+      aria-expanded="false"
       aria-controls="tray-panel"
     >
       <svg
@@ -80,7 +88,7 @@ import ModeSwitch from "@components/ModeSwitch.astro";
       <span id="taskbar-date"></span>
     </button>
   </div>
-  <div id="tray-panel" aria-hidden="true">
+  <div id="tray-panel" aria-hidden="true" inert>
     <div class="tray-panel-header">
       <div>
         <div id="tray-time"></div>
@@ -138,6 +146,7 @@ import ModeSwitch from "@components/ModeSwitch.astro";
       "taskbar-command-palette",
     );
     let trayOpen = false;
+    let trayOpener = null;
     let visibleMonth = new Date();
 
     function getAudioSettings() {
@@ -227,13 +236,29 @@ import ModeSwitch from "@components/ModeSwitch.astro";
       if (uptime) uptime.textContent = "uptime: " + mins + "m " + secs + "s";
     }
 
-    function setTrayOpen(open) {
+    // Closed, the panel leaves the tab order and the accessibility tree.
+    // restoreFocus returns focus to the tray button that opened it.
+    function setTrayOpen(open, { opener = null, restoreFocus = false } = {}) {
+      if (!trayPanel || open === trayOpen) return;
       trayOpen = open;
-      trayPanel?.classList.toggle("visible", trayOpen);
-      trayPanel?.setAttribute("aria-hidden", String(!trayOpen));
+      trayPanel.classList.toggle("visible", trayOpen);
+      trayPanel.setAttribute("aria-hidden", String(!trayOpen));
       clockButton?.setAttribute("aria-expanded", String(trayOpen));
       audioStatusButton?.setAttribute("aria-expanded", String(trayOpen));
-      if (trayOpen) renderCalendar();
+
+      if (trayOpen) {
+        trayOpener = opener;
+        trayPanel.inert = false;
+        renderCalendar();
+        return;
+      }
+
+      const active = document.activeElement;
+      const hadFocus = trayPanel.contains(active) || active === document.body;
+      if (trayPanel.contains(active)) active.blur();
+      trayPanel.inert = true;
+      if (restoreFocus && hadFocus) trayOpener?.focus();
+      trayOpener = null;
     }
 
     function renderCalendar() {
@@ -272,12 +297,12 @@ import ModeSwitch from "@components/ModeSwitch.astro";
 
     clockButton?.addEventListener("click", (event) => {
       event.stopPropagation();
-      setTrayOpen(!trayOpen);
+      setTrayOpen(!trayOpen, { opener: clockButton, restoreFocus: true });
     });
 
     audioStatusButton?.addEventListener("click", (event) => {
       event.stopPropagation();
-      setTrayOpen(!trayOpen);
+      setTrayOpen(!trayOpen, { opener: audioStatusButton, restoreFocus: true });
     });
 
     commandPaletteButton?.addEventListener("click", (event) => {
@@ -293,8 +318,14 @@ import ModeSwitch from "@components/ModeSwitch.astro";
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && trayOpen) setTrayOpen(false);
+      if (event.key === "Escape" && trayOpen)
+        setTrayOpen(false, { restoreFocus: true });
     });
+
+    // One overlay at a time: opening the palette closes the tray.
+    document.addEventListener("desktop:command-palette-open", () =>
+      setTrayOpen(false, { restoreFocus: true }),
+    );
 
     document.getElementById("calendar-prev")?.addEventListener("click", () => {
       visibleMonth = new Date(

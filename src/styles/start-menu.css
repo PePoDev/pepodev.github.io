@@ -28,6 +28,11 @@
   transform: translateX(-50%) scale(1);
 }
 
+/* Touch screens focus the menu itself on open; Tab moves on to its controls. */
+#start-menu:focus {
+  outline: none;
+}
+
 #start-menu-header {
   padding: 20px 20px 12px;
   border-bottom: 1px solid var(--glass-border);
@@ -130,6 +135,20 @@
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 2px;
+}
+
+/* Always rendered, so screen readers announce "No apps found". */
+#start-menu-empty {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+#start-menu-empty:not(:empty) {
+  padding: 4px 20px 20px;
 }
 
 #start-menu-footer {

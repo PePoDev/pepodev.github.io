@@ -957,12 +957,12 @@ import { Font } from "astro:assets";
         const toastContainer = document.getElementById("toast-container");
         if (!toastContainer) return;
 
-        function showToast(message, duration = 5000) {
+        function showToast(message, duration = 5000, icon = "💡") {
           const toast = document.createElement("div");
           toast.className = "toast";
           toast.innerHTML = `
             <div class="toast-content">
-              <span class="toast-icon">💡</span>
+              <span class="toast-icon">${icon}</span>
               <span class="toast-message">${message}</span>
             </div>
             <button class="toast-close" aria-label="Close notification">✕</button>
@@ -1023,9 +1023,10 @@ import { Font } from "astro:assets";
 
             const isMac = navigator.platform.toUpperCase().includes("MAC");
             const key = isMac ? "Cmd" : "Ctrl";
+            // Auto-dismiss so the tip stops covering the top-right icons.
             showToast(
               `Quick tip: Press <kbd>${key} + K</kbd> to open the command palette`,
-              0,
+              8000,
             );
             localStorage.setItem(hintKey, String(Date.now()));
           }, 3000);
@@ -1076,6 +1077,12 @@ import { Font } from "astro:assets";
               const opened = window.__pepodevBlogOpenSlug(blogSlug);
               if (!opened && !warnedMissingPost) {
                 console.warn(`Blog post with slug "${blogSlug}" not found`);
+                // The slug comes from the URL, so keep it out of the toast HTML.
+                showToast(
+                  "Article not found. Showing all articles instead.",
+                  5000,
+                  "⚠️",
+                );
                 warnedMissingPost = true;
               }
 
@@ -1094,7 +1101,8 @@ import { Font } from "astro:assets";
                 maximizeBlogWindow();
               }
 
-              if (openArticle()) return;
+              // Every post is rendered at build time, so a miss is final.
+              if (openArticle() || warnedMissingPost) return;
 
               if (Date.now() - startedAt < 5000) {
                 setTimeout(retryOpenArticle, 100);

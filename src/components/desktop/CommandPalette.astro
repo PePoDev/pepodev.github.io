@@ -3,6 +3,7 @@ import type { SocialLink } from "@app-types/data";
 import socialLinks from "@data/social-links.json";
 
 const apps = [
+  { id: "welcome", name: "Welcome", description: "Login & introduction" },
   { id: "blog", name: "Blog", description: "Read articles and posts" },
   { id: "project", name: "Projects", description: "Browse project showcase" },
   { id: "work", name: "Work", description: "Career timeline" },
@@ -37,6 +38,10 @@ const commands = [
     name: "Reset Desktop",
     description: "Clear all settings and state for a fresh start",
     icon: "🔄",
+    // Destructive: the first Enter, click, or tap only asks for confirmation.
+    confirm:
+      "Press Enter or click Reset Desktop again to clear all settings and reload.",
+    confirmTouch: "Tap Reset Desktop again to clear all settings and reload.",
   },
   {
     id: "toggle-theme",
@@ -61,7 +66,15 @@ const externalLinks = socialLinks.map((link) => ({
 }));
 ---
 
-<div id="command-palette" class="command-palette" data-visible="false">
+<div
+  id="command-palette"
+  class="command-palette"
+  data-visible="false"
+  role="dialog"
+  aria-label="Command palette"
+  aria-modal="true"
+  inert
+>
   <div class="command-palette-backdrop"></div>
   <div class="command-palette-container">
     <div class="command-palette-header">
@@ -85,6 +98,11 @@ const externalLinks = socialLinks.map((link) => ({
       <kbd class="command-palette-hint">ESC</kbd>
     </div>
     <div id="command-palette-results" class="command-palette-results">
+      <div
+        id="command-palette-matches"
+        class="command-palette-matches"
+        hidden
+      ></div>
       <div class="command-palette-section">
         <div class="command-palette-section-title">Commands</div>
         {
@@ -95,6 +113,8 @@ const externalLinks = socialLinks.map((link) => ({
               data-type="command"
               data-id={cmd.id}
               data-index={index}
+              data-confirm={cmd.confirm}
+              data-confirm-touch={cmd.confirmTouch}
             >
               <span class="command-palette-item-icon">{cmd.icon}</span>
               <div class="command-palette-item-content">
@@ -147,6 +167,7 @@ const externalLinks = socialLinks.map((link) => ({
         }
       </div>
     </div>
+    <p id="command-palette-status" class="command-palette-status" role="status"></p>
   </div>
 </div>
 
@@ -157,8 +178,10 @@ const externalLinks = socialLinks.map((link) => ({
     const input = document.getElementById("command-palette-input");
     const results = document.getElementById("command-palette-results");
     const backdrop = palette?.querySelector(".command-palette-backdrop");
+    const status = document.getElementById("command-palette-status");
+    const matchList = document.getElementById("command-palette-matches");
 
-    if (!palette || !input || !results) return;
+    if (!palette || !input || !results || !matchList) return;
 
     function isDesktopSiteMode() {
       return document.documentElement.dataset.siteMode !== "website";
@@ -166,6 +189,32 @@ const externalLinks = socialLinks.map((link) => ({
 
     let selectedIndex = 0;
     let visibleItems = [];
+    // A destructive command waiting for its confirming Enter, click, or tap.
+    let armedItem = null;
+    // The control that had focus before the palette opened.
+    let returnFocusTo = null;
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const sections = Array.from(
+      results.querySelectorAll(".command-palette-section"),
+    );
+    // Every item with its section and the lowercase text search matches.
+    const entries = Array.from(
+      results.querySelectorAll(".command-palette-item"),
+    ).map((item, order) => ({
+      item,
+      order,
+      section: item.closest(".command-palette-section"),
+      name:
+        item
+          .querySelector(".command-palette-item-name")
+          ?.textContent?.trim()
+          .toLowerCase() || "",
+      description:
+        item
+          .querySelector(".command-palette-item-desc")
+          ?.textContent?.trim()
+          .toLowerCase() || "",
+    }));
 
     function updateVisibleItems() {
       visibleItems = Array.from(
@@ -175,8 +224,35 @@ const externalLinks = socialLinks.map((link) => ({
       );
     }
 
+    function setStatus(message, tone = "") {
+      if (!status) return;
+      status.textContent = message;
+      status.dataset.tone = tone;
+    }
+
+    // A window that is closing stays on screen for its exit animation, so it
+    // counts as gone too.
+    function canTakeFocus(element) {
+      return (
+        element instanceof HTMLElement &&
+        element !== document.body &&
+        element.isConnected &&
+        !element.closest("[inert], [hidden], .closing") &&
+        element.getClientRects().length > 0
+      );
+    }
+
     function openPalette() {
       if (!isDesktopSiteMode()) return;
+      // The Start menu and tray close first and hand focus back to their
+      // buttons, so that is where closing the palette returns it.
+      document.dispatchEvent(new CustomEvent("desktop:command-palette-open"));
+      const active = document.activeElement;
+      returnFocusTo =
+        active instanceof HTMLElement && !palette.contains(active)
+          ? active
+          : null;
+      palette.inert = false;
       palette.dataset.visible = "true";
       input.value = "";
       filterItems("");
@@ -185,9 +261,22 @@ const externalLinks = socialLinks.map((link) => ({
       setTimeout(() => input.focus(), 10);
     }
 
-    function closePalette() {
+    // Closed, the palette leaves the tab order and the accessibility tree.
+    // restoreFocus hands focus back to whatever opened it. Launching an app
+    // skips that: focus left on a control outside the new window would keep
+    // app keys (Calculator, Snake) away from it.
+    function closePalette({ restoreFocus = false } = {}) {
+      if (palette.dataset.visible !== "true") return;
+      const active = document.activeElement;
+      const hadFocus = palette.contains(active) || active === document.body;
       palette.dataset.visible = "false";
-      input.blur();
+      disarmItem();
+      if (palette.contains(active)) active.blur();
+      palette.inert = true;
+      if (restoreFocus && hadFocus && canTakeFocus(returnFocusTo)) {
+        returnFocusTo.focus({ preventScroll: true });
+      }
+      returnFocusTo = null;
     }
 
     document.addEventListener("desktop:open-command-palette", openPalette);
@@ -195,35 +284,59 @@ const externalLinks = socialLinks.map((link) => ({
       if (event.detail?.mode === "website") closePalette();
     });
 
+    // Whether the query starts the text or one of its words.
+    function startsWord(text, query) {
+      for (
+        let at = text.indexOf(query);
+        at >= 0;
+        at = text.indexOf(query, at + 1)
+      ) {
+        if (at === 0 || !/[\p{L}\p{N}]/u.test(text[at - 1])) return true;
+      }
+      return false;
+    }
+
+    // 0 when the query starts the name or a word in it, 1 for the rest of the
+    // name, 2 for the description, -1 for no match. filterApps in
+    // StartMenu.astro ranks the same way.
+    function getMatchRank(name, description, query) {
+      if (startsWord(name, query)) return 0;
+      if (name.includes(query)) return 1;
+      return description.includes(query) ? 2 : -1;
+    }
+
+    // While searching, matches leave their sections for one flat list sorted
+    // by rank, so "set" puts Settings above Reset Desktop and "all" puts the
+    // Gallery app above Reset Desktop's description. Moving the buttons keeps
+    // the visual, Tab, and arrow-key order equal.
     function filterItems(query) {
-      const lowerQuery = query.toLowerCase();
-      const allItems = results.querySelectorAll(".command-palette-item");
-      const sections = results.querySelectorAll(".command-palette-section");
+      const lowerQuery = query.trim().toLowerCase();
+      const searching = lowerQuery !== "";
+      disarmItem();
 
+      const matches = entries
+        .map((entry) => ({
+          entry,
+          rank: getMatchRank(entry.name, entry.description, lowerQuery),
+        }))
+        .filter(({ rank }) => rank >= 0)
+        .sort((a, b) => a.rank - b.rank || a.entry.order - b.entry.order);
+
+      entries.forEach(({ item, section }) => {
+        item.style.display = "none";
+        section.append(item);
+      });
+      matches.forEach(({ entry }) => {
+        entry.item.style.display = "";
+        if (searching) matchList.append(entry.item);
+      });
+      matchList.hidden = !searching || matches.length === 0;
       sections.forEach((section) => {
-        const items = section.querySelectorAll(".command-palette-item");
-        let hasVisibleItems = false;
-
-        items.forEach((item) => {
-          const name =
-            item
-              .querySelector(".command-palette-item-name")
-              ?.textContent?.toLowerCase() || "";
-          const desc =
-            item
-              .querySelector(".command-palette-item-desc")
-              ?.textContent?.toLowerCase() || "";
-          const matches =
-            name.includes(lowerQuery) || desc.includes(lowerQuery);
-
-          item.style.display = matches ? "" : "none";
-          if (matches) hasVisibleItems = true;
-        });
-
-        section.style.display = hasVisibleItems ? "" : "none";
+        section.hidden = searching;
       });
 
       updateVisibleItems();
+      setStatus(visibleItems.length ? "" : "No matching apps or commands");
       selectedIndex = 0;
       updateSelection();
     }
@@ -232,6 +345,10 @@ const externalLinks = socialLinks.map((link) => ({
       visibleItems.forEach((item, index) => {
         item.classList.toggle("selected", index === selectedIndex);
       });
+
+      if (armedItem && visibleItems[selectedIndex] !== armedItem) {
+        disarmItem();
+      }
 
       // Scroll selected item into view
       if (visibleItems[selectedIndex]) {
@@ -242,11 +359,51 @@ const externalLinks = socialLinks.map((link) => ({
       }
     }
 
+    // Selecting another item, typing, or closing the palette cancels it.
+    function disarmItem() {
+      if (!armedItem) return;
+      armedItem.classList.remove("confirming");
+      armedItem = null;
+      setStatus("");
+    }
+
+    function armItem(item) {
+      armedItem = item;
+      item.classList.add("confirming");
+      const message =
+        (coarsePointer.matches && item.dataset.confirmTouch) ||
+        item.dataset.confirm;
+      setStatus(message, "warning");
+    }
+
+    function selectItem(item) {
+      const index = visibleItems.indexOf(item);
+      if (index < 0 || index === selectedIndex) return;
+      selectedIndex = index;
+      updateSelection();
+    }
+
+    function moveSelection(delta) {
+      const focusedItem = results.contains(document.activeElement);
+      selectedIndex = Math.max(
+        0,
+        Math.min(selectedIndex + delta, visibleItems.length - 1),
+      );
+      updateSelection();
+      // Keep keyboard focus on the highlighted item once Tab has moved it there.
+      if (focusedItem) visibleItems[selectedIndex]?.focus();
+    }
+
     function executeItem(item) {
       const type = item.dataset.type;
       const id = item.dataset.id;
 
       if (type === "command") {
+        if (item.dataset.confirm && armedItem !== item) {
+          disarmItem();
+          armItem(item);
+          return;
+        }
         executeCommand(id);
       } else if (type === "app") {
         document.dispatchEvent(
@@ -257,7 +414,7 @@ const externalLinks = socialLinks.map((link) => ({
         const href = item.dataset.href;
         if (href) {
           window.open(href, "_blank", "noopener,noreferrer");
-          closePalette();
+          closePalette({ restoreFocus: true });
         }
       }
     }
@@ -508,11 +665,11 @@ const externalLinks = socialLinks.map((link) => ({
           new CustomEvent("desktop:preferences", { detail: prefs }),
         );
 
-        closePalette();
+        closePalette({ restoreFocus: true });
       } else if (commandId === "close-all-windows") {
         // Close all open windows
         document.dispatchEvent(new CustomEvent("desktop:close-all-windows"));
-        closePalette();
+        closePalette({ restoreFocus: true });
       }
     }
 
@@ -524,7 +681,7 @@ const externalLinks = socialLinks.map((link) => ({
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         if (palette.dataset.visible === "true") {
-          closePalette();
+          closePalette({ restoreFocus: true });
         } else {
           openPalette();
         }
@@ -537,28 +694,41 @@ const externalLinks = socialLinks.map((link) => ({
       // Close palette: Escape
       if (e.key === "Escape") {
         e.preventDefault();
-        closePalette();
+        closePalette({ restoreFocus: true });
+        return;
+      }
+
+      // The open palette is modal: Tab and Shift+Tab cycle through its input
+      // and visible results.
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const stops = [input, ...visibleItems];
+        const at = stops.indexOf(document.activeElement);
+        const step = e.shiftKey ? -1 : 1;
+        // From anywhere else, Tab starts at the input, Shift+Tab at the end.
+        const from = at >= 0 ? at : e.shiftKey ? 0 : -1;
+        stops[(from + step + stops.length) % stops.length].focus();
         return;
       }
 
       // Navigate: Arrow Down
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        selectedIndex = Math.min(selectedIndex + 1, visibleItems.length - 1);
-        updateSelection();
+        moveSelection(1);
         return;
       }
 
       // Navigate: Arrow Up
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        selectedIndex = Math.max(selectedIndex - 1, 0);
-        updateSelection();
+        moveSelection(-1);
         return;
       }
 
       // Execute: Enter
       if (e.key === "Enter") {
+        // A focused item runs through its native button click instead.
+        if (results.contains(document.activeElement) || e.isComposing) return;
         e.preventDefault();
         if (visibleItems[selectedIndex]) {
           executeItem(visibleItems[selectedIndex]);
@@ -572,17 +742,24 @@ const externalLinks = socialLinks.map((link) => ({
       filterItems(e.target.value);
     });
 
-    // Click on item
+    // Click on item (also Enter or Space on a focused item)
     results?.addEventListener("click", (e) => {
       const item = e.target.closest(".command-palette-item");
       if (item) {
+        selectItem(item);
         executeItem(item);
       }
     });
 
+    // The highlight follows keyboard focus, so Enter and the highlight agree.
+    results?.addEventListener("focusin", (e) => {
+      const item = e.target.closest(".command-palette-item");
+      if (item) selectItem(item);
+    });
+
     // Click on backdrop to close
     backdrop?.addEventListener("click", () => {
-      closePalette();
+      closePalette({ restoreFocus: true });
     });
 
     // Initialize
@@ -737,6 +914,11 @@ const externalLinks = socialLinks.map((link) => ({
     border-color: rgba(34, 197, 94, 0.3);
   }
 
+  .command-palette-item.confirming {
+    background: rgba(255, 69, 58, 0.16);
+    border-color: rgba(255, 69, 58, 0.6);
+  }
+
   .command-palette-item-icon {
     font-size: 20px;
     width: 24px;
@@ -765,6 +947,23 @@ const externalLinks = socialLinks.map((link) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* Always rendered, so screen readers announce new messages. */
+  .command-palette-status {
+    margin: 0;
+    padding: 0 20px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+  }
+
+  .command-palette-status:not(:empty) {
+    padding: 12px 20px;
+  }
+
+  .command-palette-status[data-tone="warning"] {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ff9f0a;
   }
 
   @media (max-width: 768px) {

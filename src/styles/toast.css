@@ -126,10 +126,18 @@
   background: rgba(0, 0, 0, 0.12);
 }
 
+/* Phone windows fill the screen from the top edge, so toasts sit above the
+   taskbar instead of over a window's title-bar buttons. */
+@media (max-width: 768px) {
+  #toast-container {
+    top: auto;
+    bottom: calc(var(--mobile-taskbar-height, 56px) + 12px);
+  }
+}
+
 /* Mobile Responsive */
 @media (max-width: 560px) {
   #toast-container {
-    top: 12px;
     right: 12px;
     left: 12px;
     max-width: none;

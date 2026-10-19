@@ -571,6 +571,11 @@ test("command palette keyboard navigation runs desktop commands", async ({
 
   await page.keyboard.press("ControlOrMeta+K");
   await page.locator("#command-palette-input").fill("reset desktop");
+  // Reset Desktop asks for a second Enter before it clears anything.
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#command-palette-status")).toContainText(
+    "again",
+  );
   await page.keyboard.press("Enter");
   await page.waitForLoadState("domcontentloaded");
   await expect
