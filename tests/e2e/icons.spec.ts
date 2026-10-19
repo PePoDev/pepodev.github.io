@@ -22,9 +22,14 @@ type IconBox = {
   height: number;
 };
 
+// Returning visitor: the first-visit Welcome window would open 1.5 s after
+// load and could cover the icon a test is about to click.
 async function resetPage(page: Page) {
   await page.goto("/");
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.hasVisited", "true");
+  });
   await page.reload();
 }
 

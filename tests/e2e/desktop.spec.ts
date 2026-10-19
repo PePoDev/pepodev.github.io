@@ -19,9 +19,14 @@ const apps = [
   { label: "Trash", appId: "trash", title: "Trash Bin" },
 ];
 
+// Returning visitor: the first-visit Welcome window would open 1.5 s after
+// load and could cover the icon a test is about to click.
 async function resetPage(page: Page) {
   await page.goto("/");
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.hasVisited", "true");
+  });
   await page.reload();
 }
 
@@ -38,6 +43,24 @@ async function openApp(page: Page, label: string, appId: string) {
 
 test.beforeEach(async ({ page }) => {
   await resetPage(page);
+});
+
+test("a first visit opens the Welcome window by itself, once", async ({
+  page,
+}) => {
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const welcome = page.locator("#window-welcome");
+  await expect(welcome).toBeVisible({ timeout: 5_000 });
+  await expect(welcome).toHaveClass(/focused/);
+  expect(await page.evaluate(() => localStorage.getItem("pepodev.hasVisited"))).toBe(
+    "true",
+  );
+
+  // The Welcome timer would fire 1.5 s after load; a returning visit skips it.
+  await page.reload();
+  await page.waitForTimeout(2_000);
+  await expect(welcome).toBeHidden();
 });
 
 test("renders the desktop and all launchers", async ({ page }) => {

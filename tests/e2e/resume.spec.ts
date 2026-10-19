@@ -23,7 +23,11 @@ async function downloadResumePdf(page: Page) {
 
 async function openCertifications(page: Page) {
   await page.goto("/");
-  await page.evaluate(() => localStorage.clear());
+  // Returning visitor, so the first-visit Welcome window cannot cover Certs.
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.hasVisited", "true");
+  });
   await page.reload();
   await page
     .locator("#desktop-icons")
