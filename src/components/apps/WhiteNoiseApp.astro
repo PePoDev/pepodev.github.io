@@ -35,6 +35,8 @@
     let rainFilter = null;
     let dropTimer = null;
     let playing = false;
+    let audioWaiting = false;
+    let resumeTimer = 0;
     let audioSettings = loadAudioSettings();
 
     function loadAudioSettings() {
@@ -52,6 +54,15 @@
         ? Math.max(0, Math.min(1, audioSettings.volume))
         : 1;
       return audioSettings.muted ? 0 : volume;
+    }
+
+    function playingStatus() {
+      if (audioWaiting) {
+        return "Waiting for the browser to start audio. Allow sound for this site to hear the rain.";
+      }
+      return outputVolume() === 0
+        ? "Muted by system audio"
+        : "Rain loop active";
     }
 
     function applyVolume() {
@@ -82,7 +93,12 @@
       if (!AudioContextClass) return false;
       if (audioContext) return true;
 
-      audioContext = new AudioContextClass();
+      try {
+        audioContext = new AudioContextClass();
+      } catch {
+        audioContext = null;
+        return false;
+      }
       masterGain = audioContext.createGain();
       rainFilter = audioContext.createBiquadFilter();
       rainFilter.type = "bandpass";
@@ -90,12 +106,20 @@
       rainFilter.Q.value = 0.62;
       rainFilter.connect(masterGain);
       masterGain.connect(audioContext.destination);
+      // A context that starts late brings the rain in by itself.
+      audioContext.addEventListener("statechange", () => {
+        if (audioContext.state !== "running" || !audioWaiting) return;
+        audioWaiting = false;
+        if (playing) status.textContent = playingStatus();
+      });
       applyVolume();
       return true;
     }
 
     function playDrop() {
       if (!audioContext || !masterGain || !playing) return;
+      // Drops queued on a stopped clock would all sound at once on resume.
+      if (audioContext.state !== "running") return;
       const now = audioContext.currentTime;
       const oscillator = audioContext.createOscillator();
       const gain = audioContext.createGain();
@@ -131,12 +155,27 @@
       }, 130);
     }
 
-    async function startRain() {
+    // Some browsers start the context late (a slow audio device) or never
+    // settle resume() (Firefox without an audio device). The rain keeps
+    // going and says it is waiting until the context runs.
+    function resumeAudio() {
+      if (audioContext.state === "running") return;
+      const showWaiting = () => {
+        if (!playing || audioContext.state === "running") return;
+        audioWaiting = true;
+        status.textContent = playingStatus();
+      };
+      resumeTimer = window.setTimeout(showWaiting, 1500);
+      Promise.resolve()
+        .then(() => audioContext.resume())
+        .catch(showWaiting);
+    }
+
+    function startRain() {
       if (!setupAudio()) {
         status.textContent = "Audio is not available in this browser.";
         return;
       }
-      if (audioContext.state === "suspended") await audioContext.resume();
       stopRain();
 
       rainSource = audioContext.createBufferSource();
@@ -147,14 +186,16 @@
       playing = true;
       app.classList.add("noise-playing");
       toggle.textContent = "Stop rain";
-      status.textContent =
-        outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
+      status.textContent = playingStatus();
       applyVolume();
       scheduleDrops();
+      resumeAudio();
     }
 
     function stopRain() {
       playing = false;
+      audioWaiting = false;
+      window.clearTimeout(resumeTimer);
       clearInterval(dropTimer);
       dropTimer = null;
       if (rainSource) {
@@ -173,20 +214,28 @@
 
     toggle.addEventListener("click", () => {
       if (playing) stopRain();
-      else void startRain();
+      else startRain();
     });
 
     mode.addEventListener("change", () => {
-      if (playing) void startRain();
+      if (playing) startRain();
+    });
+
+    // Rain stops with its window and in website mode, which has no audio
+    // controls.
+    app
+      .closest("[data-window]")
+      ?.addEventListener("desktop:window-close", () => {
+        if (playing) stopRain();
+      });
+    document.addEventListener("site:mode-change", (event) => {
+      if (event.detail?.mode === "website" && playing) stopRain();
     });
 
     document.addEventListener("desktop:audio-settings", (event) => {
       audioSettings = { ...loadAudioSettings(), ...(event.detail || {}) };
       applyVolume();
-      if (playing) {
-        status.textContent =
-          outputVolume() === 0 ? "Muted by system audio" : "Rain loop active";
-      }
+      if (playing) status.textContent = playingStatus();
     });
   }
 

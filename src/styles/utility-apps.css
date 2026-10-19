@@ -12,6 +12,21 @@
   flex-direction: column;
 }
 
+/* Light theme: accent text darkens to keep WCAG AA on light glass. The
+   accent itself is set inline on <html>, so this derives from it. */
+[data-theme="light"] :is(.music-player-app, .white-noise-app, .settings-app) {
+  --app-accent-text: color-mix(in srgb, var(--accent-cyan) 40%, #000);
+}
+
+/* Custom properties are not validated, so the relative color needs a
+   feature query to leave the color-mix() fallback above in place. */
+@supports (color: oklch(from red 0.42 min(c, 0.15) h)) {
+  [data-theme="light"]
+    :is(.music-player-app, .white-noise-app, .settings-app) {
+    --app-accent-text: oklch(from var(--accent-cyan) 0.42 min(c, 0.15) h);
+  }
+}
+
 .music-now {
   display: grid;
   grid-template-columns: 156px minmax(0, 1fr);
@@ -41,7 +56,7 @@
 
 .music-eyebrow {
   margin-bottom: 6px;
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
@@ -116,7 +131,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 12px;
 }
@@ -268,7 +283,7 @@
 
 .music-status {
   margin: 8px 0 0;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -444,7 +459,7 @@
 .noise-panel p {
   min-height: 18px;
   margin: 0;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -842,10 +857,6 @@
   font-size: 12px;
 }
 
-.settings-field span {
-  color: var(--text-muted);
-}
-
 .settings-field select,
 .settings-field input[type="range"] {
   width: 100%;
@@ -965,7 +976,7 @@
 .settings-actions button {
   height: 36px;
   padding: 0 14px;
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   font-size: 13px;
 }
 

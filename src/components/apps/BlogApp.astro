@@ -123,6 +123,9 @@ const posts = await Promise.all(
       const terminalCommand = app.querySelector(
         "[data-blog-command]",
       ) as HTMLElement | null;
+      // The list and the reader share the window's scroller.
+      const scroller = app.closest(".window-content") as HTMLElement | null;
+      let listScrollTop = 0;
 
       function updateTerminalPath(slug?: string) {
         if (terminalCommand) {
@@ -134,13 +137,16 @@ const posts = await Promise.all(
         }
       }
 
-      function showList() {
+      // Back returns to where the list was; closing the window resets it.
+      function showList(restoreScroll: boolean) {
         if (listView) listView.style.display = "";
         if (reader) reader.classList.remove("active");
         panels.forEach((panel) => {
           (panel as HTMLElement).hidden = true;
         });
         updateTerminalPath();
+        if (!restoreScroll) listScrollTop = 0;
+        if (scroller) scroller.scrollTop = listScrollTop;
       }
 
       function openArticleBySlug(slug: string) {
@@ -154,6 +160,9 @@ const posts = await Promise.all(
         const index = panel.dataset.blogPost;
         if (typeof index === "undefined") return false;
 
+        if (scroller && !reader?.classList.contains("active")) {
+          listScrollTop = scroller.scrollTop;
+        }
         if (listView) listView.style.display = "none";
         if (reader) reader.classList.add("active");
         panels.forEach((p) => {
@@ -161,29 +170,52 @@ const posts = await Promise.all(
             (p as HTMLElement).dataset.blogPost !== index;
         });
         updateTerminalPath(slug);
+        // Every article opens at its title.
+        if (scroller) scroller.scrollTop = 0;
         return true;
       }
 
       // Expose the function globally for URL deep linking
       (window as any).__pepodevBlogOpenSlug = openArticleBySlug;
 
+      // Focus follows the view, so the keyboard never drops to the page:
+      // into the article's Back button, then back to the article's item.
+      // Neither scrolls, since both views set their own scroll position.
       app.querySelectorAll("[data-blog-index]").forEach((item) => {
         item.addEventListener("click", () => {
-          const index = (item as HTMLElement).dataset.blogIndex;
           const slug = (item as HTMLElement).dataset.blogSlug;
-          if (listView) listView.style.display = "none";
-          if (reader) reader.classList.add("active");
-          panels.forEach((panel) => {
-            (panel as HTMLElement).hidden =
-              (panel as HTMLElement).dataset.blogPost !== index;
-          });
-          updateTerminalPath(slug);
+          if (!slug || !openArticleBySlug(slug)) return;
+          app
+            .querySelector<HTMLElement>(
+              "[data-blog-post]:not([hidden]) [data-blog-back]",
+            )
+            ?.focus({ preventScroll: true });
         });
       });
 
       app.querySelectorAll("[data-blog-back]").forEach((button) => {
-        button.addEventListener("click", showList);
+        button.addEventListener("click", () => {
+          const slug =
+            button.closest<HTMLElement>("[data-blog-post]")?.dataset.blogSlug;
+          showList(true);
+          Array.from(app.querySelectorAll<HTMLElement>("[data-blog-index]"))
+            .find((item) => item.dataset.blogSlug === slug)
+            ?.focus({ preventScroll: true });
+        });
       });
+
+      // Article links open in a new tab, so the desktop never navigates away.
+      app
+        .querySelectorAll<HTMLAnchorElement>(".blog-reader-body a[href]")
+        .forEach((link) => {
+          const url = new URL(link.href, window.location.href);
+          const samePage =
+            url.origin === window.location.origin &&
+            url.pathname === window.location.pathname;
+          if (!/^https?:$/.test(url.protocol) || samePage) return;
+          link.target = "_blank";
+          link.relList.add("noopener", "noreferrer");
+        });
 
       app.querySelectorAll("[data-blog-share]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -221,7 +253,7 @@ const posts = await Promise.all(
 
       app
         .closest("[data-window]")
-        ?.addEventListener("desktop:window-close", showList);
+        ?.addEventListener("desktop:window-close", () => showList(false));
     });
   }
 

@@ -623,6 +623,8 @@ import { Font } from "astro:assets";
           let time = 0;
 
           function draw() {
+            // The music player answers with a desktop:music-audio-frame.
+            window.__pepoMusicController?.requestAudioFrame?.();
             paintFrame();
             animationId = requestAnimationFrame(draw);
           }

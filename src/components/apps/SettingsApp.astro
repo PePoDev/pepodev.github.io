@@ -119,7 +119,6 @@ const defaultTrackId = tracks[0]?.id ?? "";
     const musicKey = "pepodev.music";
     const defaults = {
       theme: localStorage.getItem("pepodev.theme") || "dark",
-      background: "network",
       accent: "green",
       radius: 6,
       glass: 55,
@@ -337,13 +336,19 @@ const defaultTrackId = tracks[0]?.id ?? "";
     };
 
     function loadPrefs() {
+      let saved = {};
       try {
-        const raw = localStorage.getItem(prefsKey);
-        if (raw) return { ...defaults, ...JSON.parse(raw) };
+        saved = JSON.parse(localStorage.getItem(prefsKey) || "{}");
       } catch {
         // Ignore corrupt persisted settings.
       }
-      return { ...defaults };
+      const prefs = { ...defaults, ...saved };
+      // Like the theme script in index.astro, a missing background follows
+      // the theme, so a light theme never starts on a dark background.
+      if (!backgroundMap[prefs.background]) {
+        prefs.background = prefs.theme === "light" ? "cloud" : "network";
+      }
+      return prefs;
     }
 
     function loadMusic() {
@@ -455,7 +460,6 @@ const defaultTrackId = tracks[0]?.id ?? "";
         }
 
         applyPrefs(prefs);
-        render();
       }
     });
 
@@ -476,7 +480,6 @@ const defaultTrackId = tracks[0]?.id ?? "";
       if (accentButton) {
         const prefs = { ...loadPrefs(), accent: accentButton.dataset.accent };
         applyPrefs(prefs);
-        render();
       }
 
       if (event.target.matches('[data-music-setting="toggle"]')) {
@@ -508,6 +511,9 @@ const defaultTrackId = tracks[0]?.id ?? "";
 
     applyPrefs(loadPrefs());
     render();
+    // Preferences also change outside Settings (the palette's Toggle Theme).
+    // Changes made here re-render through this event as well.
+    document.addEventListener("desktop:preferences", render);
     document.addEventListener("desktop:music-settings", render);
   }
 

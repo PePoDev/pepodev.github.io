@@ -12,10 +12,9 @@ const defaultTrack = tracks[0];
         <video
           class="music-art"
           id="music-art"
-          src={defaultTrack.src}
-          muted
+          data-music-media
           playsinline
-          preload="metadata"
+          preload="none"
           aria-hidden="true"
         />
       ) : defaultTrack ? (
@@ -85,23 +84,8 @@ const defaultTrack = tracks[0];
   <p class="music-status" data-music-status aria-live="polite"></p>
 
   {
-    defaultTrack?.mediaType === "video" ? (
-      <video
-        class="music-media"
-        data-music-media
-        playsinline
-        preload="metadata"
-        src={defaultTrack.src}
-      />
-    ) : (
-      defaultTrack && (
-        <audio
-          class="music-media"
-          data-music-media
-          preload="metadata"
-          src={defaultTrack.src}
-        />
-      )
+    defaultTrack?.mediaType === "audio" && (
+      <audio class="music-media" data-music-media preload="none" />
     )
   }
 </div>
@@ -134,6 +118,10 @@ const defaultTrack = tracks[0];
     const seek = player.querySelector("[data-music-seek]");
     const visualizer = player.querySelector("[data-music-visualizer]");
     const visualizerContext = visualizer?.getContext("2d");
+    const musicWindow = player.closest("[data-window]");
+    const reducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    );
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     let playbackRequestId = 0;
     let audioContext = null;
@@ -144,6 +132,7 @@ const defaultTrack = tracks[0];
     let waveformData = null;
     let visualizerFrame = 0;
     let visualizerPhase = 0;
+    let audioFramePlaying = false;
 
     function loadMusicSettings() {
       try {
@@ -190,6 +179,39 @@ const defaultTrack = tracks[0];
       return Boolean(media && !media.paused && !media.ended);
     }
 
+    function isDesktopMode() {
+      return document.documentElement.dataset.siteMode !== "website";
+    }
+
+    function isWindowOpen() {
+      return (
+        !musicWindow ||
+        (!musicWindow.hidden &&
+          musicWindow.getAttribute("aria-hidden") === "false")
+      );
+    }
+
+    function isPlayerVisible() {
+      return (
+        isWindowOpen() &&
+        !musicWindow?.classList.contains("minimized") &&
+        !musicWindow?.classList.contains("closing") &&
+        isDesktopMode() &&
+        !document.hidden
+      );
+    }
+
+    // A page load fetches no media: the track loads when the window opens or
+    // playback starts. For video tracks the artwork element is the player.
+    function loadTrackSource() {
+      const track = currentTrack();
+      if (!track || !media || media.getAttribute("src") === track.src) return;
+      playbackRequestId += 1;
+      media.preload = "metadata";
+      media.src = track.src;
+      media.load();
+    }
+
     function formatTime(seconds) {
       if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
       const wholeSeconds = Math.floor(seconds);
@@ -230,10 +252,14 @@ const defaultTrack = tracks[0];
       }
     }
 
-    function setupAnalyzer() {
-      if (!media || !AudioContextClass || analyser) return Boolean(analyser);
+    // A media element routed into a suspended AudioContext plays silently,
+    // and some browsers never resume it (Firefox without an audio device).
+    // So the media plays on its own and joins the analyser once it runs.
+    function connectAnalyzer() {
+      if (!media || analyser || audioContext?.state !== "running") {
+        return Boolean(analyser);
+      }
       try {
-        audioContext = new AudioContextClass();
         analyser = audioContext.createAnalyser();
         outputGain = audioContext.createGain();
         analyser.fftSize = 256;
@@ -254,18 +280,90 @@ const defaultTrack = tracks[0];
       return Boolean(analyser);
     }
 
-    async function resumeAnalyzer() {
-      if (!setupAnalyzer() || !audioContext) return;
-      if (audioContext.state === "suspended") {
+    function resumeAudioContext() {
+      if (!media || !AudioContextClass) return;
+      if (!audioContext) {
         try {
-          await audioContext.resume();
+          audioContext = new AudioContextClass();
+          audioContext.addEventListener("statechange", () => {
+            connectAnalyzer();
+            syncVisualizer();
+          });
         } catch {
-          // Keep the fallback visualizer running if Web Audio is unavailable.
+          audioContext = null;
+          return;
         }
+      }
+      if (audioContext.state !== "running") {
+        // Not awaited: playback must not wait for a resume that may never
+        // settle. The visualizer falls back to its idle pattern meanwhile.
+        Promise.resolve()
+          .then(() => audioContext.resume())
+          .catch(() => {});
+      }
+      connectAnalyzer();
+    }
+
+    function sampleAudio() {
+      if (
+        analyser &&
+        frequencyData &&
+        waveformData &&
+        audioContext?.state === "running"
+      ) {
+        analyser.getByteFrequencyData(frequencyData);
+        analyser.getByteTimeDomainData(waveformData);
       }
     }
 
-    function drawVisualizer() {
+    // Sends levels to the music-reactive desktop background. A stop is sent
+    // once.
+    function publishAudioFrame(playing) {
+      if (playing && frequencyData && audioContext?.state === "running") {
+        let low = 0;
+        let mid = 0;
+        let high = 0;
+        const lowLimit = Math.max(1, Math.floor(frequencyData.length * 0.18));
+        const midLimit = Math.max(
+          lowLimit + 1,
+          Math.floor(frequencyData.length * 0.52),
+        );
+
+        frequencyData.forEach((value, index) => {
+          if (index < lowLimit) low += value;
+          else if (index < midLimit) mid += value;
+          else high += value;
+        });
+
+        const lowLevel = low / (lowLimit * 255);
+        const midLevel = mid / ((midLimit - lowLimit) * 255);
+        const highLevel = high / ((frequencyData.length - midLimit) * 255);
+        audioFramePlaying = true;
+        document.dispatchEvent(
+          new CustomEvent("desktop:music-audio-frame", {
+            detail: {
+              playing: true,
+              low: lowLevel,
+              mid: midLevel,
+              high: highLevel,
+              energy: Math.min(
+                1,
+                lowLevel * 0.46 + midLevel * 0.34 + highLevel * 0.2,
+              ),
+            },
+          }),
+        );
+      } else if (!playing && audioFramePlaying) {
+        audioFramePlaying = false;
+        document.dispatchEvent(
+          new CustomEvent("desktop:music-audio-frame", {
+            detail: { playing: false, low: 0, mid: 0, high: 0, energy: 0 },
+          }),
+        );
+      }
+    }
+
+    function drawVisualizer(playing) {
       if (!visualizer || !visualizerContext) return;
 
       const width = visualizer.width;
@@ -275,9 +373,7 @@ const defaultTrack = tracks[0];
       const gap = 4;
       const barWidth = (width - gap * (barCount - 1)) / barCount;
       const gradient = visualizerContext.createLinearGradient(0, 18, 0, height);
-      const playing = isMediaPlaying();
 
-      visualizerPhase += playing ? 0.055 : 0.025;
       visualizerContext.clearRect(0, 0, width, height);
 
       const background = visualizerContext.createLinearGradient(
@@ -301,57 +397,6 @@ const defaultTrack = tracks[0];
         visualizerContext.stroke();
       }
       visualizerContext.globalAlpha = 1;
-
-      if (
-        analyser &&
-        frequencyData &&
-        waveformData &&
-        audioContext?.state === "running"
-      ) {
-        analyser.getByteFrequencyData(frequencyData);
-        analyser.getByteTimeDomainData(waveformData);
-      }
-
-      if (playing && frequencyData && audioContext?.state === "running") {
-        let low = 0;
-        let mid = 0;
-        let high = 0;
-        const lowLimit = Math.max(1, Math.floor(frequencyData.length * 0.18));
-        const midLimit = Math.max(
-          lowLimit + 1,
-          Math.floor(frequencyData.length * 0.52),
-        );
-
-        frequencyData.forEach((value, index) => {
-          if (index < lowLimit) low += value;
-          else if (index < midLimit) mid += value;
-          else high += value;
-        });
-
-        const lowLevel = low / (lowLimit * 255);
-        const midLevel = mid / ((midLimit - lowLimit) * 255);
-        const highLevel = high / ((frequencyData.length - midLimit) * 255);
-        document.dispatchEvent(
-          new CustomEvent("desktop:music-audio-frame", {
-            detail: {
-              playing: true,
-              low: lowLevel,
-              mid: midLevel,
-              high: highLevel,
-              energy: Math.min(
-                1,
-                lowLevel * 0.46 + midLevel * 0.34 + highLevel * 0.2,
-              ),
-            },
-          }),
-        );
-      } else if (!playing) {
-        document.dispatchEvent(
-          new CustomEvent("desktop:music-audio-frame", {
-            detail: { playing: false, low: 0, mid: 0, high: 0, energy: 0 },
-          }),
-        );
-      }
 
       gradient.addColorStop(0, "rgba(247, 211, 96, 0.95)");
       gradient.addColorStop(0.42, "rgba(79, 224, 200, 0.92)");
@@ -420,13 +465,47 @@ const defaultTrack = tracks[0];
       }
       visualizerContext.stroke();
       visualizerContext.globalAlpha = 1;
-
-      visualizerFrame = requestAnimationFrame(drawVisualizer);
     }
 
-    function startVisualizer() {
-      if (visualizerFrame || !visualizerContext) return;
-      drawVisualizer();
+    // Animate only while music plays in the visible window. Reduced motion
+    // keeps the visualizer static.
+    function shouldAnimateVisualizer() {
+      return isMediaPlaying() && isPlayerVisible() && !reducedMotion?.matches;
+    }
+
+    function tickVisualizer() {
+      visualizerFrame = 0;
+      if (!shouldAnimateVisualizer()) {
+        syncVisualizer();
+        return;
+      }
+      sampleAudio();
+      visualizerPhase += 0.055;
+      drawVisualizer(true);
+      visualizerFrame = requestAnimationFrame(tickVisualizer);
+    }
+
+    // The desktop background asks for levels on each of its own frames, so
+    // the music reaches it with the player minimized or closed and without a
+    // second animation loop. Reduced motion sends no levels.
+    function requestAudioFrame() {
+      const playing = isMediaPlaying() && !reducedMotion?.matches;
+      if (playing) sampleAudio();
+      publishAudioFrame(playing);
+    }
+
+    function syncVisualizer() {
+      if (shouldAnimateVisualizer()) {
+        if (!visualizerFrame) {
+          visualizerFrame = requestAnimationFrame(tickVisualizer);
+        }
+        return;
+      }
+      if (visualizerFrame) {
+        cancelAnimationFrame(visualizerFrame);
+        visualizerFrame = 0;
+      }
+      if (isPlayerVisible()) drawVisualizer(false);
     }
 
     function applyVolume() {
@@ -453,25 +532,24 @@ const defaultTrack = tracks[0];
       const track = currentTrack();
       if (!track || !media) return;
       const wasPaused = media.paused;
-      if (!media.src.endsWith(track.src)) {
-        playbackRequestId += 1;
-        media.src = track.src;
-        media.load();
-      }
+      // A closed, idle player loads the new track when it is next needed.
+      if (isWindowOpen() || !wasPaused) loadTrackSource();
       if (settings.playing && !wasPaused) void startPlayback();
     }
 
     async function startPlayback() {
-      const requestId = playbackRequestId + 1;
-      playbackRequestId = requestId;
       if (!media || !currentTrack()) {
+        playbackRequestId += 1;
         saveMusicSettings({ playing: false });
         if (status) status.textContent = "Add playable files to public/music.";
         return false;
       }
+      loadTrackSource();
+      const requestId = playbackRequestId + 1;
+      playbackRequestId = requestId;
+      resumeAudioContext();
       applyVolume();
       try {
-        await resumeAnalyzer();
         await media.play();
         if (requestId !== playbackRequestId || !isMediaPlaying()) return false;
         saveMusicSettings({ playing: true });
@@ -520,14 +598,7 @@ const defaultTrack = tracks[0];
         return;
       }
       detail.textContent = track.detail;
-      if (art?.tagName === "VIDEO" && track.mediaType === "video") {
-        if (!art.src.endsWith(track.src)) {
-          art.src = track.src;
-          art.load();
-        }
-      } else if (art?.tagName === "IMG") {
-        art.removeAttribute("src");
-      }
+      if (art?.tagName === "IMG") art.removeAttribute("src");
       trackSelect.value = track.id;
       trackSelect.disabled = false;
       toggle.disabled = false;
@@ -567,14 +638,17 @@ const defaultTrack = tracks[0];
       updatePlaybackTime();
     });
 
+    // React to changes only: this player's own saves arrive here too, and
+    // restarting on them looped startPlayback while music played.
     document.addEventListener("desktop:music-settings", (event) => {
       const wasPlaying = settings.playing;
       const oldTrack = settings.track;
       settings = normalizeMusicSettings({ ...settings, ...event.detail });
+      const trackChanged = oldTrack !== settings.track;
       render();
-      if (event.detail.track && oldTrack !== settings.track) syncAudioSource();
+      if (trackChanged) syncAudioSource();
       if (!media) return;
-      if (settings.playing && (!wasPlaying || event.detail.track)) {
+      if (settings.playing && (!wasPlaying || trackChanged)) {
         void startPlayback();
       }
       if (!settings.playing) media.pause();
@@ -592,8 +666,14 @@ const defaultTrack = tracks[0];
       setTrack(tracks[((index < 0 ? 0 : index) + 1) % tracks.length].id);
     });
 
-    media?.addEventListener("play", render);
-    media?.addEventListener("pause", render);
+    media?.addEventListener("play", () => {
+      render();
+      syncVisualizer();
+    });
+    media?.addEventListener("pause", () => {
+      render();
+      syncVisualizer();
+    });
     media?.addEventListener("timeupdate", updatePlaybackTime);
     media?.addEventListener("loadedmetadata", updatePlaybackTime);
     media?.addEventListener("durationchange", updatePlaybackTime);
@@ -609,9 +689,32 @@ const defaultTrack = tracks[0];
       saveMusicSettings({ playing: false });
     });
 
-    window.__pepoMusicController = { setPlaying, setTrack };
-    syncAudioSource();
-    startVisualizer();
+    // Music stops with its window and in website mode, which has no audio
+    // controls.
+    function stopForHiddenPlayer() {
+      if (media && (!media.paused || settings.playing)) void setPlaying(false);
+    }
+
+    musicWindow?.addEventListener("desktop:window-open", () => {
+      loadTrackSource();
+      render();
+    });
+    musicWindow?.addEventListener("desktop:window-close", stopForHiddenPlayer);
+    document.addEventListener("site:mode-change", (event) => {
+      if (event.detail?.mode === "website") stopForHiddenPlayer();
+      syncVisualizer();
+    });
+    document.addEventListener("visibilitychange", syncVisualizer);
+    reducedMotion?.addEventListener?.("change", syncVisualizer);
+    // Opening, minimizing, restoring and closing all change these.
+    if (musicWindow) {
+      new MutationObserver(syncVisualizer).observe(musicWindow, {
+        attributes: true,
+        attributeFilter: ["class", "hidden", "aria-hidden"],
+      });
+    }
+
+    window.__pepoMusicController = { setPlaying, setTrack, requestAudioFrame };
     if (persistedSettings.playing) {
       localStorage.setItem(musicKey, JSON.stringify(settings));
       document.dispatchEvent(
