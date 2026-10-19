@@ -14,18 +14,6 @@ export default defineConfig({
     // version equal to the one Astro depends on.
     processor: satteri({ features: { smartPunctuation: false } }),
   },
-  // garden.pepo.dev/* redirects to /garden/*; its blog notes now live in /blog/.
-  redirects: {
-    "/garden/blog/index": "/blog/",
-    "/garden/blog/aws-graviton": "/blog/aws-graviton-ทักครับ/",
-    "/garden/blog/aws-local-zone-bangkok-launch":
-      "/blog/aws-local-zone-bangkok-launch/",
-    "/garden/blog/do-the-fun-chaos-engineering-with-gamification":
-      "/blog/do-the-fun-chaos-engineering-with-gamification/",
-    "/garden/blog/obsidian-multiple-devices":
-      "/blog/obsidian-กับเรื่อง-multiple-devices/",
-    "/garden/blog/arch-linux-wsl": "/blog/ผิดไหมถ้าใจอยากจะใช้-arch-linux-บน-wsl/",
-  },
   prefetch: {
     prefetchAll: true,
     defaultStrategy: "viewport",

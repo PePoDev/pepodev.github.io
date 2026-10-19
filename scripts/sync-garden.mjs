@@ -36,7 +36,7 @@ const FEATURES = { gfm: true };
 const MD_LINK =
   /(!?)\[((?:[^[\]\n]|\[[^[\]\n]*\])*)\]\(\s*(?:<([^>\n]*)>|((?:[^()\s]|\([^()\s]*\))+))(?:\s+(?:"[^"]*"|'[^']*'))?\s*\)/g;
 
-/** Port of @sindresorhus/slugify defaults, so old garden URLs keep working. */
+/** Readable URL segments, as @sindresorhus/slugify makes them (IoT -> io-t, & -> and). */
 export function slugify(text) {
   const slug = text
     .replace(/&/g, " and ")
@@ -49,8 +49,8 @@ export function slugify(text) {
     .toLowerCase()
     .replace(/[^a-z\d]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  // ponytail: the plugin produced an empty slug for all-Thai names; keep the
-  // letters instead so such a note still gets a URL.
+  // ponytail: an all-Thai name would slug to nothing; keep its letters so the
+  // note still gets a URL.
   return slug || text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-");
 }
 

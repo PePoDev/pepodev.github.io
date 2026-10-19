@@ -42,7 +42,7 @@ const vault = buildIndex(
 );
 const note = (rel) => vault.all.find((n) => n.rel === rel);
 
-test("slugify matches the old garden permalinks", () => {
+test("slugify turns names into readable URL segments", () => {
   for (const [input, slug] of [
     ["IoT", "io-t"],
     ["OAuth", "o-auth"],

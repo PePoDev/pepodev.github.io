@@ -51,7 +51,7 @@ for (const viewport of [
   });
 }
 
-test("old garden URLs keep working under /garden/", async ({ page }) => {
+test("note URLs are slugified vault paths", async ({ page }) => {
   for (const path of [
     "/garden/knowledge/technical/cloud/google-cloud/io-t/",
     "/garden/knowledge/technical/others/bash-and-shell/",

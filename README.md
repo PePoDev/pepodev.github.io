@@ -51,7 +51,7 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 | `src/content/garden/`, `src/assets/garden/` | Synced garden notes and attachments; gitignored, never edit |
 | `src/pages/garden/`, `src/layouts/GardenLayout.astro` | Garden home and note routes |
 | `src/components/garden/`, `src/styles/garden.css` | Garden note tree and page styles |
-| `docs/superpowers/plans/2026-10-19-garden-obsidian-sync.md` | Garden sync setup and plugin cutover plan |
+| `docs/superpowers/plans/2026-10-19-garden-obsidian-sync.md` | Garden sync design and one-time setup |
 | `src/assets/blog/` | Local post images |
 | `src/data/` | Portfolio JSON and build-time music discovery |
 | `src/types/`, `src/utils/` | Data types and reusable logic |
@@ -138,8 +138,8 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
   with, and every note is re-parsed before writing: a note that would publish
   a comment, a raw wikilink, or a vault path is skipped with a warning. Never commit vault content or log unpublished note
   names; keep `pnpm test:garden` passing when changing the sync. Garden URLs
-  are `/garden/<slugified vault path>/`, matching the old `garden.pepo.dev`
-  permalinks; list notes through `src/utils/garden.ts`.
+  are `/garden/<slugified vault path>/`; list notes through
+  `src/utils/garden.ts`.
 - The desktop Garden app frames `/garden/` instead of inlining notes into
   `dist/index.html`. Inside the frame, `GardenLayout.astro` hides the site
   header and forwards window focus, `Escape`, and `Ctrl`/`Cmd` + `K` to the
