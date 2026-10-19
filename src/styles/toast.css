@@ -126,6 +126,12 @@
   background: rgba(0, 0, 0, 0.12);
 }
 
+/* A maximized window's title bar runs under the top-right corner, so
+   toasts move below it rather than cover its buttons. */
+html:has(.window.maximized:not(.minimized, .mobile-window)) #toast-container {
+  top: 52px;
+}
+
 /* Phone windows fill the screen from the top edge, so toasts sit above the
    taskbar instead of over a window's title-bar buttons. */
 @media (max-width: 768px) {

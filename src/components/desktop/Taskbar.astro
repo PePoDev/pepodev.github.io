@@ -35,11 +35,13 @@ import ModeSwitch from "@components/ModeSwitch.astro";
   <div id="taskbar-apps"></div>
   <div id="taskbar-tray">
     <ModeSwitch id="taskbar-site-mode" variant="taskbar" />
+    <!-- Opens the tray, so it has a fixed name and no pressed state; the
+      mute toggle is in the tray. Its title carries the current state. -->
     <button
       id="taskbar-audio-status"
       type="button"
-      aria-label="System audio enabled"
-      aria-pressed="false"
+      aria-label="Audio settings"
+      title="Audio on"
       aria-expanded="false"
       aria-controls="tray-panel"
     >
@@ -130,15 +132,24 @@ import ModeSwitch from "@components/ModeSwitch.astro";
   </div>
 </div>
 
-<script is:inline>
-  // @ts-nocheck
-  document.addEventListener("DOMContentLoaded", () => {
+<script>
+  import {
+    closeOverlay,
+    onOtherOverlayOpen,
+    openOverlay,
+  } from "@utils/overlays";
+
+  type AudioSettings = { volume: number; muted: boolean };
+
+  function initTaskbar() {
     const audioSettingsKey = "pepodev.systemAudio";
     const clockButton = document.getElementById("taskbar-clock-button");
     const trayPanel = document.getElementById("tray-panel");
     const calendarGrid = document.getElementById("calendar-grid");
     const calendarTitle = document.getElementById("calendar-title");
-    const volumeInput = document.getElementById("audio-volume");
+    const volumeInput = document.getElementById(
+      "audio-volume",
+    ) as HTMLInputElement | null;
     const volumeValue = document.getElementById("audio-volume-value");
     const muteButton = document.getElementById("audio-mute");
     const audioStatusButton = document.getElementById("taskbar-audio-status");
@@ -146,10 +157,10 @@ import ModeSwitch from "@components/ModeSwitch.astro";
       "taskbar-command-palette",
     );
     let trayOpen = false;
-    let trayOpener = null;
+    let trayOpener: HTMLElement | null = null;
     let visibleMonth = new Date();
 
-    function getAudioSettings() {
+    function getAudioSettings(): AudioSettings {
       try {
         const raw = localStorage.getItem(audioSettingsKey);
         if (raw) return { volume: 1, muted: false, ...JSON.parse(raw) };
@@ -159,14 +170,14 @@ import ModeSwitch from "@components/ModeSwitch.astro";
       return { volume: 1, muted: false };
     }
 
-    function saveAudioSettings(settings) {
+    function saveAudioSettings(settings: AudioSettings) {
       localStorage.setItem(audioSettingsKey, JSON.stringify(settings));
       document.dispatchEvent(
         new CustomEvent("desktop:audio-settings", { detail: settings }),
       );
     }
 
-    function updateRangeFill(input) {
+    function updateRangeFill(input: HTMLInputElement | null) {
       if (!input) return;
       const min = Number(input.min || 0);
       const max = Number(input.max || 100);
@@ -181,16 +192,17 @@ import ModeSwitch from "@components/ModeSwitch.astro";
     function renderAudioControls() {
       const settings = getAudioSettings();
       const volumePercent = Math.round(settings.volume * 100);
-      volumeInput.value = String(volumePercent);
+      if (volumeInput) volumeInput.value = String(volumePercent);
       updateRangeFill(volumeInput);
-      volumeValue.textContent = settings.muted ? "Muted" : volumePercent + "%";
-      muteButton.textContent = settings.muted ? "Unmute" : "Mute";
-      muteButton.setAttribute("aria-pressed", String(settings.muted));
-      audioStatusButton?.setAttribute("aria-pressed", String(settings.muted));
-      audioStatusButton?.setAttribute(
-        "aria-label",
-        settings.muted ? "System audio muted" : "System audio enabled",
-      );
+      if (volumeValue) {
+        volumeValue.textContent = settings.muted
+          ? "Muted"
+          : volumePercent + "%";
+      }
+      if (muteButton) {
+        muteButton.textContent = settings.muted ? "Unmute" : "Mute";
+        muteButton.setAttribute("aria-pressed", String(settings.muted));
+      }
       audioStatusButton?.setAttribute(
         "title",
         settings.muted ? "Muted" : "Audio on",
@@ -238,7 +250,13 @@ import ModeSwitch from "@components/ModeSwitch.astro";
 
     // Closed, the panel leaves the tab order and the accessibility tree.
     // restoreFocus returns focus to the tray button that opened it.
-    function setTrayOpen(open, { opener = null, restoreFocus = false } = {}) {
+    function setTrayOpen(
+      open: boolean,
+      {
+        opener = null,
+        restoreFocus = false,
+      }: { opener?: HTMLElement | null; restoreFocus?: boolean } = {},
+    ) {
       if (!trayPanel || open === trayOpen) return;
       trayOpen = open;
       trayPanel.classList.toggle("visible", trayOpen);
@@ -248,16 +266,12 @@ import ModeSwitch from "@components/ModeSwitch.astro";
 
       if (trayOpen) {
         trayOpener = opener;
-        trayPanel.inert = false;
+        openOverlay("tray-panel", trayPanel);
         renderCalendar();
         return;
       }
 
-      const active = document.activeElement;
-      const hadFocus = trayPanel.contains(active) || active === document.body;
-      if (trayPanel.contains(active)) active.blur();
-      trayPanel.inert = true;
-      if (restoreFocus && hadFocus) trayOpener?.focus();
+      closeOverlay(trayPanel, { restoreFocus, returnTo: [trayOpener] });
       trayOpener = null;
     }
 
@@ -307,7 +321,6 @@ import ModeSwitch from "@components/ModeSwitch.astro";
 
     commandPaletteButton?.addEventListener("click", (event) => {
       event.stopPropagation();
-      setTrayOpen(false);
       document.dispatchEvent(new CustomEvent("desktop:open-command-palette"));
     });
 
@@ -317,13 +330,29 @@ import ModeSwitch from "@components/ModeSwitch.astro";
       if (trayOpen) setTrayOpen(false);
     });
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && trayOpen)
-        setTrayOpen(false, { restoreFocus: true });
+    // Tabbing out of the panel closes it, as a click outside does. Pressing
+    // a tray button (:active) also moves focus there, but its click toggles
+    // the panel itself.
+    trayPanel?.addEventListener("focusout", (event) => {
+      const next = event.relatedTarget as Element | null;
+      if (!trayOpen || !next || trayPanel.contains(next)) return;
+      const trayButton = [clockButton, audioStatusButton].find((button) =>
+        button?.contains(next),
+      );
+      if (trayButton?.matches(":active")) return;
+      setTrayOpen(false);
     });
 
-    // One overlay at a time: opening the palette closes the tray.
-    document.addEventListener("desktop:command-palette-open", () =>
+    // preventDefault tells WindowController the Escape is handled, so it
+    // does not close the window behind the panel too.
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !trayOpen) return;
+      event.preventDefault();
+      setTrayOpen(false, { restoreFocus: true });
+    });
+
+    // One overlay at a time: the Start menu or the palette closes the tray.
+    onOtherOverlayOpen("tray-panel", () =>
       setTrayOpen(false, { restoreFocus: true }),
     );
 
@@ -366,5 +395,11 @@ import ModeSwitch from "@components/ModeSwitch.astro";
     renderCalendar();
     setInterval(updateClock, 30000);
     setInterval(updateUptime, 1000);
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTaskbar);
+  } else {
+    initTaskbar();
+  }
 </script>

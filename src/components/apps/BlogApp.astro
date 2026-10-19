@@ -159,11 +159,20 @@ const posts = await Promise.all(
         if (scroller) scroller.scrollTop = listScrollTop;
       }
 
-      function openArticleBySlug(slug: string) {
+      // Focus follows the view, so the keyboard never drops to the page:
+      // into the article's Back button, then back to the article's item.
+      // Neither scrolls, since both views set their own scroll position.
+      // An unknown slug leaves the list open with focus on its first item.
+      function openArticleBySlug(slug: string, { focus = false } = {}) {
         const panel = Array.from(panels).find(
           (p) => (p as HTMLElement).dataset.blogSlug === slug,
         ) as HTMLElement | undefined;
         if (!panel) {
+          if (focus) {
+            app
+              .querySelector<HTMLElement>("[data-blog-index]")
+              ?.focus({ preventScroll: true });
+          }
           return false;
         }
 
@@ -182,24 +191,22 @@ const posts = await Promise.all(
         updateTerminalPath(slug);
         // Every article opens at its title.
         if (scroller) scroller.scrollTop = 0;
+        if (focus) {
+          panel
+            .querySelector<HTMLElement>("[data-blog-back]")
+            ?.focus({ preventScroll: true });
+        }
         return true;
       }
 
-      // Expose the function globally for URL deep linking
-      (window as any).__pepodevBlogOpenSlug = openArticleBySlug;
+      // URL deep links (?blog=) open articles through this, focus included.
+      (window as any).__pepodevBlogOpenSlug = (slug: string) =>
+        openArticleBySlug(slug, { focus: true });
 
-      // Focus follows the view, so the keyboard never drops to the page:
-      // into the article's Back button, then back to the article's item.
-      // Neither scrolls, since both views set their own scroll position.
       app.querySelectorAll("[data-blog-index]").forEach((item) => {
         item.addEventListener("click", () => {
           const slug = (item as HTMLElement).dataset.blogSlug;
-          if (!slug || !openArticleBySlug(slug)) return;
-          app
-            .querySelector<HTMLElement>(
-              "[data-blog-post]:not([hidden]) [data-blog-back]",
-            )
-            ?.focus({ preventScroll: true });
+          if (slug) openArticleBySlug(slug, { focus: true });
         });
       });
 

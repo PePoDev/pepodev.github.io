@@ -9,7 +9,14 @@ const currentRole = experiences[0].role;
     >Audio Off</button
   >
   <div class="sre-game-screen sre-game-screen-active">
-    <div class="sre-boot-output"></div>
+    <!-- A scroller of its own at phone widths, so it is a tab stop. -->
+    <div
+      class="sre-boot-output"
+      role="log"
+      aria-label="Boot log"
+      tabindex="0"
+    >
+    </div>
     <button class="sre-boot-enter sre-btn sre-hidden" type="button"
       >Enter Production</button
     >
@@ -794,6 +801,9 @@ const currentRole = experiences[0].role;
         clearTimers();
         stopBgm();
       });
+      // Rocket Loader can run this after the window opened, past its
+      // desktop:window-open.
+      if (shell?.getAttribute("aria-hidden") === "false") resetGame();
 
       // Minimizing the window or switching to website mode freezes the
       // alerts and the music; coming back picks up where the game left off.

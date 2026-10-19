@@ -24,7 +24,12 @@
   letter-spacing: 0.5px;
 }
 
+/* Terminal stays dark in both themes, so it keeps the dark theme's text
+   colours (variables.css). */
 .terminal-app {
+  --text-primary: var(--dark-text-primary);
+  --text-secondary: var(--dark-text-secondary);
+  --text-muted: var(--dark-text-muted);
   height: 100%;
   display: grid;
   grid-template-rows: 1fr auto;
@@ -208,7 +213,7 @@
   border: 1px solid rgba(139, 148, 158, 0.5);
   border-radius: 8px;
   background: rgba(139, 148, 158, 0.12);
-  color: #8b949e;
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
@@ -391,7 +396,7 @@
 }
 
 [data-theme="light"] .gallery-lock-form p {
-  color: #a64b00;
+  color: var(--app-amber-text);
 }
 
 .gallery-header {

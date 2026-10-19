@@ -133,6 +133,16 @@
         return value.replace(/(\d+(?:\.\d+)?(?:e[+-]?\d+)?)%/g, "($1/100)");
       }
 
+      // A key focused from the keyboard keeps its own Enter and Space
+      // (app-keyboard.ts), so a pointer press leaves keys unfocused: Enter
+      // after clicking digits still means "=".
+      calculator.addEventListener("mousedown", (event) => {
+        if (!event.target.closest("button")) return;
+        event.preventDefault();
+        if (calculator.contains(document.activeElement))
+          document.activeElement.blur();
+      });
+
       calculator.addEventListener("click", (event) => {
         const button = event.target.closest("button");
         if (!button) return;

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { holdScripts, openApp, resetPage } from "./helpers";
 
 const apps = [
   { label: "Welcome", appId: "welcome", title: "Welcome - Login" },
@@ -18,28 +19,6 @@ const apps = [
   { label: "Gallery", appId: "gallery", title: "Gallery" },
   { label: "Trash", appId: "trash", title: "Trash Bin" },
 ];
-
-// Returning visitor: the first-visit Welcome window would open 1.5 s after
-// load and could cover the icon a test is about to click.
-async function resetPage(page: Page) {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.clear();
-    localStorage.setItem("pepodev.hasVisited", "true");
-  });
-  await page.reload();
-}
-
-async function openApp(page: Page, label: string, appId: string) {
-  await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: label })
-    .click();
-  const window = page.locator(`#window-${appId}`);
-  await expect(window).toBeVisible();
-  await expect(window).toHaveAttribute("aria-hidden", "false");
-  return window;
-}
 
 test.beforeEach(async ({ page }) => {
   await resetPage(page);
@@ -395,12 +374,41 @@ test("opens a blog article in desktop mode from the blog query parameter", async
   await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
     "cat articles/aws-local-zone-bangkok-launch",
   );
+  // Focus starts on Back, as when opening the article from the list, so the
+  // keyboard starts in the article, not on the icons behind the window.
+  await expect(article.locator("[data-blog-back]")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(article.locator("[data-blog-share]")).toBeFocused();
   await expect
     .poll(() =>
       page.evaluate(() => localStorage.getItem("pepodev.viewMode")),
     )
     .toBe("website");
   expect(pageErrors).toEqual([]);
+});
+
+test("a first visit from a ?blog= link opens only the article, even when the link script runs late", async ({
+  page,
+}) => {
+  // Rocket Loader can run the deep-link script after the first-visit
+  // Welcome timer (1.5s) fires.
+  const release = await holdScripts(page, /URL Deep Linking/);
+  await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.goto("/?blog=aws-local-zone-bangkok-launch");
+  await page.waitForTimeout(2_000);
+  await expect(page.locator("#window-welcome")).toBeHidden();
+  await release();
+
+  await expect(page.locator("#window-blog")).toHaveClass(/maximized/);
+  await page.waitForTimeout(500);
+  await expect(page.locator("#window-welcome")).toBeHidden();
+  await expect(
+    page.locator("#taskbar-apps").getByRole("button"),
+  ).toHaveCount(1);
+  expect(
+    await page.evaluate(() => localStorage.getItem("pepodev.hasVisited")),
+  ).toBe("true");
 });
 
 test("blog reader supports article navigation, sharing, and close reset", async ({
@@ -701,12 +709,16 @@ test("taskbar tray calendar and system audio controls update persisted state", a
     )
     .toMatchObject({ volume: 0.35, muted: false });
 
+  // The taskbar audio button opens the tray, so it has a fixed name and no
+  // pressed state; its description carries the mute state.
+  const audioButton = page.locator("#taskbar-audio-status");
+  await expect(audioButton).toHaveAccessibleName("Audio settings");
+  await expect(audioButton).not.toHaveAttribute("aria-pressed");
+  await expect(audioButton).toHaveAttribute("aria-expanded", "true");
   await page.getByRole("button", { name: "Mute" }).click();
   await expect(page.locator("#audio-volume-value")).toHaveText("Muted");
-  await expect(page.locator("#taskbar-audio-status")).toHaveAttribute(
-    "aria-label",
-    "System audio muted",
-  );
+  await expect(audioButton).toHaveAccessibleName("Audio settings");
+  await expect(audioButton).toHaveAccessibleDescription("Muted");
   await page.keyboard.press("Escape");
   await expect(tray).toHaveAttribute("aria-hidden", "true");
 });

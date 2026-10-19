@@ -32,7 +32,7 @@ const toc = headings.filter(({ depth }) => depth <= 3);
     <Font cssVariable="--font-plex-sans" />
     <Font cssVariable="--font-plex-thai" />
     <Font cssVariable="--font-plex-mono" />
-    <script is:inline>
+    <script is:inline data-cfasync="false">
       // Before first paint: the saved light/dark theme, or the desktop's own
       // inside the desktop Garden window (whose titlebar then replaces the site
       // header). Theme changes made elsewhere are followed live.
@@ -66,7 +66,7 @@ const toc = headings.filter(({ depth }) => depth <= 3);
           <nav class="ws-nav" aria-label="Site">
             <a href="/garden/" aria-current={current ? undefined : "page"}>Garden</a>
             <a href="/blog/">Writing</a>
-            <a href="/resume">Resume</a>
+            <a href="/resume/">Resume</a>
           </nav>
         </div>
       </header>

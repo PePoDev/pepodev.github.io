@@ -110,9 +110,28 @@ const photos = [
       passwordInput.select();
     });
 
-    app
-      .closest("[data-window]")
-      ?.addEventListener("desktop:window-open", focusGallery);
+    // Opening, restoring or re-launching the window focuses it. Touch
+    // screens wait for a tap unless the keyboard opened it, since the
+    // password field raises the on-screen keyboard over the window.
+    const win = app.closest("[data-window]");
+    const touchQuery = window.matchMedia(
+      "(max-width: 768px), (hover: none), (pointer: coarse)",
+    );
+    function focusOnOpen(keyboard: boolean) {
+      if (keyboard || !touchQuery.matches) focusGallery();
+    }
+    win?.addEventListener("desktop:window-focus", (event) =>
+      focusOnOpen(Boolean((event as CustomEvent).detail?.keyboard)),
+    );
+    // Rocket Loader can run this after the window opened.
+    const active = document.activeElement;
+    if (
+      win?.classList.contains("focused") &&
+      win.getAttribute("aria-hidden") === "false" &&
+      (active === win || active === document.body)
+    ) {
+      focusOnOpen(active === win);
+    }
   }
 
   if (document.readyState === "loading") {

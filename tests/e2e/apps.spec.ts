@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { holdScripts, openApp, prefsStorage, resetPage } from "./helpers";
 import certifications from "../../src/data/certifications.json" with {
   type: "json",
 };
@@ -9,48 +12,8 @@ import projects from "../../src/data/projects.json" with { type: "json" };
 import skills from "../../src/data/skills.json" with { type: "json" };
 
 const currentRole = experiences[0].role;
-
-async function resetPage(
-  page: Page,
-  prefs?: Record<string, string>,
-  storage: Record<string, string> = {},
-) {
-  await page.goto("/");
-  await page.evaluate(
-    ({ savedPrefs, savedStorage }) => {
-      localStorage.clear();
-      // Skip the first-visit Welcome window so it cannot take focus mid-test,
-      // and the command-palette tip, which can cover a window's top-right
-      // controls (the SRE game's audio toggle) in contrast screenshots.
-      localStorage.setItem("pepodev.hasVisited", "true");
-      localStorage.setItem("pepodev.commandPaletteHintShown", String(Date.now()));
-      if (savedPrefs) {
-        localStorage.setItem(
-          "pepodev.desktopPrefs",
-          JSON.stringify(savedPrefs),
-        );
-      }
-      for (const [key, value] of Object.entries(savedStorage)) {
-        localStorage.setItem(key, value);
-      }
-    },
-    { savedPrefs: prefs ?? null, savedStorage: storage },
-  );
-  await page.reload();
-}
-
-async function openApp(page: Page, label: string, appId: string) {
-  await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: label })
-    .click();
-  const window = page.locator(`#window-${appId}`);
-  await expect(window).toBeVisible();
-  await expect(window).toHaveClass(/focused/);
-  // Let it finish fading in, so screenshots see the window, not a blend.
-  await expect(window).not.toHaveClass(/opening/);
-  return window;
-}
+const require = createRequire(import.meta.url);
+const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 
 async function openWithKeyboard(page: Page, label: string, appId: string) {
   await page
@@ -294,7 +257,7 @@ test("Snake drops the old made-up best of 170 and keeps real bests", async ({
     ]);
 
   // The old key held max(170, score), so 170 says nothing about the player.
-  await resetPage(page, undefined, { "pepodev.snake.best": "170" });
+  await resetPage(page, { "pepodev.snake.best": "170" });
   let window = await openApp(page, "Snake", "snake");
   await expect(window.locator("[data-snake-best]")).toHaveText("0");
   expect(await storedBests()).toEqual([null, null]);
@@ -309,7 +272,7 @@ test("Snake drops the old made-up best of 170 and keeps real bests", async ({
   await expect(window.locator("[data-snake-best]")).toHaveText("10");
 
   // A best above the seed was really scored, so it carries over.
-  await resetPage(page, undefined, { "pepodev.snake.best": "250" });
+  await resetPage(page, { "pepodev.snake.best": "250" });
   window = await openApp(page, "Snake", "snake");
   await expect(window.locator("[data-snake-best]")).toHaveText("250");
   expect(await storedBests()).toEqual([null, "250"]);
@@ -318,7 +281,10 @@ test("Snake drops the old made-up best of 170 and keeps real bests", async ({
 test("Snake's accent controls show hover in the light theme", async ({
   page,
 }) => {
-  await resetPage(page, { theme: "light", background: "cloud" });
+  await resetPage(
+    page,
+    prefsStorage({ theme: "light", background: "cloud" }),
+  );
   const window = await openApp(page, "Snake", "snake");
   for (const name of ["Start", "Move up"]) {
     const button = window.getByRole("button", { name });
@@ -508,6 +474,117 @@ test("Terminal and Gallery focus their input when opened from the keyboard", asy
   await expect(gallery.locator("#gallery-password")).toBeFocused();
 });
 
+test("re-launching or restoring Terminal and Gallery focuses their input", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const terminal = await openWithKeyboard(page, "Terminal", "terminal");
+  const terminalInput = terminal.locator("[data-terminal-input]");
+  await openWithKeyboard(page, "Calculator", "calculator");
+
+  // Already open: launching it again from the palette types into it.
+  await page.keyboard.press("ControlOrMeta+K");
+  await expect(page.locator("#command-palette-input")).toBeFocused();
+  await page.keyboard.type("terminal");
+  await page.keyboard.press("Enter");
+  await expect(terminalInput).toBeFocused();
+  await page.keyboard.type("whoami");
+  await page.keyboard.press("Enter");
+  await expect(terminal.locator("[data-terminal-output]")).toContainText(
+    "pepo@desktop:~$ whoami",
+  );
+
+  // Minimized: the Start menu and the taskbar restore it into the input.
+  await terminal.getByRole("button", { name: "Minimize Terminal" }).click();
+  await expect(terminal).toHaveClass(/minimized/);
+  await page.locator("#taskbar-start").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#start-menu-search")).toBeFocused();
+  await page.keyboard.type("terminal");
+  await page.keyboard.press("Enter");
+  await expect(terminalInput).toBeFocused();
+  await terminal.getByRole("button", { name: "Minimize Terminal" }).click();
+  await page.locator("#taskbar-apps").getByRole("button", { name: "Terminal" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(terminalInput).toBeFocused();
+
+  const gallery = await openWithKeyboard(page, "Gallery", "gallery");
+  await expect(gallery.locator("#gallery-password")).toBeFocused();
+  await openWithKeyboard(page, "Calculator", "calculator");
+  await openWithKeyboard(page, "Gallery", "gallery");
+  await expect(gallery.locator("#gallery-password")).toBeFocused();
+});
+
+test.describe("on a touch phone", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  test("tapping Terminal or Gallery does not raise the on-screen keyboard", async ({
+    page,
+  }) => {
+    await resetPage(page);
+    const startButton = page.locator("#taskbar-start");
+    await startButton.tap();
+    await page.locator('#start-menu [data-open-app="terminal"]').tap();
+    const terminal = page.locator("#window-terminal");
+    await expect(terminal).toHaveClass(/focused/);
+    await expect(terminal.locator("[data-terminal-input]")).not.toBeFocused();
+    // A tap in the window still focuses the input.
+    await terminal.locator("[data-terminal-output]").tap();
+    await expect(terminal.locator("[data-terminal-input]")).toBeFocused();
+
+    await startButton.tap();
+    await page.locator('#start-menu [data-open-app="gallery"]').tap();
+    const gallery = page.locator("#window-gallery");
+    await expect(gallery).toHaveClass(/focused/);
+    await expect(gallery.locator("#gallery-password")).not.toBeFocused();
+
+    // A keyboard launch (an external keyboard) still focuses the input.
+    await gallery.getByRole("button", { name: "Close Gallery" }).tap();
+    await page.keyboard.press("ControlOrMeta+K");
+    await expect(page.locator("#command-palette-input")).toBeFocused();
+    await page.keyboard.type("gallery");
+    await page.keyboard.press("Enter");
+    await expect(gallery.locator("#gallery-password")).toBeFocused();
+  });
+
+  test("the SRE game boot log is a labelled tab stop", async ({ page }) => {
+    await resetPage(page);
+    await page.locator("#taskbar-start").tap();
+    await page.locator('#start-menu [data-open-app="sregame"]').tap();
+    const log = page.getByRole("log", { name: "Boot log" });
+    await expect(log).toHaveAttribute("tabindex", "0");
+    await expect(log).toContainText("ssh", { timeout: 5_000 });
+    await log.focus();
+    await expect(log).toBeFocused();
+  });
+});
+
+test("apps opened before their scripts run still start", async ({ page }) => {
+  // Rocket Loader runs app scripts late, while the window manager runs as
+  // the page parses, so a visitor can open an app before its script ran.
+  const release = await holdScripts(
+    page,
+    /SreGameApp|GalleryApp|\[data-sre-game\]|\[data-gallery-app\]/,
+  );
+  await resetPage(page);
+  await expect(page.locator("script[data-held]")).toHaveCount(2);
+
+  const game = await openApp(page, "SRE Game", "sregame");
+  await expect(game.locator(".sre-boot-output")).toBeEmpty();
+  const gallery = await openWithKeyboard(page, "Gallery", "gallery");
+  await expect(gallery).toBeFocused();
+  await release();
+
+  await expect(gallery.locator("#gallery-password")).toBeFocused();
+  await expect(game.locator(".sre-boot-output")).toContainText("ssh", {
+    timeout: 5_000,
+  });
+});
+
 test("Terminal skills lists skills.json", async ({ page }) => {
   await resetPage(page);
   const terminal = await openApp(page, "Terminal", "terminal");
@@ -572,10 +649,13 @@ for (const theme of ["light", "dark"] as const) {
   test(`the Welcome quote's focus ring reaches 3:1 in the ${theme} theme`, async ({
     page,
   }) => {
-    await resetPage(page, {
-      theme,
-      background: theme === "light" ? "cloud" : "network",
-    });
+    await resetPage(
+      page,
+      prefsStorage({
+        theme,
+        background: theme === "light" ? "cloud" : "network",
+      }),
+    );
     const welcome = await openApp(page, "Welcome", "welcome");
     const quote = welcome.locator("[data-quote-box]");
     await welcome
@@ -809,10 +889,13 @@ for (const theme of ["light", "dark"] as const) {
     page,
   }) => {
     test.setTimeout(90_000);
-    await resetPage(page, {
-      theme,
-      background: theme === "light" ? "cloud" : "network",
-    });
+    await resetPage(
+      page,
+      prefsStorage({
+        theme,
+        background: theme === "light" ? "cloud" : "network",
+      }),
+    );
 
     const calculator = await openApp(page, "Calculator", "calculator");
     for (const key of ["7", "+", "1", "Enter"]) await page.keyboard.press(key);
@@ -887,10 +970,13 @@ for (const theme of ["light", "dark"] as const) {
   test(`Certifications and Gallery accent text reaches AA contrast in the ${theme} theme`, async ({
     page,
   }) => {
-    await resetPage(page, {
-      theme,
-      background: theme === "light" ? "cloud" : "network",
-    });
+    await resetPage(
+      page,
+      prefsStorage({
+        theme,
+        background: theme === "light" ? "cloud" : "network",
+      }),
+    );
 
     const certs = await openApp(page, "Certs", "certs");
     await expectReadable(page, certs.locator(".cert-mark"), "provider badges");
@@ -914,5 +1000,113 @@ for (const theme of ["light", "dark"] as const) {
     await page.keyboard.press("Enter");
     await expect(gallery.locator(".ops-pill")).toBeVisible();
     await expectReadable(page, gallery.locator(".ops-pill"), "gallery pill");
+  });
+}
+
+// Opaque windows give axe solid backgrounds to measure; with glass it can
+// only report the text as incomplete.
+for (const theme of ["light", "dark"] as const) {
+  test(`About, Blog, Work, Projects, Welcome and Terminal text reaches AA in opaque ${theme} windows`, async ({
+    page,
+  }) => {
+    // axe walks every article the Blog window renders.
+    test.setTimeout(90_000);
+    await resetPage(
+      page,
+      prefsStorage({
+        theme,
+        background: theme === "light" ? "cloud" : "network",
+        windowGlass: false,
+      }),
+    );
+    await page.addScriptTag({ content: axeSource });
+    for (const [label, appId] of [
+      ["About Me", "me"],
+      ["Blog", "blog"],
+      ["Work", "work"],
+      ["Projects", "project"],
+      ["Welcome", "welcome"],
+      ["Terminal", "terminal"],
+    ]) {
+      const window = await openApp(page, label, appId);
+      // Let fade-ins (Welcome's messages) finish before measuring.
+      await window.evaluate((element) =>
+        Promise.all(
+          element
+            .getAnimations({ subtree: true })
+            .filter(
+              (animation) =>
+                animation.effect?.getComputedTiming().iterations !== Infinity,
+            )
+            .map((animation) => animation.finished),
+        ),
+      );
+      if (appId === "blog") {
+        await window.locator("[data-blog-index]").nth(1).click();
+        await expect(window.locator("[data-blog-back]:visible")).toBeFocused();
+      }
+      const failures = await page.evaluate(async (selector) => {
+        const axe = (
+          window as typeof window & {
+            axe: {
+              run: (
+                context: string,
+                options: object,
+              ) => Promise<{
+                violations: {
+                  nodes: { target: string[]; any: { data?: unknown }[] }[];
+                }[];
+              }>;
+            };
+          }
+        ).axe;
+        const result = await axe.run(selector, {
+          runOnly: ["color-contrast"],
+        });
+        return result.violations.flatMap((violation) =>
+          violation.nodes.map(
+            (node) =>
+              `${node.target.join(" ")} ${JSON.stringify(node.any[0]?.data)}`,
+          ),
+        );
+      }, `#window-${appId}`);
+      expect(failures, `${appId} (${theme})`).toEqual([]);
+      await window.getByRole("button", { name: /^Close / }).click();
+      await expect(window).toBeHidden();
+    }
+  });
+
+  test(`the tray panel text reaches AA in the ${theme} theme`, async ({
+    page,
+  }) => {
+    await resetPage(
+      page,
+      prefsStorage({
+        theme,
+        background: theme === "light" ? "cloud" : "network",
+      }),
+    );
+    await page.locator("#taskbar-clock-button").click();
+    const tray = page.locator("#tray-panel");
+    await expect(tray).toHaveClass(/visible/);
+    await page.waitForTimeout(250);
+    await expectReadable(page, tray.locator(".tray-status"), "status");
+    await expectReadable(page, tray.locator("#tray-date"), "date");
+    await expectReadable(
+      page,
+      tray.locator(".tray-section-title"),
+      "section titles",
+    );
+    await expectReadable(
+      page,
+      tray.locator(".tray-calendar-days span").first(),
+      "weekday",
+    );
+    await expectReadable(
+      page,
+      tray.locator(".calendar-day.today"),
+      "today",
+    );
+    await expectReadable(page, page.locator("#taskbar-date"), "taskbar date");
   });
 }

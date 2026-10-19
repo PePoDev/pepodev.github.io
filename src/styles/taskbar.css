@@ -196,7 +196,7 @@
 
 #taskbar-date {
   font-size: 10px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1;
   white-space: nowrap;
 }
@@ -252,7 +252,7 @@
 #tray-date {
   margin-top: 6px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .tray-status {
@@ -263,7 +263,7 @@
   border: 1px solid rgba(34, 197, 94, 0.2);
   border-radius: 999px;
   background: rgba(34, 197, 94, 0.1);
-  color: var(--accent-green);
+  color: var(--app-primary-text, var(--accent-green));
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: uppercase;
@@ -285,7 +285,7 @@
 
 .tray-section-title {
   margin-bottom: 10px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
@@ -396,14 +396,14 @@
 
 .tray-calendar-days span {
   height: 20px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 10px;
 }
 
 .calendar-day.today {
   background: rgba(6, 182, 212, 0.16);
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.35);
 }
 
@@ -430,7 +430,7 @@
 .audio-control-row button:hover,
 .audio-control-row button[aria-pressed="true"] {
   border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
 }
 
 .audio-control-row label,
@@ -596,8 +596,14 @@
     padding: 0;
   }
 
+  /* Hidden only visually: the label names the button. */
   .taskbar-app span {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .taskbar-app svg {

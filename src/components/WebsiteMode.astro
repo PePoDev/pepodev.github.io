@@ -189,12 +189,7 @@ const changeOf = (detail: string) => {
 const visibleChanges = 4;
 ---
 
-<div
-  id="website"
-  class="website-shell"
-  data-site-mode-panel="website"
-  aria-hidden="true"
->
+<div id="website" class="website-shell" data-site-mode-panel="website">
   <a class="website-skip-link" href="#website-main">Skip to content</a>
 
   <header class="website-header">
@@ -383,7 +378,13 @@ const visibleChanges = 4;
           <figure class="ws-uptime" aria-labelledby="website-uptime-title">
             <figcaption class="ws-uptime-head">
               <h2 id="website-uptime-title">Career uptime</h2>
-              <p class="ws-dots" data-uptime-summary>
+              <!-- data-as-of is the build month, so tests check the numbers
+                against the build, not the day they run. -->
+              <p
+                class="ws-dots"
+                data-uptime-summary
+                data-as-of={formatIsoMonth(today)}
+              >
                 <span>{`${formatMonth(firstStart)} – ${formatMonth(today)}`}</span>
                 <span>{`${career.totalMonths} months`}</span>
                 <span>{`${career.companies} companies`}</span>

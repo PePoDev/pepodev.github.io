@@ -1,5 +1,6 @@
 ---
 import { getMusicTracks } from "@data/music";
+import { accentMap, backgroundMap } from "@utils/desktop-prefs";
 
 const accents = [
   { id: "green", label: "Green", color: "#30d158" },
@@ -105,11 +106,15 @@ const defaultTrackId = tracks[0]?.id ?? "";
         <button type="button" data-music-setting="toggle">Play music</button>
         <button type="button" data-settings-reset>Reset all settings</button>
       </div>
+      <p class="settings-status" data-settings-status role="status"></p>
     </section>
   </div>
 </div>
 
-<script define:vars={{ defaultTrackId }} is:inline>
+<script
+  define:vars={{ defaultTrackId, accentMap, backgroundMap }}
+  is:inline
+>
   // @ts-nocheck
   function initSettings() {
     const app = document.querySelector("[data-settings-app]");
@@ -174,166 +179,9 @@ const defaultTrackId = tracks[0]?.id ?? "";
       { id: "sand", label: "Sand" },
     ];
 
-    const accentMap = {
-      green: { primary: "#30d158", secondary: "#64d2ff" },
-      cyan: { primary: "#64d2ff", secondary: "#30d158" },
-      purple: { primary: "#bf5af2", secondary: "#64d2ff" },
-      amber: { primary: "#ff9f0a", secondary: "#64d2ff" },
-    };
-    const backgroundMap = {
-      // Dark theme backgrounds
-      network: {
-        bg: "#0a0e17",
-        primary: "34, 197, 94",
-        secondary: "6, 182, 212",
-      },
-      aurora: {
-        bg: "#07111f",
-        primary: "20, 184, 166",
-        secondary: "168, 85, 247",
-      },
-      midnight: {
-        bg: "#101018",
-        primary: "99, 102, 241",
-        secondary: "14, 165, 233",
-      },
-      ember: {
-        bg: "#170d0a",
-        primary: "245, 158, 11",
-        secondary: "239, 68, 68",
-      },
-      ocean: {
-        bg: "#0a1420",
-        primary: "0, 191, 255",
-        secondary: "64, 224, 208",
-      },
-      glacier: {
-        bg: "#0f1419",
-        primary: "176, 224, 230",
-        secondary: "127, 255, 212",
-      },
-      void: {
-        bg: "#0d0d0f",
-        primary: "147, 112, 219",
-        secondary: "100, 149, 237",
-      },
-      neon: {
-        bg: "#1a0b2e",
-        primary: "255, 20, 147",
-        secondary: "0, 255, 255",
-      },
-      plasma: {
-        bg: "#0e0520",
-        primary: "138, 43, 226",
-        secondary: "30, 144, 255",
-      },
-      storm: {
-        bg: "#1c1c24",
-        primary: "224, 255, 255",
-        secondary: "70, 130, 180",
-      },
-      matrix: {
-        bg: "#0d0208",
-        primary: "0, 255, 65",
-        secondary: "50, 205, 50",
-      },
-      sakura: {
-        bg: "#1a0f1f",
-        primary: "255, 183, 197",
-        secondary: "221, 160, 221",
-      },
-      forest: {
-        bg: "#0a1409",
-        primary: "34, 139, 34",
-        secondary: "124, 252, 0",
-      },
-      sunset: {
-        bg: "#1f1108",
-        primary: "255, 140, 0",
-        secondary: "255, 105, 180",
-      },
-      copper: {
-        bg: "#18100d",
-        primary: "184, 115, 51",
-        secondary: "205, 127, 50",
-      },
-      // Light theme backgrounds
-      cloud: {
-        bg: "#f0f4f8",
-        primary: "100, 149, 237",
-        secondary: "135, 206, 235",
-      },
-      daylight: {
-        bg: "#fef9e7",
-        primary: "255, 193, 7",
-        secondary: "255, 152, 0",
-      },
-      mint: {
-        bg: "#f0fdf4",
-        primary: "52, 211, 153",
-        secondary: "16, 185, 129",
-      },
-      peach: {
-        bg: "#fff5f0",
-        primary: "255, 159, 64",
-        secondary: "255, 127, 80",
-      },
-      sky: {
-        bg: "#e0f2fe",
-        primary: "14, 165, 233",
-        secondary: "56, 189, 248",
-      },
-      lavender: {
-        bg: "#f5f3ff",
-        primary: "167, 139, 250",
-        secondary: "196, 181, 253",
-      },
-      cream: {
-        bg: "#fefce8",
-        primary: "234, 179, 8",
-        secondary: "250, 204, 21",
-      },
-      rose: {
-        bg: "#fff1f2",
-        primary: "251, 113, 133",
-        secondary: "244, 63, 94",
-      },
-      sage: {
-        bg: "#f0fdf4",
-        primary: "74, 222, 128",
-        secondary: "134, 239, 172",
-      },
-      coral: {
-        bg: "#fff7ed",
-        primary: "251, 146, 60",
-        secondary: "249, 115, 22",
-      },
-      powder: {
-        bg: "#ecfeff",
-        primary: "6, 182, 212",
-        secondary: "34, 211, 238",
-      },
-      lemon: {
-        bg: "#fefce8",
-        primary: "250, 204, 21",
-        secondary: "253, 224, 71",
-      },
-      blush: {
-        bg: "#fce7f3",
-        primary: "236, 72, 153",
-        secondary: "244, 114, 182",
-      },
-      seafoam: {
-        bg: "#ecfdf5",
-        primary: "16, 185, 129",
-        secondary: "52, 211, 153",
-      },
-      sand: {
-        bg: "#fef3c7",
-        primary: "217, 119, 6",
-        secondary: "245, 158, 11",
-      },
-    };
+    function getDefaultBackground(theme) {
+      return theme === "light" ? "cloud" : "network";
+    }
 
     function loadPrefs() {
       let saved = {};
@@ -346,7 +194,7 @@ const defaultTrackId = tracks[0]?.id ?? "";
       // Like the theme script in index.astro, a missing background follows
       // the theme, so a light theme never starts on a dark background.
       if (!backgroundMap[prefs.background]) {
-        prefs.background = prefs.theme === "light" ? "cloud" : "network";
+        prefs.background = getDefaultBackground(prefs.theme);
       }
       return prefs;
     }
@@ -453,14 +301,22 @@ const defaultTrackId = tracks[0]?.id ?? "";
               ? target.checked
               : target.value;
 
-        // If theme changed, switch to appropriate default background
+        // A new theme starts on its own default background.
         if (target.dataset.setting === "theme" && oldTheme !== prefs.theme) {
-          const defaultBg = prefs.theme === "light" ? "cloud" : "network";
-          prefs.background = defaultBg;
+          prefs.background = getDefaultBackground(prefs.theme);
         }
 
         applyPrefs(prefs);
       }
+    });
+
+    // The command palette's Toggle Theme asks Settings to switch, so both
+    // apply the theme the same way.
+    document.addEventListener("desktop:toggle-theme", () => {
+      const prefs = loadPrefs();
+      prefs.theme = prefs.theme === "light" ? "dark" : "light";
+      prefs.background = getDefaultBackground(prefs.theme);
+      applyPrefs(prefs);
     });
 
     app.addEventListener("change", (event) => {
@@ -474,6 +330,32 @@ const defaultTrackId = tracks[0]?.id ?? "";
         render();
       }
     });
+
+    const resetButton = app.querySelector("[data-settings-reset]");
+    const status = app.querySelector("[data-settings-status]");
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
+
+    function armReset() {
+      resetButton.classList.add("confirming");
+      status.textContent = coarsePointer.matches
+        ? "Tap Reset all settings again to clear all settings and reload."
+        : "Press Enter or click Reset all settings again to clear all settings and reload.";
+    }
+
+    // Leaving the button, clicking elsewhere, or closing the window cancels.
+    function disarmReset() {
+      if (!resetButton.classList.contains("confirming")) return;
+      resetButton.classList.remove("confirming");
+      status.textContent = "";
+    }
+
+    resetButton.addEventListener("blur", disarmReset);
+    document.addEventListener("click", (event) => {
+      if (event.target !== resetButton) disarmReset();
+    });
+    app
+      .closest("[data-window]")
+      ?.addEventListener("desktop:window-close", disarmReset);
 
     app.addEventListener("click", (event) => {
       const accentButton = event.target.closest("[data-accent]");
@@ -493,6 +375,12 @@ const defaultTrackId = tracks[0]?.id ?? "";
       }
 
       if (event.target.matches("[data-settings-reset]")) {
+        // Destructive, like the palette's Reset Desktop: the first click or
+        // tap only asks for confirmation.
+        if (!resetButton.classList.contains("confirming")) {
+          armReset();
+          return;
+        }
         // Clear ALL desktop settings and state for a complete fresh start
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {

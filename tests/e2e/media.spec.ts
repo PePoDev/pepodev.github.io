@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { openApp, resetPage } from "./helpers";
 
 type Counter =
   | "__audioFrames"
@@ -115,38 +116,6 @@ async function stallAudioContext(page: Page) {
   });
 }
 
-// Skips the first-visit Welcome window, which can open over the icons when
-// a slow page load delays the first click, and the command-palette tip, which
-// can cover a window's top-right corner in contrast screenshots.
-async function resetPage(page: Page, storage: Record<string, string> = {}) {
-  await page.goto("/");
-  await page.evaluate(
-    (storage) => {
-      localStorage.clear();
-      Object.entries(storage).forEach(([key, value]) =>
-        localStorage.setItem(key, value),
-      );
-    },
-    {
-      "pepodev.hasVisited": "true",
-      "pepodev.commandPaletteHintShown": String(Date.now()),
-      ...storage,
-    },
-  );
-  await page.reload();
-}
-
-async function openApp(page: Page, label: string, appId: string) {
-  await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: label })
-    .click();
-  const window = page.locator(`#window-${appId}`);
-  await expect(window).toBeVisible();
-  await expect(window).toHaveAttribute("aria-hidden", "false");
-  return window;
-}
-
 const media = (page: Page) => page.locator("#window-music [data-music-media]");
 const isPaused = (page: Page) =>
   media(page).evaluate((element: HTMLMediaElement) => element.paused);
@@ -216,6 +185,11 @@ test.describe("Music", () => {
     ).toBeVisible();
     expect(
       await countDuring(page, "__visualizerDraws", 1000),
+    ).toBeGreaterThan(1);
+    // The frame probe matches the loop by its function name, so it must see
+    // the loop run here; otherwise its zero counts elsewhere prove nothing.
+    expect(
+      await countDuring(page, "__visualizerFrames", 1000),
     ).toBeGreaterThan(1);
 
     await music.getByRole("button", { name: "Minimize Music Player" }).click();

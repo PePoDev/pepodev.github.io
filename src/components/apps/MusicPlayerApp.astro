@@ -699,6 +699,11 @@ const defaultTrack = tracks[0];
       loadTrackSource();
       render();
     });
+    // Rocket Loader can run this after the window opened, past its
+    // desktop:window-open.
+    if (musicWindow?.getAttribute("aria-hidden") === "false") {
+      loadTrackSource();
+    }
     musicWindow?.addEventListener("desktop:window-close", stopForHiddenPlayer);
     document.addEventListener("site:mode-change", (event) => {
       if (event.detail?.mode === "website") stopForHiddenPlayer();

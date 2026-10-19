@@ -166,13 +166,13 @@ const certifications = sortCertificationsByStatus(allCertifications);
 
   .cert-status-active {
     background: rgba(48, 209, 88, 0.15);
-    color: var(--accent-green);
+    color: var(--app-primary-text, var(--accent-green));
     border: 1px solid rgba(48, 209, 88, 0.3);
   }
 
   .cert-status-expiring {
     background: rgba(255, 159, 10, 0.15);
-    color: var(--accent-amber);
+    color: var(--app-amber-text, var(--accent-amber));
     border: 1px solid rgba(255, 159, 10, 0.3);
   }
 </style>

@@ -23,7 +23,7 @@
     <div class="terminal-prompt">
       <span class="prompt">~/explore $</span>
       <span class="cursor-blink">▊</span>
-      <p style="margin-top: 8px; font-size: 0.9em; opacity: 0.7;">
+      <p class="welcome-hint">
         Hint: Click on the desktop icons to explore my work, projects, and
         experience!
       </p>
@@ -46,10 +46,7 @@
         <span class="quote-author" data-quote-author>— Arthur C. Clarke</span>
       </span>
     </button>
-    <p
-      id="welcome-quote-hint"
-      style="text-align: center; font-size: 0.85em; opacity: 0.6; margin-top: -0.5rem;"
-    >
+    <p id="welcome-quote-hint" class="welcome-quote-hint">
       Click the quote for more wisdom ✨
     </p>
   </div>
@@ -66,7 +63,7 @@
   }
 
   .ascii-art {
-    color: var(--accent-green);
+    color: var(--app-primary-text, var(--accent-green));
     font-size: 0.45rem;
     line-height: 1;
     margin: 0;
@@ -137,9 +134,21 @@
     margin-top: 1.5rem;
   }
 
+  /* Secondary text, not faded with opacity, keeps the hints at AA. */
+  .welcome-hint {
+    margin-top: 8px;
+    font-size: 0.9em;
+  }
+
+  .welcome-quote-hint {
+    margin-top: -0.5rem;
+    font-size: 0.85em;
+    text-align: center;
+  }
+
   .cursor-blink {
     animation: blink 1s step-end infinite;
-    color: var(--accent-green);
+    color: var(--app-primary-text, var(--accent-green));
   }
 
   @keyframes blink {

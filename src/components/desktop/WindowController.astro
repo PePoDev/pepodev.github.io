@@ -111,8 +111,9 @@
     });
     syncViewportMode();
 
-    // moveFocus hands keyboard focus to the window, before desktop:window-open
-    // so an app can move it on to its own control.
+    // moveFocus hands keyboard focus to the window. Every launch, including
+    // one that restores or raises an open window, then dispatches
+    // desktop:window-focus, so an app can move focus on to its own control.
     function openWindow(appId, moveFocus = false) {
       const state = windows.get(appId);
       if (!state) return;
@@ -123,8 +124,7 @@
       }
 
       if (state.open) {
-        focusWindow(appId);
-        if (moveFocus) focusWindowElement(state);
+        activateWindow(state, moveFocus);
         return;
       }
 
@@ -160,13 +160,31 @@
       if (moveFocus) focusWindowElement(state);
       animateSkillBars(state.element);
       syncScrollableContent(state);
-      updateTaskbar();
       state.element.dispatchEvent(
         new CustomEvent("desktop:window-open", {
           detail: { appId, firstOpen: !state.hasOpened },
         }),
       );
       state.hasOpened = true;
+      dispatchWindowFocus(state, moveFocus);
+    }
+
+    // Raises the window and gives it the keys.
+    function activateWindow(state, moveFocus) {
+      focusWindow(state.appId);
+      if (moveFocus) focusWindowElement(state);
+      dispatchWindowFocus(state, moveFocus);
+    }
+
+    // keyboard says whether DOM focus moved into the window. Apps that focus
+    // their own control on desktop:window-focus skip that on touch screens
+    // unless it did, so a tap does not raise the on-screen keyboard.
+    function dispatchWindowFocus(state, keyboard) {
+      state.element.dispatchEvent(
+        new CustomEvent("desktop:window-focus", {
+          detail: { appId: state.appId, keyboard },
+        }),
+      );
     }
 
     function setupWindowEvents(state) {
@@ -419,22 +437,23 @@
         active.blur();
       } else if (target === next?.element) {
         focusWindowElement(next);
+        dispatchWindowFocus(next, true);
       } else {
         target.focus({ preventScroll: true });
       }
     }
 
+    // The same rules as canTakeFocus in src/utils/overlays.ts, which this
+    // parse-time script cannot import: closed overlays are inert, and closed
+    // or minimized windows are aria-hidden.
     function canTakeFocus(element) {
-      if (!element?.isConnected) return false;
-      if (element.closest("[inert], [hidden], [aria-hidden='true']"))
-        return false;
-      // Closed overlays such as the Start menu only fade out.
-      return element.checkVisibility
-        ? element.checkVisibility({
-            opacityProperty: true,
-            visibilityProperty: true,
-          })
-        : element.getClientRects().length > 0;
+      return (
+        element instanceof HTMLElement &&
+        element !== document.body &&
+        element.isConnected &&
+        !element.closest("[inert], [hidden], [aria-hidden='true'], .closing") &&
+        element.getClientRects().length > 0
+      );
     }
 
     // The window stays focusable only while it holds focus.
@@ -487,7 +506,7 @@
       if (moveFocus) focusWindowElement(state);
       animateSkillBars(state.element);
       syncScrollableContent(state);
-      updateTaskbar();
+      dispatchWindowFocus(state, moveFocus);
     }
 
     function toggleMaximize(appId) {
@@ -678,12 +697,19 @@
 
     // A scroller with nothing focusable inside gets its own tab stop, so
     // browsers that do not focus scrollers can still scroll it by keyboard.
+    // Hidden and disabled controls (the unlocked Gallery's password form)
+    // cannot take focus, so they do not count.
     function syncScrollableContent(state) {
       const content = state.content;
       if (!content || !state.open) return;
       const needsTabStop =
         content.scrollHeight > content.clientHeight + 1 &&
-        !content.querySelector(focusableSelector);
+        !Array.from(content.querySelectorAll(focusableSelector)).some(
+          (element) =>
+            !element.disabled &&
+            !element.closest("[hidden], [inert]") &&
+            element.getClientRects().length > 0,
+        );
       if (needsTabStop === content.hasAttribute("tabindex")) return;
 
       if (needsTabStop) {
@@ -717,8 +743,8 @@
           "taskbar-app active" +
           (state.element.classList.contains("focused") ? " focused" : "");
         btn.dataset.appId = state.appId;
-        // Phone widths hide the text label.
-        btn.setAttribute("aria-label", label);
+        // The label names the button; phone widths hide it only visually,
+        // and the icon is aria-hidden.
         btn.title = label;
         btn.innerHTML =
           state.element.querySelector(".window-titlebar-icon")?.innerHTML +
@@ -729,14 +755,13 @@
           const moveFocus = keyboardInteraction;
           if (state.minimized) {
             restoreWindow(state.appId, moveFocus);
-          } else if (isMobileMode()) {
-            focusWindow(state.appId);
-            if (moveFocus) focusWindowElement(state);
-          } else if (state.element.classList.contains("focused")) {
+          } else if (
+            !isMobileMode() &&
+            state.element.classList.contains("focused")
+          ) {
             minimizeWindow(state.appId);
           } else {
-            focusWindow(state.appId);
-            if (moveFocus) focusWindowElement(state);
+            activateWindow(state, moveFocus);
           }
         });
         taskbarApps.appendChild(btn);
@@ -768,6 +793,12 @@
 
     function scheduleWelcomeWindow() {
       if (hasVisited || welcomeTimerId || !isDesktopSiteMode()) return;
+      // A ?blog= deep link opens the article instead. Its handler can run
+      // after this timer when Rocket Loader defers it.
+      if (new URLSearchParams(window.location.search).get("blog")?.trim()) {
+        markVisited();
+        return;
+      }
 
       welcomeTimerId = window.setTimeout(() => {
         welcomeTimerId = 0;

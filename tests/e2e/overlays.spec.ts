@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { resetPage, waitForWindowManager } from "./helpers";
 
 const savedPrefs = {
   theme: "light",
@@ -9,33 +10,6 @@ const savedPrefs = {
   backgroundEffect: true,
   windowGlass: true,
 };
-
-function waitForWindowManager(page: Page) {
-  return page.waitForFunction(
-    () =>
-      (window as typeof window & { __pepodevWindowManagerReady?: boolean })
-        .__pepodevWindowManagerReady,
-  );
-}
-
-// Skip the first-visit Welcome window and the command-palette tip, so neither
-// covers the overlays under test.
-async function resetPage(page: Page, storage: Record<string, string> = {}) {
-  await page.goto("/");
-  await page.evaluate((storage) => {
-    localStorage.clear();
-    localStorage.setItem("pepodev.hasVisited", "true");
-    localStorage.setItem(
-      "pepodev.commandPaletteHintShown",
-      String(Date.now()),
-    );
-    for (const [key, value] of Object.entries(storage)) {
-      localStorage.setItem(key, value);
-    }
-  }, storage);
-  await page.reload();
-  await waitForWindowManager(page);
-}
 
 async function openPalette(page: Page) {
   await page.keyboard.press("ControlOrMeta+K");
@@ -335,6 +309,98 @@ test("the command palette closes the Start menu and tray and keeps Tab inside", 
   await expect(page.locator("#command-palette-input")).toBeFocused();
 });
 
+test("closing the palette returns focus to a window that had it", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const calculator = page.locator("#window-calculator");
+  // Launching from the keyboard focuses the window itself.
+  const focusWindowFromIcon = async () => {
+    await page
+      .locator("#desktop-icons")
+      .getByRole("button", { name: "Calculator" })
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect(calculator).toBeFocused();
+  };
+
+  // The window loses its tabindex while the palette has focus, so each way
+  // of closing the palette has to make it focusable again.
+  await focusWindowFromIcon();
+  await openPalette(page);
+  await page.keyboard.press("Escape");
+  await expect(calculator).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(calculator.locator(".min-btn")).toBeFocused();
+
+  await focusWindowFromIcon();
+  await openPalette(page);
+  await page.keyboard.press("ControlOrMeta+K");
+  await expect(calculator).toBeFocused();
+
+  await openPalette(page);
+  await page.mouse.click(10, 10);
+  await expect(calculator).toBeFocused();
+});
+
+test("Close All Windows from inside a window moves focus to the palette button", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const terminalInput = page.locator("#window-terminal [data-terminal-input]");
+  await page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: "Terminal" })
+    .focus();
+  await page.keyboard.press("Enter");
+  await expect(terminalInput).toBeFocused();
+
+  // The opener closes with its window, so focus does not drop to the page.
+  await openPalette(page);
+  await page.keyboard.type("close all");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#window-terminal")).toBeHidden();
+  await expect(page.locator("#taskbar-command-palette")).toBeFocused();
+});
+
+test("the Start menu and tray close each other", async ({ page }) => {
+  await resetPage(page);
+  const startMenu = page.locator("#start-menu");
+  const tray = page.locator("#tray-panel");
+  const startButton = page.locator("#taskbar-start");
+  const clockButton = page.locator("#taskbar-clock-button");
+
+  await startButton.click();
+  await expect(startMenu).toHaveClass(/visible/);
+  await clockButton.click();
+  await expect(tray).toHaveClass(/visible/);
+  await expect(startMenu).not.toHaveClass(/visible/);
+  await expect(startButton).toHaveAttribute("aria-expanded", "false");
+  expect(
+    await startMenu.evaluate((element) => (element as HTMLElement).inert),
+  ).toBe(true);
+
+  await startButton.click();
+  await expect(startMenu).toHaveClass(/visible/);
+  await expect(tray).not.toHaveClass(/visible/);
+  await expect(clockButton).toHaveAttribute("aria-expanded", "false");
+
+  // From the keyboard too, and tabbing out of the Start menu closes it.
+  await page.keyboard.press("Escape");
+  await expect(startButton).toBeFocused();
+  await clockButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(tray).toHaveClass(/visible/);
+  await startButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(startMenu).toHaveClass(/visible/);
+  await expect(tray).not.toHaveClass(/visible/);
+  await expect(page.locator("#start-menu-search")).toBeFocused();
+  await page.locator("#start-menu-apps .start-menu-app").last().focus();
+  await page.keyboard.press("Tab");
+  await expect(startMenu).not.toHaveClass(/visible/);
+});
+
 test("Close All Windows hands focus back to the palette button", async ({
   page,
 }) => {
@@ -382,6 +448,37 @@ test("phones open the Start menu without focusing its search box and return focu
   await expect(page.locator("#command-palette-input")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(paletteButton).toBeFocused();
+});
+
+test.describe("phones", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  test("the Reset Desktop confirmation shows inside the palette", async ({
+    page,
+  }) => {
+    await resetPage(page);
+    await page.locator("#taskbar-command-palette").tap();
+    const reset = page.locator('[data-id="reset-desktop"]');
+    await reset.tap();
+    await expect(reset).toHaveClass(/confirming/);
+    const status = page.locator("#command-palette-status");
+    await expect(status).toHaveText(
+      "Tap Reset Desktop again to clear all settings and reload.",
+    );
+    const statusBox = (await status.boundingBox())!;
+    const containerBox = (await page
+      .locator(".command-palette-container")
+      .boundingBox())!;
+    expect(statusBox.height).toBeGreaterThan(20);
+    expect(statusBox.y).toBeGreaterThanOrEqual(containerBox.y);
+    expect(statusBox.y + statusBox.height).toBeLessThanOrEqual(
+      containerBox.y + containerBox.height + 1,
+    );
+  });
 });
 
 test.describe("touch tablets", () => {
@@ -502,6 +599,18 @@ test("an unknown ?blog= slug opens the article list with a toast", async ({
   await expect(blogWindow.locator("[data-blog-list-view]")).toBeVisible();
   await expect(toast).toContainText("Article not found");
   await expect(toast.locator(".toast-icon")).toHaveText("⚠️");
+  // Focus starts on the first article, and the toast stays clear of the
+  // maximized window's title-bar buttons.
+  await expect(blogWindow.locator("[data-blog-index]").first()).toBeFocused();
+  await expect(blogWindow).toHaveClass(/maximized/);
+  // Measure after the window's scale-in, which shifts its title bar down.
+  await expect(blogWindow).not.toHaveClass(/opening/);
+  await expect(toast).toHaveClass(/toast-show/);
+  const desktopToast = (await toast.boundingBox())!;
+  const desktopClose = (await blogWindow.locator(".close-btn").boundingBox())!;
+  expect(desktopToast.y).toBeGreaterThanOrEqual(
+    desktopClose.y + desktopClose.height,
+  );
 
   // The slug never reaches the toast markup. On phones the toast sits above
   // the taskbar, clear of the Blog window's close button.

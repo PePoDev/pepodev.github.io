@@ -364,6 +364,16 @@
         if (state === "ready" || state === "paused") start();
       }
 
+      // A control focused from the keyboard keeps its own Enter and Space
+      // (app-keyboard.ts), so a pointer press leaves controls unfocused:
+      // Space after clicking Start still pauses.
+      root.addEventListener("mousedown", (event) => {
+        if (!event.target.closest("button")) return;
+        event.preventDefault();
+        if (root.contains(document.activeElement))
+          document.activeElement.blur();
+      });
+
       root.addEventListener("click", (event) => {
         const action = event.target.closest("[data-snake-action]")?.dataset
           .snakeAction;

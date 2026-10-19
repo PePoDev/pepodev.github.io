@@ -1,4 +1,25 @@
 /* === App Content Styles === */
+
+/* Light theme: accent text darkens to keep WCAG AA on light glass, and the
+   accent stays for borders and tints. The accents are set inline on <html>,
+   so these derive from them: --app-accent-text from --accent-cyan and
+   --app-primary-text from --accent-green. In the dark theme they are unset,
+   so text falls back to the accents. */
+[data-theme="light"] :is(.window, #tray-panel) {
+  --app-accent-text: color-mix(in srgb, var(--accent-cyan) 40%, #000);
+  --app-primary-text: color-mix(in srgb, var(--accent-green) 40%, #000);
+  --app-amber-text: color-mix(in srgb, var(--accent-amber) 55%, #000);
+}
+
+/* Custom properties are not validated, so the relative colors need a
+   feature query to leave the color-mix() fallbacks above in place. */
+@supports (color: oklch(from red 0.42 min(c, 0.15) h)) {
+  [data-theme="light"] :is(.window, #tray-panel) {
+    --app-accent-text: oklch(from var(--accent-cyan) 0.42 min(c, 0.15) h);
+    --app-primary-text: oklch(from var(--accent-green) 0.42 min(c, 0.15) h);
+  }
+}
+
 .app-content {
   padding: 24px;
 }
@@ -34,7 +55,7 @@
 .terminal-heading {
   font-family: var(--font-mono);
   font-size: 13px;
-  color: var(--accent-green);
+  color: var(--app-primary-text, var(--accent-green));
   margin-bottom: 16px;
   padding: 8px 12px;
   background: rgba(34, 197, 94, 0.06);
@@ -43,7 +64,7 @@
 }
 
 .terminal-heading .prompt {
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
 }
 
 /* Status badge */
@@ -60,7 +81,7 @@
 
 .status-badge.online {
   background: rgba(34, 197, 94, 0.12);
-  color: var(--accent-green);
+  color: var(--app-primary-text, var(--accent-green));
   border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
@@ -75,7 +96,7 @@
 
 .status-badge.busy {
   background: rgba(245, 158, 11, 0.12);
-  color: var(--accent-amber);
+  color: var(--app-amber-text, var(--accent-amber));
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
@@ -164,7 +185,7 @@
 .timeline-date {
   font-size: 11px;
   font-family: var(--font-mono);
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   margin-bottom: 4px;
 }
 

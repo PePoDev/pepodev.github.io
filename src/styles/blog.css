@@ -66,7 +66,7 @@
   display: inline-block;
   font-size: 11px;
   font-family: var(--font-mono);
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   background: rgba(100, 210, 255, 0.1);
   border: 1px solid rgba(100, 210, 255, 0.2);
   padding: 2px 8px;
@@ -104,7 +104,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   cursor: pointer;
   margin-bottom: 12px;
   background: none;
@@ -129,7 +129,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--glass-border);
   border-radius: 6px;
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -183,7 +183,7 @@
   border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--accent-green);
+  color: var(--app-primary-text, var(--accent-green));
 }
 
 .blog-reader-body pre {
@@ -208,7 +208,7 @@
 
 .blog-reader-body a,
 .prose a {
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   text-decoration: none;
   border-bottom: 1px solid rgba(100, 210, 255, 0.3);
   transition: all 0.15s ease;

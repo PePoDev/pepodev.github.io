@@ -133,7 +133,7 @@
 
 .start-menu-app-text small {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-top: 2px;
 }
 
@@ -162,7 +162,7 @@
 
 #start-menu-footer span {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
 }
 

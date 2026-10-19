@@ -124,4 +124,4 @@ tags: ["AWS", "Graviton", "ARM", "Cloud", "Performance"]
 ขอพลังของ ARM จงสถิตอยู่กับทุกคนครับ ⚔️
 ### Continue readings
 - [https://github.com/aws/aws-graviton-getting-started](https://github.com/aws/aws-graviton-getting-started)
-- [https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html](https://web.archive.org/web/20241202143454/https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html)
+- [AWS whitepaper: Transitioning your service or application (archived)](https://web.archive.org/web/20241202143454/https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html)

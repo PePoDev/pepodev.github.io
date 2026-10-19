@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { resetPage } from "./helpers";
 
 const layoutViewports = [
   { width: 1280, height: 720 },
@@ -21,17 +22,6 @@ type IconBox = {
   width: number;
   height: number;
 };
-
-// Returning visitor: the first-visit Welcome window would open 1.5 s after
-// load and could cover the icon a test is about to click.
-async function resetPage(page: Page) {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.clear();
-    localStorage.setItem("pepodev.hasVisited", "true");
-  });
-  await page.reload();
-}
 
 // Resize events fire before the next animation frame callbacks.
 async function resizeViewport(
@@ -344,6 +334,13 @@ test("swapping a link icon onto an app icon persists both positions", async ({
 test("reset desktop and reset all settings clear saved icon positions", async ({
   page,
 }) => {
+  // Both resets also clear pepodev.hasVisited, so the first-visit Welcome
+  // window would open over the icons 1.5s after each reload.
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("pepodev.hasVisited")) {
+      localStorage.setItem("pepodev.hasVisited", "true");
+    }
+  });
   const welcome = page
     .locator("#desktop-icons")
     .getByRole("button", { name: "Welcome" });
@@ -372,11 +369,25 @@ test("reset desktop and reset all settings clear saved icon positions", async ({
     .locator("#desktop-icons")
     .getByRole("button", { name: "Settings" })
     .click();
+  // Like Reset Desktop, the first click only asks for confirmation, and
+  // clicking elsewhere cancels it.
+  const settings = page.locator("#window-settings");
+  const resetAll = settings.getByRole("button", { name: "Reset all settings" });
+  const status = settings.locator("[data-settings-status]");
+  await resetAll.click();
+  await expect(resetAll).toHaveClass(/confirming/);
+  await expect(status).toHaveText(
+    "Press Enter or click Reset all settings again to clear all settings and reload.",
+  );
+  await expect(status).toHaveAttribute("role", "status");
+  await settings.locator("h2").first().click();
+  await expect(resetAll).not.toHaveClass(/confirming/);
+  await expect(status).toBeEmpty();
+  expect(await getSavedIconKeys(page)).toHaveLength(2);
+
+  await resetAll.click();
   reloaded = page.waitForEvent("load");
-  await page
-    .locator("#window-settings")
-    .getByRole("button", { name: "Reset all settings" })
-    .click();
+  await resetAll.click();
   await reloaded;
   expect(await getSavedIconKeys(page)).toEqual([]);
   expect(await welcome.boundingBox()).toEqual(welcomeBox);

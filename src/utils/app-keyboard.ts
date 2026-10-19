@@ -50,7 +50,8 @@ export function isAppKeyboardOwner(
 /**
  * Whether a document-level keydown belongs to the app in `windowEl`. Browser
  * shortcuts, open overlays and keys aimed at other controls are left alone,
- * and the window's title-bar buttons keep their native Enter and Space.
+ * and a focused button or link in the window (a title-bar control, a
+ * Calculator key) keeps its native Enter and Space.
  */
 export function isAppKeyboardEvent(
   event: Event,
@@ -67,7 +68,8 @@ export function isAppKeyboardEvent(
   const target = event.target instanceof Element ? event.target : null;
   if (
     (event.key === "Enter" || event.key === " ") &&
-    target?.closest(".window-titlebar")
+    windowEl.contains(target) &&
+    target?.closest("button, a[href], summary, [role='button']")
   )
     return false;
   return ownsElement(target, windowEl);

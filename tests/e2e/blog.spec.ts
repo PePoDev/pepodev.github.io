@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { expect, test, type Page } from "@playwright/test";
+import { resetPage } from "./helpers";
 import {
   BLOG_DESCRIPTION,
   BLOG_TITLE,
@@ -51,17 +52,6 @@ const posts = [
     lang: "th",
   },
 ];
-
-// Returning visitor: the first-visit Welcome window would open 1.5 s after
-// load and could cover the icon a test is about to click.
-async function resetPage(page: Page) {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.clear();
-    localStorage.setItem("pepodev.hasVisited", "true");
-  });
-  await page.reload();
-}
 
 async function wheelScroll(page: Page) {
   const viewport = page.viewportSize()!;
@@ -377,6 +367,16 @@ test("redirected Graviton citations point at Wayback snapshots of the originals"
       ),
       original,
     ).toBe(true);
+  }
+
+  // An archived link never shows the original URL, which no longer leads to
+  // the cited page, as its text.
+  const archivedTexts = await page
+    .locator('.prose a[href^="https://web.archive.org/"]')
+    .allInnerTexts();
+  expect(archivedTexts.length).toBeGreaterThan(0);
+  for (const text of archivedTexts) {
+    expect(text.trim()).not.toMatch(/^https?:\/\//);
   }
 });
 

@@ -172,39 +172,53 @@ const externalLinks = socialLinks.map((link) => ({
   </div>
 </div>
 
-<script is:inline>
-  // @ts-nocheck
-  document.addEventListener("DOMContentLoaded", () => {
+<script>
+  import {
+    closeOverlay,
+    getFocusedWindow,
+    onOtherOverlayOpen,
+    openOverlay,
+  } from "@utils/overlays";
+  import { rankMatch } from "@utils/search";
+
+  function initCommandPalette() {
     const palette = document.getElementById("command-palette");
-    const input = document.getElementById("command-palette-input");
+    const input = document.getElementById(
+      "command-palette-input",
+    ) as HTMLInputElement | null;
     const results = document.getElementById("command-palette-results");
     const backdrop = palette?.querySelector(".command-palette-backdrop");
     const status = document.getElementById("command-palette-status");
     const matchList = document.getElementById("command-palette-matches");
+    const paletteButton = document.getElementById("taskbar-command-palette");
 
     if (!palette || !input || !results || !matchList) return;
+    const dialog = palette;
+    const searchInput = input;
+    const resultList = results;
+    const matches = matchList;
 
     function isDesktopSiteMode() {
       return document.documentElement.dataset.siteMode !== "website";
     }
 
     let selectedIndex = 0;
-    let visibleItems = [];
+    let visibleItems: HTMLElement[] = [];
     // A destructive command waiting for its confirming Enter, click, or tap.
-    let armedItem = null;
+    let armedItem: HTMLElement | null = null;
     // The control that had focus before the palette opened.
-    let returnFocusTo = null;
+    let returnFocusTo: HTMLElement | null = null;
     const coarsePointer = window.matchMedia("(pointer: coarse)");
     const sections = Array.from(
-      results.querySelectorAll(".command-palette-section"),
+      resultList.querySelectorAll<HTMLElement>(".command-palette-section"),
     );
     // Every item with its section and the lowercase text search matches.
     const entries = Array.from(
-      results.querySelectorAll(".command-palette-item"),
+      resultList.querySelectorAll<HTMLElement>(".command-palette-item"),
     ).map((item, order) => ({
       item,
       order,
-      section: item.closest(".command-palette-section"),
+      section: item.closest(".command-palette-section") as HTMLElement,
       name:
         item
           .querySelector(".command-palette-item-name")
@@ -217,108 +231,82 @@ const externalLinks = socialLinks.map((link) => ({
           .toLowerCase() || "",
     }));
 
+    function isOpen() {
+      return dialog.dataset.visible === "true";
+    }
+
     function updateVisibleItems() {
       visibleItems = Array.from(
-        results.querySelectorAll(
+        resultList.querySelectorAll<HTMLElement>(
           '.command-palette-item:not([style*="display: none"])',
         ),
       );
     }
 
-    function setStatus(message, tone = "") {
+    function setStatus(message: string, tone = "") {
       if (!status) return;
       status.textContent = message;
       status.dataset.tone = tone;
     }
 
-    // A window that is closing stays on screen for its exit animation, so it
-    // counts as gone too.
-    function canTakeFocus(element) {
-      return (
-        element instanceof HTMLElement &&
-        element !== document.body &&
-        element.isConnected &&
-        !element.closest("[inert], [hidden], .closing") &&
-        element.getClientRects().length > 0
-      );
-    }
-
     function openPalette() {
-      if (!isDesktopSiteMode()) return;
+      if (!isDesktopSiteMode() || isOpen()) return;
       // The Start menu and tray close first and hand focus back to their
       // buttons, so that is where closing the palette returns it.
-      document.dispatchEvent(new CustomEvent("desktop:command-palette-open"));
+      openOverlay("command-palette", dialog);
       const active = document.activeElement;
       returnFocusTo =
-        active instanceof HTMLElement && !palette.contains(active)
+        active instanceof HTMLElement &&
+        active !== document.body &&
+        !dialog.contains(active)
           ? active
           : null;
-      palette.inert = false;
-      palette.dataset.visible = "true";
-      input.value = "";
+      dialog.dataset.visible = "true";
+      searchInput.value = "";
       filterItems("");
       selectedIndex = 0;
       updateSelection();
-      setTimeout(() => input.focus(), 10);
+      setTimeout(() => searchInput.focus(), 10);
     }
 
     // Closed, the palette leaves the tab order and the accessibility tree.
-    // restoreFocus hands focus back to whatever opened it. Launching an app
-    // skips that: focus left on a control outside the new window would keep
-    // app keys (Calculator, Snake) away from it.
+    // restoreFocus hands focus back to whatever opened it, or, when that is
+    // gone (Close All Windows), to the topmost window or the palette button.
+    // Launching an app skips that: focus left on a control outside the new
+    // window would keep app keys (Calculator, Snake) away from it.
     function closePalette({ restoreFocus = false } = {}) {
-      if (palette.dataset.visible !== "true") return;
-      const active = document.activeElement;
-      const hadFocus = palette.contains(active) || active === document.body;
-      palette.dataset.visible = "false";
+      if (!isOpen()) return;
+      dialog.dataset.visible = "false";
       disarmItem();
-      if (palette.contains(active)) active.blur();
-      palette.inert = true;
-      if (restoreFocus && hadFocus && canTakeFocus(returnFocusTo)) {
-        returnFocusTo.focus({ preventScroll: true });
-      }
+      closeOverlay(dialog, {
+        restoreFocus,
+        returnTo: returnFocusTo
+          ? [returnFocusTo, getFocusedWindow(), paletteButton]
+          : [],
+      });
       returnFocusTo = null;
     }
 
     document.addEventListener("desktop:open-command-palette", openPalette);
     document.addEventListener("site:mode-change", (event) => {
-      if (event.detail?.mode === "website") closePalette();
+      if ((event as CustomEvent).detail?.mode === "website") closePalette();
     });
-
-    // Whether the query starts the text or one of its words.
-    function startsWord(text, query) {
-      for (
-        let at = text.indexOf(query);
-        at >= 0;
-        at = text.indexOf(query, at + 1)
-      ) {
-        if (at === 0 || !/[\p{L}\p{N}]/u.test(text[at - 1])) return true;
-      }
-      return false;
-    }
-
-    // 0 when the query starts the name or a word in it, 1 for the rest of the
-    // name, 2 for the description, -1 for no match. filterApps in
-    // StartMenu.astro ranks the same way.
-    function getMatchRank(name, description, query) {
-      if (startsWord(name, query)) return 0;
-      if (name.includes(query)) return 1;
-      return description.includes(query) ? 2 : -1;
-    }
+    onOtherOverlayOpen("command-palette", () => closePalette());
 
     // While searching, matches leave their sections for one flat list sorted
-    // by rank, so "set" puts Settings above Reset Desktop and "all" puts the
-    // Gallery app above Reset Desktop's description. Moving the buttons keeps
-    // the visual, Tab, and arrow-key order equal.
-    function filterItems(query) {
+    // by rank (src/utils/search.ts), so "set" puts Settings above Reset
+    // Desktop and "all" puts the Gallery app above Reset Desktop's
+    // description. Moving the buttons keeps the visual, Tab, and arrow-key
+    // order equal.
+    function filterItems(query: string) {
       const lowerQuery = query.trim().toLowerCase();
       const searching = lowerQuery !== "";
       disarmItem();
 
-      const matches = entries
+      const ranked = entries
         .map((entry) => ({
           entry,
-          rank: getMatchRank(entry.name, entry.description, lowerQuery),
+          rank: rankMatch(entry.name, entry.description, lowerQuery),
         }))
         .filter(({ rank }) => rank >= 0)
         .sort((a, b) => a.rank - b.rank || a.entry.order - b.entry.order);
@@ -327,11 +315,11 @@ const externalLinks = socialLinks.map((link) => ({
         item.style.display = "none";
         section.append(item);
       });
-      matches.forEach(({ entry }) => {
+      ranked.forEach(({ entry }) => {
         entry.item.style.display = "";
-        if (searching) matchList.append(entry.item);
+        if (searching) matches.append(entry.item);
       });
-      matchList.hidden = !searching || matches.length === 0;
+      matches.hidden = !searching || ranked.length === 0;
       sections.forEach((section) => {
         section.hidden = searching;
       });
@@ -352,12 +340,10 @@ const externalLinks = socialLinks.map((link) => ({
       }
 
       // Scroll selected item into view
-      if (visibleItems[selectedIndex]) {
-        visibleItems[selectedIndex].scrollIntoView({
-          block: "nearest",
-          behavior: "smooth",
-        });
-      }
+      visibleItems[selectedIndex]?.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
     }
 
     // Selecting another item, typing, or closing the palette cancels it.
@@ -368,24 +354,25 @@ const externalLinks = socialLinks.map((link) => ({
       setStatus("");
     }
 
-    function armItem(item) {
+    function armItem(item: HTMLElement) {
       armedItem = item;
       item.classList.add("confirming");
       const message =
         (coarsePointer.matches && item.dataset.confirmTouch) ||
-        item.dataset.confirm;
+        item.dataset.confirm ||
+        "";
       setStatus(message, "warning");
     }
 
-    function selectItem(item) {
+    function selectItem(item: HTMLElement) {
       const index = visibleItems.indexOf(item);
       if (index < 0 || index === selectedIndex) return;
       selectedIndex = index;
       updateSelection();
     }
 
-    function moveSelection(delta) {
-      const focusedItem = results.contains(document.activeElement);
+    function moveSelection(delta: number) {
+      const focusedItem = resultList.contains(document.activeElement);
       selectedIndex = Math.max(
         0,
         Math.min(selectedIndex + delta, visibleItems.length - 1),
@@ -395,7 +382,7 @@ const externalLinks = socialLinks.map((link) => ({
       if (focusedItem) visibleItems[selectedIndex]?.focus();
     }
 
-    function executeItem(item) {
+    function executeItem(item: HTMLElement) {
       const type = item.dataset.type;
       const id = item.dataset.id;
 
@@ -405,7 +392,7 @@ const externalLinks = socialLinks.map((link) => ({
           armItem(item);
           return;
         }
-        executeCommand(id);
+        if (id) executeCommand(id);
       } else if (type === "app") {
         document.dispatchEvent(
           new CustomEvent("desktop:open-app", { detail: { appId: id } }),
@@ -420,10 +407,10 @@ const externalLinks = socialLinks.map((link) => ({
       }
     }
 
-    function executeCommand(commandId) {
+    function executeCommand(commandId: string) {
       if (commandId === "reset-desktop") {
         // Clear ALL desktop settings and state for a complete fresh start
-        const keysToRemove = [];
+        const keysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
           // Remove all pepodev-related keys
@@ -438,237 +425,10 @@ const externalLinks = socialLinks.map((link) => ({
         // Reload the page to show default state
         setTimeout(() => window.location.reload(), 500);
       } else if (commandId === "toggle-theme") {
-        // Toggle theme using the same logic as Settings app
-        const prefsKey = "pepodev.desktopPrefs";
-        const defaults = {
-          theme: localStorage.getItem("pepodev.theme") || "dark",
-          background: "network",
-          accent: "green",
-          radius: 12,
-          glass: 72,
-          backgroundEffect: true,
-          windowGlass: true,
-        };
-
-        let prefs = { ...defaults };
-        try {
-          const raw = localStorage.getItem(prefsKey);
-          if (raw) prefs = { ...defaults, ...JSON.parse(raw) };
-        } catch {
-          // Ignore corrupt settings
-        }
-
-        // Toggle the theme
-        const oldTheme = prefs.theme;
-        prefs.theme = prefs.theme === "dark" ? "light" : "dark";
-
-        // Switch to appropriate default background when theme changes
-        if (oldTheme !== prefs.theme) {
-          prefs.background = prefs.theme === "light" ? "cloud" : "network";
-        }
-
-        // Apply preferences with proper CSS variables
-        const accentMap = {
-          green: { primary: "#30d158", secondary: "#64d2ff" },
-          cyan: { primary: "#64d2ff", secondary: "#30d158" },
-          purple: { primary: "#bf5af2", secondary: "#64d2ff" },
-          amber: { primary: "#ff9f0a", secondary: "#64d2ff" },
-        };
-        const backgroundMap = {
-          network: {
-            bg: "#0a0e17",
-            primary: "34, 197, 94",
-            secondary: "6, 182, 212",
-          },
-          aurora: {
-            bg: "#07111f",
-            primary: "20, 184, 166",
-            secondary: "168, 85, 247",
-          },
-          midnight: {
-            bg: "#101018",
-            primary: "99, 102, 241",
-            secondary: "14, 165, 233",
-          },
-          ember: {
-            bg: "#170d0a",
-            primary: "245, 158, 11",
-            secondary: "239, 68, 68",
-          },
-          ocean: {
-            bg: "#0a1420",
-            primary: "0, 191, 255",
-            secondary: "64, 224, 208",
-          },
-          glacier: {
-            bg: "#0f1419",
-            primary: "176, 224, 230",
-            secondary: "127, 255, 212",
-          },
-          void: {
-            bg: "#0d0d0f",
-            primary: "147, 112, 219",
-            secondary: "100, 149, 237",
-          },
-          neon: {
-            bg: "#1a0b2e",
-            primary: "255, 20, 147",
-            secondary: "0, 255, 255",
-          },
-          plasma: {
-            bg: "#0e0520",
-            primary: "138, 43, 226",
-            secondary: "30, 144, 255",
-          },
-          storm: {
-            bg: "#1c1c24",
-            primary: "224, 255, 255",
-            secondary: "70, 130, 180",
-          },
-          matrix: {
-            bg: "#0d0208",
-            primary: "0, 255, 65",
-            secondary: "50, 205, 50",
-          },
-          sakura: {
-            bg: "#1a0f1f",
-            primary: "255, 183, 197",
-            secondary: "221, 160, 221",
-          },
-          forest: {
-            bg: "#0a1409",
-            primary: "34, 139, 34",
-            secondary: "124, 252, 0",
-          },
-          sunset: {
-            bg: "#1f1108",
-            primary: "255, 140, 0",
-            secondary: "255, 105, 180",
-          },
-          copper: {
-            bg: "#18100d",
-            primary: "184, 115, 51",
-            secondary: "205, 127, 50",
-          },
-          // Light theme backgrounds
-          cloud: {
-            bg: "#f0f4f8",
-            primary: "100, 149, 237",
-            secondary: "135, 206, 235",
-          },
-          daylight: {
-            bg: "#fef9e7",
-            primary: "255, 193, 7",
-            secondary: "255, 152, 0",
-          },
-          mint: {
-            bg: "#f0fdf4",
-            primary: "52, 211, 153",
-            secondary: "16, 185, 129",
-          },
-          peach: {
-            bg: "#fff5f0",
-            primary: "255, 159, 64",
-            secondary: "255, 127, 80",
-          },
-          sky: {
-            bg: "#e0f2fe",
-            primary: "14, 165, 233",
-            secondary: "56, 189, 248",
-          },
-          lavender: {
-            bg: "#f5f3ff",
-            primary: "167, 139, 250",
-            secondary: "196, 181, 253",
-          },
-          cream: {
-            bg: "#fefce8",
-            primary: "234, 179, 8",
-            secondary: "250, 204, 21",
-          },
-          rose: {
-            bg: "#fff1f2",
-            primary: "251, 113, 133",
-            secondary: "244, 63, 94",
-          },
-          sage: {
-            bg: "#f0fdf4",
-            primary: "74, 222, 128",
-            secondary: "134, 239, 172",
-          },
-          coral: {
-            bg: "#fff7ed",
-            primary: "251, 146, 60",
-            secondary: "249, 115, 22",
-          },
-          powder: {
-            bg: "#ecfeff",
-            primary: "6, 182, 212",
-            secondary: "34, 211, 238",
-          },
-          lemon: {
-            bg: "#fefce8",
-            primary: "250, 204, 21",
-            secondary: "253, 224, 71",
-          },
-          blush: {
-            bg: "#fce7f3",
-            primary: "236, 72, 153",
-            secondary: "244, 114, 182",
-          },
-          seafoam: {
-            bg: "#ecfdf5",
-            primary: "16, 185, 129",
-            secondary: "52, 211, 153",
-          },
-          sand: {
-            bg: "#fef3c7",
-            primary: "217, 119, 6",
-            secondary: "245, 158, 11",
-          },
-        };
-
-        const root = document.documentElement;
-        const accent = accentMap[prefs.accent] || accentMap.green;
-        const background =
-          backgroundMap[prefs.background] || backgroundMap.network;
-
-        root.setAttribute("data-theme", prefs.theme);
-        root.style.setProperty("--accent-primary", accent.primary);
-        root.style.setProperty("--accent-secondary", accent.secondary);
-        // Also update the main accent variables for backward compatibility
-        root.style.setProperty("--accent-green", accent.primary);
-        root.style.setProperty("--accent-cyan", accent.secondary);
-        root.style.setProperty("--window-radius", `${prefs.radius}px`);
-        root.style.setProperty(
-          "--glass-bg",
-          `rgba(${prefs.theme === "light" ? "255, 255, 255" : "44, 44, 46"}, ${prefs.glass / 100})`,
-        );
-        root.style.setProperty("--desktop-bg-color", background.bg);
-        root.style.setProperty("--particle-primary-rgb", background.primary);
-        root.style.setProperty(
-          "--particle-secondary-rgb",
-          background.secondary,
-        );
-        root.setAttribute(
-          "data-background-effect",
-          prefs.backgroundEffect ? "on" : "off",
-        );
-        root.setAttribute(
-          "data-window-glass",
-          prefs.windowGlass ? "on" : "off",
-        );
-
-        localStorage.setItem("pepodev.theme", prefs.theme);
-        localStorage.setItem(prefsKey, JSON.stringify(prefs));
-
-        document.dispatchEvent(
-          new CustomEvent("desktop:preferences", { detail: prefs }),
-        );
-
+        // Settings owns the preferences and applies the switch.
+        document.dispatchEvent(new CustomEvent("desktop:toggle-theme"));
         closePalette({ restoreFocus: true });
       } else if (commandId === "close-all-windows") {
-        // Close all open windows
         document.dispatchEvent(new CustomEvent("desktop:close-all-windows"));
         closePalette({ restoreFocus: true });
       }
@@ -681,7 +441,7 @@ const externalLinks = socialLinks.map((link) => ({
       // Open palette: Ctrl+K or Cmd+K
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        if (palette.dataset.visible === "true") {
+        if (isOpen()) {
           closePalette({ restoreFocus: true });
         } else {
           openPalette();
@@ -690,7 +450,7 @@ const externalLinks = socialLinks.map((link) => ({
       }
 
       // Only handle these keys when palette is open
-      if (palette.dataset.visible !== "true") return;
+      if (!isOpen()) return;
 
       // Close palette: Escape
       if (e.key === "Escape") {
@@ -703,8 +463,8 @@ const externalLinks = socialLinks.map((link) => ({
       // and visible results.
       if (e.key === "Tab") {
         e.preventDefault();
-        const stops = [input, ...visibleItems];
-        const at = stops.indexOf(document.activeElement);
+        const stops = [searchInput, ...visibleItems];
+        const at = stops.indexOf(document.activeElement as HTMLElement);
         const step = e.shiftKey ? -1 : 1;
         // From anywhere else, Tab starts at the input, Shift+Tab at the end.
         const from = at >= 0 ? at : e.shiftKey ? 0 : -1;
@@ -729,23 +489,24 @@ const externalLinks = socialLinks.map((link) => ({
       // Execute: Enter
       if (e.key === "Enter") {
         // A focused item runs through its native button click instead.
-        if (results.contains(document.activeElement) || e.isComposing) return;
+        if (resultList.contains(document.activeElement) || e.isComposing)
+          return;
         e.preventDefault();
-        if (visibleItems[selectedIndex]) {
-          executeItem(visibleItems[selectedIndex]);
-        }
-        return;
+        const item = visibleItems[selectedIndex];
+        if (item) executeItem(item);
       }
     });
 
     // Search input
-    input?.addEventListener("input", (e) => {
-      filterItems(e.target.value);
+    searchInput.addEventListener("input", () => {
+      filterItems(searchInput.value);
     });
 
     // Click on item (also Enter or Space on a focused item)
-    results?.addEventListener("click", (e) => {
-      const item = e.target.closest(".command-palette-item");
+    resultList.addEventListener("click", (e) => {
+      const item = (e.target as Element).closest<HTMLElement>(
+        ".command-palette-item",
+      );
       if (item) {
         selectItem(item);
         executeItem(item);
@@ -753,8 +514,10 @@ const externalLinks = socialLinks.map((link) => ({
     });
 
     // The highlight follows keyboard focus, so Enter and the highlight agree.
-    results?.addEventListener("focusin", (e) => {
-      const item = e.target.closest(".command-palette-item");
+    resultList.addEventListener("focusin", (e) => {
+      const item = (e.target as Element).closest<HTMLElement>(
+        ".command-palette-item",
+      );
       if (item) selectItem(item);
     });
 
@@ -765,7 +528,13 @@ const externalLinks = socialLinks.map((link) => ({
 
     // Initialize
     updateVisibleItems();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCommandPalette);
+  } else {
+    initCommandPalette();
+  }
 </script>
 
 <style>
@@ -794,10 +563,15 @@ const externalLinks = socialLinks.map((link) => ({
     backdrop-filter: blur(4px);
   }
 
+  /* A column, so the results scroll and the status line under them always
+     stays in view. */
   .command-palette-container {
     position: relative;
+    display: flex;
+    flex-direction: column;
     width: 90%;
     max-width: 600px;
+    max-height: calc(85vh - 24px);
     background: rgba(15, 23, 42, 0.95);
     border: 1px solid rgba(34, 197, 94, 0.3);
     border-radius: 12px;
@@ -815,6 +589,7 @@ const externalLinks = socialLinks.map((link) => ({
 
   .command-palette-header {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
@@ -854,6 +629,8 @@ const externalLinks = socialLinks.map((link) => ({
   }
 
   .command-palette-results {
+    flex: 1 1 auto;
+    min-height: 0;
     max-height: 400px;
     overflow-y: auto;
     padding: 8px;
@@ -916,8 +693,8 @@ const externalLinks = socialLinks.map((link) => ({
   }
 
   .command-palette-item.confirming {
-    background: rgba(255, 69, 58, 0.16);
-    border-color: rgba(255, 69, 58, 0.6);
+    background: color-mix(in srgb, var(--accent-red) 16%, transparent);
+    border-color: color-mix(in srgb, var(--accent-red) 60%, transparent);
   }
 
   .command-palette-item-icon {
@@ -952,6 +729,7 @@ const externalLinks = socialLinks.map((link) => ({
 
   /* Always rendered, so screen readers announce new messages. */
   .command-palette-status {
+    flex-shrink: 0;
     margin: 0;
     padding: 0 20px;
     color: rgba(255, 255, 255, 0.6);
@@ -964,7 +742,7 @@ const externalLinks = socialLinks.map((link) => ({
 
   .command-palette-status[data-tone="warning"] {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ff9f0a;
+    color: var(--accent-amber);
   }
 
   @media (max-width: 768px) {
@@ -997,7 +775,7 @@ const externalLinks = socialLinks.map((link) => ({
     }
 
     .command-palette-results {
-      max-height: calc(100dvh - var(--mobile-taskbar-height, 56px) - 92px);
+      max-height: none;
     }
 
     .command-palette-item {

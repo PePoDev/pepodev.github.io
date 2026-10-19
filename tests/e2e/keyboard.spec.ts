@@ -1,26 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-
-// Returning visitor: the first-visit Welcome window would open 1.5 s after
-// load and could cover the icon a test is about to click.
-async function resetPage(page: Page) {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.clear();
-    localStorage.setItem("pepodev.hasVisited", "true");
-  });
-  await page.reload();
-}
-
-async function openApp(page: Page, label: string, appId: string) {
-  await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: label })
-    .click();
-  const window = page.locator(`#window-${appId}`);
-  await expect(window).toBeVisible();
-  await expect(window).toHaveClass(/focused/);
-  return window;
-}
+import { openApp, resetPage } from "./helpers";
 
 // Open windows can cover desktop icons, so later apps launch from the start menu.
 async function openFromStartMenu(page: Page, appId: string) {
@@ -393,4 +372,26 @@ test("Enter on a focused app's title-bar Close button closes the window", async 
   await page.keyboard.press("Enter");
   await expect(calculator).toBeHidden();
   await expect(calculator.locator(".calculator-value")).toHaveText("0");
+});
+
+test("Enter and Space on a focused Calculator key press that key", async ({
+  page,
+}) => {
+  const calculator = await openApp(page, "Calculator", "calculator");
+  const value = calculator.locator(".calculator-value");
+  await page.keyboard.type("12+");
+
+  await calculator.getByRole("button", { name: "7", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(value).toHaveText("12+7");
+  await page.keyboard.press("Space");
+  await expect(value).toHaveText("12+77");
+
+  // A clicked key does not keep focus, so Enter afterwards still means "=".
+  await calculator.getByRole("button", { name: "AC" }).click();
+  await calculator.getByRole("button", { name: "4", exact: true }).click();
+  await calculator.getByRole("button", { name: "+" }).click();
+  await calculator.getByRole("button", { name: "4", exact: true }).click();
+  await page.keyboard.press("Enter");
+  await expect(value).toHaveText("8");
 });

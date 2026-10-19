@@ -1,33 +1,10 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { expect, test, type Page } from "@playwright/test";
+import { holdScripts, openApp, resetPage } from "./helpers";
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
-
-// Returning visitors: no Welcome window or palette tip toast to get in the way.
-async function resetPage(page: Page, storage: Record<string, string> = {}) {
-  await page.goto("/");
-  await page.evaluate((items) => {
-    localStorage.clear();
-    localStorage.setItem("pepodev.hasVisited", "true");
-    localStorage.setItem("pepodev.commandPaletteHintShown", String(Date.now()));
-    for (const [key, value] of Object.entries(items))
-      localStorage.setItem(key, value);
-  }, storage);
-  await page.reload();
-}
-
-async function openApp(page: Page, label: string, appId: string) {
-  await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: label })
-    .click();
-  const window = page.locator(`#window-${appId}`);
-  await expect(window).toBeVisible();
-  await expect(window).not.toHaveClass(/opening/);
-  return window;
-}
 
 async function dragBy(
   page: Page,
@@ -361,11 +338,20 @@ test("phone-width taskbar window buttons have accessible names", async ({
   await page.locator('#start-menu [data-open-app="settings"]').click();
   await expect(page.locator("#window-settings")).toBeVisible();
 
+  // The label is hidden only visually, so it still names the button, and
+  // the icon (with its text, such as "CK") is aria-hidden.
   const taskbarApps = page.locator("#taskbar-apps");
-  await expect(taskbarApps.locator(".taskbar-app span").first()).toBeHidden();
+  const label = taskbarApps.locator(".taskbar-app span").first();
+  expect((await label.boundingBox())?.width ?? 0).toBeLessThanOrEqual(1);
+  await expect(taskbarApps.locator(".taskbar-app[aria-label]")).toHaveCount(0);
   await expect(taskbarApps.getByRole("button", { name: "Work" })).toBeVisible();
   await expect(
     taskbarApps.getByRole("button", { name: "Settings" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Open start menu" }).click();
+  await page.locator('#start-menu [data-open-app="certs"]').click();
+  await expect(
+    taskbarApps.getByRole("button", { name: "Certifications", exact: true }),
   ).toBeVisible();
 
   await page.addScriptTag({ content: axeSource });
@@ -380,7 +366,9 @@ test("phone-width taskbar window buttons have accessible names", async ({
         };
       }
     ).axe;
-    const result = await axe.run("#taskbar-apps", { runOnly: ["button-name"] });
+    const result = await axe.run("#taskbar-apps", {
+      runOnly: ["button-name", "label-content-name-mismatch"],
+    });
     return result.violations.map((violation) => violation.id);
   });
   expect(violations).toEqual([]);
@@ -432,6 +420,30 @@ test("a scrolling window body with nothing focusable is a labelled tab stop", as
   expect(violations).toEqual([]);
 });
 
+test("controls hidden in a scrolling window body do not count as its tab stop", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 800, height: 600 });
+  const gallery = await openApp(page, "Gallery", "gallery");
+  const content = gallery.locator(".window-content");
+  await gallery.getByLabel("Please enter the password").fill("password");
+  await page.keyboard.press("Enter");
+  await expect(gallery.locator("[data-gallery-unlocked]")).toBeVisible();
+
+  // The password form is hidden but still in the DOM.
+  await expect
+    .poll(() =>
+      content.evaluate(
+        (element) => element.scrollHeight > element.clientHeight + 1,
+      ),
+    )
+    .toBe(true);
+  await expect(content).toHaveAttribute("tabindex", "0");
+  await expect(
+    page.getByRole("group", { name: "Gallery content" }),
+  ).toBeVisible();
+});
+
 test("the mode switch is an action button with no pressed state", async ({
   page,
 }) => {
@@ -476,6 +488,39 @@ test("without scripts, mode switches are named right and shortcuts show", async 
   // The shortcut links work without scripts, so they are not hidden.
   await expect(page.locator("#link-webring")).toBeVisible();
   await context.close();
+});
+
+test("website mode reaches assistive tech before its deferred scripts run", async ({
+  page,
+  request,
+}) => {
+  // Neither panel is aria-hidden in the markup; CSS hides the other one.
+  const html = await (await request.get("/")).text();
+  for (const id of ["desktop", "website"]) {
+    const tag = html.match(new RegExp(`<div[^>]*id="${id}"[^>]*>`))?.[0];
+    expect(tag, id).toBeTruthy();
+    expect(tag, id).not.toContain("aria-hidden");
+  }
+
+  // Rocket Loader runs SiteModeController late; the panel is shown first.
+  const release = await holdScripts(
+    page,
+    /SiteModeController|function \w\(\w\)\{return \w===`website`/,
+  );
+  await resetPage(page, { "pepodev.viewMode": "website" });
+  await expect(page.locator("script[data-held]")).toHaveCount(1);
+  await expect(page.locator("#website")).toBeVisible();
+  await expect(page.locator("#desktop")).toBeHidden();
+  await expect(
+    page.getByRole("link", { name: "Skip to content" }),
+  ).toBeAttached();
+  await expect(page.getByRole("banner")).toBeVisible();
+  await release();
+  await expect(page.locator("#website")).not.toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  await expect(page.locator("#desktop")).toHaveAttribute("aria-hidden", "true");
 });
 
 test("two-way mode switches hand focus to the other panel's switch", async ({
@@ -623,7 +668,7 @@ test("scripts that must run while the page parses opt out of Rocket Loader", asy
 }) => {
   const markers = [
     'storageKey = "pepodev.viewMode"',
-    "Apply the saved theme before first paint",
+    "Apply the saved theme and accent before first paint",
     "initParticleNetwork",
     "window.__pepodevWindowManagerReady = true",
     "window.__pepodevDesktopIconsReady = true",

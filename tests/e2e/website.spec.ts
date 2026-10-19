@@ -20,7 +20,9 @@ const viewports = [
 const accents = ["green", "cyan", "purple", "amber"];
 const background = { dark: "rgb(11, 15, 20)", light: "rgb(244, 244, 239)" };
 
-// Expected career numbers, worked out here independently of the app's util.
+// Expected career numbers, worked out here independently of the app's util,
+// for the month the site was built in. The page states it (data-as-of), so
+// a test run in a later month than the build still checks the build.
 const MONTHS = [
   "january",
   "february",
@@ -35,26 +37,6 @@ const MONTHS = [
   "november",
   "december",
 ];
-const now = new Date();
-const thisMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
-const toIndex = (text: string) => {
-  if (/present/i.test(text)) return thisMonth;
-  const [month, year] = text.trim().split(/\s+/);
-  return Number(year) * 12 + MONTHS.indexOf(month.toLowerCase());
-};
-const spans = experiences
-  .map(({ period }) => period.split(" - ").map(toIndex))
-  .sort((a, b) => a[0] - b[0]);
-const earliest = spans[0][0];
-const expectedYears = Math.floor((thisMonth - earliest) / 12);
-const expectedMonths = thisMonth - earliest + 1;
-const expectedCompanies = new Set(
-  experiences.map(({ company }) => company.replace(/,?\s*Co\.,?\s*Ltd\.?$/, "")),
-).size;
-let gapMonths = 0;
-for (let i = 1; i < spans.length; i += 1) {
-  gapMonths += Math.max(0, spans[i][0] - spans[i - 1][1] - 1);
-}
 const tenure = (months: number) =>
   [
     Math.floor(months / 12) > 0 && `${Math.floor(months / 12)} yr`,
@@ -62,6 +44,41 @@ const tenure = (months: number) =>
   ]
     .filter(Boolean)
     .join(" ");
+
+async function getCareerExpectations(page: Page) {
+  const asOf = await page
+    .locator("[data-uptime-summary]")
+    .getAttribute("data-as-of");
+  const [builtYear, builtMonth] = (asOf ?? "").split("-").map(Number);
+  expect(builtYear, `data-as-of="${asOf}"`).toBeGreaterThan(2000);
+  const thisMonth = builtYear * 12 + builtMonth - 1;
+  const toIndex = (text: string) => {
+    if (/present/i.test(text)) return thisMonth;
+    const [month, year] = text.trim().split(/\s+/);
+    return Number(year) * 12 + MONTHS.indexOf(month.toLowerCase());
+  };
+  const spans = experiences
+    .map(({ period }) => period.split(" - ").map(toIndex))
+    .sort((a, b) => a[0] - b[0]);
+  const earliest = spans[0][0];
+  let gapMonths = 0;
+  for (let i = 1; i < spans.length; i += 1) {
+    gapMonths += Math.max(0, spans[i][0] - spans[i - 1][1] - 1);
+  }
+  const [currentStart] = experiences[0].period.split(" - ").map(toIndex);
+  return {
+    earliest,
+    gapMonths,
+    expectedYears: Math.floor((thisMonth - earliest) / 12),
+    expectedMonths: thisMonth - earliest + 1,
+    expectedCompanies: new Set(
+      experiences.map(({ company }) =>
+        company.replace(/,?\s*Co\.,?\s*Ltd\.?$/, ""),
+      ),
+    ).size,
+    currentTenure: tenure(thisMonth - currentStart + 1),
+  };
+}
 
 async function openWebsite(
   page: Page,
@@ -197,6 +214,43 @@ test("accent text keeps AA contrast for every Settings accent", async ({
   }
 });
 
+test("the saved theme and accent apply before the end-of-body scripts", async ({
+  page,
+}) => {
+  // Drop the script at the end of <body> that applies all preferences, so
+  // only the <head> script can have set them.
+  await page.route(
+    (url) => url.pathname === "/",
+    async (route) => {
+      const response = await route.fetch();
+      const html = (await response.text()).replace(
+        /<script\b[^>]*>(?:(?!<\/script>)[\s\S])*Initialize theme immediately[\s\S]*?<\/script>/,
+        "",
+      );
+      await route.fulfill({ response, body: html });
+    },
+  );
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("pepodev.viewMode", "website");
+    localStorage.setItem(
+      "pepodev.desktopPrefs",
+      JSON.stringify({ theme: "light", accent: "purple" }),
+    );
+  });
+  await page.reload();
+  expect(
+    await page.evaluate(() =>
+      Array.from(document.scripts).some((script) =>
+        script.text.includes("Initialize theme immediately"),
+      ),
+    ),
+  ).toBe(false);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator("html")).toHaveCSS("--accent-primary", "#bf5af2");
+  await expect(page.locator("html")).toHaveCSS("--accent-secondary", "#64d2ff");
+});
+
 test("website mode follows the Settings theme and is dark by default", async ({
   page,
 }) => {
@@ -240,6 +294,14 @@ test("shows years, companies, tenure and uptime computed from experiences.json",
   page,
 }) => {
   const website = await openWebsite(page);
+  const {
+    earliest,
+    gapMonths,
+    expectedYears,
+    expectedMonths,
+    expectedCompanies,
+    currentTenure,
+  } = await getCareerExpectations(page);
 
   // June 2019 is the earliest start, so this is at least 7 from 2026 on.
   expect(expectedYears).toBeGreaterThanOrEqual(7);
@@ -259,9 +321,8 @@ test("shows years, companies, tenure and uptime computed from experiences.json",
   await expect(website.locator(".ws-seg i")).toHaveCount(expectedMonths);
   await expect(website.locator(".ws-seg--gap i")).toHaveCount(gapMonths);
 
-  const [currentStart] = experiences[0].period.split(" - ").map(toIndex);
   await expect(website.locator("[data-tenure]").first()).toHaveText(
-    tenure(thisMonth - currentStart + 1),
+    currentTenure,
   );
   await expect(website.locator(".ws-release")).toHaveCount(experiences.length);
 
@@ -325,6 +386,8 @@ test("the Work app shows the computed experience metrics", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  const { expectedYears, expectedCompanies } =
+    await getCareerExpectations(page);
   await page
     .locator("#desktop-icons")
     .getByRole("button", { name: "Work" })

@@ -12,21 +12,6 @@
   flex-direction: column;
 }
 
-/* Light theme: accent text darkens to keep WCAG AA on light glass. The
-   accent itself is set inline on <html>, so this derives from it. */
-[data-theme="light"] :is(.music-player-app, .white-noise-app, .settings-app) {
-  --app-accent-text: color-mix(in srgb, var(--accent-cyan) 40%, #000);
-}
-
-/* Custom properties are not validated, so the relative color needs a
-   feature query to leave the color-mix() fallback above in place. */
-@supports (color: oklch(from red 0.42 min(c, 0.15) h)) {
-  [data-theme="light"]
-    :is(.music-player-app, .white-noise-app, .settings-app) {
-    --app-accent-text: oklch(from var(--accent-cyan) 0.42 min(c, 0.15) h);
-  }
-}
-
 .music-now {
   display: grid;
   grid-template-columns: 156px minmax(0, 1fr);
@@ -240,7 +225,7 @@
 }
 
 .music-play {
-  color: var(--accent-cyan);
+  color: var(--app-accent-text, var(--accent-cyan));
   font-weight: 600;
 }
 
@@ -648,10 +633,10 @@
 }
 
 /* The board is always dark, so it keeps the dark theme's text colours
-   (copied from :root in variables.css; keep them in step). */
+   (variables.css). */
 .snake-stage {
-  --text-primary: #f5f5f7;
-  --text-secondary: #a1a1a6;
+  --text-primary: var(--dark-text-primary);
+  --text-secondary: var(--dark-text-secondary);
   position: relative;
   height: 100%;
   aspect-ratio: 1 / 1;
@@ -1068,6 +1053,23 @@
   padding: 0 14px;
   color: var(--app-accent-text, var(--accent-cyan));
   font-size: 13px;
+}
+
+/* Reset all settings waits for a second click, like the palette's Reset
+   Desktop. */
+.settings-actions button.confirming {
+  border-color: color-mix(in srgb, var(--accent-red) 60%, transparent);
+  background: color-mix(in srgb, var(--accent-red) 16%, transparent);
+}
+
+.app-content .settings-status {
+  margin: 10px 0 0;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.app-content .settings-status:empty {
+  margin: 0;
 }
 
 @media (max-width: 560px) {

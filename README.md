@@ -39,8 +39,11 @@ foreground. Playwright starts its own server with `--ignore-lock`.
 cannot play the AAC music, so the two music tests fail locally. CI sets
 `PLAYWRIGHT_SERVER=preview` (serve the built `dist/`; run `pnpm build` first)
 and `PLAYWRIGHT_CHANNEL=chrome` (installed Google Chrome); set both to
-reproduce CI. In CI, `test.only` fails the run and tests get two retries, so
-check the report for flaky tests.
+reproduce CI. In CI, `test.only` fails the run and tests get two retries; the
+job uploads the `playwright-report` artifact on every run, so check it for
+tests that only passed on a retry (flaky). Specs share `resetPage`, `openApp`,
+and `holdScripts` (which holds scripts back the way Rocket Loader does) from
+`tests/e2e/helpers.ts`.
 
 ## Project Map
 
@@ -64,7 +67,7 @@ check the report for flaky tests.
 | `docs/superpowers/plans/2026-10-19-garden-obsidian-sync.md` | Garden sync design and one-time setup |
 | `src/assets/blog/` | Local post images |
 | `src/data/` | Portfolio JSON and build-time music discovery |
-| `src/types/`, `src/utils/` | Data types and reusable logic |
+| `src/types/`, `src/utils/` | Data types and reusable logic, including the shared overlay focus rules (`overlays.ts`), search ranking (`search.ts`), and desktop accent and background colours (`desktop-prefs.ts`) |
 | `src/styles/global.css` | Shared desktop and app styles |
 | `src/styles/website-mode.css` | Website-mode styles (`ws-*` classes) |
 | `public/music/` | Local audio library |
@@ -98,7 +101,11 @@ check the report for flaky tests.
   theme scripts in `<head>`, the preferences/particle script, and the window,
   icon, and link controllers. Give new parse-time scripts the same attribute,
   and guard their DOMContentLoaded handlers with a `window.__pepodev…Ready`
-  flag, since Rocket Loader can replay the event.
+  flag, since Rocket Loader can replay the event. Every other script can run
+  after a visitor has opened windows, so an app that acts on
+  `desktop:window-open` or `desktop:window-focus` also checks at start-up
+  whether its window is already open (SRE game, Music, Terminal, Gallery),
+  and the first-visit Welcome timer skips `?blog=` links itself.
 - Preserve keyboard access, stable `global.css` selectors, command-palette
   stacking, and case-insensitive `Ctrl`/`Cmd` + `K`.
 - Explicit `display` rules on hidden panels require a `[hidden]` override.
@@ -109,24 +116,37 @@ check the report for flaky tests.
   not reach Markdown rendered through `<slot />` or `<Content />`.
 - List a new desktop overlay in both `isEscapeOwnedByOverlay`
   (`WindowController.astro`) and `isDesktopOverlayOpen`
-  (`src/utils/app-keyboard.ts`), and close it on
-  `desktop:command-palette-open`.
+  (`src/utils/app-keyboard.ts`). Open and close it with `openOverlay` and
+  `closeOverlay` from `src/utils/overlays.ts`, close it in
+  `onOtherOverlayOpen`, and call `preventDefault()` on the Escape it handles.
+  `canTakeFocus` there and in `WindowController.astro` (which cannot import
+  it) follow the same rules.
 - Put a `-webkit-` declaration before its standard property. CSS minification
   drops a standard property followed by its prefixed twin, and keeps prefixes
   only for browsers in `vite.build.cssTarget` (`astro.config.mjs`).
-- Keep text at WCAG AA in both themes and focus rings at 3:1. `--accent-cyan`
-  is pale in both themes, so light-theme app text uses `--text-primary` or
-  `--text-secondary` (Music, White Noise, and Settings use `--app-accent-text`)
-  and keeps the accent for borders and tints. Surfaces that stay dark in both
-  themes (the Snake board, the SRE game) redefine the `--text-*` variables
-  locally.
+- Keep text at WCAG AA in both themes, on glass and on opaque windows, and
+  focus rings at 3:1; `--text-muted` meets AA too. The accents are pale in
+  the light theme, so accent-coloured text in windows and the tray uses
+  `--app-accent-text`, `--app-primary-text`, or `--app-amber-text`
+  (`app-base.css`, set only in the light theme, falling back to the accent
+  in the dark one), or `--text-primary`/`--text-secondary`, and keeps the
+  accent for borders and tints. Labels on the translucent Start menu, tray,
+  and taskbar use `--text-secondary`. Surfaces that stay dark in both themes
+  (the Snake board, the SRE game, Terminal) point the `--text-*` variables at
+  the `--dark-text-*` ones in `variables.css`. The opaque-window axe test in
+  `apps.spec.ts` checks the content apps; glass hides backgrounds from axe.
+  One known gap: in the light theme, a window at low glass opacity stacked
+  over one of those dark windows shows grey behind its text.
 - Honor `prefers-reduced-motion`: the desktop background paints one still
   frame, and window, icon, app, and website-mode animations stop.
 - Website mode is dark by default and follows the Settings theme
-  (`data-theme="light"` on `<html>`) and accent. Size its text in `rem` and set
-  its breakpoints in `em`, so it follows the browser's text size. Rows that
-  run edge to edge inside a panel or scroller use inset focus rings, which
-  the panel cannot clip.
+  (`data-theme="light"` on `<html>`) and accent, both applied by the `<head>`
+  script before first paint. Size its text in `rem` and set its breakpoints
+  in `em`, so it follows the browser's text size. Rows that run edge to edge
+  inside a panel or scroller use inset focus rings, which the panel cannot
+  clip. Neither mode panel is `aria-hidden` in the markup:
+  `html[data-site-mode]` hides the other one from first paint, before
+  `SiteModeController` also marks it hidden and inert.
 - All type comes from the Fonts API Google provider (`astro.config.mjs`):
   Inter and JetBrains Mono (`--font-sans`, `--font-mono`) for the desktop,
   blog, and resume, without preload so website mode never downloads them;
@@ -145,10 +165,12 @@ check the report for flaky tests.
 - Years of experience, company count, tenure, and the career-uptime strip are
   computed at build time by `src/utils/experience.ts` from each
   `experiences.json` period (`"May 2020 - June 2022"` or
-  `"February 2024 - Present"`); do not hard-code them. The About role and bio
-  and the SRE game's hire screen use `experiences.json[0].role`, the Terminal
-  `skills` command prints `skills.json`, and the Projects heading counts
-  `projects.json`. Education lives in `education.json`.
+  `"February 2024 - Present"`); do not hard-code them. The uptime summary's
+  `data-as-of` holds the build month, which the tests compute from, so a
+  test run in a later month than the build still passes. The About role and
+  bio and the SRE game's hire screen use `experiences.json[0].role`, the
+  Terminal `skills` command prints `skills.json`, and the Projects heading
+  counts `projects.json`. Education lives in `education.json`.
 - In `projects.json`, `name` and `github` follow the repository's current name,
   every `link` is https, and `archived` and `stars` mirror GitHub; a repo
   archived on GitHub is not shown as Active. A project's optional `summary` is
@@ -217,33 +239,53 @@ check the report for flaky tests.
   waits while the desktop is hidden.
 - Windows are non-modal dialogs (`role="dialog"`) labelled by their title.
   `Escape` closes the focused window after overlays handle it. Opening a
-  window from the keyboard focuses it before `desktop:window-open`, so an app
+  window from the keyboard focuses it before `desktop:window-open`. Every
+  launch (a new window, a restore, or an already open one, from an icon, the
+  Start menu, the palette, or the taskbar) and every hand-off of focus into
+  the next window then dispatches `desktop:window-focus`, whose
+  `detail.keyboard` says whether DOM focus moved into the window, so an app
   can move focus on to its own control. Closing or minimizing the focused
   window hands `.focused` to the topmost remaining one; after a pointer close,
   DOM focus is dropped so the next app gets the keys, and from the keyboard
   focus returns to the window's launcher if still shown, else into the topmost
   window, else to the app's icon. Tabbing into a window focuses it. Minimized
-  and closed windows are `inert` and `aria-hidden`.
+  and closed windows are `inert` and `aria-hidden`. Taskbar window buttons
+  are named by their label, which phone widths hide only visually.
 - Dragging keeps a window's title bar above the taskbar with at least 120px of
   it on screen. Maximized windows end at the taskbar (`getTaskbarHeight()`),
   and Maximize reads Restore while maximized. An overflowing `.window-content`
-  with nothing focusable inside is a labelled tab stop.
+  with nothing focusable inside (hidden and disabled controls do not count)
+  is a labelled tab stop; an inner scroller of its own, such as the SRE
+  game's boot log, is a labelled tab stop too. Toasts sit below a maximized
+  window's title bar.
 - The Start menu, tray panel, and command palette are `inert` while closed,
-  and only one is open at a time. The open palette is modal. Escape, a toggle
-  button, `Ctrl`/`Cmd` + `K`, or a backdrop click returns focus to the opener;
-  launching an app does not.
+  and only one is open at a time: opening one closes the others. Tabbing out
+  of the Start menu or tray closes it. The open palette is modal. Escape, a
+  toggle button, `Ctrl`/`Cmd` + `K`, or a backdrop click returns focus to the
+  opener (a window included), or, when the opener is gone (Close All
+  Windows), to the topmost window or the palette button; launching an app
+  does not. The tray's audio button opens the tray, so it is named "Audio
+  settings" with no pressed state; Mute is in the tray.
 - Palette and Start search rank names that start with the query first, then
-  other name matches, then description matches. Enter runs the top match, or
-  the focused palette item. Reset Desktop runs only on a second Enter, click,
-  or tap.
+  other name matches, then description matches (`rankMatch` in
+  `src/utils/search.ts`). Enter runs the top match, or the focused palette
+  item. Reset Desktop, and Settings' Reset all settings, run only on a second
+  Enter, click, or tap, with the reason shown in a status line that stays in
+  view on phones. Toggle Theme asks Settings to switch
+  (`desktop:toggle-theme`), so both apply the same preferences.
 - Calculator and Snake take keys only while their window is focused in desktop
   mode with no overlay open and no Ctrl, Meta, or Alt (AltGr is allowed). Form
-  fields and controls outside the window keep their keys, and Snake pauses
-  whenever it loses the keyboard. The shared guard is
-  `src/utils/app-keyboard.ts`.
-- Storage keys are `pepodev.desktopPrefs`, `pepodev.music`,
-  `pepodev.systemAudio`, `pepodev.snake.best.v2`,
-  `pepodev.desktopIcon.v3.<appId>`, and `pepodev.linkIcon.v4.<link id>`. Older
+  fields and controls outside the window keep their keys, a focused button or
+  link inside it keeps its Enter and Space, and Snake pauses whenever it
+  loses the keyboard. Pointer presses on Calculator and Snake buttons do not
+  focus them, so Enter after clicking keys still means "=". The shared guard
+  is `src/utils/app-keyboard.ts`.
+- Storage keys are `pepodev.desktopPrefs`, `pepodev.theme` (a mirror of
+  `desktopPrefs.theme`, read when the preferences have no theme),
+  `pepodev.music`, `pepodev.systemAudio`, `pepodev.snake.best.v2`,
+  `pepodev.desktopIcon.v3.<appId>`, `pepodev.linkIcon.v4.<link id>`,
+  `pepodev.hasVisited` (first-visit Welcome), and
+  `pepodev.commandPaletteHintShown` (when the palette tip last showed). Older
   icon key versions are removed on load; bump the version to discard saved
   layouts. The old `pepodev.snake.best` is removed on load.
 - `pepodev.viewMode` stores `desktop` or `website`; first visits default to
@@ -260,15 +302,18 @@ check the report for flaky tests.
   visualizer animates only while music plays in its visible window; the
   desktop background asks for levels through
   `window.__pepoMusicController.requestAudioFrame()`.
-- The desktop Blog reader opens every article at the top with focus on Back;
-  Back restores the list position. Links in articles open in a new tab, so
-  the desktop never navigates away.
+- The desktop Blog reader opens every article at the top with focus on Back,
+  from the list or a `?blog=` link (an unknown slug focuses the first
+  article); Back restores the list position. Links in articles open in a new
+  tab, so the desktop never navigates away.
 - Anything that changes desktop preferences dispatches `desktop:preferences`;
   Settings re-renders from storage on it.
 - Snake's board shrinks with the window and never covers its controls; a new
   visitor's best score is 0. Calculator keeps the newest digits in view and
   reports errors without clearing the input. Terminal and Gallery focus their
-  input when opened. The SRE game freezes while minimized or hidden.
+  input when opened, restored, or launched again; on touch screens only when
+  the keyboard opened them, so a tap does not raise the on-screen keyboard.
+  The SRE game freezes while minimized or hidden.
 - Gallery password is intentionally the literal `password`.
 - Certifications sort as Active (at least 90 days remaining), Expiring Soon,
   then Expired; badges refresh hourly. Data and sorting live in
@@ -300,16 +345,17 @@ For substantial changes:
 GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`: `build`
 builds and uploads the site with `withastro/action`, `test` runs the Playwright
 suite against that artifact in Google Chrome, and `deploy` publishes it with
-`actions/deploy-pages` only after both pass. It also runs hourly, which keeps
-the computed experience values current and picks up newly published garden
-notes, and on demand. GitHub disables a schedule after 60 days without
-repository activity, so re-enable it in the Actions tab if the values go
-stale. When the `VAULT_DEPLOY_KEY` secret (a read-only deploy key on
-`PePoDev/obsidian-vault`) is set, a separate `garden` job checks out only the
-vault's Markdown and attachments, runs the sync, and passes the published notes
-to the build and test jobs as an artifact. That job installs packages with
-`--ignore-scripts` and runs nothing but the sync; keep the key out of any job
-that builds or runs package scripts.
+`actions/deploy-pages` only after both pass. Runs never overlap (concurrency
+group `pages`): a newer run waits, so an older build cannot deploy over it.
+It also runs hourly, which keeps the computed experience values current and
+picks up newly published garden notes, and on demand. GitHub disables a
+schedule after 60 days without repository activity, so re-enable it in the
+Actions tab if the values go stale. When the `VAULT_DEPLOY_KEY` secret (a
+read-only deploy key on `PePoDev/obsidian-vault`) is set, a separate `garden`
+job checks out only the vault's Markdown and attachments, runs the sync, and
+passes the published notes to the build and test jobs as an artifact. That job
+installs packages with `--ignore-scripts` and runs nothing but the sync; keep
+the key out of any job that builds or runs package scripts.
 
 Preserve existing worktree changes, avoid destructive Git commands unless
 explicitly requested, and do not commit generated artifacts unless tracked.
