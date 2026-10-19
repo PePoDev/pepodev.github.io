@@ -531,6 +531,19 @@ test.describe("Blog reader", () => {
     expect(page.url()).toBe(desktopUrl);
     await expect(blog).toBeVisible();
   });
+
+  test("Thai articles are marked as Thai", async ({ page }) => {
+    await resetPage(page);
+    const blog = await openApp(page, "Blog", "blog");
+    await expect(
+      blog.locator(
+        "[data-blog-post][data-blog-slug='aws-graviton-ทักครับ'] .blog-reader-body",
+      ),
+    ).toHaveAttribute("lang", "th");
+    await expect(
+      blog.locator("button[data-blog-slug='aws-graviton-ทักครับ'] .blog-item-title"),
+    ).toHaveAttribute("lang", "th");
+  });
 });
 
 test.describe("Settings", () => {

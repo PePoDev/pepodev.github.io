@@ -1,12 +1,16 @@
 ---
 import { render } from "astro:content";
 import FormattedDate from "@components/FormattedDate.astro";
-import { getPostDescription, getPublishedPosts } from "@utils/blog";
+import {
+  getPostDescription,
+  getPostLanguage,
+  getPublishedPosts,
+} from "@utils/blog";
 
 const posts = await Promise.all(
   (await getPublishedPosts()).map(async (post) => {
     const { Content } = await render(post);
-    return { post, Content };
+    return { post, Content, lang: getPostLanguage(post) };
   }),
 );
 ---
@@ -23,7 +27,7 @@ const posts = await Promise.all(
     </p>
     <div class="blog-list">
       {
-        posts.map(({ post }, index) => {
+        posts.map(({ post, lang }, index) => {
           const description = getPostDescription(post);
           return (
             <button
@@ -32,11 +36,15 @@ const posts = await Promise.all(
               data-blog-index={index}
               data-blog-slug={post.id}
             >
-              <div class="blog-item-title">{post.data.title}</div>
+              <div class="blog-item-title" lang={lang}>
+                {post.data.title}
+              </div>
               <div class="blog-item-meta">
                 <FormattedDate date={post.data.pubDate} />
               </div>
-              <div class="blog-item-desc">{description}</div>
+              <div class="blog-item-desc" lang={lang}>
+                {description}
+              </div>
               {post.data.tags && post.data.tags.length > 0 && (
                 <div class="blog-item-tags">
                   {post.data.tags.map((tag) => (
@@ -52,7 +60,7 @@ const posts = await Promise.all(
   </div>
   <div class="blog-reader" data-blog-reader>
     {
-      posts.map(({ post, Content }, index) => {
+      posts.map(({ post, Content, lang }, index) => {
         return (
           <article
             class="blog-post-panel"
@@ -88,7 +96,9 @@ const posts = await Promise.all(
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
               </button>
-              <h2 class="blog-reader-title">{post.data.title}</h2>
+              <h2 class="blog-reader-title" lang={lang}>
+                {post.data.title}
+              </h2>
               <div class="blog-reader-date">
                 <FormattedDate date={post.data.pubDate} />
               </div>
@@ -100,7 +110,7 @@ const posts = await Promise.all(
                 </div>
               )}
             </div>
-            <div class="blog-reader-body">
+            <div class="blog-reader-body" lang={lang}>
               <Content />
             </div>
           </article>

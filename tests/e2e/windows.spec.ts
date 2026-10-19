@@ -220,6 +220,17 @@ test("pointer opens leave keyboard focus where it was", async ({ page }) => {
   await expect(page.locator("#window-me")).not.toBeFocused();
 });
 
+test("a screen-reader click opens a desktop app", async ({ page }) => {
+  // Assistive tech activates with a click whose detail is 0 and sends no
+  // pointer or key events, which the drag-aware icons otherwise rely on.
+  await page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: "About Me" })
+    .evaluate((icon: HTMLElement) => icon.click());
+  await expect(page.locator("#window-me")).toBeVisible();
+  await expect(page.locator("#taskbar-apps button")).toHaveCount(1);
+});
+
 test("a click inside a window leaves keyboard scrolling to its content", async ({
   page,
 }) => {

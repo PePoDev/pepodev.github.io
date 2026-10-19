@@ -544,3 +544,15 @@
     width: 100%;
   }
 }
+
+/* Reduced motion: blinking, pulsing and glitching stop, and the boot
+   lines and alerts appear at once in their final state. */
+@media (prefers-reduced-motion: reduce) {
+  .sre-game-container *,
+  .sre-game-container *::before,
+  .sre-game-container *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

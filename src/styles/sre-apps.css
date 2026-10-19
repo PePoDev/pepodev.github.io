@@ -382,6 +382,18 @@
   font-size: 12px;
 }
 
+/* Light theme: the accent is too pale for text on light glass, and the
+   light amber is about 2:1 on white. */
+[data-theme="light"] .ops-pill,
+[data-theme="light"] .cert-mark,
+[data-theme="light"] .gallery-lock-form button {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .gallery-lock-form p {
+  color: #a64b00;
+}
+
 .gallery-header {
   display: flex;
   align-items: center;

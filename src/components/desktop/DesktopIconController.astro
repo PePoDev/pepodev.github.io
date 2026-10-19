@@ -452,8 +452,11 @@
           }
         });
 
+        // Pointer and key opens are handled above. A click with detail 0
+        // comes from assistive tech (screen-reader activation), which
+        // sends no pointer or key events.
         trigger.addEventListener("click", (event) => {
-          if (!isMobileLauncherMode()) return;
+          if (!isMobileLauncherMode() && event.detail !== 0) return;
           event.preventDefault();
           openApp();
         });

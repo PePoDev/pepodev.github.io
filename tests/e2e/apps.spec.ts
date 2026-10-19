@@ -246,6 +246,24 @@ test("the Snake jumpscare holds still with reduced motion", async ({
   );
 });
 
+test("the SRE game stops blinking and glitching with reduced motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await resetPage(page);
+  const game = await openApp(page, "SRE Game", "sregame");
+  const probe = await game.evaluate((element) => {
+    const span = document.createElement("span");
+    span.className = "sre-status-crit";
+    element.querySelector(".sre-game-container")?.append(span);
+    const style = getComputedStyle(span);
+    const result = style.animationIterationCount;
+    span.remove();
+    return result;
+  });
+  expect(probe).toBe("1");
+});
+
 test("the Snake jumpscare still animates without a reduced-motion preference", async ({
   page,
 }) => {
@@ -859,5 +877,39 @@ for (const theme of ["light", "dark"] as const) {
     await expectReadable(page, game.locator(".sre-health-pct"), "health");
     await expectReadable(page, game.locator(".sre-alert-desc"), "alert");
     await expectReadable(page, game.locator(".sre-action-btn"), "actions");
+  });
+}
+
+for (const theme of ["light", "dark"] as const) {
+  test(`Certifications and Gallery accent text reaches AA contrast in the ${theme} theme`, async ({
+    page,
+  }) => {
+    await resetPage(page, {
+      theme,
+      background: theme === "light" ? "cloud" : "network",
+    });
+
+    const certs = await openApp(page, "Certs", "certs");
+    await expectReadable(page, certs.locator(".cert-mark"), "provider badges");
+    await page.keyboard.press("Escape");
+
+    const gallery = await openApp(page, "Gallery", "gallery");
+    await expectReadable(
+      page,
+      gallery.getByRole("button", { name: "Unlock" }),
+      "Unlock",
+    );
+    await gallery.getByLabel("Please enter the password").fill("hunter2");
+    await page.keyboard.press("Enter");
+    await expect(gallery.locator("[data-gallery-error]")).not.toBeEmpty();
+    await expectReadable(
+      page,
+      gallery.locator("[data-gallery-error]"),
+      "wrong-password message",
+    );
+    await gallery.getByLabel("Please enter the password").fill("password");
+    await page.keyboard.press("Enter");
+    await expect(gallery.locator(".ops-pill")).toBeVisible();
+    await expectReadable(page, gallery.locator(".ops-pill"), "gallery pill");
   });
 }
