@@ -1,0 +1,43 @@
+---
+import { render } from "astro:content";
+import FormattedDate from "@components/FormattedDate.astro";
+import GardenLayout from "@layouts/GardenLayout.astro";
+import {
+  gardenHref,
+  getGardenHome,
+  getGardenNotes,
+  getRecentlyTended,
+} from "@utils/garden";
+
+const notes = await getGardenNotes();
+const home = getGardenHome(notes);
+const recent = getRecentlyTended(notes, 8);
+const Content = home ? (await render(home)).Content : undefined;
+const title = home?.data.title ?? "Digital Garden";
+---
+
+<GardenLayout
+  title={title}
+  description="PePoDev's digital garden: evolving notes on cloud, reliability, software, and business."
+>
+  <h1 class="garden-title">{title}</h1>
+  <div class="prose">
+    {Content ? <Content /> : <p>No notes have been planted yet.</p>}
+  </div>
+  {
+    recent.length > 0 && (
+      <section class="garden-recent" aria-labelledby="garden-recent-title">
+        <h2 id="garden-recent-title">Recently tended</h2>
+        <ul>
+          {recent.map((note) => (
+            <li>
+              <a href={gardenHref(note)}>{note.data.title}</a>
+              <span>{note.data.folders.join(" / ")}</span>
+              {note.data.updated && <FormattedDate date={note.data.updated} />}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</GardenLayout>

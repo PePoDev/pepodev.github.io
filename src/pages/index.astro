@@ -3,6 +3,7 @@ import AboutApp from "../components/apps/AboutApp.astro";
 import BlogApp from "../components/apps/BlogApp.astro";
 import CalculatorApp from "../components/apps/CalculatorApp.astro";
 import CertificationsWalletApp from "../components/apps/CertificationsWalletApp.astro";
+import GardenApp from "../components/apps/GardenApp.astro";
 import GalleryApp from "../components/apps/GalleryApp.astro";
 import MusicPlayerApp from "../components/apps/MusicPlayerApp.astro";
 import ProjectsApp from "../components/apps/ProjectsApp.astro";
@@ -94,6 +95,12 @@ import { Font } from "astro:assets";
           appId="certs"
           label="Certs"
           data-default-col="4"
+          data-default-row="0"
+        />
+        <DesktopIcon
+          appId="garden"
+          label="Garden"
+          data-default-col="5"
           data-default-row="0"
         />
         <DesktopIcon
@@ -191,6 +198,14 @@ import { Font } from "astro:assets";
         </Window>
         <Window appId="blog" title="Blog - Articles" width={700} height={520}>
           <BlogApp />
+        </Window>
+        <Window
+          appId="garden"
+          title="Garden - Digital Garden"
+          width={960}
+          height={640}
+        >
+          <GardenApp />
         </Window>
         <Window
           appId="project"

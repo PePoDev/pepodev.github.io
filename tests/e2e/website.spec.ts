@@ -500,7 +500,6 @@ test("website mode keeps a skip link, visible focus and reduced motion", async (
     "https://linkedin.com/in/pepodev",
     "https://fb.com/pepodev",
     "https://blog.pepo.dev",
-    "https://garden.pepo.dev",
     "mailto:pepo@pepo.dev",
   ]) {
     await expect(website.locator(`a[href="${href}"]`).first()).toBeAttached();

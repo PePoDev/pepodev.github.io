@@ -1,0 +1,294 @@
+/* Digital garden pages (/garden/). They opt into website mode's tokens and
+   header (html[data-site-mode="website"], website-mode.css); note bodies use
+   .prose from blog.css. */
+
+.garden-shell {
+  min-height: 100dvh;
+  background: var(--ws-bg);
+  color: var(--ws-ink);
+  font-family: var(--ws-sans);
+  line-height: 1.6;
+}
+
+.garden-shell :where(a) {
+  color: inherit;
+}
+
+.garden-shell :focus-visible {
+  outline: 2px solid var(--ws-accent);
+  outline-offset: 3px;
+}
+
+.garden-layout {
+  max-width: calc(var(--ws-wrap) + var(--ws-gutter) * 2);
+  margin-inline: auto;
+  padding: 32px var(--ws-gutter) 64px;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-areas: "sidebar main";
+  gap: 40px;
+}
+
+.garden-main {
+  grid-area: main;
+  min-width: 0;
+}
+
+.garden-sidebar,
+.garden-toc {
+  position: sticky;
+  top: calc(3.875rem + 24px);
+  align-self: start;
+  max-height: calc(100dvh - 3.875rem - 48px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ws-line-strong) transparent;
+  font-size: 0.875rem;
+}
+
+.garden-sidebar {
+  grid-area: sidebar;
+}
+
+.garden-filter {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--ws-line);
+  border-radius: 8px;
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+  font: inherit;
+}
+
+.garden-filter-empty {
+  color: var(--ws-muted);
+}
+
+.garden-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.garden-tree .garden-tree {
+  margin-left: 7px;
+  padding-left: 10px;
+  border-left: 1px solid var(--ws-line);
+}
+
+.garden-tree [hidden] {
+  display: none;
+}
+
+.garden-tree summary {
+  padding: 4px 0;
+  color: var(--ws-ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.garden-tree a {
+  display: block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--ws-ink-2);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.garden-tree a:hover {
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+}
+
+.garden-tree a[aria-current="page"] {
+  background: var(--ws-accent-soft);
+  color: var(--ws-ink);
+}
+
+.garden-toc {
+  grid-area: toc;
+  display: none;
+}
+
+.garden-toc p {
+  margin: 0 0 8px;
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.garden-toc ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.garden-toc li[data-depth="3"] {
+  padding-left: 12px;
+}
+
+.garden-toc a {
+  display: block;
+  padding: 3px 0;
+  color: var(--ws-ink-2);
+  text-decoration: none;
+}
+
+.garden-toc a:hover {
+  color: var(--ws-ink);
+}
+
+.garden-breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.8rem;
+}
+
+.garden-breadcrumbs li + li::before {
+  content: "/";
+  margin-right: 8px;
+}
+
+.garden-breadcrumbs a {
+  color: var(--ws-ink-2);
+  text-decoration: none;
+}
+
+.garden-breadcrumbs a:hover,
+.garden-recent a:hover,
+.garden-backlinks a:hover {
+  color: var(--ws-accent);
+}
+
+.garden-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.garden-meta,
+.garden-recent span,
+.garden-recent time {
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.8rem;
+}
+
+.garden-meta {
+  margin: 0 0 28px;
+}
+
+.garden-main .prose {
+  margin: 0;
+}
+
+/* Wide tables scroll inside the column instead of widening the page. */
+.garden-main .prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.garden-seed {
+  color: var(--ws-muted);
+  font-style: italic;
+}
+
+.garden-recent,
+.garden-backlinks {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ws-line);
+}
+
+.garden-recent h2,
+.garden-backlinks h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.garden-recent ul,
+.garden-backlinks ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.garden-recent li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 8px 0;
+}
+
+.garden-recent a,
+.garden-backlinks a {
+  color: var(--ws-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.garden-recent time {
+  margin-left: auto;
+}
+
+.garden-backlinks li {
+  padding: 4px 0;
+}
+
+@media (min-width: 1240px) {
+  .garden-layout:has(.garden-toc) {
+    grid-template-columns: 240px minmax(0, 1fr) 200px;
+    grid-template-areas: "sidebar main toc";
+  }
+
+  .garden-toc {
+    display: block;
+  }
+}
+
+@media (max-width: 860px) {
+  .garden-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "main" "sidebar";
+    gap: 32px;
+  }
+
+  .garden-sidebar {
+    position: static;
+    max-height: none;
+    padding-top: 24px;
+    border-top: 1px solid var(--ws-line);
+  }
+}
+
+/* Inside the desktop Garden window: the window titlebar replaces the header. */
+html[data-embed] {
+  scroll-padding-top: 0;
+}
+
+html[data-embed] .garden-header {
+  display: none;
+}
+
+html[data-embed] .garden-layout {
+  padding-top: 20px;
+}
+
+html[data-embed] :is(.garden-sidebar, .garden-toc) {
+  top: 20px;
+  max-height: calc(100dvh - 40px);
+}

@@ -3,35 +3,94 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  # Rebuild monthly so values computed at build time (years of experience,
-  # tenure, the career-uptime strip in website mode) stay current.
-  schedule:
-    - cron: "7 0 1 * *"
   workflow_dispatch:
+  # Hourly: picks up notes published in the Obsidian vault, and keeps values
+  # computed at build time (years of experience, tenure, the career-uptime
+  # strip in website mode) current.
+  schedule:
+    - cron: "17 * * * *"
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
+  # The vault is private and this repo is public. Only this job sees the vault
+  # deploy key. It installs packages without running their scripts and runs
+  # only the sync (plus the Markdown parser it loads), fetches just Markdown and
+  # attachments, and hands the build the published notes only (already public
+  # on the site).
+  garden:
+    runs-on: ubuntu-latest
+    env:
+      HAS_VAULT_KEY: ${{ secrets.VAULT_DEPLOY_KEY != '' }}
+    outputs:
+      synced: ${{ env.HAS_VAULT_KEY }}
+    steps:
+      - name: Checkout your repository using git
+        if: env.HAS_VAULT_KEY == 'true'
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        if: env.HAS_VAULT_KEY == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Install dependencies without running their scripts
+        if: env.HAS_VAULT_KEY == 'true'
+        run: npx --yes pnpm@10.33.2 install --frozen-lockfile --ignore-scripts
+      - name: Check out the Obsidian vault
+        if: env.HAS_VAULT_KEY == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: PePoDev/obsidian-vault
+          ssh-key: ${{ secrets.VAULT_DEPLOY_KEY }}
+          path: .vault
+          fetch-depth: 0 # commit history dates each note
+          filter: blob:none # without downloading old file versions
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            **/*.md
+            /Attachments/
+            /.obsidian/app.json
+          persist-credentials: false
+          show-progress: false
+      - name: Sync published garden notes
+        if: env.HAS_VAULT_KEY == 'true'
+        run: node scripts/sync-garden.mjs --vault .vault
+      - name: Upload published garden notes
+        if: env.HAS_VAULT_KEY == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: garden
+          path: |
+            src/content/garden
+            src/assets/garden
+          retention-days: 1
+
   build:
+    needs: garden
     runs-on: ubuntu-latest
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v6
+      - name: Download published garden notes
+        if: needs.garden.outputs.synced == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: garden
+          path: src
       - name: Install, build, and upload your site
         uses: withastro/action@v6
-        # with:
-        # path: . # The root location of your Astro project inside the repository. (optional)
-        # node-version: 24 # The specific version of Node that should be used to build your site. Defaults to 24. (optional)
-        # package-manager: pnpm@latest # The Node package manager that should be used to install dependencies and build your site. Automatically detected based on your lockfile; pnpm's version comes from "packageManager" in package.json. (optional)
-        # build-cmd: pnpm run build # The command to run to build your site. Runs the package build script/task by default. (optional)
 
   # Runs the Playwright suite against the site the build job uploaded, so the
   # deploy job only ever publishes a build that passed.
   test:
-    needs: build
+    needs: [garden, build]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -63,6 +122,13 @@ jobs:
           path: ${{ runner.temp }}/github-pages
       - name: Unpack it into dist/
         run: mkdir dist && tar -xf "$RUNNER_TEMP/github-pages/artifact.tar" -C dist
+      # tests/e2e/garden.spec.ts skips itself without the synced notes.
+      - name: Download published garden notes
+        if: needs.garden.outputs.synced == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: garden
+          path: src
       - name: Run the Playwright suite
         run: pnpm test:e2e
       - name: Upload the Playwright report
@@ -78,6 +144,9 @@ jobs:
   deploy:
     needs: [build, test]
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

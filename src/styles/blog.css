@@ -373,3 +373,51 @@
   border: 0;
   border-top: 1px solid var(--glass-border);
 }
+
+/* Obsidian callouts, written as <aside>/<details class="callout"> by
+   scripts/sync-garden.mjs. */
+.prose .callout {
+  --callout-color: var(--accent-cyan);
+  margin: 0 0 1.25em;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--callout-color) 35%, transparent);
+  border-left: 3px solid var(--callout-color);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--callout-color) 8%, transparent);
+}
+
+.prose .callout[data-callout="tip"] {
+  --callout-color: var(--accent-green);
+}
+
+.prose .callout:is([data-callout="warning"], [data-callout="caution"]) {
+  --callout-color: var(--accent-amber);
+}
+
+.prose .callout:is([data-callout="danger"], [data-callout="bug"]) {
+  --callout-color: var(--accent-red);
+}
+
+.prose .callout-title {
+  margin: 0;
+  color: var(--callout-color);
+  font-weight: 700;
+}
+
+.prose summary.callout-title {
+  cursor: pointer;
+}
+
+/* Callout titles are Markdown, so they arrive wrapped in a paragraph. */
+.prose .callout-title > p {
+  display: inline;
+  margin: 0;
+}
+
+.prose .callout > .callout-title + * {
+  margin-top: 0.5em;
+}
+
+.prose .callout > :last-child {
+  margin-bottom: 0;
+}

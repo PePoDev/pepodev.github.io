@@ -1,5 +1,6 @@
 // @ts-check
 import { fileURLToPath } from "node:url";
+import { satteri } from "@astrojs/markdown-satteri";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig, fontProviders } from "astro/config";
@@ -8,6 +9,12 @@ import { defineConfig, fontProviders } from "astro/config";
 export default defineConfig({
   site: "https://pepo.dev",
   integrations: [mdx(), sitemap()],
+  markdown: {
+    // Notes are written in Obsidian, which keeps `--flag` and straight quotes;
+    // smart punctuation would break copied commands. Keep this package's
+    // version equal to the one Astro depends on.
+    processor: satteri({ features: { smartPunctuation: false } }),
+  },
   prefetch: {
     prefetchAll: true,
     defaultStrategy: "viewport",

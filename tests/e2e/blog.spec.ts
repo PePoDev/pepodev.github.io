@@ -439,7 +439,8 @@ test("the Blog app and website mode list real titles and dates", async ({
     .locator("#taskbar")
     .getByRole("button", { name: "Switch to website mode" })
     .click();
-  await expect(page.locator("#website .ws-post-title")).toHaveText(
+  // Scoped: the Garden section lists notes with the same row styles.
+  await expect(page.locator("#website-writing .ws-post-title")).toHaveText(
     posts.slice(0, 5).map((p) => p.title),
   );
 });
