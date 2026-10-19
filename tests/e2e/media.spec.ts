@@ -116,7 +116,8 @@ async function stallAudioContext(page: Page) {
 }
 
 // Skips the first-visit Welcome window, which can open over the icons when
-// a slow page load delays the first click.
+// a slow page load delays the first click, and the command-palette tip, which
+// can cover a window's top-right corner in contrast screenshots.
 async function resetPage(page: Page, storage: Record<string, string> = {}) {
   await page.goto("/");
   await page.evaluate(
@@ -126,7 +127,11 @@ async function resetPage(page: Page, storage: Record<string, string> = {}) {
         localStorage.setItem(key, value),
       );
     },
-    { "pepodev.hasVisited": "true", ...storage },
+    {
+      "pepodev.hasVisited": "true",
+      "pepodev.commandPaletteHintShown": String(Date.now()),
+      ...storage,
+    },
   );
   await page.reload();
 }

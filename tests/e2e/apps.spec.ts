@@ -19,8 +19,11 @@ async function resetPage(
   await page.evaluate(
     ({ savedPrefs, savedStorage }) => {
       localStorage.clear();
-      // Skip the first-visit Welcome window so it cannot take focus mid-test.
+      // Skip the first-visit Welcome window so it cannot take focus mid-test,
+      // and the command-palette tip, which can cover a window's top-right
+      // controls (the SRE game's audio toggle) in contrast screenshots.
       localStorage.setItem("pepodev.hasVisited", "true");
+      localStorage.setItem("pepodev.commandPaletteHintShown", String(Date.now()));
       if (savedPrefs) {
         localStorage.setItem(
           "pepodev.desktopPrefs",
