@@ -109,7 +109,7 @@ const originLine = `I started out writing game backends in Go${
 const socialByIcon = new Map(socialLinks.map((link) => [link.icon, link]));
 const emailHref = socialByIcon.get("email")?.href ?? "mailto:pepo@pepo.dev";
 const email = emailHref.replace(/^mailto:/, "");
-const resumeHref = socialByIcon.get("resume")?.href ?? "/resume";
+const resumeHref = socialByIcon.get("resume")?.href ?? "/resume/";
 const issueLink = socialByIcon.get("issue");
 const webringLink = socialByIcon.get("webring");
 const isExternal = (href: string) => /^https?:/.test(href);

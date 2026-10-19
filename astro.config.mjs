@@ -50,6 +50,28 @@ export default defineConfig({
     },
   },
   fonts: [
+    // Desktop mode, blog, and resume type (--font-sans and --font-mono in
+    // src/styles/variables.css). Rendered by BaseHead on every page and not
+    // preloaded, so website mode never downloads them.
+    {
+      provider: fontProviders.google(),
+      name: "Inter",
+      cssVariable: "--font-inter",
+      weights: [400, 500, 600, 700],
+      styles: ["normal"],
+      subsets: ["latin", "latin-ext"],
+      // Bare family names: variables.css keeps the system fallbacks.
+      fallbacks: [],
+    },
+    {
+      provider: fontProviders.google(),
+      name: "JetBrains Mono",
+      cssVariable: "--font-jetbrains-mono",
+      weights: [400, 500, 700],
+      styles: ["normal"],
+      subsets: ["latin", "latin-ext"],
+      fallbacks: [],
+    },
     // Website mode only (src/styles/website-mode.css). Astro downloads these
     // at build time and serves them from /_astro/fonts/; browsers fetch them
     // only when website mode renders text in them.
@@ -81,28 +103,6 @@ export default defineConfig({
       styles: ["normal"],
       subsets: ["latin"],
       fallbacks: ["monospace"],
-    },
-    {
-      provider: fontProviders.local(),
-      name: "Atkinson",
-      cssVariable: "--font-atkinson",
-      fallbacks: ["sans-serif"],
-      options: {
-        variants: [
-          {
-            src: ["./src/assets/fonts/atkinson-regular.woff"],
-            weight: 400,
-            style: "normal",
-            display: "swap",
-          },
-          {
-            src: ["./src/assets/fonts/atkinson-bold.woff"],
-            weight: 700,
-            style: "normal",
-            display: "swap",
-          },
-        ],
-      },
     },
   ],
 });

@@ -1,0 +1,5 @@
+# The Sitemap host is SITE_URL in src/consts.ts; keep the two in sync.
+User-agent: *
+Allow: /
+
+Sitemap: https://pepo.dev/sitemap-index.xml

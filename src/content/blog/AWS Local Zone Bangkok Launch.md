@@ -22,7 +22,7 @@ tags: ["AWS", "Local Zone", "Bangkok", "Cloud", "Latency"]
 
 จากรูปของการทดสอบที่ลองสั่ง `ping` ไปยังเครื่องใน `ap-southeast-1` (รูปซ้าย) ที่ใช้เวลาประมาณ 27ms กับฝั่ง local zone (รูปขวา) ประมาณ 4ms จะเห็นได้ว่า local zone ให้ latency ที่ต่ำกว่าประมาณ 6 เท่าเลยทีเดียว!
 
-![](../../assets/blog/aws-local-zone-03.png)
+![สไลด์ Local Zones and Latency: ผู้ใช้และระบบ on-premises เชื่อมต่อ Local Zone Bangkok ด้วย latency ระดับ single-digit millisecond ส่วนการวิ่งไปถึง AWS Region Singapore ใช้เวลาหลายสิบมิลลิวินาที](../../assets/blog/aws-local-zone-03.png)
 
 และเนื่องจาก Bangkok Local zone จะอยู่ภายใต้ Region Singapore จึงใช้ Network backbone เดียวกัน ทำให้เราสามารถติดต่อกับ Service ที่มีตามเดิมใน region ได้ปกติ ไม่ได้วิ่งออก public network แต่อย่างใด
 
@@ -30,17 +30,17 @@ tags: ["AWS", "Local Zone", "Bangkok", "Cloud", "Latency"]
 
 ณ ปัจจุบัน Services ที่พร้อมให้บริการบน Local Zone (วงกลมส้ม) จะยังมีไม่มากแต่ทาง AWS ก็มีแพลนจะเพิ่ม Services ที่สามารถใช้งานบน Local zone ขึ้นอีกในอนาคต (วงกลมขาว)
 
-![](../../assets/blog/aws-local-zone-04.png)
+![แผนภาพบริการบน Local Zone: วงกลมส้มคือบริการที่ใช้ได้แล้ว ได้แก่ Amazon EC2, EBS, ECS, EKS, VPC และ AWS Shield ส่วนวงกลมขาวคือบริการที่จะตามมา ได้แก่ Amazon FSx, RDS, EMR, ElastiCache, Elastic Load Balancer และ Direct Connect](../../assets/blog/aws-local-zone-04.png)
 
 และถึงแม้ว่า services จะยังไม่มากนัก แต่ก็ค่อนข้างเพียงพอต่อความต้องการในการยกระดับ system ที่มี latency sensitive ให้มี performance ที่มากขึ้นได้ และนอกจาก Services ในข้างต้น เรายังสามารถใช้ AWS Marketplace Partner ภายใน Local zone ได้เหมือน region ปกติอีกด้วย
 
-![](../../assets/blog/aws-local-zone-05.jpeg)
+![สไลด์ AWS Marketplace partner solutions ที่ deploy ลง Local Zone ได้ แบ่งเป็นหมวด DevOps, Security, Storage, Networking, Database, Business apps, AWS Data Exchange และ Professional services พร้อมโลโก้พาร์ทเนอร์ เช่น New Relic, Dynatrace, Splunk, NetApp, F5, Cisco, Databricks และ SAP](../../assets/blog/aws-local-zone-05.jpeg)
 
 ## ราคาเท่าไหร่กันนะ
 
 พูดกันมาถึงขนาดนี้ หลายๆท่านคงเตรียมเปิด console ไปกดสร้างหรือเตรียมแผนงานย้ายระบบมาอยู่บน Local zone กันเป็นแน่แท้ แต่ก่อนจะไปขั้นนั้น ลองมาดูค่าใช้จ่ายเมื่อเทียบกับ compute ทั่วไปบน region กันก่อน
 
-| |EC2 (Region)|EC2 (Local Zone)|
+|ค่าใช้จ่าย|EC2 (Region)|EC2 (Local Zone)|
 |---|---|---|
 |Instance (c5.2xlarge) / hours|$0.392|$0.549|
 |EBS (gp2) / GB|$0.12|$0.246|
@@ -51,17 +51,17 @@ tags: ["AWS", "Local Zone", "Bangkok", "Cloud", "Latency"]
 
 ยังไม่หมดเพียงเท่านั้น ภายในงานยังมีการพูดถึงการมาในอนาคตของ Thailand Region เพราะ AWS ถึงกับทุ่มเงินจำนวน 190 ล้านบาท เพื่อเข้ามาทำ Region ในประเทศไทยกันเลยทีเดียว
 
-![](../../assets/blog/aws-local-zone-06.jpeg)
+![สไลด์ AWS Cloud Expansion: 31 Launched Regions, 99 Availability Zones และ 410+ Points of Presence พร้อมอีก 4 region ที่กำลังจะมา ได้แก่ Canada West, Israel, Thailand และ Auckland](../../assets/blog/aws-local-zone-06.jpeg)
 
 และภายในงานยังมีคำถามที่น่าสนใจดังนี้
 
-![](../../assets/blog/aws-local-zone-07.jpeg)
+![สไลด์ Thailand AWS Region vs BKK Local Zone: BKK Local Zone เป็นส่วนขยายของ Singapore region, parent จะไม่เปลี่ยนเป็น TH Region และจะไม่ถูกแปลงเป็น TH Region เพราะ Thailand AWS Region จะสร้างแยกต่างหาก](../../assets/blog/aws-local-zone-07.jpeg)
 
 กล่าวโดยสรุปคือ BKK Local zone จะเป็นส่วนต่อขยายของ Singapore และจะไม่มีอะไรเกี่ยวข้องกับ TH Region ในอนาคต ถึงแม้ว่า TH Region จะเสร็จและพร้อมใช้งาน ก็จะไม่มีการย้าย BKK Local Zone มาที่ TH region แต่อย่างใด
 
 ## ใช้ให้ถูกงาน
 
-![](../../assets/blog/aws-local-zone-08.jpeg)
+![สไลด์ Use cases ของ Local Zone: Latency-based สำหรับ gaming, social media และ telecommunications และ Location-based สำหรับ data residency ของ financial services และ public sector รวมถึง hybrid cloud migration และ modernization](../../assets/blog/aws-local-zone-08.jpeg)
 
 ลองมาดูตัวอย่างหรือ Use case การนำ Local zone มาใช้เพื่อให้เกิดประโยชน์กันดีกว่า
 
@@ -82,6 +82,6 @@ tags: ["AWS", "Local Zone", "Bangkok", "Cloud", "Latency"]
 
 สำหรับองค์กรที่คิดจะกระโดดเข้ามาสู่การใช้ Bangkok Local zone จะต้องมี Use case ที่เหมาะสม เพราะนอกจากจะมีราคาที่มากกว่าเดิมแล้ว Service หลายๆตัวก็ยังไม่พร้อมให้บริการ ณ ขณะที่เขียนบทความนี้ แต่ก็ถือว่าเป็นสิ่งที่น่าสนใจมาก ที่จะนำมาช่วยพัฒนาระบบที่ต้องการ latency ที่ต่ำเพื่อให้ได้ performance ที่มากขึ้น ใครต้องการจะทดสอบก็สามารถลองทำตาม[บทความ](https://aws.amazon.com/th/blogs/thailand/aws-local-zones-bangkok-%E0%B8%9E%E0%B8%A3%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7/)จาก AWS ได้เลย
 
-![](../../assets/blog/aws-local-zone-09.jpeg)
+![สไลด์ LZ Architecture - Metro/country gaming hub: Game Management รันใน Availability Zone ของ Region Singapore ส่วน Game Engine รันใน Local Zone (BKK/HAN/MNL) ใกล้ผู้เล่นที่เชื่อมต่อผ่าน local internet ด้วย latency ระดับ single-digit millisecond](../../assets/blog/aws-local-zone-09.jpeg)
 
 ถ้าชอบก็อย่าลืมกดติดตามบทความถัดๆไปด้วยนะ ขอบคุณครับ 🙇🏻‍♂️

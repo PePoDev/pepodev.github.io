@@ -160,10 +160,21 @@ test("renders current portfolio content in website mode", async ({ page }) => {
   await expect(website.locator('a[href^="/blog/"]').first()).toBeVisible();
   await expect(
     website.getByRole("link", { name: "View resume" }),
-  ).toHaveAttribute("href", "/resume");
+  ).toHaveAttribute("href", "/resume/");
   await expect(
     website.locator("header").getByRole("link", { name: "Resume" }),
-  ).toHaveAttribute("href", "/resume");
+  ).toHaveAttribute("href", "/resume/");
+});
+
+test("desktop and website resume links use the canonical /resume/", async ({
+  page,
+}) => {
+  // GitHub Pages redirects /resume to /resume/, so link to the final URL.
+  await expect(page.locator("#link-resume")).toHaveAttribute(
+    "href",
+    "/resume/",
+  );
+  await expect(page.locator('a[href="/resume"]')).toHaveCount(0);
 });
 
 test("preserves desktop window state and ignores desktop shortcuts in website mode", async ({

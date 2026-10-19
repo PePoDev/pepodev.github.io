@@ -1,10 +1,25 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Download, type Page } from "@playwright/test";
 import certifications from "../../src/data/certifications.json" with {
   type: "json",
 };
 import experiences from "../../src/data/experiences.json" with {
   type: "json",
 };
+
+async function readPdf(download: Download) {
+  let pdf = "";
+  for await (const chunk of await download.createReadStream()) {
+    pdf += chunk.toString("latin1");
+  }
+  return pdf;
+}
+
+async function downloadResumePdf(page: Page) {
+  await page.goto("/resume/");
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download PDF" }).click();
+  return readPdf(await downloadPromise);
+}
 
 async function openCertifications(page: Page) {
   await page.goto("/");
@@ -84,6 +99,17 @@ test("resume skip link keeps dark text on the accent", async ({ page }) => {
   await expect(skip).toHaveCSS("background-color", "rgb(48, 209, 88)");
 });
 
+test("printing the resume hides the skip link", async ({ page }) => {
+  await page.goto("/resume/");
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator(".resume-skip-link")).toBeHidden();
+  await page.emulateMedia({ media: "screen" });
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "Skip to content" }),
+  ).toBeInViewport();
+});
+
 test("resume lists certifications as earned history in HTML and PDF", async ({
   page,
 }) => {
@@ -107,10 +133,7 @@ test("resume lists certifications as earned history in HTML and PDF", async ({
   expect(download.suggestedFilename()).toBe("pepo-resume.pdf");
   await expect(page.getByRole("status")).toHaveText("Download started.");
 
-  let pdf = "";
-  for await (const chunk of await download.createReadStream()) {
-    pdf += chunk.toString("latin1");
-  }
+  const pdf = await readPdf(download);
   expect(pdf.startsWith("%PDF-1.4")).toBe(true);
   expect(pdf).toContain("(CERTIFICATIONS) Tj");
   for (const certification of certifications) {
@@ -188,4 +211,79 @@ test("certifications wallet refreshes badges hourly and shows expiry quietly", a
     "Earned May 2023",
   );
   await expect(certs.locator(".cert-status:visible")).toHaveCount(0);
+});
+
+// Advance widths (1/1000 em) of ASCII 32-126 in Helvetica (Adobe AFM).
+const HELVETICA = [
+  278, 278, 355, 556, 556, 889, 667, 222, 333, 333, 389, 584, 278, 333, 278,
+  278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584,
+  584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556,
+  833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278,
+  278, 278, 469, 556, 222, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222,
+  500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500,
+  500, 334, 260, 334, 584,
+];
+
+test("the resume PDF has metadata, clickable links, and a flush date column", async ({
+  page,
+}) => {
+  const pdf = await downloadResumePdf(page);
+
+  expect(pdf).toContain("/Title (Thiwanon Chomcharoen \\(PePo\\) - Resume)");
+  expect(pdf).toContain("/Author (Thiwanon Chomcharoen \\(PePo\\))");
+  expect(pdf).toMatch(/\/Info \d+ 0 R/);
+  for (const uri of [
+    "mailto:pepo@pepo.dev",
+    "https://github.com/pepodev",
+    "https://linkedin.com/in/pepodev",
+    ...certifications.map((c) => c.credlyUrl),
+  ]) {
+    expect(pdf).toContain(`/S /URI /URI (${uri})`);
+  }
+  expect(pdf).toMatch(/\/Annots \[/);
+
+  // Each period's right edge sits on the 549pt right margin (595 - 46).
+  for (const { period } of experiences) {
+    const match = pdf.match(
+      new RegExp(`([\\d.]+) [\\d.]+ Td\\n\\(${period}\\) Tj`),
+    );
+    expect(match, period).not.toBeNull();
+    const width = [...period].reduce(
+      (sum, c) => sum + HELVETICA[c.charCodeAt(0) - 32],
+      0,
+    );
+    expect(Number(match![1]) + (width * 9.3) / 1000).toBeCloseTo(549, 1);
+  }
+});
+
+test("resume PDF section headings stay on the page with their first lines", async ({
+  page,
+}) => {
+  const pdf = await downloadResumePdf(page);
+  // One content stream per page, in page order; each Tj draws one line.
+  const pages = [...pdf.matchAll(/stream\n([\s\S]*?)\nendstream/g)].map(
+    ([, content]) =>
+      [...content.matchAll(/\(((?:\\.|[^\\)])*)\) Tj/g)].map(([, text]) =>
+        text.replace(/\\(.)/g, "$1"),
+      ),
+  );
+  const headings = [
+    "SUMMARY",
+    "EXPERIENCE",
+    "TECHNICAL SKILLS",
+    "EDUCATION",
+    "CERTIFICATIONS",
+  ];
+
+  expect(pages.flat()).toEqual(expect.arrayContaining(headings));
+  for (const lines of pages) {
+    expect(headings).not.toContain(lines.at(-1));
+  }
+  const certificationsPage = pages.find((lines) =>
+    lines.includes("CERTIFICATIONS"),
+  );
+  const first = certifications[0];
+  expect(certificationsPage).toContain(
+    `${first.name}, earned ${first.issueDate.slice(0, 4)}`,
+  );
 });

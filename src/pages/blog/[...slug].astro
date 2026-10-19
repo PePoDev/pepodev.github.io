@@ -5,6 +5,7 @@ import {
   type BlogEntry,
   getPostDescription,
   getPostHeroImage,
+  getPostLanguage,
   getPublishedPosts,
 } from "@utils/blog";
 
@@ -27,6 +28,7 @@ const mappedData = {
   pubDate: post.data.pubDate,
   updatedDate: post.data.updatedDate,
   heroImage: getPostHeroImage(post),
+  lang: getPostLanguage(post),
 };
 ---
 

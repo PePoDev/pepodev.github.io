@@ -3,7 +3,7 @@ title: AWS Graviton ทักครับ 👋
 pubDate: 2024-01-14T13:14:03Z
 url-slug: aws-graviton-introduction
 sub-title: ภาพรวมของ AWS Graviton ที่ให้ประสิทธิภาพแรงขึ้นแต่ราคาถูกลง บ้าไปแล้ววววว
-cover-picture: ../../assets/blog/aws-graviton-cover.png
+cover-picture: ../../assets/blog/aws-graviton-cover.jpg
 publish: true
 dg-publish: true
 tags: ["AWS", "Graviton", "ARM", "Cloud", "Performance"]
@@ -12,11 +12,11 @@ tags: ["AWS", "Graviton", "ARM", "Cloud", "Performance"]
 
 ปัจจุบันเวอร์ชั่นล่าสุดของ AWS Graviton คือ Generation 4 ที่เพิ่งเปิดตัวกันไปในงาน [AWS re:Invent 2023](https://reinvent.awsevents.com/) ที่ผ่านมา (ขณะนี้อยู่ใน preview สามารถ [signup](https://aws.amazon.com/ec2/instance-types/r8g/) เผื่อทดลองใช้งานได้) ซึ่งมีการปรับปรุงในเรื่องของ performance และ cost-effective ที่มากขึ้น
 
-![](../../assets/blog/aws-graviton-01.png)
+![สไลด์ AWS: Why build our own chips? สี่เหตุผลคือ Specialization, Speed, Innovation และ Security](../../assets/blog/aws-graviton-01.png)
 ## ประสิทธิภาพของ Graviton
 ถ้าถามว่า อะไรที่ทำให้ AWS Graviton แรงกว่า คุ้มกว่า เรามาลองดูรูปนี้กันครับ
 
-![](../../assets/blog/aws-graviton-02.png)
+![แผนภาพเปรียบเทียบ R5 instance กับ R6g instance: ฝั่ง Every vCPU is a full core แสดงว่า vCPU สองตัวของ R5 แชร์ execution resources ของ core เดียวกัน แต่ใน R6g แต่ละ vCPU มี core ของตัวเอง ฝั่ง Uniform memory access แสดงว่า R5 มีสอง socket ที่ต้องข้ามไปใช้ memory ของอีก socket แต่ R6g เป็น 64-core single socket ที่เข้าถึง memory แบบ local](../../assets/blog/aws-graviton-02.png)
 
 จากรูปนี้เราจะเห็นอยู่สองเรื่องนั่นก็คือ
 
@@ -24,34 +24,34 @@ tags: ["AWS", "Graviton", "ARM", "Cloud", "Performance"]
 
 2. Uniform memory access - คือการที่ processor มี local memory เป็นของตัวเอง ไม่แชร์ข้ามระหว่างกัน ทำให้สามารถ access ได้ไวกว่า non-local memory [(Memory Design NUMA)](https://en.wikipedia.org/wiki/Non-uniform_memory_access)
 
-ถ้าหากว่าใครไหวเรื่องพวกนี้แนะนำให้ไปต่อกับ [AWS whitepaper](https://docs.aws.amazon.com/whitepapers/latest/ec2-networking-for-telecom/overview-of-performance-optimization-options.html) อันนี้ได้เลยครับ  
+ถ้าหากว่าใครไหวเรื่องพวกนี้แนะนำให้ไปต่อกับ [AWS whitepaper](https://web.archive.org/web/20240222191049/https://docs.aws.amazon.com/whitepapers/latest/ec2-networking-for-telecom/overview-of-performance-optimization-options.html) อันนี้ได้เลยครับ  
 ส่วนตัวผมนั้น ไม่ไหวครับ 🥲
 
-![](../../assets/blog/aws-graviton-03.png)
+![กราฟ Latency เทียบกับ Load (CPU normalized): x86 (with SMT) มี latency พุ่งขึ้นเมื่อโหลดเกินราว 60% ขณะที่ Graviton คงที่จนเกือบ 100% พื้นที่ระหว่างสองเส้นคือ Unlocked capacity](../../assets/blog/aws-graviton-03.png)
 
 ด้วยสองเหตุผลที่กล่าวไปทำให้เราสามารถรีดประสิทธิภาพของ CPU ได้มากขึ้น แทบจะ 100% กันเลยทีเดียว ต่างจาก x86 ที่จะเริ่มมี Latency มากขึ้นเรื่อยๆเพราะ Physical core ถูกแบ่งกันใช้งาน ทำให้เราต้องมาตั้ง trigger scaling ตั้งแต่เนิ่นๆก่อนที่จะเกิด Bottleneck กันอย่างในปัจุบัน
 
 ถัดไปลองมาดู Benchmark กันบ้างครับ
 
-รูปนี้เป็น [Benchmark](https://www.anandtech.com/show/15578/cloud-clash-amazon-graviton2-arm-against-intel-and-amd/9) ของทาง Anandtech ที่ทำเทียบระหว่าง AWS Graviton 2 กับ x86 ทั้งทางฝั่ง AMD และ Intel ครับ จะเห็นได้ว่าในจำนวนเงิน dollar ที่จ่ายไปเท่ากันนั้น การใช้งาน AWS Graviton สามารถให้ผลลัพธ์ที่ค่อนข้างมากกว่านั่นเอง และหากมาลองดู real world scenario ที่เราใช้กันอย่างเช่น Nginx ก็ยังให้ Requests/Sec ที่มากกว่าเช่นกัน
+รูปนี้เป็น [Benchmark](https://web.archive.org/web/20240314034611/https://www.anandtech.com/show/15578/cloud-clash-amazon-graviton2-arm-against-intel-and-amd/9) ของทาง Anandtech ที่ทำเทียบระหว่าง AWS Graviton 2 กับ x86 ทั้งทางฝั่ง AMD และ Intel ครับ จะเห็นได้ว่าในจำนวนเงิน dollar ที่จ่ายไปเท่ากันนั้น การใช้งาน AWS Graviton สามารถให้ผลลัพธ์ที่ค่อนข้างมากกว่านั่นเอง และหากมาลองดู real world scenario ที่เราใช้กันอย่างเช่น Nginx ก็ยังให้ Requests/Sec ที่มากกว่าเช่นกัน
 
-[![](../../assets/blog/aws-graviton-04-nginx.png)](https://www.nginx.com/resources/datasheets/nginx-plus-arm-based-aws-graviton2-amis/)
+[![NGINX Plus on Arm-Based AWS Graviton2 AMIs datasheet: M6g ทำ Requests/Sec ได้มากกว่า M5 ราว 47-63% ในทุกขนาด instance ให้ price-performance ดีกว่า 40% และต้นทุนต่ำกว่า 20%](../../assets/blog/aws-graviton-04-nginx.png)](https://web.archive.org/web/20240214223125/https://www.nginx.com/resources/datasheets/nginx-plus-arm-based-aws-graviton2-amis/)
 
 ลองมาดู feedback จากลูกค้าที่ใช้ AWS Graviton กันบ้างครับ
 
-![Announcing the Epic Games Store - Unreal Engine](../../assets/blog/aws-graviton-05-unreal-engine.jpg)
+![โลโก้ Epic Games Store](../../assets/blog/aws-graviton-05-unreal-engine.jpg)
 
 > "AWS Graviton4 instances are the fastest EC2 instances we've evert tested and are delivering outstanding performance across our most competitive and latency sensitive workloads. we look forward to using Graviton4 to improve player experience and expand what is possible within Fortnite."
 > 
 > Epic Game
 
-![Datadog Launches Universal Service Monitoring](../../assets/blog/aws-graviton-06-datadog.jpg)
+![โลโก้ Datadog](../../assets/blog/aws-graviton-06-datadog.jpg)
 
 > "Integrating Graviton4-based instances into our environment was seamless and gave us an immediate performance boost out of the box, and we're looking forward to using Graviton4 when it becomes generally available"
 > 
 > Datadog
 
-![Stripe: Local payment methods pricing](../../assets/blog/aws-graviton-07-stripe.png)
+![โลโก้ Stripe](../../assets/blog/aws-graviton-07-stripe.png)
 
 > "Measured up to 50% query performance improvement and 10%-15% reduced error rate (fewer timeouts)"
 > 
@@ -78,17 +78,17 @@ tags: ["AWS", "Graviton", "ARM", "Cloud", "Performance"]
 
 - Operating System - ปัจจุบันแทบจะทุก Linux distributions รองรับ ARM64 กันเป็นที่เรียบร้อย ถ้าหากคุณใช้ AMI มาตราฐานอย่าง Amazon Linux, Ubuntu, หรือ Alpine Linux ก็สบายใจได้ แต่ถ้าไม่หรือเป็นมีการปรับแต่งกันขึ้นมาเอง ก็อาจจะต้องไปดู [Operating System](https://github.com/aws/aws-graviton-getting-started/blob/main/os.md) ที่รองรับกันนิดนึงว่ารองรับหรือไม่ครับ
 
-![](../../assets/blog/aws-graviton-08.png)
+![ตาราง Operating Systems available for Graviton based instances: Amazon Linux 2023, Amazon Linux 2, Ubuntu 18.04 ถึง 22.04, SuSE 15 SP2 และ Red Hat Enterprise Linux 8.2 ขึ้นไป พร้อมข้อมูล LSE support, kernel page size และ AMI ของแต่ละตัว](../../assets/blog/aws-graviton-08.png)
 
 - Version - นอกจากการเปลี่ยนวิธีการ compile ของภาษาที่เราใช้แล้ว เราก็ควรจะอัพเกรดเวอร์ชั่นที่ใช้ให้ใหม่ที่สุดเท่าที่จะเป็นไปได้ด้วยเช่นกัน เพราะในตอนที่ยุคของ ARM computer มาถึง หลายๆภาษาก็เริ่มมีการ optimize ให้เข้ากับ ARM มากยิ่งขึ้น อย่างเช่น [Go version 1.18](https://tip.golang.org/doc/go1.18) ที่มีการปรับปรุงการส่งฟังก์ชั่นเป็นอาร์กิวเมนต์ในรูปแบบใหม่ที่ทำให้ได้ performance มามากขึ้นกว่า 10% นั่นเอง
-    [![](../../assets/blog/aws-graviton-09-go.png)](https://aws.amazon.com/blogs/compute/making-your-go-workloads-up-to-20-faster-with-go-1-18-and-aws-graviton/)
+    [![กราฟ Dynamic Webpage จากบทความ Making your Go workloads up to 20% faster with Go 1.18 and AWS Graviton: Go 1.18 ทำ requests/sec ได้มากกว่า Go 1.17.8 11% เมื่อเปิด TCP keepalive และ 10% เมื่อปิด](../../assets/blog/aws-graviton-09-go.png)](https://aws.amazon.com/blogs/compute/making-your-go-workloads-up-to-20-faster-with-go-1-18-and-aws-graviton/)
     ref: [**Making your Go workloads up to 20% faster with Go 1.18 and AWS Graviton**](https://aws.amazon.com/blogs/compute/making-your-go-workloads-up-to-20-faster-with-go-1-18-and-aws-graviton/)
 ### 2/ Workload Transition
 เมื่อ software ของเรานั้นรองรับการทำงานบน AWS Graviton กันเป็นที่เรียบร้อยแล้ว ถัดไปเราจะมาดูว่าการเปลี่ยน workload ของเราไปใช้เป็น AWS Graviton มีขั้นตอนเบื้องต้นยังไง ในที่นี้เราจะขอยกตัวอย่างเป็น AWS EKS ซึ่งเป็น Kubernetes Platform สำหรับบริหารและจัดการ Container workload ที่ใช้กันอย่างแพร่หลายในปัจจุบัน เมื่อพร้อมแล้วเรามาเริ่มกันที่
 
 - Container Image
     จากข้อที่หนึ่ง เมื่อเราได้ทดลอง compile หรือเปลี่ยน runtime ของภาษาที่เราใช้งาน เราก็จะมาทำสิ่งที่เรียกว่า Multi-arch container images ที่ทำให้ Image ของเราทำงานได้บนหลาย CPU architectures (arm64 และ amd64) ซึ่งสามารถใช้เครื่องมืออย่าง [Docker Buildx](https://github.com/docker/buildx#getting-started) มาช่วยในขั้นตอนนี้ได้เลยครับ
-    ![](../../assets/blog/aws-graviton-10.png)
+    ![แผนภาพ Docker Buildx สร้าง image ให้ทั้ง amd64 และ arm64](../../assets/blog/aws-graviton-10.png)
 - Deploy
     เมื่อ build เสร็จก็ต้อง deploy ถูกต้องไหมครับ ใน EKS เราสามารถสร้าง Node Group ใหม่โดยใช้ instance type ที่เป็นประเภท Graviton ได้เลย วิธีดูว่า Instance Type ไหนเป็น AWS Graviton ก็คือตัวลงท้ายในประเภทจะเป็นตัว `g` เช่น `t4g.medium`ครับ หลังจากนั้นเราก็ควร taint node group นี้ไว้ด้วยแล้วก็ค่อยไปใส่ toleration ให้ service ที่พร้อมสำหรับการรันบน AWS Graviton ถึงเข้ามาใช้งานได้ครับ
 	
@@ -103,25 +103,25 @@ tags: ["AWS", "Graviton", "ARM", "Cloud", "Performance"]
 	จริงๆแล้ววิธีการย้าย workload มีค่อนข้างหลากหลายครับ นอกจาก [Taint and Toleration](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) ก็ยังมี [Node label selector](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) และ [Node affinity](https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/) อีกด้วย ซึ่งเราสามารถใช้งานร่วมกันเผื่อให้ได้ผลลัพธ์ตามที่ควรจะเป็นได้ครับ
     
     นอกจากการรันให้ถูก node แล้ว เรายังสามารถผสาน technique ที่เกี่ยวกับ [Traffic splitting](https://gateway-api.sigs.k8s.io/guides/traffic-splitting/) ได้อีกด้วย ทำให้เราสามารถลองแบ่ง Traffic จำนวนหนึ่งมารันบน AWS Graviton เพื่อทำการทดสอบอะไรบางอย่างก่อนจะย้ายไปใช้จริง 100% ได้ครับ
-	[![Traffic splitting](../../assets/blog/aws-graviton-11-traffic-splitting.png)](https://gateway-api.sigs.k8s.io/guides/traffic-splitting/)
+	[![แผนภาพ Traffic splitting ของ Gateway API: Gateway prod-web ส่ง traffic 90% ไปที่ Service foo-v1 และ 10% ไปที่ foo-v2 ตาม HTTPRoute simple-split](../../assets/blog/aws-graviton-11-traffic-splitting.png)](https://gateway-api.sigs.k8s.io/guides/traffic-splitting/)
 - Testing
     เราจะรู้ได้ยังไงหล่ะว่าการมาใช้ AWS Graviton ทำให้ระบบเราได้ Performance ที่มากขึ้นและ Latency ลดลงเหมือนที่คนอื่นเขาเล่ากันมา คำตอบคือการทำ Testing ครับ หากว่าระบบเรามี script สำหรับการทำ Smoke Test เราก็สามารถนำมาทดลองรันกับ Service ที่ทำงานอยู่บน AWS Graviton เผื่อ Monitor ผลลัพธ์ได้เลยครับ
     
     อย่างไรก็ตาม การใช้งาน AWS Graviton ไม่ได้หมายความว่าเราจะได้ประสิทธิภาพเพิ่มขึ้นกันตลอดทุกครั้งนะครับ เพราะอย่างที่เรากล่าวกันไปในหัวข้อก่อน ว่าถ้าเวอร์ชั่นของภาษาที่เราใช้ยังไม่ได้ Optimize มาสำหรับ CPU ประเภท ARM อาจจะทำให้ประสิทธิภาพลดลงก็เป็นได้ โดยในส่วนนี้เราสามารถใช้เครื่องมือที่เรียกว่า [Flame Graphs](https://github.com/brendangregg/FlameGraph) มาดู stack frame ของ application ว่ามันช้าลงที่ส่วนไหนเพื่อทำการ optimize เพิ่มเติมได้ครับ
-    ![Example](../../assets/blog/aws-graviton-12-flamegraph.svg)
+    ![ตัวอย่าง Flame Graph ของโปรแกรม bash: แต่ละแท่งคือ stack frame เช่น main, reader_loop และ execute_command ซ้อนกันขึ้นไปตาม call stack ความกว้างของแท่งคือสัดส่วนเวลาที่ใช้ CPU](../../assets/blog/aws-graviton-12-flamegraph.svg)
 
 ทั้งหมดนี้ก็เป็นเพียงขั้นตอนคร่าวๆเท่านั้น ทุกคนสามารถเข้าไปอ่านเรื่อง [Transition Guide](https://github.com/docker/buildx#getting-started) เพิ่มเติมเพื่อขั้นตอนและวิธีการวางแผนที่ถูกต้องมากขึ้นครับ
 
 ### 3/ Managed Services
 นอกจาก workload ของเราเองแล้ว เรายังสามารถใช้งานเจ้า Graviton กับ Managed services ต่างๆของ AWS ได้ด้วยนะ ซึ่งในส่วนนี้เราไม่ต้องทำอะไรเลยครับ สามารถ upgrade แล้วก็ enjoy ได้เลย ลองเข้าไปดูรายละเอียดของแต่ล่ะ [managed services](https://github.com/aws/aws-graviton-getting-started/blob/main/managed_services.md) ที่เราต้องการใช้งานได้เลยครับ
 
-![AWS re:Invent 2023 - AWS Graviton: The best price performance for your AWS workloads](../../assets/blog/aws-graviton-13-reinvent.png)
+![สไลด์ Beyond EC2: AWS managed services supporting Graviton จาก AWS re:Invent 2023 แสดงบริการที่รองรับ Graviton ได้แก่ Amazon DocumentDB, Aurora, RDS, ElastiCache, MemoryDB for Redis, Neptune, OpenSearch Service, EMR, AWS Lambda, AWS Fargate, AWS Elastic Beanstalk และ Amazon SageMaker](../../assets/blog/aws-graviton-13-reinvent.png)
 
 ## สรุป
 ถ้าหากว่าคุณเริ่มที่จะสนใจ AWS Graviton แล้วล่ะก็ ลองเข้าไปที่ [AWS Graviton Fast Start](https://aws.amazon.com/ec2/graviton/fast-start/) ซึ่งเป็นโปรแกรมสำหรับการย้าย workload ของเรามาอยู่บน AWS Graviton ซึ่งมีตัวอย่างของ Serverless, Container, Database และ Caching ครับ
 
-[![](../../assets/blog/aws-graviton-14-fast-start.png)](https://aws.amazon.com/ec2/graviton/fast-start/)
+[![AWS Graviton Fast Start: Innovate quickly with AWS Graviton Fast Start, get up to 40% better price performance for a variety of workloads](../../assets/blog/aws-graviton-14-fast-start.png)](https://aws.amazon.com/ec2/graviton/fast-start/)
 ขอพลังของ ARM จงสถิตอยู่กับทุกคนครับ ⚔️
 ### Continue readings
 - [https://github.com/aws/aws-graviton-getting-started](https://github.com/aws/aws-graviton-getting-started)
-- [https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html](https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html)
+- [https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html](https://web.archive.org/web/20241202143454/https://docs.aws.amazon.com/whitepapers/latest/aws-graviton2-for-isv/transitioning-your-service-or-application.html)

@@ -22,7 +22,7 @@ const earnedCertifications = certifications.map((certification) => ({
 const resumePdfData = {
   name: "Thiwanon Chomcharoen (PePo)",
   title: "Site Reliability Engineer",
-  contact: contactLinks.map(({ label }) => label),
+  contact: contactLinks,
   summary:
     "Site Reliability Engineer specializing in cloud infrastructure, Kubernetes platforms, observability, infrastructure as code, GitOps delivery, and reliability practices for production systems.",
   education: [
@@ -33,7 +33,10 @@ const resumePdfData = {
   experiences,
   skills: skills.map((skill) => `${skill.name} - ${skill.level}%`),
   certifications: earnedCertifications.map(
-    ({ name, earnedYear }) => `${name}, earned ${earnedYear}`,
+    ({ name, earnedYear, credlyUrl }) => ({
+      text: `${name}, earned ${earnedYear}`,
+      href: credlyUrl,
+    }),
   ),
 };
 
@@ -360,6 +363,7 @@ const currentYear = new Date().getFullYear();
           background: none;
         }
 
+        .resume-skip-link,
         .resume-header,
         .resume-actions,
         .resume-footer {
@@ -529,12 +533,24 @@ const currentYear = new Date().getFullYear();
         const contentWidth = width - marginX * 2;
         const pages = [];
         let commands = [];
+        let links = [];
         let y = 792;
 
         function addPage() {
-          if (commands.length) pages.push(commands.join("\n"));
+          if (commands.length) {
+            pages.push({ content: commands.join("\n"), links });
+          }
           commands = [];
+          links = [];
           y = 792;
+        }
+
+        // A clickable area over text drawn at baseline textY.
+        function addLink(x, textY, linkWidth, size, uri) {
+          links.push({
+            rect: [x, textY - size * 0.25, x + linkWidth, textY + size * 0.85],
+            uri,
+          });
         }
 
         function ensureSpace(requiredHeight) {
@@ -587,8 +603,10 @@ const currentYear = new Date().getFullYear();
           );
         }
 
-        function drawSection(title) {
-          ensureSpace(34);
+        // keepWith is the height of the section's first block. The heading
+        // takes 38pt, so this keeps it off the bottom of a page by itself.
+        function drawSection(title, keepWith) {
+          ensureSpace(38 + keepWith);
           y -= 8;
           drawRect(marginX, y - 14, contentWidth, 18);
           drawText(title.toUpperCase(), width / 2, y - 9, {
@@ -599,9 +617,13 @@ const currentYear = new Date().getFullYear();
           y -= 30;
         }
 
+        function paragraphHeight(text) {
+          return wrapPdfLine(text, contentWidth, 10).length * 12 + 6;
+        }
+
         function drawParagraph(text) {
           const lines = wrapPdfLine(text, contentWidth, 10);
-          ensureSpace(lines.length * 12 + 6);
+          ensureSpace(paragraphHeight(text));
           lines.forEach((line) => {
             drawText(line, marginX, y, { size: 10 });
             y -= 12;
@@ -609,13 +631,26 @@ const currentYear = new Date().getFullYear();
           y -= 6;
         }
 
+        // Bullet items are strings, or { text, href } for a linked item.
+        function bulletHeight(item) {
+          const text = typeof item === "string" ? item : item.text;
+          return wrapPdfLine(text, contentWidth - 22, 9.3).length * 11 + 2;
+        }
+
         function drawBulletList(items, maxItems) {
           items.slice(0, maxItems).forEach((item) => {
-            const lines = wrapPdfLine(item, contentWidth - 22, 9.3);
-            ensureSpace(lines.length * 11 + 2);
+            const { text, href } =
+              typeof item === "string" ? { text: item } : item;
+            const lines = wrapPdfLine(text, contentWidth - 22, 9.3);
+            ensureSpace(bulletHeight(item));
             drawText("-", marginX + 10, y, { size: 9.5 });
             lines.forEach((line, index) => {
-              drawText(line, marginX + 24, y - index * 11, { size: 9.3 });
+              const lineY = y - index * 11;
+              drawText(line, marginX + 24, lineY, { size: 9.3 });
+              if (href) {
+                const lineWidth = getTextWidth(line, 9.3);
+                addLink(marginX + 24, lineY, lineWidth, 9.3, href);
+              }
             });
             y -= lines.length * 11 + 2;
           });
@@ -635,19 +670,31 @@ const currentYear = new Date().getFullYear();
         y -= 11;
         drawLine(marginX, y, width - marginX, y, "0.88");
         y -= 14;
-        drawText(data.contact.join(" - "), width / 2, y, {
+        const contactSeparator = " - ";
+        const contactLine = data.contact
+          .map(({ label }) => label)
+          .join(contactSeparator);
+        drawText(contactLine, width / 2, y, {
           size: 8.5,
           align: "center",
           color: "0.3 0.31 0.35",
         });
+        let contactX = width / 2 - getTextWidth(contactLine, 8.5) / 2;
+        data.contact.forEach(({ label, href }) => {
+          const labelWidth = getTextWidth(label, 8.5);
+          if (href) addLink(contactX, y, labelWidth, 8.5, href);
+          contactX += labelWidth + getTextWidth(contactSeparator, 8.5);
+        });
         y -= 24;
 
-        drawSection("Summary");
+        drawSection("Summary", paragraphHeight(data.summary));
         drawParagraph(data.summary);
 
-        drawSection("Experience");
+        // Role, company, and the first bullets of an entry stay together.
+        const entryHeight = 72;
+        drawSection("Experience", entryHeight);
         data.experiences.forEach((experience, index) => {
-          ensureSpace(72);
+          ensureSpace(entryHeight);
           drawText(experience.role, marginX, y, { size: 10.2, bold: true });
           drawText(experience.period, width - marginX, y, {
             size: 9.3,
@@ -663,13 +710,14 @@ const currentYear = new Date().getFullYear();
           y -= 5;
         });
 
-        drawSection("Technical Skills");
+        const skillRowHeight = 14;
+        drawSection("Technical Skills", skillRowHeight);
         const skillLines = splitIntoColumns(
           data.skills.map((skill) => skill.replace(/\s-\s\d+%$/, "")),
           2,
         );
         skillLines.forEach((row) => {
-          ensureSpace(14);
+          ensureSpace(skillRowHeight);
           row.forEach((skill, index) => {
             drawText(skill, marginX + index * (contentWidth / 2), y, {
               size: 9.5,
@@ -679,8 +727,7 @@ const currentYear = new Date().getFullYear();
         });
         y -= 8;
 
-        drawSection("Education");
-        ensureSpace(42);
+        drawSection("Education", 42);
         drawText(data.education[0], marginX, y, { size: 10.2, bold: true });
         drawText(data.education[2], width - marginX, y, {
           size: 9.3,
@@ -693,9 +740,15 @@ const currentYear = new Date().getFullYear();
         });
         y -= 24;
 
-        drawSection("Certifications");
+        const [firstCertification] = data.certifications;
+        drawSection(
+          "Certifications",
+          firstCertification ? bulletHeight(firstCertification) : 0,
+        );
         drawBulletList(data.certifications, data.certifications.length);
-        if (commands.length) pages.push(commands.join("\n"));
+        if (commands.length) {
+          pages.push({ content: commands.join("\n"), links });
+        }
 
         const objects = [];
         const addObject = (body) => {
@@ -703,8 +756,20 @@ const currentYear = new Date().getFullYear();
           return objects.length;
         };
 
-        const catalogId = addObject("<< /Type /Catalog /Pages 2 0 R >>");
+        const catalogId = addObject(
+          "<< /Type /Catalog /Pages 2 0 R /Lang (en-US) /ViewerPreferences << /DisplayDocTitle true >> >>",
+        );
         const pagesId = addObject("");
+        const infoId = addObject(
+          [
+            "<<",
+            `/Title (${escapePdfText(`${data.name} - Resume`)})`,
+            `/Author (${escapePdfText(data.name)})`,
+            `/Subject (${escapePdfText(data.title)})`,
+            "/Creator (pepo.dev)",
+            ">>",
+          ].join(" "),
+        );
         const fontId = addObject(
           "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
         );
@@ -713,9 +778,14 @@ const currentYear = new Date().getFullYear();
         );
         const pageIds = [];
 
-        pages.forEach((content) => {
+        pages.forEach(({ content, links: pageLinks }) => {
           const contentId = addObject(
             `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+          );
+          const annotIds = pageLinks.map(({ rect, uri }) =>
+            addObject(
+              `<< /Type /Annot /Subtype /Link /Rect [${rect.map(formatNumber).join(" ")}] /Border [0 0 0] /A << /S /URI /URI (${escapePdfText(uri)}) >> >>`,
+            ),
           );
           const pageId = addObject(
             [
@@ -724,8 +794,13 @@ const currentYear = new Date().getFullYear();
               `/MediaBox [0 0 ${width} ${height}]`,
               `/Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >>`,
               `/Contents ${contentId} 0 R`,
+              annotIds.length
+                ? `/Annots [${annotIds.map((id) => `${id} 0 R`).join(" ")}]`
+                : "",
               ">>",
-            ].join("\n"),
+            ]
+              .filter(Boolean)
+              .join("\n"),
           );
           pageIds.push(pageId);
         });
@@ -748,7 +823,7 @@ const currentYear = new Date().getFullYear();
         });
         pdf += [
           "trailer",
-          `<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>`,
+          `<< /Size ${objects.length + 1} /Root ${catalogId} 0 R /Info ${infoId} 0 R >>`,
           "startxref",
           String(xrefOffset),
           "%%EOF",
@@ -786,8 +861,35 @@ const currentYear = new Date().getFullYear();
         return rows;
       }
 
+      // Advance widths (1/1000 em) of ASCII 32-126 in Helvetica and
+      // Helvetica-Bold (Adobe AFM metrics, StandardEncoding), so centered and
+      // right-aligned text such as the date column lines up.
+      const HELVETICA_WIDTHS = [
+        278, 278, 355, 556, 556, 889, 667, 222, 333, 333, 389, 584, 278, 333,
+        278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278,
+        584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278,
+        500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944,
+        667, 667, 611, 278, 278, 278, 469, 556, 222, 556, 556, 500, 556, 556,
+        278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500,
+        278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584,
+      ];
+      const HELVETICA_BOLD_WIDTHS = [
+        278, 333, 474, 556, 556, 889, 722, 278, 333, 333, 389, 584, 278, 333,
+        278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333,
+        584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278,
+        556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944,
+        667, 667, 611, 333, 278, 333, 584, 556, 278, 556, 611, 556, 611, 556,
+        333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556,
+        333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584,
+      ];
+
       function getTextWidth(text, fontSize, bold = false) {
-        return normalizePdfText(text).length * fontSize * (bold ? 0.56 : 0.51);
+        const widths = bold ? HELVETICA_BOLD_WIDTHS : HELVETICA_WIDTHS;
+        let units = 0;
+        for (const char of normalizePdfText(text)) {
+          units += widths[char.charCodeAt(0) - 32];
+        }
+        return (units * fontSize) / 1000;
       }
 
       function formatNumber(value) {

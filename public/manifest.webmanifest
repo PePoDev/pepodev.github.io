@@ -1,0 +1,15 @@
+{
+  "name": "PePoDev - Interactive Desktop and Engineering Blog",
+  "short_name": "PePoDev",
+  "description": "Site Reliability Engineer specializing in Kubernetes, Terraform, and cloud infrastructure. Building reliable platforms with open-source technologies.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#0a0e17",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

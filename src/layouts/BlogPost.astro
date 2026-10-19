@@ -3,19 +3,39 @@ import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 import BaseHead from "../components/BaseHead.astro";
 import FormattedDate from "../components/FormattedDate.astro";
+import SiteHeader from "../components/SiteHeader.astro";
 
-type Props = CollectionEntry<"blog">["data"];
+type Props = CollectionEntry<"blog">["data"] & {
+  /** From getPostLanguage(); "th" for Thai posts. */
+  lang?: "th" | "en";
+};
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const {
+  title,
+  description,
+  pubDate,
+  updatedDate,
+  heroImage,
+  lang = "en",
+} = Astro.props;
+// For share cards only: on the page, the cover sits right above the h1 and
+// is decorative.
+const coverAlt = `Cover image for ${title}`;
+// English page chrome inside a Thai post.
+const chromeLang = lang === "en" ? undefined : "en";
 ---
 
-<html lang="en">
+<html lang={lang}>
   <head>
     <BaseHead
       title={title}
       description={description}
       image={heroImage}
+      imageAlt={heroImage ? coverAlt : undefined}
       type="article"
+      lang={lang}
+      publishedTime={pubDate}
+      modifiedTime={updatedDate}
     />
     <style>
       main {
@@ -50,10 +70,33 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
       .last-updated-on {
         font-style: italic;
       }
+      .post-footer {
+        max-width: 720px;
+        margin: 3em auto 0;
+        padding-top: 1.5em;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px 24px;
+        border-top: 1px solid var(--glass-border);
+      }
+      .post-footer a {
+        color: var(--accent-cyan);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .post-footer a:hover {
+        color: var(--text-primary);
+      }
+      .post-footer a:focus-visible {
+        outline: 3px solid var(--accent-secondary);
+        outline-offset: 3px;
+      }
     </style>
   </head>
 
   <body>
+    <SiteHeader />
     <main>
       <article>
         <div class="hero-image">
@@ -63,7 +106,7 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
                 width={1020}
                 height={510}
                 src={heroImage}
-                alt={`Hero image for ${title}`}
+                alt=""
                 loading="eager"
                 fetchpriority="high"
               />
@@ -72,7 +115,7 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
         </div>
         <div class="prose">
           <div class="title">
-            <div class="date">
+            <div class="date" lang={chromeLang}>
               <FormattedDate date={pubDate} />
               {
                 updatedDate && (
@@ -88,6 +131,10 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
           <slot />
         </div>
       </article>
+      <nav class="post-footer" aria-label="Blog" lang={chromeLang}>
+        <a href="/blog/"><span aria-hidden="true">← </span>All posts</a>
+        <a href="/rss.xml">Subscribe via RSS</a>
+      </nav>
     </main>
   </body>
 </html>

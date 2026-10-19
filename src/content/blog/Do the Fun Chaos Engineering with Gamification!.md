@@ -20,7 +20,7 @@ The meaning is relatively straightforward, In short, It's is "rude to your clust
 
 Leave it behind, Because in this article we will talk only about the **FUN** part of chaos engineering, But it might not be fun for everyone 🤣
 
-![Meme](../../assets/blog/chaos-engineering-01-meme.png)
+![The "This is fine" meme: a cartoon dog sips coffee in a room on fire](../../assets/blog/chaos-engineering-01-meme.png)
 
 ## What is Gamification?
 
@@ -46,19 +46,19 @@ Are you ready? Let's get started.
 
 > KubeDoom is The next level of chaos engineering! Kill pods inside your Kubernetes cluster by shooting them in Doom! - [KubeDoom](https://github.com/storax/kubedoom)
 
-![KubeDoom](../../assets/blog/chaos-engineering-02-kubedoom.png)
+![KubeDoom: a Doom level where the monsters are labeled with Kubernetes pod names such as kube-proxy](../../assets/blog/chaos-engineering-02-kubedoom.png)
 
 ### 2. KubeInvaders
 
 > Gamified Chaos Engineering Tool for Kubernetes - [KubeInvaders](https://github.com/lucky-sideburn/KubeInvaders)
 
-![](../../assets/blog/chaos-engineering-03.png)
+![KubeInvaders: a Space Invaders style game where the ship shoots at aliens and server icons that stand for Kubernetes pods, with the cluster and namespace shown below](../../assets/blog/chaos-engineering-03.png)
 
 ### 3. Kube Chaos
 
 > A chaos engineering style game where you seek out and destroy Kubernetes pods, twinstick shmup style - [Kube Chaos](https://github.com/Shogan/kube-chaos)
 
-[119267327-07a41c80-bbe6-11eb-87ec-25ee0f96e669.mp4](https://user-images.githubusercontent.com/814180/119267327-07a41c80-bbe6-11eb-87ec-25ee0f96e669.mp4)
+[Kube Chaos demo video (MP4)](https://user-images.githubusercontent.com/814180/119267327-07a41c80-bbe6-11eb-87ec-25ee0f96e669.mp4)
 ## Summary
 
 These are the example projects that I found to make chaos engineering fun. If you find more interesting projects please tell me. But also please note that this is not the real principle of chaos engineering. It's just fun to implement the game with some chaos engineering concepts. To make it right, You need to understand more in the context of what you are doing and experiment for the result that you are looking for to improve the durability of your system.
