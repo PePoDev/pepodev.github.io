@@ -382,6 +382,14 @@ html[data-site-mode="website"] body {
   text-decoration: none;
 }
 
+/* Six section links fit from 430px; below that the Garden section is
+   reached by scrolling, and Writing and Contact link to it. */
+@media (max-width: 26.8125em) {
+  .ws-nav .ws-nav-optional {
+    display: none;
+  }
+}
+
 .ws-nav a span {
   color: var(--ws-muted);
   font-family: var(--ws-mono);

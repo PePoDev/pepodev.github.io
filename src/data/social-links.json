@@ -20,11 +20,6 @@
     "icon": "blog"
   },
   {
-    "label": "Digital Garden - garden.pepo.dev",
-    "href": "https://garden.pepo.dev",
-    "icon": "garden"
-  },
-  {
     "label": "Report Issue - GitHub",
     "href": "https://github.com/pepodev/pepodev.github.io/issues/new",
     "icon": "issue"

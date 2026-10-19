@@ -1,0 +1,66 @@
+---
+import { render } from "astro:content";
+import FormattedDate from "@components/FormattedDate.astro";
+import GardenLayout from "@layouts/GardenLayout.astro";
+import {
+  buildGardenTree,
+  gardenHref,
+  getBacklinks,
+  getBreadcrumbs,
+  getGardenNotes,
+} from "@utils/garden";
+
+export async function getStaticPaths() {
+  const notes = await getGardenNotes();
+  return notes
+    .filter((note) => note.id !== "index")
+    .map((note) => ({ params: { slug: note.id }, props: { note, notes } }));
+}
+
+const { note, notes } = Astro.props;
+const { Content, headings } = await render(note);
+const backlinks = getBacklinks(note, notes);
+const crumbs = getBreadcrumbs(note, buildGardenTree(notes));
+const { title, updated } = note.data;
+---
+
+<GardenLayout
+  title={title}
+  description={`${title}: notes from PePoDev's digital garden.`}
+  current={note.id}
+  headings={headings}
+>
+  <article>
+    <nav class="garden-breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/garden/">Garden</a></li>
+        {crumbs.map(({ name, href }) => <li>{href ? <a href={href}>{name}</a> : name}</li>)}
+      </ol>
+    </nav>
+    <h1 class="garden-title">{title}</h1>
+    {updated && <p class="garden-meta">Last tended <FormattedDate date={updated} /></p>}
+    <div class="prose">
+      {
+        note.body?.trim() ? (
+          <Content />
+        ) : (
+          <p class="garden-seed">This note is still a seed. Nothing has grown here yet.</p>
+        )
+      }
+    </div>
+    {
+      backlinks.length > 0 && (
+        <section class="garden-backlinks" aria-labelledby="garden-backlinks-title">
+          <h2 id="garden-backlinks-title">Linked from</h2>
+          <ul>
+            {backlinks.map((link) => (
+              <li>
+                <a href={gardenHref(link)}>{link.data.title}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </article>
+</GardenLayout>

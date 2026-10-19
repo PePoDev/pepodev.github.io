@@ -1,0 +1,52 @@
+---
+import { type GardenFolder, gardenHref } from "@utils/garden";
+
+interface Props {
+  folder: GardenFolder;
+  current?: string;
+  path?: string[];
+}
+
+const { folder, current, path = [] } = Astro.props;
+// The folder's own note (AWS/AWS) leads, ahead of subfolders.
+const lead = folder.notes.filter((note) => note.data.title === folder.name);
+const rest = folder.notes.filter((note) => !lead.includes(note));
+---
+
+<ul class="garden-tree">
+  {
+    lead.map((note) => (
+      <li data-note={[...path, note.data.title].join(" ").toLowerCase()}>
+        <a href={gardenHref(note)} aria-current={note.id === current ? "page" : undefined}>
+          {note.data.title}
+        </a>
+      </li>
+    ))
+  }
+  {
+    folder.folders.map((child) => {
+      // Open the current note's folders; on the garden home, the top level.
+      const open = current === undefined ? path.length === 0 : child.ids.has(current);
+      return (
+        <li>
+          <details open={open} data-open={open ? "" : undefined}>
+            <summary>{child.name}</summary>
+            <Astro.self folder={child} current={current} path={[...path, child.name]} />
+          </details>
+        </li>
+      );
+    })
+  }
+  {
+    rest.map((note) => (
+      <li data-note={[...path, note.data.title].join(" ").toLowerCase()}>
+        <a
+          href={gardenHref(note)}
+          aria-current={note.id === current ? "page" : undefined}
+        >
+          {note.data.title}
+        </a>
+      </li>
+    ))
+  }
+</ul>

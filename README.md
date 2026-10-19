@@ -1,9 +1,10 @@
-# PePoDev | Desktop Portfolio
+# PePoDev | Personal Website
 
-An Astro-based static portfolio and engineering blog with two presentation
-modes: an interactive desktop and a conventional responsive website. The
-desktop includes draggable windows, shortcuts, a command palette, work and
-project content, Markdown/MDX posts, a resume page with PDF download, music,
+An Astro-based static personal website (portfolio, engineering blog, and
+digital garden) with two presentation modes: an interactive desktop and a
+conventional responsive website. The desktop includes draggable windows,
+shortcuts, a command palette, work and project content, Markdown/MDX posts, a
+digital garden synced from Obsidian, a resume page with PDF download, music,
 tools, and games.
 
 Keep it **static-first**: render content at build time and use small client
@@ -21,6 +22,8 @@ Requires Node `>=22.22.0` and `pnpm`.
 | `pnpm preview` | Preview the production build |
 | `pnpm test:e2e` | Run Playwright tests |
 | `pnpm test:e2e:ui` | Run Playwright in UI mode |
+| `pnpm garden:sync` | Sync published garden notes from the vault in `GARDEN_VAULT` (or `--vault <path>`) |
+| `pnpm test:garden` | Run the garden sync privacy and link checks |
 | `pnpm astro --help` | Show Astro CLI help |
 
 Run commands from the repository root. Use `pnpm build` after code changes and
@@ -44,6 +47,11 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
 | `src/pages/resume.astro` | Standalone HTML resume page with PDF download |
 | `src/pages/rss.xml.js` | RSS feed |
 | `src/content/blog/` | Markdown/MDX posts; standard and Obsidian frontmatter |
+| `scripts/sync-garden.mjs` | Obsidian vault to garden sync; the privacy boundary for vault content |
+| `src/content/garden/`, `src/assets/garden/` | Synced garden notes and attachments; gitignored, never edit |
+| `src/pages/garden/`, `src/layouts/GardenLayout.astro` | Garden home and note routes |
+| `src/components/garden/`, `src/styles/garden.css` | Garden note tree and page styles |
+| `docs/superpowers/plans/2026-10-19-garden-obsidian-sync.md` | Garden sync setup and plugin cutover plan |
 | `src/assets/blog/` | Local post images |
 | `src/data/` | Portfolio JSON and build-time music discovery |
 | `src/types/`, `src/utils/` | Data types and reusable logic |
@@ -113,6 +121,9 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
   fields. List posts through `src/utils/blog.ts`, not `getCollection("blog")`,
   so drafts, sort order, and fallbacks match everywhere. Post ids, URLs, and RSS
   links come from file names; do not change them.
+- Markdown renders without smart punctuation (`markdown.processor` in
+  `astro.config.mjs`), so `--flags` and straight quotes match Obsidian. Keep
+  `@astrojs/markdown-satteri` and `satteri` at the versions Astro depends on.
 - `image.layout: "constrained"` in `astro.config.mjs` gives Markdown and
   `<Image>` output a srcset. Every article is also rendered in
   `dist/index.html`, so check its size after adding breakpoints or many images.
@@ -120,6 +131,19 @@ foreground. Playwright starts its own dev server with `--ignore-lock`.
   Verify playback in a real browser.
 - Regenerate `public/og-image.png` with
   `node scripts/generate-og-image.mjs`.
+- The digital garden comes only from `pnpm garden:sync`. It publishes vault
+  notes with `dg-publish: true` (except `Blog/`), turns links to unpublished
+  notes into plain text, drops comments and frontmatter, and copies only
+  embedded attachments. Code is found with `satteri`, the parser Astro renders
+  with, and every note is re-parsed before writing: a note that would publish
+  a comment, a raw wikilink, or a vault path is skipped with a warning. Never commit vault content or log unpublished note
+  names; keep `pnpm test:garden` passing when changing the sync. Garden URLs
+  are `/garden/<slugified vault path>/`, matching the old `garden.pepo.dev`
+  permalinks; list notes through `src/utils/garden.ts`.
+- The desktop Garden app frames `/garden/` instead of inlining notes into
+  `dist/index.html`. Inside the frame, `GardenLayout.astro` hides the site
+  header and forwards window focus, `Escape`, and `Ctrl`/`Cmd` + `K` to the
+  desktop.
 - Register new apps in `src/pages/index.astro`, `StartMenu.astro`,
   `CommandPalette.astro`, and `AppIcon.astro`.
 - The resume remains a standalone `/resume` page; do not restore
@@ -171,14 +195,20 @@ For substantial changes:
 3. Check `dist/index.html` after page composition or app content changes.
 4. Manually test window opening, minimizing, maximizing, closing, dragging, and
    taskbar behavior when interaction code changes.
-5. Confirm affected `/`, `/blog/`, and `/rss.xml` routes build for content
+5. Confirm affected `/`, `/blog/`, `/garden/`, and `/rss.xml` routes build for content
    changes, and blog pages scroll without sideways overflow at phone width.
 
 ## Deployment and Git
 
 GitHub Pages deploys `main` through `.github/workflows/deploy.yaml` using
-`withastro/action` and `actions/deploy-pages`. It also rebuilds on the first of
-every month so the computed experience values stay current.
+`withastro/action` and `actions/deploy-pages`. It also runs hourly, which keeps
+the computed experience values current and picks up newly published garden
+notes, and on demand. When the `VAULT_DEPLOY_KEY` secret (a read-only deploy key
+on `PePoDev/obsidian-vault`) is set, a separate `garden` job checks out only the
+vault's Markdown and attachments, runs the sync, and passes the published notes
+to the build job as an artifact. That job installs packages with
+`--ignore-scripts` and runs nothing but the sync; keep the key out of any job
+that builds or runs package scripts.
 
 Preserve existing worktree changes, avoid destructive Git commands unless
 explicitly requested, and do not commit generated artifacts unless tracked.

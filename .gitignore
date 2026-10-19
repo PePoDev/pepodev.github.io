@@ -26,3 +26,8 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# garden notes synced from the private Obsidian vault (pnpm garden:sync)
+src/content/garden/
+src/assets/garden/
+.vault/

@@ -28,6 +28,7 @@ import {
   numberToWords,
   type TimelineSegment,
 } from "@utils/experience";
+import { gardenHref, getGardenNotes, getRecentlyTended } from "@utils/garden";
 import {
   getGameJamYear,
   getLanguageColor,
@@ -79,8 +80,16 @@ const posts = allPosts.slice(0, 5).map((post) => ({
   lang: getPostLanguage(post),
   date: post.data.pubDate.toISOString().slice(0, 10),
 }));
-// Writing is numbered 04 only when there are posts to show.
-const contactIndex = posts.length > 0 ? "05" : "04";
+const allNotes = await getGardenNotes();
+const gardenNotes = getRecentlyTended(allNotes, 5);
+const gardenCount = allNotes.filter((note) => note.id !== "index").length;
+// Writing and Garden take the next numbers only when they have something to
+// show, so Contact always comes last.
+let nextIndex = 4;
+const sectionIndex = () => String(nextIndex++).padStart(2, "0");
+const writingIndex = posts.length > 0 ? sectionIndex() : "";
+const gardenIndex = gardenNotes.length > 0 ? sectionIndex() : "";
+const contactIndex = sectionIndex();
 const thaiPosts = allPosts.filter(
   (post) => getPostLanguage(post) === "th",
 ).length;
@@ -113,8 +122,13 @@ const resumeHref = socialByIcon.get("resume")?.href ?? "/resume";
 const issueLink = socialByIcon.get("issue");
 const webringLink = socialByIcon.get("webring");
 const isExternal = (href: string) => /^https?:/.test(href);
+// The garden lives on this site now, so its channel is a local link.
+const gardenChannel =
+  gardenNotes.length > 0
+    ? { label: "Digital garden", href: "/garden/", icon: "garden" }
+    : undefined;
 const channels = ["github", "linkedin", "resume", "blog", "garden", "facebook"]
-  .map((icon) => socialByIcon.get(icon))
+  .map((icon) => (icon === "garden" ? gardenChannel : socialByIcon.get(icon)))
   .filter((link) => link !== undefined)
   .map((link) => {
     const [label, handle] = link.label.split(" - ");
@@ -197,7 +211,14 @@ const visibleChanges = 4;
         {
           posts.length > 0 && (
             <a href="#website-writing">
-              <span aria-hidden="true">04</span>Writing
+              <span aria-hidden="true">{writingIndex}</span>Writing
+            </a>
+          )
+        }
+        {
+          gardenNotes.length > 0 && (
+            <a class="ws-nav-optional" href="#website-garden">
+              <span aria-hidden="true">{gardenIndex}</span>Garden
             </a>
           )
         }
@@ -733,7 +754,7 @@ const visibleChanges = 4;
         >
           <div class="ws-sec-head">
             <span class="ws-sec-idx" aria-hidden="true">
-              04
+              {writingIndex}
             </span>
             <h2 id="website-writing-title">Writing</h2>
             <p class="ws-sec-meta">
@@ -780,18 +801,14 @@ const visibleChanges = 4;
                 <h3>Read elsewhere</h3>
               </div>
               <ul>
-                {[socialByIcon.get("blog"), socialByIcon.get("garden")]
+                {[socialByIcon.get("blog")]
                   .filter((link) => link !== undefined)
                   .map((link) => {
-                    const [label, host] = link.label.split(" - ");
+                    const [, host] = link.label.split(" - ");
                     return (
                       <li>
                         <a href={link.href} target="_blank" rel="noopener noreferrer">
-                          <b>
-                            {label === "Blog"
-                              ? "Engineering blog"
-                              : "Digital garden"}
-                          </b>
+                          <b>Engineering blog</b>
                           <span>{host}</span>
                           <i aria-hidden="true">↗</i>
                         </a>
@@ -805,6 +822,15 @@ const visibleChanges = 4;
                     <i aria-hidden="true">→</i>
                   </a>
                 </li>
+                {gardenNotes.length > 0 && (
+                  <li>
+                    <a href="/garden/">
+                      <b>Digital garden</b>
+                      <span>pepo.dev/garden</span>
+                      <i aria-hidden="true">→</i>
+                    </a>
+                  </li>
+                )}
                 <li>
                   <a href="/rss.xml">
                     <b>RSS feed</b>
@@ -817,6 +843,58 @@ const visibleChanges = 4;
                 <p class="ws-note">Topics so far: {topicList}.</p>
               )}
             </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      gardenNotes.length > 0 && (
+        <section
+          id="website-garden"
+          class="ws-section ws-wrap"
+          aria-labelledby="website-garden-title"
+        >
+          <div class="ws-sec-head">
+            <span class="ws-sec-idx" aria-hidden="true">
+              {gardenIndex}
+            </span>
+            <h2 id="website-garden-title">Garden</h2>
+            <p class="ws-sec-meta">{`${gardenCount} notes, synced from Obsidian`}</p>
+          </div>
+          <div class="ws-panel ws-posts">
+            <div class="ws-panel-head">
+              <h3>Recently tended</h3>
+              <a class="ws-head-link" href="/garden/">
+                Explore the garden <span aria-hidden="true">→</span>
+              </a>
+            </div>
+            <ol>
+              {gardenNotes.map((note) => (
+                <li class="ws-post">
+                  {note.data.updated ? (
+                    <time datetime={note.data.updated.toISOString()}>
+                      {note.data.updated.toISOString().slice(0, 10)}
+                    </time>
+                  ) : (
+                    <span />
+                  )}
+                  <span class="ws-post-main">
+                    <a class="ws-post-title" href={gardenHref(note)}>
+                      {note.data.title}
+                    </a>
+                    <span>{note.data.folders.join(" / ")}</span>
+                  </span>
+                  <span class="ws-post-tags">
+                    <span class="ws-post-topics">
+                      {note.data.folders.slice(1, 3).map((folder) => (
+                        <span>{folder}</span>
+                      ))}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
       )

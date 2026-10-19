@@ -25,4 +25,17 @@ const blog = defineCollection({
     }),
 });
 
-export const collections = { blog };
+// Written by `pnpm garden:sync` from the Obsidian vault; never edit by hand.
+const garden = defineCollection({
+  loader: glob({ base: "./src/content/garden", pattern: "**/*.md" }),
+  schema: z.object({
+    title: z.string(),
+    folders: z.array(z.string()),
+    updated: z.coerce.date().optional(),
+    links: z.array(z.string()),
+    // The sync writes published notes only; fail the build if anything else lands here.
+    "dg-publish": z.literal(true),
+  }),
+});
+
+export const collections = { blog, garden };
