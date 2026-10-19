@@ -1,4 +1,6 @@
-<script is:inline>
+<script is:inline data-cfasync="false">
+  // data-cfasync="false" stops Cloudflare Rocket Loader from deferring this
+  // past first paint, which shows website-mode visitors the desktop first.
   (() => {
     const storageKey = "pepodev.viewMode";
     let mode = "desktop";
@@ -38,8 +40,14 @@
     const switches = Array.from(
       document.querySelectorAll<HTMLButtonElement>("[data-site-mode-toggle]"),
     );
+    // Desktop mode locks the page to one screen, which resets its scroll.
+    let websiteScrollY = 0;
 
     function applyMode(mode: SiteMode, persist: boolean) {
+      const previousMode = root.dataset.siteMode;
+      if (previousMode === "website" && mode === "desktop") {
+        websiteScrollY = window.scrollY;
+      }
       root.dataset.siteMode = mode;
 
       panels.forEach((panel) => {
@@ -49,32 +57,41 @@
         panel.setAttribute("aria-hidden", String(!active));
       });
 
-      const nextMode: SiteMode = mode === "desktop" ? "website" : "desktop";
-      const actionLabel = `Switch to ${nextMode} mode`;
-      const visibleLabel =
-        nextMode === "website" ? "Website mode" : "Desktop mode";
-
-      switches.forEach((button) => {
-        button.setAttribute("aria-label", actionLabel);
-        button.setAttribute("title", actionLabel);
-        button.setAttribute("aria-pressed", String(mode === "website"));
-        const label = button.querySelector<HTMLElement>(
-          "[data-site-mode-label]",
-        );
-        if (label) label.textContent = visibleLabel;
-      });
-
       if (persist) {
         try {
           localStorage.setItem(storageKey, mode);
         } catch {
           // The selected mode still applies for this page.
         }
+        dropBlogDeepLink();
       }
 
       document.dispatchEvent(
         new CustomEvent("site:mode-change", { detail: { mode } }),
       );
+
+      if (previousMode === "desktop" && mode === "website") {
+        window.scrollTo({ top: websiteScrollY, behavior: "instant" });
+      }
+    }
+
+    // A ?blog= deep link opens desktop mode only until the visitor picks a
+    // mode, so a reload keeps their choice.
+    function dropBlogDeepLink() {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("blog")) return;
+      url.searchParams.delete("blog");
+      history.replaceState(history.state, "", url);
+    }
+
+    // The pressed button is hidden with its panel, so focus moves to the
+    // new panel's mode switch.
+    function focusModeSwitch(mode: SiteMode) {
+      document
+        .querySelector<HTMLElement>(
+          `[data-site-mode-panel="${mode}"] [data-site-mode-toggle]`,
+        )
+        ?.focus({ preventScroll: true });
     }
 
     switches.forEach((button) => {
@@ -82,11 +99,12 @@
         const currentMode = normalizeMode(root.dataset.siteMode);
         const nextMode = currentMode === "desktop" ? "website" : "desktop";
         applyMode(nextMode, true);
+        focusModeSwitch(nextMode);
       });
     });
 
     // One-way buttons (e.g. "Open desktop mode" in website content) keep
-    // their own visible label and hand focus to the new panel's mode switch.
+    // their own visible label.
     document
       .querySelectorAll<HTMLButtonElement>("[data-site-mode-target]")
       .forEach((button) => {
@@ -94,11 +112,7 @@
           const mode = normalizeMode(button.dataset.siteModeTarget);
           if (mode === normalizeMode(root.dataset.siteMode)) return;
           applyMode(mode, true);
-          document
-            .querySelector<HTMLElement>(
-              `[data-site-mode-panel="${mode}"] [data-site-mode-toggle]`,
-            )
-            ?.focus({ preventScroll: true });
+          focusModeSwitch(mode);
         });
       });
 

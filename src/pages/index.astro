@@ -40,10 +40,12 @@ import { Font } from "astro:assets";
     <Font cssVariable="--font-plex-thai" />
     <Font cssVariable="--font-plex-mono" />
     <SiteModeController />
-    <script is:inline>
+    <script is:inline data-cfasync="false">
       // Apply the saved theme before first paint so website mode does not
       // flash dark for light-theme visitors. The rest of the preferences
       // (accent, background, glass) are applied at the end of <body>.
+      // data-cfasync="false" keeps Cloudflare Rocket Loader from deferring
+      // this and the other scripts that must run while the page parses.
       try {
         const prefs = JSON.parse(
           localStorage.getItem("pepodev.desktopPrefs") || "{}",
@@ -162,7 +164,7 @@ import { Font } from "astro:assets";
       <DesktopIconController />
 
       <!-- External Link Shortcuts -->
-      <div id="desktop-links" aria-label="External shortcuts">
+      <div id="desktop-links" role="group" aria-label="External shortcuts">
         {
           socialLinks.map((link, index) => (
             <ExternalLinkIcon
@@ -251,7 +253,7 @@ import { Font } from "astro:assets";
 
     <WebsiteMode />
 
-    <script is:inline>
+    <script is:inline data-cfasync="false">
       // @ts-nocheck
       // Initialize theme immediately to prevent flash
       (function () {
@@ -480,6 +482,10 @@ import { Font } from "astro:assets";
       })();
 
       document.addEventListener("DOMContentLoaded", () => {
+        // Rocket Loader can replay DOMContentLoaded for deferred scripts.
+        if (window.__pepodevParticlesReady) return;
+        window.__pepodevParticlesReady = true;
+
         function initParticleNetwork() {
           const canvas = document.getElementById("bg-canvas");
           if (!canvas) return;
@@ -502,6 +508,10 @@ import { Font } from "astro:assets";
           let lastAudioRingAt = 0;
           let backgroundEffectEnabled = true;
           let animationId = 0;
+          // Reduced motion shows one still frame of the network.
+          const reducedMotionQuery = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+          );
           let siteMode =
             document.documentElement.dataset.siteMode === "website"
               ? "website"
@@ -546,7 +556,10 @@ import { Font } from "astro:assets";
           resize();
           readDesktopPrefs();
           readBackgroundEffectPref();
-          window.addEventListener("resize", resize);
+          window.addEventListener("resize", () => {
+            resize();
+            syncAnimation();
+          });
           document.addEventListener("desktop:preferences", (event) => {
             readDesktopPrefs();
             backgroundEffectEnabled = event.detail?.backgroundEffect !== false;
@@ -563,6 +576,11 @@ import { Font } from "astro:assets";
             syncAnimation();
           });
           document.addEventListener("visibilitychange", syncAnimation);
+          if (reducedMotionQuery.addEventListener) {
+            reducedMotionQuery.addEventListener("change", syncAnimation);
+          } else {
+            reducedMotionQuery.addListener(syncAnimation);
+          }
           document.addEventListener("desktop:music-audio-frame", (event) => {
             const detail = event.detail || {};
             musicAudio = {
@@ -605,6 +623,11 @@ import { Font } from "astro:assets";
           let time = 0;
 
           function draw() {
+            paintFrame();
+            animationId = requestAnimationFrame(draw);
+          }
+
+          function paintFrame() {
             ctx.fillStyle = desktopPrefs.bg;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             time += 0.016;
@@ -885,16 +908,18 @@ import { Font } from "astro:assets";
             vignetteGrad.addColorStop(1, "rgba(10, 14, 23, 0.7)");
             ctx.fillStyle = vignetteGrad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            animationId = requestAnimationFrame(draw);
           }
 
-          function shouldAnimate() {
+          function shouldShow() {
             return (
               backgroundEffectEnabled &&
               siteMode === "desktop" &&
               !document.hidden
             );
+          }
+
+          function shouldAnimate() {
+            return shouldShow() && !reducedMotionQuery.matches;
           }
 
           function startAnimation() {
@@ -913,6 +938,8 @@ import { Font } from "astro:assets";
               startAnimation();
             } else {
               pauseAnimation();
+              // Resizes and new colors clear or change the still frame.
+              if (shouldShow()) paintFrame();
             }
           }
 

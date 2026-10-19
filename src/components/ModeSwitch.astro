@@ -7,6 +7,11 @@ interface Props {
 }
 
 const { id, variant } = Astro.props;
+// An action button: its name says what it does, so it has no pressed state.
+// Each variant shows only in its own mode, so the name never changes and is
+// right before any script runs.
+const nextMode = variant === "website" ? "desktop" : "website";
+const actionLabel = `Switch to ${nextMode} mode`;
 ---
 
 <button
@@ -14,10 +19,9 @@ const { id, variant } = Astro.props;
   class:list={["site-mode-switch", `site-mode-switch--${variant}`]}
   type="button"
   data-site-mode-toggle
-  aria-label="Switch to website mode"
-  aria-pressed="false"
-  title="Switch to website mode"
+  aria-label={actionLabel}
+  title={actionLabel}
 >
   <MonitorIcon />
-  {variant === "website" && <span data-site-mode-label>Website mode</span>}
+  {variant === "website" && <span data-site-mode-label>Desktop mode</span>}
 </button>

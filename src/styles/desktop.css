@@ -79,6 +79,15 @@
   z-index: 4;
 }
 
+/* DesktopIconController places icons on its grid; showing them first would
+   paint them stacked in the CSS grid and then jump (layout shift). Without
+   scripts, the CSS grid is the layout and the shortcut links still work. */
+@media (min-width: 769px) and (scripting: enabled) {
+  .desktop-icon:not([data-desktop-icon-ready]) {
+    visibility: hidden;
+  }
+}
+
 @media (max-width: 560px) {
   #desktop-icons {
     grid-template-columns: repeat(2, 80px);
@@ -210,6 +219,20 @@
     0 0 20px rgba(0, 0, 0, 0.6);
   line-height: 1.2;
   word-break: break-word;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desktop-icon,
+  .desktop-icon svg,
+  .desktop-icon img {
+    transition: none;
+  }
+
+  .desktop-icon:active,
+  .desktop-icon:hover svg,
+  .desktop-icon:hover img {
+    transform: none;
+  }
 }
 
 /* Light Theme Overrides */

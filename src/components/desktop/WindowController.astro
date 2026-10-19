@@ -1,4 +1,4 @@
-<script is:inline>
+<script is:inline data-cfasync="false">
   // @ts-nocheck
   document.addEventListener("DOMContentLoaded", () => {
     if (window.__pepodevWindowManagerReady) return;
@@ -11,6 +11,13 @@
     let topZ = 100;
     let userOpenedWindow = false;
     let userInteracted = false;
+    // Set by keydown and cleared by pointerdown, so only windows opened from
+    // the keyboard take keyboard focus.
+    let keyboardInteraction = false;
+    // A dragged window keeps this much of its title bar on screen.
+    const minVisibleTitlebar = 120;
+    const focusableSelector =
+      'a[href], button, input, select, textarea, summary, iframe, [contenteditable], [tabindex]:not([tabindex="-1"])';
     const windows = new Map();
 
     function isDesktopSiteMode() {
@@ -25,11 +32,13 @@
         width: Number(element.dataset.width),
         height: Number(element.dataset.height),
         element,
+        content: element.querySelector(".window-content"),
         open: false,
         minimized: false,
         maximized: false,
         prevBounds: null,
         hasOpened: false,
+        returnFocus: null,
       };
       windows.set(state.appId, state);
       setupWindowEvents(state);
@@ -38,8 +47,24 @@
     document.addEventListener("desktop:open-app", (event) => {
       if (!isDesktopSiteMode()) return;
       userOpenedWindow = true;
-      openWindow(event.detail.appId);
+      openWindow(event.detail.appId, keyboardInteraction);
     });
+
+    document.addEventListener(
+      "keydown",
+      (event) => {
+        if (!["Shift", "Control", "Alt", "Meta"].includes(event.key))
+          keyboardInteraction = true;
+      },
+      true,
+    );
+    document.addEventListener(
+      "pointerdown",
+      () => {
+        keyboardInteraction = false;
+      },
+      true,
+    );
 
     ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
       document.addEventListener(
@@ -86,27 +111,42 @@
     });
     syncViewportMode();
 
-    function openWindow(appId) {
+    // moveFocus hands keyboard focus to the window, before desktop:window-open
+    // so an app can move it on to its own control.
+    function openWindow(appId, moveFocus = false) {
       const state = windows.get(appId);
       if (!state) return;
 
       if (state.open && state.minimized) {
-        restoreWindow(appId);
+        restoreWindow(appId, moveFocus);
         return;
       }
 
       if (state.open) {
         focusWindow(appId);
+        if (moveFocus) focusWindowElement(state);
         return;
       }
 
+      // Closing a window opened from the keyboard returns keyboard focus
+      // here while it is shown. Start menu and palette items close with
+      // their overlay.
+      const active = document.activeElement;
+      state.returnFocus =
+        moveFocus &&
+        active &&
+        active !== document.body &&
+        !state.element.contains(active) &&
+        !active.closest("#start-menu, #command-palette, #tray-panel")
+          ? active
+          : null;
       state.open = true;
       state.minimized = false;
-      state.maximized = false;
+      setMaximized(state, false);
       state.prevBounds = null;
       state.element.hidden = false;
-      state.element.setAttribute("aria-hidden", "false");
-      state.element.classList.remove("minimized", "maximized", "closing");
+      setWindowShown(state, true);
+      state.element.classList.remove("minimized", "closing");
       state.element.classList.add("opening");
       if (isMobileMode()) {
         applyMobileWindowBounds(state);
@@ -117,7 +157,9 @@
 
       window.setTimeout(() => state.element.classList.remove("opening"), 300);
       focusWindow(appId);
+      if (moveFocus) focusWindowElement(state);
       animateSkillBars(state.element);
+      syncScrollableContent(state);
       updateTaskbar();
       state.element.dispatchEvent(
         new CustomEvent("desktop:window-open", {
@@ -136,6 +178,19 @@
         if (state.open && !state.minimized) focusWindow(state.appId);
       });
 
+      // Only focusWindowElement makes the window itself focusable, until focus
+      // moves on (not when the browser window loses focus). A click inside
+      // leaves focus where the browser puts it, so keyboard scrolling still
+      // starts from the clicked content.
+      win.addEventListener("blur", () => {
+        if (document.hasFocus()) win.removeAttribute("tabindex");
+      });
+      win.addEventListener(
+        "pointerdown",
+        () => win.removeAttribute("tabindex"),
+        true,
+      );
+
       // Tabbing into a window gives it the keyboard, just like clicking.
       win.addEventListener("focusin", () => {
         if (state.open && !state.minimized && !win.classList.contains("focused"))
@@ -151,6 +206,16 @@
       win
         .querySelector(".max-btn")
         ?.addEventListener("click", () => toggleMaximize(state.appId));
+
+      // Content that grows, shrinks or changes view can start or stop
+      // overflowing without the window resizing.
+      if (state.content && window.ResizeObserver) {
+        const observer = new ResizeObserver(() => syncScrollableContent(state));
+        observer.observe(state.content);
+        Array.from(state.content.children).forEach((child) =>
+          observer.observe(child),
+        );
+      }
 
       let isDragging = false;
       let dragStartX = 0;
@@ -223,14 +288,19 @@
               unmaximizeWindow(state, restoredBounds);
 
               winStartX = parseInt(win.style.left);
-              winStartY = 0;
+              winStartY = parseInt(win.style.top);
               dragStartX = event.clientX;
               dragStartY = event.clientY;
               wasMaximized = false;
             }
           } else if (!wasMaximized) {
-            win.style.left = winStartX + deltaX + "px";
-            win.style.top = Math.max(0, winStartY + deltaY) + "px";
+            const next = clampWindowOrigin(
+              win,
+              winStartX + deltaX,
+              winStartY + deltaY,
+            );
+            win.style.left = next.left + "px";
+            win.style.top = next.top + "px";
           }
         }
 
@@ -281,13 +351,15 @@
       const wasFocused = state.element.classList.contains("focused");
       state.open = false;
       state.minimized = false;
-      state.maximized = false;
+      setMaximized(state, false);
       state.element.classList.add("closing");
-      state.element.classList.remove("focused", "minimized", "maximized");
-      releaseWindowFocus(state, wasFocused);
+      state.element.classList.remove("focused", "minimized");
+      releaseWindowFocus(state, wasFocused, true);
+      setWindowShown(state, false);
       window.setTimeout(() => {
+        // Reopened while the closing animation ran.
+        if (state.open) return;
         state.element.hidden = true;
-        state.element.setAttribute("aria-hidden", "true");
         state.element.classList.remove("closing");
         updateTaskbar();
       }, 200);
@@ -312,18 +384,70 @@
         )[0];
     }
 
-    // A closed or minimized window drops DOM focus and hands window focus to
-    // the next one, so app keys and Escape agree on the active window.
-    function releaseWindowFocus(state, wasFocused) {
+    // A closed or minimized window hands window focus to the next one, so app
+    // keys and Escape agree on the active window. DOM focus in it, or on its
+    // launcher, is dropped after a pointer action, so the next app gets the
+    // keys. From the keyboard it goes back to the launcher of a window opened
+    // from the keyboard while that is still shown, else into the next
+    // window, else to the control that reopens it.
+    function releaseWindowFocus(state, wasFocused, closing = false) {
       const active = document.activeElement;
-      if (
+      const hadFocus =
         state.element.contains(active) ||
-        active?.closest?.(`[data-open-app="${state.appId}"]`)
-      ) {
+        active?.closest?.(`[data-open-app="${state.appId}"]`) ||
+        // Closing removes the window's own taskbar button.
+        (closing &&
+          taskbarApps?.contains(active) &&
+          active.dataset.appId === state.appId);
+      const next = getActiveWindow();
+      if (wasFocused && next) focusWindow(next.appId);
+      updateTaskbar();
+      if (!hadFocus) return;
+
+      const target =
+        keyboardInteraction &&
+        [
+          closing && state.returnFocus,
+          next?.element,
+          closing
+            ? document.querySelector(
+                `#desktop-icons [data-open-app="${state.appId}"]`,
+              )
+            : taskbarApps?.querySelector(`[data-app-id="${state.appId}"]`),
+        ].find(canTakeFocus);
+      if (!target) {
         active.blur();
+      } else if (target === next?.element) {
+        focusWindowElement(next);
+      } else {
+        target.focus({ preventScroll: true });
       }
-      const next = wasFocused && getActiveWindow();
-      if (next) focusWindow(next.appId);
+    }
+
+    function canTakeFocus(element) {
+      if (!element?.isConnected) return false;
+      if (element.closest("[inert], [hidden], [aria-hidden='true']"))
+        return false;
+      // Closed overlays such as the Start menu only fade out.
+      return element.checkVisibility
+        ? element.checkVisibility({
+            opacityProperty: true,
+            visibilityProperty: true,
+          })
+        : element.getClientRects().length > 0;
+    }
+
+    // The window stays focusable only while it holds focus.
+    function focusWindowElement(state) {
+      state.element.tabIndex = -1;
+      state.element.focus({ preventScroll: true });
+    }
+
+    // Closed and minimized windows leave the Tab order and the accessibility
+    // tree; only an open, unminimized window is shown.
+    function setWindowShown(state, shown) {
+      state.element.inert = !shown;
+      state.element.setAttribute("aria-hidden", String(!shown));
     }
 
     function isEscapeOwnedByOverlay() {
@@ -343,18 +467,26 @@
       state.element.classList.add("minimized");
       state.element.classList.remove("focused");
       releaseWindowFocus(state, wasFocused);
+      setWindowShown(state, false);
       updateTaskbar();
     }
 
-    function restoreWindow(appId) {
+    function restoreWindow(appId, moveFocus = false) {
       const state = windows.get(appId);
       if (!state || !state.open) return;
       state.minimized = false;
       state.element.hidden = false;
       state.element.classList.remove("minimized");
-      if (isMobileMode()) applyMobileWindowBounds(state);
+      setWindowShown(state, true);
+      if (isMobileMode()) {
+        applyMobileWindowBounds(state);
+      } else if (!state.maximized) {
+        clampWindowPosition(state);
+      }
       focusWindow(appId);
+      if (moveFocus) focusWindowElement(state);
       animateSkillBars(state.element);
+      syncScrollableContent(state);
       updateTaskbar();
     }
 
@@ -373,15 +505,27 @@
         state.element.style.left = "0";
         state.element.style.top = "0";
         state.element.style.width = "100vw";
-        state.element.style.height = "calc(100vh - 48px)";
+        state.element.style.height = `calc(100vh - ${getTaskbarHeight()}px)`;
         state.element.style.zIndex = ++topZ;
-        state.maximized = true;
-        state.element.classList.add("maximized");
+        setMaximized(state, true);
       } else if (state.prevBounds) {
         unmaximizeWindow(state);
+      } else {
+        // Maximized at phone width, so there are no bounds to restore.
+        applyDesktopInitialBounds(state);
       }
 
       focusWindow(appId);
+    }
+
+    // The Maximize button reads Restore while the window is maximized.
+    function setMaximized(state, maximized) {
+      state.maximized = maximized;
+      state.element.classList.toggle("maximized", maximized);
+      const button = state.element.querySelector(".max-btn");
+      const action = maximized ? "Restore" : "Maximize";
+      button?.setAttribute("title", action);
+      button?.setAttribute("aria-label", `${action} ${state.title}`);
     }
 
     function isMobileMode() {
@@ -403,8 +547,12 @@
     }
 
     function getCenteredWindowBounds(state) {
+      const taskbarHeight = getTaskbarHeight();
       const availableWidth = Math.max(280, window.innerWidth - 24);
-      const availableHeight = Math.max(220, window.innerHeight - 72);
+      const availableHeight = Math.max(
+        220,
+        window.innerHeight - taskbarHeight - 24,
+      );
       const width = Math.min(state.width, availableWidth);
       const height = Math.min(state.height, availableHeight);
 
@@ -415,25 +563,64 @@
         ),
         top: Math.max(
           12,
-          (window.innerHeight - height - 48) / 2 +
-            (Math.random() * 30 - 15),
+          Math.min(
+            (window.innerHeight - height - taskbarHeight) / 2 +
+              (Math.random() * 30 - 15),
+            window.innerHeight - height - taskbarHeight - 12,
+          ),
         ),
         width,
         height,
       };
     }
 
+    // Keeps a title bar reachable: above the taskbar, with at least
+    // minVisibleTitlebar of it on screen to grab. Off the left edge, the
+    // window controls at its right end do not count.
+    function clampWindowOrigin(win, left, top) {
+      const titlebar = win.querySelector(".window-titlebar");
+      const controls = win.querySelector(".window-controls");
+      const titlebarBottom =
+        win.clientTop +
+        (titlebar?.offsetTop ?? 0) +
+        (titlebar?.offsetHeight ?? 40);
+      const controlsWidth = controls
+        ? win.offsetWidth - win.clientLeft - controls.offsetLeft
+        : 0;
+      const visibleWidth = Math.min(minVisibleTitlebar, win.offsetWidth);
+      const visibleLeftWidth = Math.min(
+        minVisibleTitlebar + controlsWidth,
+        win.offsetWidth,
+      );
+      const maxTop = window.innerHeight - getTaskbarHeight() - titlebarBottom;
+
+      return {
+        left: Math.min(
+          Math.max(left, visibleLeftWidth - win.offsetWidth),
+          window.innerWidth - visibleWidth,
+        ),
+        top: Math.min(Math.max(0, top), Math.max(0, maxTop)),
+      };
+    }
+
+    function clampWindowPosition(state) {
+      const win = state.element;
+      const next = clampWindowOrigin(win, win.offsetLeft, win.offsetTop);
+      win.style.left = next.left + "px";
+      win.style.top = next.top + "px";
+    }
+
     function applyDesktopInitialBounds(state) {
-      state.element.classList.remove("mobile-window", "maximized");
-      state.maximized = false;
+      state.element.classList.remove("mobile-window");
+      setMaximized(state, false);
       state.prevBounds = null;
       applyWindowBounds(state.element, getCenteredWindowBounds(state));
     }
 
     function applyMobileWindowBounds(state) {
       state.prevBounds = null;
-      state.maximized = true;
-      state.element.classList.add("mobile-window", "maximized");
+      setMaximized(state, true);
+      state.element.classList.add("mobile-window");
       state.element.style.left = "0";
       state.element.style.top = "0";
       state.element.style.width = "100vw";
@@ -456,6 +643,8 @@
           applyMobileWindowBounds(state);
         } else if (wasMobile) {
           applyDesktopInitialBounds(state);
+        } else if (!state.maximized) {
+          clampWindowPosition(state);
         }
       });
 
@@ -483,40 +672,81 @@
       if (!bounds) return;
       applyWindowBounds(state.element, bounds);
       state.element.style.zIndex = ++topZ;
-      state.maximized = false;
-      state.element.classList.remove("maximized");
+      setMaximized(state, false);
+      clampWindowPosition(state);
+    }
+
+    // A scroller with nothing focusable inside gets its own tab stop, so
+    // browsers that do not focus scrollers can still scroll it by keyboard.
+    function syncScrollableContent(state) {
+      const content = state.content;
+      if (!content || !state.open) return;
+      const needsTabStop =
+        content.scrollHeight > content.clientHeight + 1 &&
+        !content.querySelector(focusableSelector);
+      if (needsTabStop === content.hasAttribute("tabindex")) return;
+
+      if (needsTabStop) {
+        content.tabIndex = 0;
+        content.setAttribute("role", "group");
+        content.setAttribute("aria-label", `${state.title} content`);
+      } else {
+        content.removeAttribute("tabindex");
+        content.removeAttribute("role");
+        content.removeAttribute("aria-label");
+      }
     }
 
     function updateTaskbar() {
       if (!taskbarApps) return;
+      // Rebuilding drops the focused button; a keyboard user keeps focus on
+      // its replacement, while a click leaves the keys to the window.
+      const focusedAppId =
+        keyboardInteraction && taskbarApps.contains(document.activeElement)
+          ? document.activeElement.dataset.appId
+          : "";
       taskbarApps.innerHTML = "";
 
       windows.forEach((state) => {
         if (!state.open) return;
 
+        const label = state.title.split("-")[0].trim();
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className =
           "taskbar-app active" +
           (state.element.classList.contains("focused") ? " focused" : "");
+        btn.dataset.appId = state.appId;
+        // Phone widths hide the text label.
+        btn.setAttribute("aria-label", label);
+        btn.title = label;
         btn.innerHTML =
           state.element.querySelector(".window-titlebar-icon")?.innerHTML +
           "<span>" +
-          state.title.split("-")[0].trim() +
+          label +
           "</span>";
         btn.addEventListener("click", () => {
+          const moveFocus = keyboardInteraction;
           if (state.minimized) {
-            restoreWindow(state.appId);
+            restoreWindow(state.appId, moveFocus);
           } else if (isMobileMode()) {
             focusWindow(state.appId);
+            if (moveFocus) focusWindowElement(state);
           } else if (state.element.classList.contains("focused")) {
             minimizeWindow(state.appId);
           } else {
             focusWindow(state.appId);
+            if (moveFocus) focusWindowElement(state);
           }
         });
         taskbarApps.appendChild(btn);
       });
+
+      if (focusedAppId) {
+        taskbarApps
+          .querySelector(`[data-app-id="${focusedAppId}"]`)
+          ?.focus({ preventScroll: true });
+      }
     }
 
     function animateSkillBars(win) {

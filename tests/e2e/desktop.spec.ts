@@ -92,7 +92,8 @@ test("switches modes from the taskbar and website header and persists each choic
   const websiteSwitch = website
     .locator("header")
     .getByRole("button", { name: "Switch to desktop mode" });
-  await expect(websiteSwitch).toHaveAttribute("aria-pressed", "true");
+  // An action button: the name says what it does, with no pressed state.
+  await expect(websiteSwitch).not.toHaveAttribute("aria-pressed");
   await websiteSwitch.click();
 
   await expect(page.locator("html")).toHaveAttribute(

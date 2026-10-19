@@ -33,6 +33,17 @@
   display: none;
 }
 
+/* Windows take keyboard focus when opened from the keyboard, with a ring
+   only for keyboard users. */
+.window:focus {
+  outline: none;
+}
+
+.window:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -2px;
+}
+
 .window.focused {
   box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.3),
@@ -195,6 +206,16 @@
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
+/* Overflowing content with nothing focusable inside is a tab stop. */
+.window-content:focus {
+  outline: none;
+}
+
+.window-content:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -2px;
+}
+
 .window-content::-webkit-scrollbar {
   width: 6px;
 }
@@ -269,6 +290,21 @@
   .window-content {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .window {
+    transition: box-shadow 0.2s ease;
+  }
+
+  .window.opening {
+    animation: none;
+  }
+
+  .window.minimized,
+  .window.closing {
+    transform: none;
   }
 }
 

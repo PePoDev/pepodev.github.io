@@ -19,12 +19,14 @@ const { appId, title, width, height } = Astro.props;
   data-title={title}
   data-width={width}
   data-height={height}
+  role="dialog"
+  aria-labelledby={`window-${appId}-title`}
   aria-hidden="true"
   hidden
 >
   <div class="window-titlebar">
     <div class="window-titlebar-icon"><AppIcon name={appId} /></div>
-    <span class="window-title">{title}</span>
+    <span id={`window-${appId}-title`} class="window-title">{title}</span>
     <div class="window-controls">
       <button
         class="min-btn"
