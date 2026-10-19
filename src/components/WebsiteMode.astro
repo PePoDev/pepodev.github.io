@@ -158,18 +158,19 @@ const yearSpan = (segment: TimelineSegment) => {
 const roleSegments = career.timeline.filter((segment) => segment.role);
 
 // "Built observability platform with…" -> tag "Built" + "Observability
-// platform with…". When the rest would start mid-phrase ("Deployed and
-// managed…", "Contributed to…"), the whole bullet follows the tag instead.
-// Only the display changes; experiences.json keeps its wording.
+// platform with…". When the rest starts with a connective ("Deployed and
+// managed…", "Contributed to…"), it stays lower case and carries on from the
+// tag ("and managed…"), so the verb is not repeated. Only the display
+// changes; experiences.json keeps its wording.
 const CONNECTIVES = new Set(
   "a an and as at by for from in into of on or the to with".split(" "),
 );
 const changeOf = (detail: string) => {
   const [verb, ...words] = detail.split(" ");
-  const text = CONNECTIVES.has(words[0]?.toLowerCase() ?? "")
-    ? detail
-    : words.join(" ");
-  return { verb, text: text.charAt(0).toUpperCase() + text.slice(1) };
+  const text = words.join(" ");
+  return CONNECTIVES.has(words[0]?.toLowerCase() ?? "")
+    ? { verb, text }
+    : { verb, text: text.charAt(0).toUpperCase() + text.slice(1) };
 };
 const visibleChanges = 4;
 ---
@@ -522,7 +523,7 @@ const visibleChanges = 4;
         <p class="ws-sec-meta">
           <span>Changelog · newest first</span>
           <a class="ws-head-link" href={resumeHref}
-            >Full résumé <span aria-hidden="true">→</span></a
+            >Full resume <span aria-hidden="true">→</span></a
           >
         </p>
       </div>

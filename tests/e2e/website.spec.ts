@@ -284,19 +284,28 @@ test("shows years, companies, tenure and uptime computed from experiences.json",
     }
   }
 
-  // After the verb tag, each line reads as a sentence: capitalised, and the
-  // whole bullet when the rest would start mid-phrase. The data is unchanged.
+  // After the verb tag, each line reads as a sentence: capitalised, or in
+  // lower case carrying on from the tag when the rest starts with a
+  // connective ("Deployed" + "and managed…"). The data is unchanged.
   const lines = website.locator(".ws-changes li");
   const details = experiences.flatMap((experience) => experience.details);
   await expect(lines).toHaveCount(details.length);
   for (const [index, detail] of details.entries()) {
     const text = (await lines.nth(index).locator("span").nth(1).textContent())!;
-    expect(text.charAt(0)).toBe(text.charAt(0).toUpperCase());
-    expect(detail.toLowerCase()).toContain(text.toLowerCase());
+    const rest = detail.slice(detail.indexOf(" ") + 1);
+    const connective =
+      /^(a|an|and|as|at|by|for|from|in|into|of|on|or|the|to|with)$/i.test(
+        rest.split(" ")[0],
+      );
+    expect(text, detail).toBe(
+      connective ? rest : rest.charAt(0).toUpperCase() + rest.slice(1),
+    );
   }
   const deployed = details.find((detail) => detail.startsWith("Deployed and"));
   if (deployed) {
-    await expect(website.locator(".ws-changes li", { hasText: deployed })).toHaveCount(1);
+    const line = website.locator(".ws-changes li", { hasText: deployed });
+    await expect(line).toHaveCount(1);
+    await expect(line.locator("span").nth(1)).toHaveText(/^and managed /);
   }
 
   const zilo = website.locator(".ws-release").first().locator("details.ws-more");

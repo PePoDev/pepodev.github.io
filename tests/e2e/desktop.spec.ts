@@ -708,7 +708,15 @@ test("music player and settings music controls update state", async ({
     "late_shift_protocol",
   );
 
-  const settings = await openApp(page, "Settings", "settings");
+  // The Music window covers the Settings icon at 1280x720, so a click would
+  // land on the window; open Settings from the keyboard instead.
+  await page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: "Settings" })
+    .press("Enter");
+  const settings = page.locator("#window-settings");
+  await expect(settings).toBeVisible();
+  await expect(settings).toHaveAttribute("aria-hidden", "false");
   await expect(settings.locator('[data-music-setting="volume"]')).toHaveCount(
     0,
   );

@@ -1,28 +1,28 @@
 [
   {
     "name": "terraform-kind-cluster",
-    "description": "Terraform module to create Kubernetes cluster from KIND (Kubernetes IN Docker) 🧱🧱",
+    "description": "Terraform module to create a Kubernetes cluster with KIND (Kubernetes IN Docker) 🧱🧱",
     "summary": "Terraform module that spins up a Kubernetes cluster with KIND (Kubernetes in Docker). Published on the Terraform Registry.",
     "stars": 9,
     "tags": ["HCL", "hacktoberfest", "k8s", "kind"],
-    "archived": false,
+    "archived": true,
     "link": "https://registry.terraform.io/modules/PePoDev/cluster/kind/latest",
     "github": "https://github.com/PePoDev/terraform-kind-cluster"
   },
   {
-    "name": "number-guesser",
-    "description": "Number guessing game 🔢",
-    "summary": "A small number-guessing game in TypeScript, playable in the browser.",
-    "stars": 0,
+    "name": "guessle",
+    "description": "🔢 Guessle: a daily Wordle-style number puzzle, plus classic, pass-and-play, and online multiplayer.",
+    "summary": "A daily Wordle-style number puzzle in TypeScript, with a replayable random mode and local and online multiplayer.",
+    "stars": 1,
     "tags": ["TypeScript", "game"],
     "archived": false,
-    "link": "http://number-guesser.pepo.dev/",
-    "github": "https://github.com/PePoDev/number-guesser"
+    "link": "https://guessle.pepo.dev/",
+    "github": "https://github.com/PePoDev/guessle"
   },
   {
     "name": "corqty",
-    "description": "Infrastructure never easy than this before.",
-    "summary": "A Rust project with one goal: make infrastructure easier than it has ever been.",
+    "description": "Infrastructure has never been this easy before.",
+    "summary": "Generic visual workflow orchestration in Rust and React, starting with multi-tenant accounts, RBAC, and audit logging.",
     "stars": 0,
     "tags": ["Rust"],
     "archived": false,
@@ -31,11 +31,11 @@
   },
   {
     "name": "super-utils",
-    "description": "Super utils is the utility containerized for multiple purposes. 🐳🐳",
+    "description": "Super utils is a containerized utility for multiple purposes. 🐳🐳",
     "summary": "A containerized utility toolbox for many everyday purposes.",
     "stars": 0,
     "tags": ["HTML", "docker", "hacktoberfest", "utils-docker"],
-    "archived": false,
+    "archived": true,
     "link": "https://pepo.dev/super-utils",
     "github": "https://github.com/PePoDev/super-utils"
   },
@@ -51,7 +51,7 @@
   },
   {
     "name": "egypt-bubble",
-    "description": "Bubble Puzzle game with basic logic by monogame. (👁👁)",
+    "description": "Bubble puzzle game with basic logic, built with MonoGame. (👁👁)",
     "summary": "Bubble puzzle game built with MonoGame.",
     "stars": 5,
     "tags": ["C#", "csharp", "egypt", "game"],
@@ -61,7 +61,7 @@
   },
   {
     "name": "aws-tags-updater",
-    "description": "AWS Tags Updater - Sync tags with all resources via sheet 🐏🐏",
+    "description": "AWS Tags Updater - Sync tags with all resources via a spreadsheet 🐏🐏",
     "summary": "Syncs AWS resource tags from a spreadsheet.",
     "stars": 2,
     "tags": ["Go", "aws", "aws-tags", "golang"],
@@ -71,7 +71,7 @@
   },
   {
     "name": "Roots-Runaway",
-    "description": "Protect the world by destroy the evil tree 👿🌲",
+    "description": "Protect the world by destroying the evil tree 👿🌲",
     "summary": "Multiplayer game: protect the world by destroying the evil tree.",
     "stars": 2,
     "tags": [
@@ -86,7 +86,7 @@
   },
   {
     "name": "ham-city",
-    "description": "HamCity Catapult game final project in Class game programming ⛰⛰",
+    "description": "HamCity: a catapult game, the final project for a game programming class ⛰⛰",
     "summary": "Catapult game, final project for a game programming class.",
     "stars": 1,
     "tags": ["C#", "catapult", "csharp", "game"],
@@ -96,7 +96,7 @@
   },
   {
     "name": "game-price-of-growth-ggj-21",
-    "description": "Story game about growing story and lost something every grow. Finally, He will found the answer of life or not ?",
+    "description": "Story game about growing up and losing something every time he grows. Will he find the answer to life in the end, or not?",
     "summary": "Story game about growing up and losing something with every step.",
     "stars": 0,
     "tags": ["C#", "global-game-jam", "isometric-game", "unity2d"],
@@ -106,7 +106,7 @@
   },
   {
     "name": "little-warrior",
-    "description": "Unity game to Fight and Protect their castle 🐱‍👤🐱‍👤",
+    "description": "Unity game to fight and protect their castle 🐱‍👤🐱‍👤",
     "summary": "Unity game: fight to protect your castle.",
     "stars": 0,
     "tags": ["C#", "game", "unity"],
@@ -126,7 +126,7 @@
   },
   {
     "name": "cur-cli",
-    "description": "CUR is Cloud Usage Reporting for collect cloud usage data and make report to user via slack, telegram or etc. ☁☁",
+    "description": "CUR (Cloud Usage Reporting) collects cloud usage data and reports it to users via Slack, Telegram, and more. ☁☁",
     "summary": "Cloud Usage Reporting: collects AWS and GCP usage and reports it to Slack or Telegram.",
     "stars": 0,
     "tags": ["Go", "aws", "cloud", "gcp"],
@@ -136,7 +136,7 @@
   },
   {
     "name": "xlog",
-    "description": "E[X]tend [Log]rus is Wrapper function for use logrus as builder design pattern and intergrate to elasticsearch in one line of code. 📜📜",
+    "description": "E[X]tend [Log]rus is a wrapper for using logrus with the builder design pattern and integrating with Elasticsearch in one line of code. 📜📜",
     "summary": "Builder-style wrapper for logrus with one-line Elasticsearch integration.",
     "stars": 0,
     "tags": ["Go", "cli", "cloud", "golang"],
@@ -146,7 +146,7 @@
   },
   {
     "name": "dont-touch-my-baby",
-    "description": "Protect your child from the villains. And make your home a happy home 🏞🏞",
+    "description": "Protect your child from the villains and make your home a happy home 🏞🏞",
     "summary": "Protect your child from the villains and keep a happy home.",
     "stars": 0,
     "tags": ["C#", "global-game-jam", "home", "unity3d"],

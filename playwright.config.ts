@@ -1,9 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// CI (.github/workflows/deploy.yaml) sets both variables: it serves the
+// built dist/ that gets deployed, in Google Chrome, which plays the AAC
+// music that Playwright's bundled Chromium cannot. Without them, tests run
+// against the dev server in the bundled Chromium.
+const server = process.env.PLAYWRIGHT_SERVER === "preview" ? "preview" : "dev";
+const channel = process.env.PLAYWRIGHT_CHANNEL;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
+  // In CI a stray test.only fails the run, and a test gets two retries
+  // before it blocks the deploy.
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://127.0.0.1:4323",
@@ -12,7 +23,7 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   webServer: {
-    command: "pnpm dev --host 127.0.0.1 --port 4323 --ignore-lock",
+    command: `pnpm ${server} --host 127.0.0.1 --port 4323 --ignore-lock`,
     url: "http://127.0.0.1:4323",
     reuseExistingServer: true,
     timeout: 120_000,
@@ -20,7 +31,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], ...(channel ? { channel } : {}) },
     },
   ],
 });

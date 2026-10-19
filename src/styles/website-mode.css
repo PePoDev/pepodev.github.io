@@ -1208,10 +1208,11 @@ html[data-site-mode="website"] body {
   margin-top: 8px;
 }
 
-/* Projects */
+/* Projects. At most four columns (five 20% tracks and their gaps never fit);
+   auto-fit drops the empty ones, so fewer active projects share the row. */
 .ws-svc-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(20%, 1fr));
   gap: 16px;
 }
 

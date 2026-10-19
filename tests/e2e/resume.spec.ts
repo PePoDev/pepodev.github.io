@@ -126,7 +126,7 @@ test("resume lists certifications as earned history in HTML and PDF", async ({
 test("certifications wallet keeps active and expiring-soon badges for valid certifications", async ({
   page,
 }) => {
-  // Terraform Associate expires 2024-04-10; the others are still valid
+  // Terraform Associate expires 2024-04-11; the others are still valid
   await page.clock.install({ time: new Date("2024-02-15T12:00:00Z") });
   const certs = await openCertifications(page);
 
@@ -163,8 +163,8 @@ test("certifications wallet keeps active and expiring-soon badges for valid cert
 test("certifications wallet refreshes badges hourly and shows expiry quietly", async ({
   page,
 }) => {
-  // Google Cloud Digital Leader expires at 2026-08-31T00:00:00Z
-  await page.clock.install({ time: new Date("2026-08-30T23:30:00Z") });
+  // Google Cloud Digital Leader expires at 2026-09-01T00:00:00Z
+  await page.clock.install({ time: new Date("2026-08-31T23:30:00Z") });
   const certs = await openCertifications(page);
   const digitalLeader = certs.locator(".cert-card", {
     hasText: "Google Cloud Digital Leader",
@@ -174,7 +174,7 @@ test("certifications wallet refreshes badges hourly and shows expiry quietly", a
     "Expiring Soon",
   );
   await expect(digitalLeader.locator(".cert-expiry")).toHaveText(
-    "Expires August 2026",
+    "Expires September 2026",
   );
 
   await page.clock.fastForward("01:00:00");
@@ -182,10 +182,10 @@ test("certifications wallet refreshes badges hourly and shows expiry quietly", a
   await expect(digitalLeader).toHaveAttribute("data-status", "expired");
   await expect(digitalLeader.locator(".cert-status")).toBeHidden();
   await expect(digitalLeader.locator(".cert-expiry")).toHaveText(
-    "Expired August 2026",
+    "Expired September 2026",
   );
   await expect(digitalLeader.locator(".cert-earned")).toHaveText(
-    "Earned August 2024",
+    "Earned May 2023",
   );
   await expect(certs.locator(".cert-status:visible")).toHaveCount(0);
 });

@@ -24,12 +24,59 @@ jobs:
         uses: withastro/action@v6
         # with:
         # path: . # The root location of your Astro project inside the repository. (optional)
-        # node-version: 24 # The specific version of Node that should be used to build your site. Defaults to 22. (optional)
-        # package-manager: pnpm@latest # The Node package manager that should be used to install dependencies and build your site. Automatically detected based on your lockfile. (optional)
+        # node-version: 24 # The specific version of Node that should be used to build your site. Defaults to 24. (optional)
+        # package-manager: pnpm@latest # The Node package manager that should be used to install dependencies and build your site. Automatically detected based on your lockfile; pnpm's version comes from "packageManager" in package.json. (optional)
         # build-cmd: pnpm run build # The command to run to build your site. Runs the package build script/task by default. (optional)
 
-  deploy:
+  # Runs the Playwright suite against the site the build job uploaded, so the
+  # deploy job only ever publishes a build that passed.
+  test:
     needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      # Read by playwright.config.ts: serve dist/ with `astro preview`, in
+      # Google Chrome, which plays the AAC music that Playwright's bundled
+      # Chromium cannot.
+      PLAYWRIGHT_SERVER: preview
+      PLAYWRIGHT_CHANNEL: chrome
+    steps:
+      - name: Checkout your repository using git
+        uses: actions/checkout@v6
+      - name: Install pnpm (the version in package.json "packageManager")
+        uses: pnpm/action-setup@v6
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24 # The withastro/action default the build job uses
+          cache: pnpm
+      - name: Install dependencies from the lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Install Google Chrome
+        run: pnpm exec playwright install chrome
+      - name: Download the site the build job uploaded
+        uses: actions/download-artifact@v8
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/github-pages
+      - name: Unpack it into dist/
+        run: mkdir dist && tar -xf "$RUNNER_TEMP/github-pages/artifact.tar" -C dist
+      - name: Run the Playwright suite
+        run: pnpm test:e2e
+      - name: Upload the Playwright report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  deploy:
+    needs: [build, test]
     runs-on: ubuntu-latest
     environment:
       name: github-pages

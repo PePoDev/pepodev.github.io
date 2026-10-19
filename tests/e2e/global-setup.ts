@@ -4,8 +4,8 @@ import { chromium, type FullConfig } from "@playwright/test";
 // the content data store on startup. Absorb that reload here so it cannot
 // interrupt the first test.
 export default async function globalSetup(config: FullConfig) {
-  const { baseURL, launchOptions } = config.projects[0].use;
-  const browser = await chromium.launch(launchOptions);
+  const { baseURL, channel, launchOptions } = config.projects[0].use;
+  const browser = await chromium.launch({ ...launchOptions, channel });
   const page = await browser.newPage();
 
   await page.goto(baseURL ?? "/");

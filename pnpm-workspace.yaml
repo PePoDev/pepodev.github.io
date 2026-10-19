@@ -1,3 +1,11 @@
 allowBuilds:
   esbuild: true
   sharp: true
+# Patched versions of build-time dependencies that pnpm audit flags:
+# source-map-js (GHSA-68fv-2mgg-jv7q, via astro) and esbuild
+# (GHSA-g7r4-m6w7-qqqr, an optional Vite peer that nothing installs today;
+# open-ended so it never holds back a newer esbuild that Vite moves to).
+# Drop an entry once Astro's own dependency ranges exclude the bad versions.
+overrides:
+  source-map-js: ^1.2.2
+  esbuild: ">=0.28.1"

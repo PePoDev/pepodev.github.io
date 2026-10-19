@@ -1,12 +1,13 @@
 // @ts-check
 import { fileURLToPath } from "node:url";
+import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig, fontProviders } from "astro/config";
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://pepo.dev",
-  integrations: [sitemap()],
+  integrations: [mdx(), sitemap()],
   prefetch: {
     prefetchAll: true,
     defaultStrategy: "viewport",
