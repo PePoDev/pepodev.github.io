@@ -26,8 +26,9 @@
     max-width: 360px;
   }
 
+  /* One row keeps the board tall enough on phones; Status gets the room. */
   .snake-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr);
   }
 
   .snake-controls button,
@@ -73,8 +74,8 @@
     grid-template-columns: 1fr;
   }
 
-  .snake-stage {
-    width: min(100%, 320px);
+  .snake-panel {
+    --snake-board-max: 320px;
   }
 }
 

@@ -31,17 +31,23 @@
 
     <div class="section-divider"></div>
 
-    <div class="quote-box" data-quote-box>
-      <div class="quote-icon">💭</div>
-      <div class="quote-text">
-        <p class="quote-main" data-quote-text>
+    <button
+      type="button"
+      class="quote-box"
+      data-quote-box
+      aria-describedby="welcome-quote-hint"
+    >
+      <span class="quote-icon" aria-hidden="true">💭</span>
+      <span class="quote-text" aria-live="polite">
+        <span class="quote-main" data-quote-text>
           "Any sufficiently advanced technology is indistinguishable from
           magic."
-        </p>
-        <p class="quote-author" data-quote-author>— Arthur C. Clarke</p>
-      </div>
-    </div>
+        </span>
+        <span class="quote-author" data-quote-author>— Arthur C. Clarke</span>
+      </span>
+    </button>
     <p
+      id="welcome-quote-hint"
       style="text-align: center; font-size: 0.85em; opacity: 0.6; margin-top: -0.5rem;"
     >
       Click the quote for more wisdom ✨
@@ -74,18 +80,33 @@
   .quote-box {
     display: flex;
     gap: 1rem;
+    width: 100%;
     padding: 1rem;
     background: rgba(255, 255, 255, 0.03);
+    border: none;
     border-left: 3px solid var(--accent-green);
     border-radius: 4px;
     margin: 1rem 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      background 0.2s ease,
+      transform 0.2s ease;
   }
 
-  .quote-box:hover {
+  .quote-box:hover,
+  .quote-box:focus-visible {
     background: rgba(255, 255, 255, 0.06);
     transform: translateX(4px);
+  }
+
+  /* Text colour keeps the ring at 3:1 or more in both themes; the light
+     accent green is too pale on light glass. */
+  .quote-box:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
   }
 
   .quote-icon {
@@ -94,15 +115,19 @@
 
   .quote-text {
     flex: 1;
+    font-size: 14px;
+    line-height: 1.6;
   }
 
   .quote-main {
+    display: block;
     font-style: italic;
     margin: 0 0 0.5rem 0;
     color: var(--text-primary);
   }
 
   .quote-author {
+    display: block;
     margin: 0;
     font-size: 0.9rem;
     color: var(--text-secondary);
@@ -125,6 +150,18 @@
     51%,
     100% {
       opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .welcome-messages,
+    .cursor-blink {
+      animation: none;
+    }
+
+    .quote-box:hover,
+    .quote-box:focus-visible {
+      transform: none;
     }
   }
 

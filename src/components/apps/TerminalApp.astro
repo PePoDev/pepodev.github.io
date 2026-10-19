@@ -1,4 +1,7 @@
 ---
+import skills from "@data/skills.json";
+
+const skillNames = skills.map((skill) => skill.name);
 const commands = [
   "help",
   "whoami",
@@ -27,7 +30,7 @@ const commands = [
   </form>
 </div>
 
-<script define:vars={{ commands }} is:inline>
+<script define:vars={{ commands, skillNames }} is:inline>
   // @ts-nocheck
   function initTerminal() {
     const app = document.querySelector("[data-terminal-app]");
@@ -68,9 +71,7 @@ const commands = [
           "Pepo - Site Reliability Engineer focused on cloud platforms, observability, IaC, GitOps, and production resilience.",
         );
       } else if (command === "skills") {
-        print(
-          "Kubernetes, Terraform, AWS, GCP, Grafana, Datadog, Kafka, Vault, ArgoCD, Go, Python.",
-        );
+        print(skillNames.join(", ") + ".");
       } else if (command === "projects") {
         print("Opening Projects...");
         openApp("project");
@@ -91,6 +92,11 @@ const commands = [
     });
 
     app.addEventListener("click", () => input.focus());
+    app
+      .closest("[data-window]")
+      ?.addEventListener("desktop:window-open", () =>
+        input.focus({ preventScroll: true }),
+      );
   }
 
   if (document.readyState === "loading") {

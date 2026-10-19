@@ -38,15 +38,23 @@ const photos = [
         data-gallery-password
         type="password"
         autocomplete="current-password"
+        aria-describedby="gallery-error"
       />
       <button type="submit">Unlock</button>
-      <p data-gallery-error role="status" aria-live="polite"></p>
+      <p id="gallery-error" data-gallery-error role="status" aria-live="polite">
+      </p>
     </form>
   </section>
 
-  <section class="gallery-unlocked" data-gallery-unlocked hidden>
+  <section
+    class="gallery-unlocked"
+    data-gallery-unlocked
+    aria-labelledby="gallery-title"
+    tabindex="-1"
+    hidden
+  >
     <div class="gallery-header">
-      <span class="ops-pill">Private gallery</span>
+      <span id="gallery-title" class="ops-pill">Private gallery</span>
       <strong>{photos.length} pictures</strong>
     </div>
     <div class="gallery-grid">
@@ -79,6 +87,12 @@ const photos = [
     const locked = app.querySelector("[data-gallery-lock]");
     const unlocked = app.querySelector("[data-gallery-unlocked]");
 
+    // Put the keyboard where it is needed: the password field while locked,
+    // the pictures once unlocked.
+    function focusGallery() {
+      (locked.hidden ? unlocked : passwordInput).focus({ preventScroll: true });
+    }
+
     form.addEventListener("submit", (event) => {
       event.preventDefault();
 
@@ -86,12 +100,19 @@ const photos = [
         locked.hidden = true;
         unlocked.hidden = false;
         error.textContent = "";
+        passwordInput.removeAttribute("aria-invalid");
+        focusGallery();
         return;
       }
 
-      error.textContent = "Please enter the password";
+      error.textContent = "Incorrect password, try again.";
+      passwordInput.setAttribute("aria-invalid", "true");
       passwordInput.select();
     });
+
+    app
+      .closest("[data-window]")
+      ?.addEventListener("desktop:window-open", focusGallery);
   }
 
   if (document.readyState === "loading") {

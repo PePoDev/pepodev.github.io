@@ -616,14 +616,14 @@ test("snake game starts, scores, pauses, and resets", async ({ page }) => {
   const window = await openApp(page, "Snake", "snake");
 
   await expect(window.locator("[data-snake-status]")).toHaveText("Ready");
-  await expect(window.locator("[data-snake-best]")).toHaveText("170");
+  await expect(window.locator("[data-snake-best]")).toHaveText("0");
   await window.getByRole("button", { name: "Start" }).click();
   await expect(window.locator("[data-snake-status]")).toHaveText("Running");
 
   await expect
     .poll(() => window.locator("[data-snake-score]").textContent())
     .toBe("10");
-  await expect(window.locator("[data-snake-best]")).toHaveText("170");
+  await expect(window.locator("[data-snake-best]")).toHaveText("10");
 
   await window.getByRole("button", { name: "Pause" }).click();
   await expect(window.locator("[data-snake-status]")).toHaveText("Paused");
@@ -825,7 +825,7 @@ test("gallery requires the password before showing pictures", async ({
   await gallery.locator("[data-gallery-password]").fill("wrong");
   await gallery.getByRole("button", { name: "Unlock" }).click();
   await expect(gallery.locator("[data-gallery-error]")).toContainText(
-    "Please enter the password",
+    "Incorrect password, try again.",
   );
   await expect(gallery.locator("[data-gallery-unlocked]")).toBeHidden();
 

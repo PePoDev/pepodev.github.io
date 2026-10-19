@@ -6,6 +6,7 @@ import { formatDegree, formatEducationYears } from "@utils/education";
 import { getCareerSummary, numberToWords } from "@utils/experience";
 
 const { years } = getCareerSummary(experiences);
+const currentRole = experiences[0].role;
 ---
 
 <div class="app-content">
@@ -16,8 +17,8 @@ const { years } = getCareerSummary(experiences);
     <div class="profile-avatar">T</div>
     <div class="profile-info">
       <h2>Thiwanon Chomcharoen (PePoDev)</h2>
-      <div class="profile-role">Site Reliability Engineer</div>
-      <div class="profile-location">Bangkok City, Thailand</div>
+      <div class="profile-role">{currentRole}</div>
+      <div class="profile-location">Bangkok, Thailand</div>
       <div style="margin-top:8px">
         <span class="status-badge online">Available for opportunities</span>
       </div>
@@ -25,7 +26,7 @@ const { years } = getCareerSummary(experiences);
   </div>
   <h3>Who Am I</h3>
   <p>
-    Experienced and energetic DevOps Engineer with over {numberToWords(years)} years of experience
+    Experienced and energetic {currentRole} with over {numberToWords(years)} years of experience
     effectively managing infrastructure projects from conception to completion.
     I specialize in using Kubernetes, Terraform, and many open-source
     technologies to deliver an efficient and reliable platform.

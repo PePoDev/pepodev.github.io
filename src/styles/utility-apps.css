@@ -495,22 +495,61 @@
   background: rgba(0, 0, 0, 0.22);
 }
 
+/* Long lines stay on one line inside the display and scroll sideways; the
+   script picks which end is in view and fades the edges that are cut. */
+.calculator-history,
+.calculator-value {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.calculator-history::-webkit-scrollbar,
+.calculator-value::-webkit-scrollbar {
+  display: none;
+}
+
+.calculator-history.is-cut-start,
+.calculator-value.is-cut-start {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 28px);
+  mask-image: linear-gradient(to right, transparent, #000 28px);
+}
+
+.calculator-history.is-cut-end,
+.calculator-value.is-cut-end {
+  -webkit-mask-image: linear-gradient(to left, transparent, #000 28px);
+  mask-image: linear-gradient(to left, transparent, #000 28px);
+}
+
+.calculator-history.is-cut-start.is-cut-end,
+.calculator-value.is-cut-start.is-cut-end {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 28px calc(100% - 28px),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 28px calc(100% - 28px),
+    transparent
+  );
+}
+
 .calculator-history {
   min-height: 18px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .calculator-value {
-  max-width: 100%;
-  overflow: hidden;
   color: var(--text-primary);
-  font-family: var(--font-mono);
   font-size: 32px;
   font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .calculator-grid {
@@ -536,16 +575,36 @@
   border-color: rgba(var(--particle-secondary-rgb), 0.28);
 }
 
+/* Light theme: the accent is too pale for text on light glass, and the
+   darker display would sink the history line below AA contrast. */
+[data-theme="light"] .calculator-display {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .calculator-grid .calculator-op,
+[data-theme="light"] .calculator-grid .calculator-equals {
+  background: rgba(var(--particle-secondary-rgb), 0.08);
+  color: var(--text-primary);
+}
+
 .snake-app {
   box-sizing: border-box;
   display: flex;
   align-items: stretch;
   justify-content: center;
+  container-type: inline-size;
 }
 
+/* The board row takes the height the stats and controls leave, between
+   160px and the panel width, so the board never paints over the controls;
+   when even 160px does not fit, the window scrolls instead. */
 .snake-panel {
+  --snake-board-max: 360px;
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows:
+    auto minmax(160px, min(var(--snake-board-max), 100cqw))
+    auto auto;
+  align-content: start;
   gap: 12px;
   width: 100%;
   max-width: 500px;
@@ -576,7 +635,7 @@
 
 .snake-stats span {
   margin-bottom: 4px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: uppercase;
@@ -588,9 +647,13 @@
   font-size: 17px;
 }
 
+/* The board is always dark, so it keeps the dark theme's text colours
+   (copied from :root in variables.css; keep them in step). */
 .snake-stage {
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
   position: relative;
-  width: min(100%, 360px);
+  height: 100%;
   aspect-ratio: 1 / 1;
   justify-self: center;
   min-height: 0;
@@ -786,6 +849,20 @@
   color: var(--accent-cyan);
 }
 
+/* Light theme: the accent is too pale for text on light glass, so it
+   moves to the border, and hover adds a tint the white wash cannot. */
+[data-theme="light"] .snake-controls button:first-child,
+[data-theme="light"] .snake-pad button {
+  border-color: rgba(var(--particle-secondary-rgb), 0.28);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .snake-controls button:hover,
+[data-theme="light"] .snake-pad button:hover {
+  border-color: rgba(var(--particle-secondary-rgb), 0.45);
+  background: rgba(var(--particle-secondary-rgb), 0.08);
+}
+
 @keyframes snakeJumpScare {
   0% {
     opacity: 0;
@@ -823,6 +900,19 @@
   }
   100% {
     transform: scale(0.86) translateY(18px);
+  }
+}
+
+/* Reduced motion: the ghost still appears, but holds still with no lunge,
+   shake, or contrast flashes. */
+@media (prefers-reduced-motion: reduce) {
+  .snake-jumpscare.visible {
+    animation: none;
+    opacity: 1;
+  }
+
+  .snake-jumpscare.visible .snake-ghost {
+    animation: none;
   }
 }
 

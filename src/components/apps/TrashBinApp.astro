@@ -81,6 +81,7 @@ const trashItems = [
     const list = app.querySelector("[data-trash-list]");
     const empty = app.querySelector("[data-trash-empty]");
     const count = app.querySelector("[data-trash-count]");
+    const emptyButton = app.querySelector("[data-empty-trash]");
 
     function renderCount() {
       const remaining = app.querySelectorAll("[data-trash-item]").length;
@@ -91,10 +92,23 @@ const trashItems = [
       empty.hidden = remaining > 0;
     }
 
+    // A restored item's button is disabled and removed, so the keyboard moves
+    // to the next Restore button, the previous one, or Empty trash.
+    function focusAfterRestore(restoreButton) {
+      const buttons = Array.from(
+        list.querySelectorAll("[data-restore-trash]:not(:disabled)"),
+      );
+      const index = buttons.indexOf(restoreButton);
+      (buttons[index + 1] || buttons[index - 1] || emptyButton).focus();
+    }
+
     app.addEventListener("click", (event) => {
       const restoreButton = event.target.closest("[data-restore-trash]");
       if (restoreButton) {
         const item = restoreButton.closest("[data-trash-item]");
+        if (item.contains(document.activeElement)) {
+          focusAfterRestore(restoreButton);
+        }
         restoreButton.textContent = "Restored-ish";
         restoreButton.disabled = true;
         item.classList.add("restored");

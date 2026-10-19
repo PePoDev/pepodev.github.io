@@ -1,3 +1,9 @@
+---
+import experiences from "@data/experiences.json";
+
+const currentRole = experiences[0].role;
+---
+
 <div class="app-content sre-game-container" data-sre-game>
   <button class="sre-audio-toggle" type="button" aria-pressed="false"
     >Audio Off</button
@@ -55,7 +61,7 @@
       <h1 class="sre-hero-title">
         Hire <span class="sre-accent">PePoDev</span>
       </h1>
-      <p class="sre-hero-subtitle">Senior Site Reliability Engineer</p>
+      <p class="sre-hero-subtitle">{currentRole}</p>
       <div class="sre-divider"></div>
       <p class="sre-hero-tagline">
         You don't need another engineer who patches fires.<br />
@@ -135,22 +141,22 @@
         { text: "", cls: "", delay: 200 },
         { text: "$ kubectl get nodes", cls: "", delay: 600 },
         {
-          text: "NAME           STATUS   ROLES    AGE   VERSION",
+          text: "NAME           STATUS   ROLES           AGE   VERSION",
           cls: "sre-dim",
           delay: 300,
         },
         {
-          text: "prod-node-01   Ready    master   45d   v1.36.0",
+          text: "prod-node-01   Ready    control-plane   45d   v1.36.0",
           cls: "",
           delay: 200,
         },
         {
-          text: "prod-node-02   Ready    worker   45d   v1.36.0",
+          text: "prod-node-02   Ready    worker          45d   v1.36.0",
           cls: "",
           delay: 200,
         },
         {
-          text: "prod-node-03   Ready    worker   45d   v1.36.0",
+          text: "prod-node-03   Ready    worker          45d   v1.36.0",
           cls: "",
           delay: 200,
         },
@@ -299,6 +305,8 @@
       let currentRound = 0;
       let alertTimer = null;
       let bootToken = 0;
+      let paused = false;
+      let resumeBgm = false;
       const timeouts = new Set();
       const AudioContextClass =
         window.AudioContext || window.webkitAudioContext;
@@ -312,13 +320,27 @@
       const systemAudioKey = "pepodev.systemAudio";
       let systemAudioSettings = loadSystemAudioSettings();
 
+      // Every game timer goes through later() so a minimized window can
+      // freeze them all and resume each with the time it had left.
       function later(callback, delay) {
-        const handle = window.setTimeout(() => {
-          timeouts.delete(handle);
-          callback();
-        }, delay);
-        timeouts.add(handle);
-        return handle;
+        const timeout = { callback, remaining: delay, startedAt: 0, handle: 0 };
+        timeouts.add(timeout);
+        if (!paused) runTimeout(timeout);
+        return timeout;
+      }
+
+      function runTimeout(timeout) {
+        timeout.startedAt = Date.now();
+        timeout.handle = window.setTimeout(() => {
+          timeouts.delete(timeout);
+          timeout.callback();
+        }, timeout.remaining);
+      }
+
+      function cancelLater(timeout) {
+        if (!timeout) return;
+        clearTimeout(timeout.handle);
+        timeouts.delete(timeout);
       }
 
       function wait(delay) {
@@ -326,12 +348,40 @@
       }
 
       function clearTimers() {
-        if (alertTimer) clearInterval(alertTimer);
+        cancelLater(alertTimer);
         alertTimer = null;
-        timeouts.forEach((handle) => clearTimeout(handle));
+        timeouts.forEach((timeout) => clearTimeout(timeout.handle));
         timeouts.clear();
         bootToken++;
+        resumeBgm = false;
         stopBgm();
+      }
+
+      function pauseGame() {
+        if (paused) return;
+        paused = true;
+        const now = Date.now();
+        timeouts.forEach((timeout) => {
+          clearTimeout(timeout.handle);
+          timeout.remaining = Math.max(
+            0,
+            timeout.remaining - (now - timeout.startedAt),
+          );
+        });
+        resumeBgm = Boolean(bgmTimer);
+        stopBgm();
+        if (audioContext?.state === "running") void audioContext.suspend();
+      }
+
+      function resumeGame() {
+        if (!paused) return;
+        paused = false;
+        if (audioEnabled && audioContext?.state === "suspended") {
+          void audioContext.resume();
+        }
+        timeouts.forEach(runTimeout);
+        if (resumeBgm) startBgm();
+        resumeBgm = false;
       }
 
       function setupAudio() {
@@ -446,6 +496,10 @@
 
       function startBgm() {
         if (!audioEnabled || bgmTimer) return;
+        if (paused) {
+          resumeBgm = true;
+          return;
+        }
 
         const pattern = [110, 146.83, 164.81, 220, 196, 164.81, 146.83, 123.47];
         const pulse = () => {
@@ -610,20 +664,24 @@
           actionsDiv.appendChild(button);
         });
 
-        if (alertTimer) clearInterval(alertTimer);
-        alertTimer = setInterval(() => {
+        const countDown = () => {
           timeLeft--;
           const timer = gameArea.querySelector(".sre-alert-timer");
           if (timer) timer.textContent = `Time remaining: ${timeLeft}s`;
           if (timeLeft <= 0) {
-            clearInterval(alertTimer);
+            alertTimer = null;
             timeExpired(index);
+          } else {
+            alertTimer = later(countDown, 1000);
           }
-        }, 1000);
+        };
+        cancelLater(alertTimer);
+        alertTimer = later(countDown, 1000);
       }
 
       function handleAction(alertIndex, actionIndex) {
-        if (alertTimer) clearInterval(alertTimer);
+        cancelLater(alertTimer);
+        alertTimer = null;
         const alert = alerts[alertIndex];
         const action = alert.actions[actionIndex];
         playFailureCue();
@@ -718,7 +776,9 @@
       });
 
       q(".sre-boot-enter").addEventListener("click", async () => {
-        await enableAudio();
+        // On a device with no sound output, resume() never settles, so the
+        // game starts anyway and audio joins if the browser ever starts it.
+        await Promise.race([enableAudio(), wait(300)]);
         startGame();
       });
       q(".sre-gameover-reveal").addEventListener("click", () => showScreen(3));
@@ -734,6 +794,23 @@
         clearTimers();
         stopBgm();
       });
+
+      // Minimizing the window or switching to website mode freezes the
+      // alerts and the music; coming back picks up where the game left off.
+      if (shell) {
+        const syncPause = () => {
+          const hidden =
+            shell.classList.contains("minimized") ||
+            document.documentElement.dataset.siteMode === "website";
+          if (hidden) pauseGame();
+          else resumeGame();
+        };
+        new MutationObserver(syncPause).observe(shell, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+        document.addEventListener("site:mode-change", syncPause);
+      }
     });
   }
 

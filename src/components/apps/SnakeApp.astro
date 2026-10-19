@@ -76,12 +76,15 @@
       const overlayTitle = root.querySelector("[data-snake-overlay-title]");
       const overlayCopy = root.querySelector("[data-snake-overlay-copy]");
       const jumpscare = root.querySelector("[data-snake-jumpscare]");
-      const storageKey = "pepodev.snake.best";
+      const storageKey = "pepodev.snake.best.v2";
+      // The old key was seeded with a made-up best of 170, so only a higher
+      // value there is a real score worth carrying over.
+      const legacyStorageKey = "pepodev.snake.best";
+      const legacySeedBest = 170;
       const audioSettingsKey = "pepodev.systemAudio";
       const size = 20;
       const cell = canvas.width / size;
       const tickMs = 300;
-      const defaultBest = 170;
       const scareScore = 120;
       const AudioContextClass =
         window.AudioContext || window.webkitAudioContext;
@@ -91,10 +94,7 @@
       let direction;
       let nextDirection;
       let score;
-      let best = Number.parseInt(
-        localStorage.getItem(storageKey) || String(defaultBest),
-        10,
-      );
+      let best = loadBest();
       let timer = null;
       let state = "ready";
       let scareShown = false;
@@ -268,6 +268,19 @@
           setStatus("Running");
           setOverlay("", "", false);
         }
+      }
+
+      function loadBest() {
+        const legacyBest =
+          Number.parseInt(localStorage.getItem(legacyStorageKey) || "0", 10) ||
+          0;
+        localStorage.removeItem(legacyStorageKey);
+        if (legacyBest > legacySeedBest && !localStorage.getItem(storageKey)) {
+          localStorage.setItem(storageKey, String(legacyBest));
+        }
+        return (
+          Number.parseInt(localStorage.getItem(storageKey) || "0", 10) || 0
+        );
       }
 
       function placeFood() {

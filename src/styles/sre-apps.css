@@ -141,7 +141,7 @@
 
 .trash-toolbar p {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -162,6 +162,13 @@
 .trash-item button:hover {
   border-color: var(--accent-cyan);
   color: var(--accent-cyan);
+}
+
+/* Light theme: the accent is too pale for text on light glass. */
+[data-theme="light"] .trash-toolbar button:hover,
+[data-theme="light"] .trash-item button:hover,
+[data-theme="light"] .trash-item-title span {
+  color: var(--text-primary);
 }
 
 .trash-item button:disabled {
@@ -241,7 +248,7 @@
 }
 
 .trash-item small {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 10px;
 }
