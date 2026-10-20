@@ -168,7 +168,7 @@ and `holdScripts` (which holds scripts back the way Rocket Loader does) from
   `"February 2024 - Present"`); do not hard-code them. The uptime summary's
   `data-as-of` holds the build month, which the tests compute from, so a
   test run in a later month than the build still passes. The About role and
-  bio and the SRE game's hire screen use `experiences.json[0].role`, the
+  bio and the SRE game's closing screen use `experiences.json[0].role`, the
   Terminal `skills` command prints `skills.json`, and the Projects heading
   counts `projects.json`. Education lives in `education.json`.
 - In `projects.json`, `name` and `github` follow the repository's current name,

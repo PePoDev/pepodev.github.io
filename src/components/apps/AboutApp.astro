@@ -5,7 +5,7 @@ import skills from "@data/skills.json";
 import { formatDegree, formatEducationYears } from "@utils/education";
 import { getCareerSummary, numberToWords } from "@utils/experience";
 
-const { years } = getCareerSummary(experiences);
+const { years, current } = getCareerSummary(experiences);
 const currentRole = experiences[0].role;
 ---
 
@@ -19,9 +19,15 @@ const currentRole = experiences[0].role;
       <h2>Thiwanon Chomcharoen (PePoDev)</h2>
       <div class="profile-role">{currentRole}</div>
       <div class="profile-location">Bangkok, Thailand</div>
-      <div style="margin-top:8px">
-        <span class="status-badge online">Available for opportunities</span>
-      </div>
+      {
+        current && (
+          <div style="margin-top:8px">
+            <span class="status-badge online">
+              Currently at {current.companyName}
+            </span>
+          </div>
+        )
+      }
     </div>
   </div>
   <h3>Who Am I</h3>
