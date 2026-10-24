@@ -10,6 +10,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "check": "astro check",
     "astro": "astro",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -26,7 +27,9 @@
     "sharp": "^0.35.5"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.12",
     "@playwright/test": "^1.60.0",
-    "axe-core": "4.14.0"
+    "axe-core": "4.14.0",
+    "typescript": "^6.0.3"
   }
 }
