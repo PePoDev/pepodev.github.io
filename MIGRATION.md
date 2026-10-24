@@ -47,9 +47,11 @@ Done (the desktop core, see [The React desktop](#the-react-desktop)):
   demand), `BrandMark.tsx` for website mode and the garden, and the
   [ownership rules](#parallel-tracks-who-edits-what) for the parallel tracks.
 
-Done (apps, first part): the Certifications wallet, Welcome, Trash,
-Gallery, Terminal, Calculator and the Garden frame are ported (see the
-[checklist](#checklist-still-to-port)).
+Done (apps): all 13 remaining apps are ported — Certifications wallet,
+Welcome, Trash, Gallery, Terminal, Calculator and the Garden frame, plus
+Blog, Music, White Noise, Settings, Snake and the SRE game (see the
+[checklist](#checklist-still-to-port) and
+[Ported apps](#ported-apps-blog-music-white-noise-settings-snake-sre-game)).
 
 Still to port: see the [checklist](#checklist-still-to-port) at the end.
 
@@ -809,6 +811,52 @@ Add it to `APP_IDS`, `APPS` and `DESKTOP_ICON_ORDER` (apps.ts), a line in
 `app-bodies.tsx` and in `apps/app-data.ts`, its icon in `AppIcon.tsx`, and
 the two files in `src/components/apps/`.
 
+### Ported apps: Blog, Music, White Noise, Settings, Snake, SRE game
+
+- Every body renders the snapshot of an engine object created in a
+  `useState` initializer without side effects (`music-player.ts`,
+  `sre-game.ts`, `snake-game.ts`, White Noise's rain); effects start and
+  stop it with cleanups, so Strict Mode's double effects are safe, and they
+  depend on `useAppWindow()`'s primitives, so drags and raises never re-run
+  them. Canvas drawing is imperative on a canvas React renders. Each body is
+  a lazy chunk of 2 to 6 KB gzipped.
+- **Blog**: `BlogApp.data.ts` returns list metadata only (`id`, `title`,
+  `description`, `lang`, `tags`, ISO `date`, and `dateText` fixed at build
+  time). An unopened panel's `.blog-reader-body` is empty; an opened one
+  shows "Loading article…" (`.app-loading`, `role="status"`) or an error
+  (`role="alert"`) with "Try again", which moves focus to Back before it
+  goes away. Opening an article whose load failed loads it again. Links get
+  `target="_blank"` and `rel="noopener noreferrer"` in the HTML string
+  before it renders (no React-owned DOM is changed).
+- **Music and Settings** share `apps/music-settings.ts`: the `pepodev.music`
+  helpers and `window.__pepoMusicController` (`{ setPlaying, setTrack,
+  requestAudioFrame }`), which Music publishes once its body mounts. Settings
+  drives the music only through it (`requestMusic({ track, playing })`) and
+  no longer dispatches `desktop:music-settings` itself; Music dispatches it
+  on every save, and Settings re-renders on it, so its "Pause music" label
+  follows the player (it changes once playback has started, not
+  optimistically). Settings mounts Music's body (`mountApp("music")`) when it
+  mounts, so the controller exists before a click and `play()` runs inside
+  the click; a request made before that is kept as one merged request (the
+  latest track and play state) and runs when the controller appears.
+  `MusicPlayerApp.data.ts` is `{ video, tracks: { id, title, src }[] }` (the
+  detail line, the same for every track, is in the body), and
+  `SettingsApp.data.ts` is `{ tracks: { id, label }[] }`. A media error
+  message stays visible (the Astro player erased it at once).
+- **Snake**: the best-score helpers are `apps/snake-best.ts`. README's "the
+  old `pepodev.snake.best` is removed on load" holds without loading Snake:
+  the desktop boot (`runtime.tsx`) calls `migrateLegacySnakeBest()`, the one
+  core change of this track. The Astro init guard `data-ready` on
+  `[data-snake-game]` is gone (nothing read it).
+- **SRE game**: still `mount: "idle"` (tests read its text before opening
+  it). Every opening resets to the boot log, including one made before the
+  body mounted; closing stops the game; a minimized window or website mode
+  freezes every timer and the music, which resume with the time they had
+  left. Nothing sounds while the window is closed, so an
+  `AudioContext.resume()` that settles after a close stays silent, and Enter
+  Production starts once per boot (a double click, or a reset or close
+  during its 300 ms wait for audio, starts nothing).
+
 ### Parallel tracks: who edits what
 
 The apps, website-mode and resume/garden tracks work at the same time.
@@ -1021,6 +1069,21 @@ content layer loads and renders MDX posts".
     pointer leaves the keys to the windows" (raise, minimize and restore by
     pointer leave the button unfocused and Enter alone; from the keyboard,
     focus follows into the window).
+- Changed with the apps (Blog, Music, White Noise, Settings, Snake, SRE game):
+  - `media.spec.ts` "external article links open in a new tab and keep the
+    desktop": article bodies load when an article opens, so it waits for the
+    list (the Blog chunk can arrive after `openApp` returns), opens every
+    article, waits for its body and checks every `http` link's `target` and
+    `rel` (at least one link); the popup half is unchanged.
+  - `media.spec.ts` "Music, White Noise and Settings text meets AA": waits
+    for each app's first sampled element before sampling (a late chunk made
+    `document.querySelector` return null).
+  - `apps.spec.ts` `expectReadable` (the contrast tests 885 and 967) waits
+    for the first element instead of counting at once (a late chunk counted
+    0 under load).
+  - New in `media.spec.ts`: "an article that fails to load can be retried
+    without losing focus" ("Try again" leaves focus on Back; opening a
+    failed article again loads it).
 - Fast local run against the export: build, then
   `PLAYWRIGHT_SERVER=preview npx playwright test -c <config>` with a config
   that serves `out/` with `scripts/serve-static.mjs` (the CI setup).
@@ -1124,8 +1187,9 @@ fail it.
 ## Checklist (still to port)
 
 Each open item names the track that owns it and the tests that pass once
-it is done (`spec:line` in the current files; 89 fail today, after the
-first apps track, all listed).
+it is done (`spec:line` in the current files; after both apps tracks only
+tests that need website mode or the resume were left, and the site track
+ports those).
 A test listed under two tracks needs both.
 
 - [x] Decide the desktop runtime: a React desktop (Page runtime).
@@ -1152,46 +1216,25 @@ A test listed under two tracks needs both.
     (the frame of `/garden/`), each with its own CSS file where the Astro
     component had scoped styles (`CertificationsWalletApp.css`,
     `WelcomeApp.css`, `GardenApp.css`); their `.astro` sources and
-    `ContactIcon.astro` are deleted. Their tests pass on the export:
-    `apps.spec.ts` 300, 329, 384, 405, 432, 461, 477, 525, 585, 596, 623,
-    646 x2, 835, 967 x2; `keyboard.spec.ts` 234, 285, 335, 368, 395, 405;
-    `desktop.spec.ts` 641, 840, 865, 887; `windows.spec.ts` 244, 423;
-    `overlays.spec.ts` 346; `resume.spec.ts` 153, 190. The tests below that
-    also name these apps fail only at another app's step; their parts for
-    these apps pass when run alone.
-
-  Tests that pass once the remaining apps are ported:
-  - `apps.spec.ts`: 134 (Snake on phones, x4), 195, 233, 250, 281 (Snake),
-    215, 705, 757, 814 (SRE game), 554 (SRE game boot log), 566 (the SRE
-    game half of "opened before their code loaded"; Gallery's passes), 867
-    (the SRE half; the About half passes), 885 x2 (Snake and SRE game
-    contrast; Calculator and Trash pass), 1006 x2 (Blog; Welcome,
-    Terminal, About, Work and Projects pass it when checked alone).
-  - `keyboard.spec.ts`: 22, 47, 63, 89, 137, 171, 198, 258, 349 (Snake;
-    their Calculator, Terminal and Gallery parts pass), 305 (Snake, and
-    website mode: its page must be tall enough to scroll).
-  - `media.spec.ts`: 143, 166, 214, 237, 259, 287, 299 (Music), 335, 364,
-    380 (White Noise), 421, 455,
-    478, 514 (Blog reader), 529 (Settings), 686 x3 (Music, White Noise and
-    Settings contrast).
-  - `desktop.spec.ts`: 346 and 426 (Blog), 659 (Snake), 680 (Settings),
-    738 and 796 (Music; they also fail locally without AAC), 932 (White
-    Noise).
-  - `windows.spec.ts`: 211 and 715 (Blog); `overlays.spec.ts`: 589 (Blog
-    list; its toast and maximize parts are the core's and passed with a
-    throwaway Blog); `icons.spec.ts`: 334 (Settings' Reset all settings;
-    the palette half passes); `website.spec.ts`: 273 (Settings, with
-    website mode); `blog.spec.ts`: 479 (with website mode).
+    `ContactIcon.astro` are deleted.
+  - [x] Ported (second apps track): Blog, Music, White Noise, Settings, Snake
+    and the SRE game (see
+    [Ported apps](#ported-apps-blog-music-white-noise-settings-snake-sre-game));
+    their `.astro` sources are deleted. Music's two tests pass in CI's
+    Chrome; this container's Chromium has no AAC (they pass here with a WAV
+    served for `/music/**`).
 - [ ] **Website mode** (website track): `WebsiteMode.astro` into
   `src/components/WebsiteMode.tsx` per the
   [website mode contract](#website-mode-contract), using `BrandMark`.
   Tests that pass once it is ported: `desktop.spec.ts` 119;
   `windows.spec.ts` 691 (needs the panel taller than 2000px; the scroll
   restore itself was checked with stand-in content); `blog.spec.ts` 451,
-  479 (with the Blog app); `data.spec.ts` 38 (with the resume), 64, 101,
-  159, 191; `website.spec.ts` 273 (with Settings), 312, 404 (reads website
+  479 (its Blog app half passes); `data.spec.ts` 38 (with the resume), 64, 101,
+  159, 191; `website.spec.ts` 312, 404 (reads website
   mode's `data-as-of`; the Work app half is ported), 420, 464 x3, 484,
-  492, 514, 538, 591, 626, 636, 652; `keyboard.spec.ts` 305 (with Snake).
+  492, 514, 538, 591, 626, 636, 652 (273 already passes with Settings and
+  the placeholder; check it again with the port); `keyboard.spec.ts` 305
+  (with Calculator; its Snake half passes).
 - [ ] **Resume** (resume/garden track; `src/astro-legacy/pages/resume.astro`
   to `src/app/(resume)/resume/page.tsx`): page markup, scoped styles, the
   PDF download script (`resumePdfData` through `scriptValue()`); set the

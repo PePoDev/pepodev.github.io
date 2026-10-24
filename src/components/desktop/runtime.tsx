@@ -5,6 +5,7 @@
 // [data-open-app] launchers, the command-palette tip and the "idle" app
 // bodies (registry mount: "idle").
 import { useEffect } from "react";
+import { migrateLegacySnakeBest } from "@components/apps/snake-best";
 import { APPS, isAppId } from "./apps";
 import { startAppKeys } from "./app-keys";
 import { startBlogDeepLink } from "./deep-link";
@@ -155,6 +156,9 @@ function startIdleMounts() {
 }
 
 function boot(): () => void {
+  // Storage an app leaves behind from older versions of the site goes on
+  // every load, whether or not the app is opened (README).
+  migrateLegacySnakeBest();
   const cleanups = [
     startPrefs(),
     startToasts(),

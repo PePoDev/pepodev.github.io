@@ -105,8 +105,8 @@ async function contrastOf(page: Page, locator: Locator) {
 }
 
 async function expectReadable(page: Page, locator: Locator, label: string) {
+  await expect(locator.first(), `${label} is rendered`).toBeAttached();
   const count = await locator.count();
-  expect(count, `${label} is rendered`).toBeGreaterThan(0);
   for (let i = 0; i < count; i += 1) {
     const result = await contrastOf(page, locator.nth(i));
     expect(

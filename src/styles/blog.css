@@ -173,6 +173,12 @@
   overflow-wrap: break-word;
 }
 
+/* The article's body loads when it opens: its loading line and error sit
+   where the text will start (desktop/app-loading.css styles them). */
+.window-content .blog-reader .app-loading {
+  padding: 0;
+}
+
 .blog-reader-body p {
   margin-bottom: 12px;
 }

@@ -1,6 +1,7 @@
-// PLACEHOLDER: build-time data of the SRE Game app, passed to it as its `data`
-// prop. Its track replaces this loader along with SreGameApp.tsx (MIGRATION.md,
-// "The React desktop"). Return JSON-serializable data only.
+// Build-time data of the SRE game: the current job title for its closing
+// screen (experiences.json[0].role, README Content and Apps).
+import experiences from "@data/experiences.json";
+
 export default async function loadSreGameData() {
-  return null;
+  return { currentRole: experiences[0].role };
 }

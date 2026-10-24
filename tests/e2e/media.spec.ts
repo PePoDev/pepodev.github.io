@@ -484,11 +484,29 @@ test.describe("Blog reader", () => {
     );
     await resetPage(page);
     const blog = await openApp(page, "Blog", "blog");
-    const links = blog.locator(".blog-reader-body a[href^='http']");
-    expect(await links.count()).toBeGreaterThan(0);
-    const attributes = await links.evaluateAll((anchors: HTMLAnchorElement[]) =>
-      anchors.map((anchor) => `${anchor.target} ${anchor.rel}`),
+    // The reader loads each article's body when it opens, so open them all
+    // (once the list is there: the app's code may still be loading).
+    const items = blog.locator("[data-blog-index]");
+    const openBody = blog.locator(
+      "[data-blog-post]:not([hidden]) .blog-reader-body",
     );
+    await expect(items.first()).toBeVisible();
+    const attributes: string[] = [];
+    for (let i = 0; i < (await items.count()); i += 1) {
+      await items.nth(i).click();
+      await expect(openBody).not.toBeEmpty();
+      attributes.push(
+        ...(await openBody
+          .locator("a[href^='http']")
+          .evaluateAll((anchors: HTMLAnchorElement[]) =>
+            anchors.map((anchor) => `${anchor.target} ${anchor.rel}`),
+          )),
+      );
+      await blog
+        .locator("[data-blog-post]:not([hidden]) [data-blog-back]")
+        .click();
+    }
+    expect(attributes.length).toBeGreaterThan(0);
     expect(new Set(attributes)).toEqual(
       new Set(["_blank noopener noreferrer"]),
     );
@@ -522,6 +540,44 @@ test.describe("Blog reader", () => {
     await expect(
       blog.locator("button[data-blog-slug='aws-graviton-ทักครับ'] .blog-item-title"),
     ).toHaveAttribute("lang", "th");
+  });
+
+  test("an article that fails to load can be retried without losing focus", async ({
+    page,
+  }) => {
+    // Article bodies load when they open (/blog/<id>/article.json).
+    let fail = true;
+    await page.route("**/blog/*/article.json", (route) =>
+      fail ? route.fulfill({ status: 500, body: "" }) : route.continue(),
+    );
+    await resetPage(page);
+    const blog = await openApp(page, "Blog", "blog");
+    const article = blog.locator("[data-blog-post]:not([hidden])");
+    const body = article.locator(".blog-reader-body");
+    const back = article.locator("[data-blog-back]");
+    const retry = article.getByRole("button", { name: "Try again" });
+
+    await blog.locator("[data-blog-index]").nth(0).click();
+    await expect(retry).toBeVisible();
+    await expect(body).toBeEmpty();
+
+    // "Try again" goes away when pressed; focus stays in the article.
+    fail = false;
+    await retry.focus();
+    await page.keyboard.press("Enter");
+    await expect(body).not.toBeEmpty();
+    await expect(back).toBeFocused();
+
+    // Opening an article whose load failed loads it again.
+    fail = true;
+    await back.click();
+    await blog.locator("[data-blog-index]").nth(1).click();
+    await expect(retry).toBeVisible();
+    await back.click();
+    fail = false;
+    await blog.locator("[data-blog-index]").nth(1).click();
+    await expect(body).not.toBeEmpty();
+    await expect(article.getByRole("alert")).toHaveCount(0);
   });
 });
 
@@ -696,7 +752,11 @@ for (const [theme, background, accent] of [
       ["Settings", "settings"],
     ] as const) {
       const window = await openApp(page, label, appId);
-      // Let the opening animation finish before sampling.
+      // The app's code may still be loading; then let the opening animation
+      // finish before sampling.
+      await expect(
+        window.locator(contrastTargets[appId][0]).first(),
+      ).toBeVisible();
       await page.waitForTimeout(400);
       await page.evaluate(() => {
         document.querySelector("[data-music-status]")!.textContent =
