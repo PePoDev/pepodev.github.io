@@ -1,74 +1,105 @@
-// PLACEHOLDER until the garden is ported from
-// src/astro-legacy/pages/garden/ and src/layouts/GardenLayout.astro (see
-// MIGRATION.md). It already exports every garden URL the sitemap lists.
-//
-// One optional catch-all route serves the garden home (/garden/, no slug)
-// and every note (/garden/<id>/). With output: "export", Next.js fails the
-// build when a dynamic route's generateStaticParams returns nothing, and the
-// garden is empty in every checkout and CI run without synced notes (it is
-// gitignored). The home entry ({ slug: [] }) is always listed, so an empty
-// garden still builds; keep it that way when porting.
-import { notFound } from "next/navigation";
-import { buildMetadata, type PageHead } from "@lib/head";
-import { decodeParam, staticParams } from "@lib/static-params";
-import { gardenHref, getGardenHome, getGardenNotes, type GardenNote } from "@utils/garden";
-
-type GardenParams = Promise<{ slug?: string[] }>;
+// The garden home (/garden/: the vault's home note and the recently tended
+// notes) and every note (/garden/<id>/: breadcrumbs, the note, backlinks),
+// ported from src/pages/garden/index.astro and [...slug].astro. Notes come
+// only from `pnpm garden:sync` (src/utils/garden.ts); see garden-data.ts for
+// why both live in one optional catch-all route.
+import { FormattedDate } from "@components/FormattedDate";
+import { GardenShell } from "@components/garden/GardenShell";
+import { render } from "@lib/content";
+import { buildMetadata } from "@lib/head";
+import { buildGardenTree, gardenHref, getBacklinks, getBreadcrumbs, getRecentlyTended } from "@utils/garden";
+import {
+  type GardenPage,
+  type GardenParams,
+  gardenHomeTitle,
+  getGardenHead,
+  getGardenPage,
+  getGardenParams,
+} from "./garden-data";
 
 // Only the notes that exist; anything else is the 404.
 export const dynamicParams = false;
 
-export async function generateStaticParams() {
-  const notes = await getGardenNotes();
-  const home = getGardenHome(notes);
-  return staticParams<{ slug: string[] }>([
-    { slug: [] },
-    ...notes.filter((note) => note !== home).map((note) => ({ slug: note.id.split("/") })),
-  ]);
-}
-
-/** The garden home (note undefined) or the note a route param names. */
-async function getPage(params: GardenParams) {
-  const notes = await getGardenNotes();
-  const home = getGardenHome(notes);
-  const { slug } = await params;
-  if (!slug?.length) return { home, note: undefined };
-  const id = slug.map(decodeParam).join("/");
-  const note = notes.find((entry) => entry.id === id && entry !== home);
-  if (!note) notFound();
-  return { home, note };
-}
-
-function getHead({ home, note }: { home?: GardenNote; note?: GardenNote }): PageHead {
-  if (!note) {
-    return {
-      title: `${home?.data.title ?? "Digital Garden"} | PePoDev Garden`,
-      description:
-        "PePoDev's digital garden: evolving notes on cloud, reliability, software, and business.",
-      path: "/garden/",
-    };
-  }
-  return {
-    title: `${note.data.title} | PePoDev Garden`,
-    description: `${note.data.title}: notes from PePoDev's digital garden.`,
-    path: gardenHref(note),
-    type: "article",
-  };
-}
+export const generateStaticParams = getGardenParams;
 
 export async function generateMetadata({ params }: { params: GardenParams }) {
-  return buildMetadata(getHead(await getPage(params)));
+  return buildMetadata(getGardenHead(await getGardenPage(params)));
 }
 
-export default async function GardenPage({ params }: { params: GardenParams }) {
-  const { note } = await getPage(params);
+async function GardenHome({ notes, home }: GardenPage) {
+  const recent = getRecentlyTended(notes, 8);
+  const Content = home ? (await render(home)).Content : undefined;
   return (
-    <main className="porting-placeholder">
-      <h1>{note ? note.data.title : "The garden is being ported to Next.js"}</h1>
-      <p>
-        {note ? "This garden note is being ported to Next.js. " : ""}
-        Meanwhile, read the <a href="/blog/">blog</a>.
-      </p>
-    </main>
+    <GardenShell>
+      <h1 className="garden-title">{gardenHomeTitle(home)}</h1>{" "}
+      <div className="prose">{Content ? <Content /> : <p>No notes have been planted yet.</p>}</div>{" "}
+      {recent.length > 0 && (
+        <section className="garden-recent" aria-labelledby="garden-recent-title">
+          <h2 id="garden-recent-title">Recently tended</h2>{" "}
+          <ul>
+            {recent.map((note) => (
+              <li key={note.id}>
+                <a href={gardenHref(note)}>{note.data.title}</a> <span>{note.data.folders.join(" / ")}</span>{" "}
+                {note.data.updated && <FormattedDate date={note.data.updated} />}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </GardenShell>
   );
+}
+
+async function GardenNotePage({ notes, note }: GardenPage & { note: NonNullable<GardenPage["note"]> }) {
+  const { Content, headings } = await render(note);
+  const backlinks = getBacklinks(note, notes);
+  const crumbs = getBreadcrumbs(note, buildGardenTree(notes));
+  const { title, updated } = note.data;
+  return (
+    <GardenShell current={note.id} headings={headings}>
+      <article>
+        <nav className="garden-breadcrumbs" aria-label="Breadcrumb">
+          <ol>
+            <li>
+              <a href="/garden/">Garden</a>
+            </li>
+            {/* Keyed by position: a folder name can repeat along the path. */}
+            {crumbs.map(({ name, href }, index) => (
+              <li key={index}>{href ? <a href={href}>{name}</a> : name}</li>
+            ))}
+          </ol>
+        </nav>{" "}
+        <h1 className="garden-title">{title}</h1>{" "}
+        {updated && (
+          <p className="garden-meta">
+            Last tended <FormattedDate date={updated} />
+          </p>
+        )}{" "}
+        <div className="prose">
+          {note.body.trim() ? (
+            <Content />
+          ) : (
+            <p className="garden-seed">This note is still a seed. Nothing has grown here yet.</p>
+          )}
+        </div>{" "}
+        {backlinks.length > 0 && (
+          <section className="garden-backlinks" aria-labelledby="garden-backlinks-title">
+            <h2 id="garden-backlinks-title">Linked from</h2>{" "}
+            <ul>
+              {backlinks.map((link) => (
+                <li key={link.id}>
+                  <a href={gardenHref(link)}>{link.data.title}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </article>
+    </GardenShell>
+  );
+}
+
+export default async function GardenRoute({ params }: { params: GardenParams }) {
+  const page = await getGardenPage(params);
+  return page.note ? <GardenNotePage {...page} note={page.note} /> : <GardenHome {...page} />;
 }

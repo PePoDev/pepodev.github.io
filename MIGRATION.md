@@ -29,9 +29,6 @@ Done (the foundation):
 - Pages: `/blog/`, `/blog/<id>/`, the 404 (`out/404.html`), `/rss.xml`,
   `/sitemap-index.xml`, `/sitemap-0.xml`; `robots.txt` and
   `manifest.webmanifest` stay in `public/`.
-- Placeholders that say they are being ported: `/resume/`, `/garden/` and
-  every synced garden note (`/garden/<id>/`), so the export already has
-  every URL the sitemap lists.
 - Static preview server, Playwright config, CI workflow.
 
 Done (the desktop core, see [The React desktop](#the-react-desktop)):
@@ -41,8 +38,9 @@ Done (the desktop core, see [The React desktop](#the-react-desktop)):
   site mode, preferences, system audio, the first-visit Welcome window, the
   palette tip and `?blog=` deep links driven by React state.
 - The app registry and the app contract; About, Work and Projects are
-  ported. The other 13 apps are stubs at their final paths, and website mode
-  is a placeholder panel, for the parallel tracks to replace.
+  ported. The other 13 apps are stubs at their final paths, for the apps
+  track to replace; website mode was a placeholder panel until the website
+  track ported it (below).
 - The Blog app's article files (`/blog/<id>/article.json`, loaded on
   demand), `BrandMark.tsx` for website mode and the garden, and the
   [ownership rules](#parallel-tracks-who-edits-what) for the parallel tracks.
@@ -52,6 +50,14 @@ Welcome, Trash, Gallery, Terminal, Calculator and the Garden frame, plus
 Blog, Music, White Noise, Settings, Snake and the SRE game (see the
 [checklist](#checklist-still-to-port) and
 [Ported apps](#ported-apps-blog-music-white-noise-settings-snake-sre-game)).
+
+Done (website mode, the resume and the garden, see
+[Website mode, resume and garden](#website-mode-resume-and-garden)):
+
+- Website mode (`WebsiteMode.tsx`, server-rendered, with two client
+  islands), `/resume/` (static, with the in-browser PDF) and the garden
+  (`/garden/` and every synced note, static, with the filter and the
+  desktop Garden window's frame script).
 
 Still to port: see the [checklist](#checklist-still-to-port) at the end.
 
@@ -91,18 +97,16 @@ AGENTS.md; keep it that way (README.md is the single source of truth).
 | `src/app/(home)/` | Root layout and page of `/` (desktop and website mode, `runtime="react"`). |
 | `src/components/desktop/` | The React desktop: state, window manager, overlays, icons, shell components, parse-time scripts, app registry and app API (see [The React desktop](#the-react-desktop)). |
 | `src/components/apps/` | One app per `<Name>App.tsx` (client body, loaded on demand) and `<Name>App.data.ts` (its build-time data); `app-data.ts` lists the loaders. Stubs say they are placeholders. |
-| `src/components/WebsiteMode.tsx` | Website mode (the `#website` panel). Placeholder for now. |
+| `src/components/WebsiteMode.tsx`, `src/components/website/` | Website mode (the `#website` panel) and its islands: `BangkokClock.tsx` (client), `BangkokClockScript.tsx` (parse-time), `CopyEmailButton.tsx` (client), `bangkok-time.ts`. |
 | `src/app/(blog)/blog/` | Blog index; `blog-index.css` is its scoped stylesheet. |
 | `src/app/(post)/blog/[slug]/` | Post pages. The root layout sits in the dynamic segment so `<html lang>` is the post's language. `post-data.ts` is shared by the layout, the page and `article.json/route.ts` (the post's body for the desktop Blog app, `out/blog/<id>/article.json`). |
-| `src/app/(resume)/resume/` | Resume. Placeholder page for now. |
-| `src/app/(garden)/garden/[[...slug]]/` | Garden home (`/garden/`) and notes (`/garden/<id>/`) in one optional catch-all route. Placeholder page for now; see Dynamic routes. |
+| `src/app/(resume)/resume/` | Resume: `page.tsx`, `resume.css` (its scoped styles), `resume-pdf.ts` (the PDF generator) and `ResumeDownloadScript.tsx` (Download PDF, an `<InlineScript>`). |
+| `src/app/(garden)/garden/[[...slug]]/` | Garden home (`/garden/`) and notes (`/garden/<id>/`) in one optional catch-all route, with the garden's root layout (`layout.tsx`: theme script, note JSON-LD) and `garden-data.ts` (shared by both); see Dynamic routes. `src/components/garden/` holds `GardenShell.tsx` (header, sidebar, TOC), `GardenTree.tsx` and `GardenScripts.tsx`. |
 | `src/app/global-not-found.tsx`, `src/app/not-found/` | The branded 404, exported as `out/404.html`. |
 | `src/app/rss.xml/`, `src/app/sitemap-index.xml/`, `src/app/sitemap-0.xml/` | Static route handlers (`dynamic = "force-static"`), written to `out/` as files. |
 | `src/lib/` | Framework plumbing: `content.ts`, `markdown.ts`, `images.ts`, `head.ts`, `static-params.ts`, `sitemap.ts`, `xml.ts`. Alias `@lib/*`. |
-| `src/components/` | React components (`.tsx`), plus the `.astro` files still to port (`WebsiteMode.astro`, `garden/`, the app sources not ported yet in `apps/`). `Document.tsx`, `InlineScript.tsx`, `JsonLd.tsx`, `ResponsiveImage.tsx`, `FormattedDate.tsx`, `SiteHeader.tsx`, `Prefetch.tsx`, `BrandMark.tsx` (port of `BrandMark.astro`, same `size` prop), `home/HomeHeadScripts.tsx`, `desktop/` are done. |
+| `src/components/` | React components (`.tsx`). `Document.tsx`, `InlineScript.tsx`, `JsonLd.tsx`, `ResponsiveImage.tsx`, `FormattedDate.tsx`, `SiteHeader.tsx`, `Prefetch.tsx`, `BrandMark.tsx` (port of `BrandMark.astro`, same `size` prop), `home/HomeHeadScripts.tsx`, `desktop/` are done. |
 | `src/styles/fonts-desktop.css`, `src/styles/fonts-website.css` | `@font-face` rules and `--font-*` variables; `src/assets/fonts/` holds the 11 committed woff2 files. |
-| `src/astro-legacy/pages/` | The Astro routes not ported yet (`resume.astro`, `garden/`). They were moved out of `src/pages/`, which Next.js treats as the Pages Router. Delete each file once ported (`index.astro` is gone). |
-| `src/layouts/GardenLayout.astro` | Still to port. |
 | `src/utils/`, `src/data/`, `src/types/`, `src/styles/`, `src/consts.ts`, `src/content/`, `src/assets/`, `public/` | Unchanged, apart from `src/utils/blog.ts` and `garden.ts`, which now read `@lib/content`. |
 | `public/_img/` | Images resized at build time; generated, gitignored. |
 | `out/` | The export; generated, gitignored (was `dist/`). |
@@ -183,8 +187,7 @@ a static-first site. So every root layout declares its runtime:
   what proves a static page works without React.
 
 Current state: `/` is `runtime="react"` (the desktop); every other page is
-`runtime="none"` (blog index, posts, 404, and the placeholders for
-`/resume/` and `/garden/`).
+`runtime="none"` (blog index, posts, 404, `/resume/`, the garden).
 
 Measured (blog index, Next.js 16.4.3): static, 9.9 KB of HTML and no
 external JavaScript; the same page as `runtime="react"` with one small
@@ -790,8 +793,7 @@ document it here.
 
 ### Website mode contract
 
-`src/components/WebsiteMode.tsx` is a Server Component placeholder. The
-website track replaces its content and keeps: the `SiteModePanel` wrapper
+`src/components/WebsiteMode.tsx` is a Server Component. It keeps: the `SiteModePanel` wrapper
 (`#website`, `.website-shell`, `data-site-mode-panel="website"`), a
 `<header>` with `<ModeSwitch variant="website" />`, any one-way
 `button[data-site-mode-target="desktop"]`, and the
@@ -800,10 +802,78 @@ before hydration). Mode switching, focus handover, `?blog=` removal and
 scroll restore are site-mode's (and the early-input script's before the
 boot); the panel needs no client code for them. `BrandMark` (the "P" mark,
 `<BrandMark size={26} />` and `size={44}`) is ported in
-`src/components/BrandMark.tsx`; the placeholder already uses it in its
-brand link. Interactive bits (the Bangkok clock, copy e-mail) are small
+`src/components/BrandMark.tsx`. Interactive bits (the Bangkok clock, copy e-mail) are small
 client components or delegated listeners. Its markup is repeated in the
 RSC payload, so keep it lean.
+
+### Website mode, resume and garden
+
+Ported by the website and resume/garden tracks. A computed-style, layout,
+attribute and text diff against the Astro build (1440, 820 and 390 wide,
+dark and light themes, details open; for the resume also print and the
+focused skip link; for the garden every page of a fake synced vault, at
+1280 too, and the filter) finds no difference besides those listed below,
+and the head tags and JSON-LD of every page match. The resume's PDF is
+byte-identical to the Astro build's.
+
+- **Website mode** renders at build time; only `SiteModePanel` and two
+  islands hydrate. The Bangkok clock (`BangkokTime`, `BangkokClockText`)
+  reads one shared 15-second ticker through `useSyncExternalStore`
+  (hydrating with the build-time value); `BangkokClockScript`, a
+  parse-time script right after the panel, writes the current time into
+  the `[data-bkk-time]` elements before first paint (they carry
+  `suppressHydrationWarning`), as the Astro module script did, instead of
+  showing the build-time value until hydration. `CopyEmailButton` shows
+  itself once hydrated where the Clipboard API exists. The footer says
+  "Static Next.js build" (was "Static Astro build"): two characters
+  longer, so from 798 to 812 px wide its two paragraphs wrap onto two rows
+  (the panel is 30 px taller there; narrower and wider, the layout is the
+  same as Astro's). Weight: `index.html`
+  is 233.6 KB raw / 42.4 KB gzip (the panel is 34 KB raw / 8.1 KB gzip of
+  HTML, and the RSC payload grew to 102.7 KB raw / 20.8 KB gzip).
+- **Resume**: static. `resume.css` is the scoped `<style>` with every
+  selector under `.resume-page`; the print variables stay on
+  `html.resume-document`. `createResumePdf` (`resume-pdf.ts`, typed and
+  self-contained) is inlined with `Function#toString` into
+  `ResumeDownloadScript`, with the data through `scriptValue()`. The footer
+  says "Built as a static Next.js site." (was "... Astro site.").
+- **Garden**: static. The root layout lives in the catch-all segment, so
+  notes get their BlogPosting JSON-LD (no dates, as before) and the home
+  the Person. The theme/embed script is in `<head>`
+  (`<Document suppressHydrationWarning>`); the filter and frame script
+  sits at the end of `<body>`. Inside the desktop Garden window the frame
+  script gives links that leave the garden `target` and `rel` before
+  `next dev` hydrates; React keeps them (hydration rule 1). The header's
+  links carry `suppressHydrationWarning`, so only a note whose Markdown
+  links leave the garden still makes React log the mismatch (under
+  `next dev`, in the window; the export does not hydrate). Remaining
+  markup differences are the Markdown pipeline's (`shiki github-dark`
+  instead of `astro-code github-dark`, no `data-astro-image*` attributes
+  on images), with the same computed styles.
+- **Garden light theme** (intended difference): `.prose` (blog.css) colors
+  links, inline code and callout titles with the accents as they are,
+  which the Astro garden kept in the light theme at 1.8 to 2.5:1 (WCAG AA
+  failures). `garden.css` gives them, in the light theme only, their
+  accent's hue at OKLCH lightness 0.42 (as the desktop's light windows do,
+  with a `color-mix()` fallback), hover and visited links included: 7.0:1
+  or more. axe finds nothing on the garden home and the notes with
+  callouts, inline code and Thai text, in either theme at 1440 and 390 px.
+  The dark theme is unchanged.
+- Lists of names that can repeat are keyed by position: a note's folders
+  (the garden breadcrumbs, website mode's Garden topics, e.g.
+  `Knowledge/Notes/Notes/`) and a post's tags.
+- Verified with a fake vault synced by `pnpm garden:sync` (home note,
+  nested folders and folder notes, links and backlinks, a private note,
+  tip/warning/folded callouts, three attachments, a wide table, headings,
+  a Thai folder and note; for the keys, also `Knowledge/Notes/Notes/Deep`):
+  `garden.spec.ts` passes all 7 tests against the export and `next dev`
+  with a throwaway port of `GardenApp.astro` (since put back to the stub);
+  with the stub, its desktop Garden window test waits for the apps track.
+  Thai ids are served raw and percent-encoded, and website mode's Garden
+  section matches the Astro build. Under `next dev`, React logs nothing
+  on `/` in website mode or on the garden pages (framed: see above). The notes were
+  removed afterwards; the build passes with and without
+  `src/content/garden`.
 
 ### Adding an app
 
@@ -1084,6 +1154,21 @@ content layer loads and renders MDX posts".
   - New in `media.spec.ts`: "an article that fails to load can be retried
     without losing focus" ("Try again" leaves focus on Back; opening a
     failed article again loads it).
+- Changed with website mode: `data.spec.ts` "project links use https and
+  the repository's current name" and "only unarchived repositories are
+  shown as active" read the desktop Projects cards (links, count, archived
+  badges), which the Astro page rendered hidden in every visit; they now
+  switch to the desktop and open Projects first (`openDesktopProjects`),
+  since its body mounts on first launch. Same assertions.
+- Status after website mode, the resume and the garden, and again after
+  their correction round (export, bundled Chromium, 233 tests): 135
+  passed, 91 failed, 7 skipped (garden, without synced notes), the same 91
+  both times; every failure is one the apps track owns (the checklist's
+  Apps list). With synced notes `garden.spec.ts` passes 6 of 7; its
+  desktop Garden window test also needs the Garden app (it passed with a
+  throwaway port of `GardenApp.astro`). Under `next dev` the website,
+  data, resume, pages and garden specs fail only the apps-owned tests and
+  `pages.spec.ts` 129 (the dev overlay's Inter, see below).
 - Fast local run against the export: build, then
   `PLAYWRIGHT_SERVER=preview npx playwright test -c <config>` with a config
   that serves `out/` with `scripts/serve-static.mjs` (the CI setup).
@@ -1187,9 +1272,9 @@ fail it.
 ## Checklist (still to port)
 
 Each open item names the track that owns it and the tests that pass once
-it is done (`spec:line` in the current files; after both apps tracks only
-tests that need website mode or the resume were left, and the site track
-ports those).
+it is done (`spec:line` in the current files). All three tracks (both apps
+tracks and website mode, the resume and the garden) are merged; the
+integration status is below.
 A test listed under two tracks needs both.
 
 - [x] Decide the desktop runtime: a React desktop (Page runtime).
@@ -1223,27 +1308,31 @@ A test listed under two tracks needs both.
     their `.astro` sources are deleted. Music's two tests pass in CI's
     Chrome; this container's Chromium has no AAC (they pass here with a WAV
     served for `/music/**`).
-- [ ] **Website mode** (website track): `WebsiteMode.astro` into
+- [x] **Website mode** (website track): `WebsiteMode.astro` into
   `src/components/WebsiteMode.tsx` per the
   [website mode contract](#website-mode-contract), using `BrandMark`.
   Tests that pass once it is ported: `desktop.spec.ts` 119;
   `windows.spec.ts` 691 (needs the panel taller than 2000px; the scroll
   restore itself was checked with stand-in content); `blog.spec.ts` 451,
-  479 (its Blog app half passes); `data.spec.ts` 38 (with the resume), 64, 101,
-  159, 191; `website.spec.ts` 312, 404 (reads website
+  479 (with the Blog app); `data.spec.ts` 54 (with the resume), 80, 118,
+  176, 208; `website.spec.ts` 273 (with Settings), 312, 404 (reads website
   mode's `data-as-of`; the Work app half is ported), 420, 464 x3, 484,
-  492, 514, 538, 591, 626, 636, 652 (273 already passes with Settings and
-  the placeholder; check it again with the port); `keyboard.spec.ts` 305
-  (with Calculator; its Snake half passes).
-- [ ] **Resume** (resume/garden track; `src/astro-legacy/pages/resume.astro`
+  492, 514, 538, 591, 626, 636, 652; `keyboard.spec.ts` 305 (with Snake).
+  Done; the ones that still fail need an app (`website.spec.ts` 273,
+  `blog.spec.ts` 479, `keyboard.spec.ts` 305, all in the Apps item).
+  `data.spec.ts` 80 and 118 (64 and 101 before their helper was added)
+  now open the desktop Projects window before reading its cards (its body
+  mounts on first launch), see Tests.
+- [x] **Resume** (resume/garden track; `src/astro-legacy/pages/resume.astro`
   to `src/app/(resume)/resume/page.tsx`): page markup, scoped styles, the
   PDF download script (`resumePdfData` through `scriptValue()`); set the
   `(resume)` runtime to match (an `<InlineScript>` keeps it static). The
   layout already sets `class="resume-document"`. Tests that pass once it
   is ported: `resume.spec.ts` 41, 95, 106, 117, 231, 263;
-  `desktop.spec.ts` 633 (the PDF download); `data.spec.ts` 38 (with
-  website mode).
-- [ ] **Garden** (resume/garden track; `src/astro-legacy/pages/garden/`,
+  `desktop.spec.ts` 633 (the PDF download); `data.spec.ts` 54 (with
+  website mode). Done; `resume.spec.ts` 153 and 190 also need the Certs
+  wallet (Apps item).
+- [x] **Garden** (resume/garden track; `src/astro-legacy/pages/garden/`,
   `src/layouts/GardenLayout.astro`, `components/garden/GardenTree.astro`):
   replace the placeholder in `garden/[[...slug]]/page.tsx` (keep the home
   entry in `generateStaticParams`), the theme/embed `<head>` script as
@@ -1254,12 +1343,17 @@ A test listed under two tracks needs both.
   desktop as described under the app contract). Build once with an empty
   `src/content/garden` and once with synced notes. No test fails today
   (`garden.spec.ts` skips itself without synced notes); run it with synced
-  notes.
+  notes. Done: see
+  [Website mode, resume and garden](#website-mode-resume-and-garden);
+  `src/astro-legacy/` and `src/layouts/` are gone (the `@layouts/*` alias
+  in `tsconfig.json` is now unused). With synced notes `garden.spec.ts`
+  passes 6 of 7; 98 (the desktop Garden window) needs the Garden app
+  (Apps item).
 - [ ] Run the computed-style diff and the full suite for each ported page
-  (the desktop shell's diff is done; repeat it with each app open, and for
-  website mode).
-- [ ] Delete `src/astro-legacy/`, the remaining `.astro` files, and
-  `src/layouts/` (and the `@layouts/*` alias) if nothing uses them.
+  (done for the desktop shell, website mode, the resume and the garden;
+  repeat it with each app open).
+- [ ] Delete the remaining `.astro` files and the unused `@layouts/*`
+  alias (`src/astro-legacy/` and `src/layouts/` are gone).
 - [ ] Verify on pepo.dev with Rocket Loader on: parse-time scripts run
   before first paint, hydration is not deferred.
 - [ ] Rewrite README.md for Next.js: Setup table (`pnpm astro`, `dist/`,

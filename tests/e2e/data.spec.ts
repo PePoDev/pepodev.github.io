@@ -35,6 +35,22 @@ async function openWebsite(page: Page) {
   return website;
 }
 
+// The desktop Projects app renders its cards once its window first opens
+// (app bodies load on demand), so switch to the desktop and open it.
+async function openDesktopProjects(page: Page) {
+  await page
+    .locator("#website header")
+    .getByRole("button", { name: "Switch to desktop mode" })
+    .click();
+  await page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: "Projects" })
+    .click();
+  const cards = page.locator("#window-project .project-card");
+  await expect(cards.first()).toBeAttached();
+  return cards;
+}
+
 test("certifications link to public Credly badges", async ({
   page,
   request,
@@ -91,10 +107,11 @@ test("project links use https and the repository's current name", async ({
     }
   }
   // The desktop Projects cards open the same links.
+  const cards = await openDesktopProjects(page);
   expect(
-    await page
-      .locator("#window-project .project-card")
-      .evaluateAll((cards) => cards.map((card) => card.getAttribute("href"))),
+    await cards.evaluateAll((cards) =>
+      cards.map((card) => card.getAttribute("href")),
+    ),
   ).toEqual(projects.map(({ link }) => link));
 });
 
@@ -129,7 +146,7 @@ test("only unarchived repositories are shown as active", async ({ page }) => {
   expect(Math.abs(row.left)).toBeLessThan(1);
   expect(Math.abs(row.right)).toBeLessThan(1);
 
-  const cards = page.locator("#window-project .project-card");
+  const cards = await openDesktopProjects(page);
   await expect(cards).toHaveCount(projects.length);
   for (const [index, project] of projects.entries()) {
     await expect(

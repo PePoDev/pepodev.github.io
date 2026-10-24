@@ -200,6 +200,57 @@
   overflow-x: auto;
 }
 
+/* Light theme: .prose (blog.css) colors links, inline code and callout
+   titles with the accents as they are, which are drawn for dark surfaces
+   and fall under 4.5:1 on the light page. Here they keep their hue at
+   OKLCH lightness 0.42, like the desktop's light windows (app-base.css),
+   with a mix toward black where relative colors are missing. */
+html[data-theme="light"] .garden-main .prose {
+  --garden-link: color-mix(in srgb, var(--accent-cyan) 40%, #000);
+  --garden-link-hover: color-mix(in srgb, var(--accent-blue) 40%, #000);
+  --garden-link-visited: color-mix(in srgb, var(--accent-purple) 40%, #000);
+  --garden-code: color-mix(in srgb, var(--accent-green) 40%, #000);
+}
+
+html[data-theme="light"] .garden-main .prose .callout {
+  --garden-callout-text: color-mix(in srgb, var(--callout-color) 40%, #000);
+}
+
+/* Custom properties are not validated, so the relative colors need a
+   feature query to leave the color-mix() fallbacks above in place. */
+@supports (color: oklch(from red 0.42 min(c, 0.15) h)) {
+  html[data-theme="light"] .garden-main .prose {
+    --garden-link: oklch(from var(--accent-cyan) 0.42 min(c, 0.15) h);
+    --garden-link-hover: oklch(from var(--accent-blue) 0.42 min(c, 0.15) h);
+    --garden-link-visited: oklch(from var(--accent-purple) 0.42 min(c, 0.15) h);
+    --garden-code: oklch(from var(--accent-green) 0.42 min(c, 0.15) h);
+  }
+
+  html[data-theme="light"] .garden-main .prose .callout {
+    --garden-callout-text: oklch(from var(--callout-color) 0.42 min(c, 0.15) h);
+  }
+}
+
+html[data-theme="light"] .garden-main .prose a {
+  color: var(--garden-link);
+}
+
+html[data-theme="light"] .garden-main .prose a:hover {
+  color: var(--garden-link-hover);
+}
+
+html[data-theme="light"] .garden-main .prose a:visited {
+  color: var(--garden-link-visited);
+}
+
+html[data-theme="light"] .garden-main .prose :not(pre) > code {
+  color: var(--garden-code);
+}
+
+html[data-theme="light"] .garden-main .prose .callout-title {
+  color: var(--garden-callout-text);
+}
+
 .garden-seed {
   color: var(--ws-muted);
   font-style: italic;
