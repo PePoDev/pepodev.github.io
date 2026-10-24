@@ -215,16 +215,44 @@ test("an open command palette keeps keys from the app behind it", async ({
 
   const calculator = await openFromStartMenu(page, "calculator");
   const value = calculator.locator(".calculator-value");
+  await page.keyboard.type("12");
+  await expect(value).toHaveText("12");
   await page.keyboard.press("ControlOrMeta+K");
   await expect(input).toBeFocused();
   await input.blur();
   await page.keyboard.type("42");
-  await expect(value).toHaveText("0");
+  await expect(value).toHaveText("12");
+  // The Escape that closes the palette is not the Calculator's, which
+  // clears the expression on Escape.
   await page.keyboard.press("Escape");
   await expect(palette).toHaveAttribute("data-visible", "false");
   await page.keyboard.type("7");
-  await expect(value).toHaveText("7");
+  await expect(value).toHaveText("127");
   await expect(status).toHaveText("Ready");
+});
+
+test("an app restored or raised from the taskbar with the pointer gets the keys", async ({
+  page,
+}) => {
+  const calculator = await openApp(page, "Calculator", "calculator");
+  const value = calculator.locator(".calculator-value");
+  await calculator.getByRole("button", { name: "Minimize Calculator" }).click();
+  await expect(calculator).toHaveClass(/minimized/);
+
+  await focusFromTaskbar(page, /Calculator/);
+  await expect(calculator).toHaveClass(/focused/);
+  await page.keyboard.type("1+1");
+  await page.keyboard.press("Enter");
+  await expect(value).toHaveText("2");
+  await expect(calculator).not.toHaveClass(/minimized/);
+
+  await openFromStartMenu(page, "snake");
+  await focusFromTaskbar(page, /Calculator/);
+  await expect(calculator).toHaveClass(/focused/);
+  await page.keyboard.type("*3");
+  await page.keyboard.press("Enter");
+  await expect(value).toHaveText("6");
+  await expect(calculator).toHaveClass(/focused/);
 });
 
 test("closing or minimizing the focused window hands the keyboard to the next one", async ({

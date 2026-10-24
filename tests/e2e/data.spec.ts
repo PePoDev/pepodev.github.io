@@ -213,19 +213,32 @@ test("the content layer loads and renders MDX posts", async () => {
         "",
         "## Rendered by MDX",
         "",
-        '<aside className="callout">The answer is {answer}.</aside>',
+        '<aside className="callout" style={{ marginTop: 8, lineHeight: 1.5 }}>The answer is {answer}.</aside>',
+        "",
+        "```sh",
+        "echo 'hello' && ls -la",
+        "```",
         "",
       ].join("\n"),
     );
-    const { getCollection, render } = await import("../../src/lib/content");
+    const { getCollection, render, renderHtml } = await import("../../src/lib/content");
     const [post] = await getCollection("blog", undefined, { base });
     expect(post.id).toBe("hello-from-mdx");
     expect(post.data.title).toBe("Hello from MDX");
     const { Content, headings } = await render(post);
     const html = renderToStaticMarkup(createElement(Content));
     expect(html).toContain('<h2 id="rendered-by-mdx">Rendered by MDX</h2>');
-    expect(html).toContain('<aside class="callout">The answer is 42.</aside>');
+    expect(html).toContain(
+      '<aside class="callout" style="margin-top:8px;line-height:1.5">The answer is 42.</aside>',
+    );
+    expect(html).toContain('<pre class="shiki github-dark"');
     expect(headings).toEqual([{ depth: 2, slug: "rendered-by-mdx", text: "Rendered by MDX" }]);
+    // The Blog app's article file (/blog/<id>/article.json) has the same
+    // document as an HTML string, rendered without React (which escapes
+    // quotes in text where hast-util-to-html leaves them).
+    const quotes = (markup: string) =>
+      markup.replaceAll("&#x27;", "'").replaceAll("&quot;", '"');
+    expect(quotes(await renderHtml(post))).toBe(quotes(html));
   } finally {
     await rm(base, { recursive: true, force: true });
   }

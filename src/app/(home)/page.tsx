@@ -1,19 +1,24 @@
-// PLACEHOLDER until the desktop and website mode are ported from
-// src/astro-legacy/pages/index.astro (see MIGRATION.md).
+// The home page: the React desktop and website mode (MIGRATION.md, "The
+// React desktop"). Build-time data is loaded here, on the server, and passed
+// to the desktop as compact props; app bodies load on demand.
 import { SITE_DESCRIPTION, SITE_TITLE } from "@/consts";
+import { loadAppData } from "@components/apps/app-data";
+import { Desktop } from "@components/desktop/Desktop";
+import { DesktopIconScript } from "@components/desktop/DesktopScripts";
+import { WebsiteMode } from "@components/WebsiteMode";
 import { buildMetadata } from "@lib/head";
 
 export const generateMetadata = () =>
   buildMetadata({ title: SITE_TITLE, description: SITE_DESCRIPTION, path: "/" });
 
-export default function HomePage() {
+export default async function HomePage() {
+  const appData = await loadAppData();
   return (
-    <main className="porting-placeholder">
-      <h1>The desktop is being ported to Next.js</h1>
-      <p>
-        This page will hold the interactive desktop and website mode. Meanwhile, read the{" "}
-        <a href="/blog/">blog</a>.
-      </p>
-    </main>
+    <>
+      <Desktop appData={appData} />
+      {/* Right after the icons it places, before website mode. */}
+      <DesktopIconScript />
+      <WebsiteMode />
+    </>
   );
 }

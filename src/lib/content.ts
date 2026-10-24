@@ -15,7 +15,7 @@ import { slug as githubSlug } from "github-slugger";
 import { parseDocument } from "yaml";
 import { z } from "zod";
 import { type ImageAsset, resolveImage } from "./images";
-import { type RenderedContent, renderMarkdown } from "./markdown";
+import { type RenderedContent, renderMarkdown, renderMarkdownToHtml } from "./markdown";
 
 export type { MarkdownHeading, RenderedContent } from "./markdown";
 
@@ -230,6 +230,22 @@ export function render(entry: CollectionEntry<CollectionName>): Promise<Rendered
   if (!pending) {
     pending = renderMarkdown(entry.body, entry.filePath);
     rendered.set(entry, pending);
+  }
+  return pending;
+}
+
+const renderedHtml = new WeakMap<object, Promise<string>>();
+
+/**
+ * Renders an entry's body to an HTML string, for files written at build
+ * time (the Blog app's article files). The same document as `render`'s
+ * `<Content />`. Cached per entry.
+ */
+export function renderHtml(entry: CollectionEntry<CollectionName>): Promise<string> {
+  let pending = renderedHtml.get(entry);
+  if (!pending) {
+    pending = renderMarkdownToHtml(entry.body, entry.filePath);
+    renderedHtml.set(entry, pending);
   }
   return pending;
 }

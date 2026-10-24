@@ -22,6 +22,9 @@
 //    the page.
 // 4. Checks that sitemap-0.xml lists exactly the exported pages (every
 //    out/**/index.html), and that sitemap-index.xml points to it.
+// 5. Checks that every post (out/blog/<id>/index.html) has its Blog app
+//    article file, out/blog/<id>/article.json ({ id, html }), and that the
+//    files the article references exist (step 3's check, on its html).
 import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -176,8 +179,7 @@ for (const file of htmlFiles(root)) {
 
 const missing = new Map();
 const attribute = /\s(src|href|srcset|content|poster)="([^"]*)"/gi;
-for (const file of htmlFiles(root)) {
-  const html = readFileSync(file, "utf8");
+function checkReferences(html, file) {
   for (const [, name, value] of html.matchAll(attribute)) {
     const candidates =
       name.toLowerCase() === "srcset"
@@ -203,6 +205,35 @@ for (const file of htmlFiles(root)) {
     }
   }
 }
+for (const file of htmlFiles(root)) checkReferences(readFileSync(file, "utf8"), file);
+
+// --- 5. Blog article files (read by the desktop Blog app) -------------------
+
+let articles = 0;
+const blogDir = path.join(root, "blog");
+for (const entry of existsSync(blogDir) ? readdirSync(blogDir, { withFileTypes: true }) : []) {
+  const dir = path.join(blogDir, entry.name);
+  if (!entry.isDirectory() || !existsSync(path.join(dir, "index.html"))) continue;
+  const file = path.join(dir, "article.json");
+  if (!existsSync(file)) {
+    fail(`${rel(file)} is missing; the Blog app loads every post's body from it (article.json/route.ts).`);
+    continue;
+  }
+  let article;
+  try {
+    article = JSON.parse(readFileSync(file, "utf8"));
+  } catch (error) {
+    fail(`${rel(file)} is not valid JSON: ${error.message}`);
+    continue;
+  }
+  if (article?.id !== entry.name || typeof article.html !== "string" || article.html.length === 0) {
+    fail(`${rel(file)} should be { id: "${entry.name}", html: "<the rendered article>" }.`);
+    continue;
+  }
+  checkReferences(article.html, file);
+  articles += 1;
+}
+
 for (const [url, pages] of missing) {
   fail(`pages reference ${url}, which is not in out/ (in ${[...pages].join(", ")})`);
 }
@@ -246,5 +277,6 @@ if (errors.length > 0) {
 }
 console.log(
   `postbuild: out/ is complete. ${staticPages} static pages (runtime "none", Next.js scripts removed), ` +
-    `${reactPages} hydrating pages; every referenced local file exists; the sitemap lists the ${pagePaths.size} exported pages.`,
+    `${reactPages} hydrating pages; every referenced local file exists; the sitemap lists the ${pagePaths.size} exported pages; ` +
+    `${articles} Blog app article files.`,
 );

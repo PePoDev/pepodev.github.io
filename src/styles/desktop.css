@@ -79,7 +79,8 @@
   z-index: 4;
 }
 
-/* DesktopIconController places icons on its grid; showing them first would
+/* The icon grid (icon-layout.ts, and before hydration the placement script
+   in DesktopScripts.tsx) places icons; showing them first would
    paint them stacked in the CSS grid and then jump (layout shift). Without
    scripts, the CSS grid is the layout and the shortcut links still work. */
 @media (min-width: 769px) and (scripting: enabled) {

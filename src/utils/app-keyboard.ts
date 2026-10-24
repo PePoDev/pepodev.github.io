@@ -11,7 +11,7 @@ export function isAppWindowActive(
   );
 }
 
-/** The overlays WindowController's isEscapeOwnedByOverlay defers to. */
+/** The desktop overlays (overlay-state.ts); the window manager's Escape defers to them too. */
 function isDesktopOverlayOpen(): boolean {
   return Boolean(
     document.querySelector(
@@ -52,6 +52,12 @@ export function isAppKeyboardOwner(
  * shortcuts, open overlays and keys aimed at other controls are left alone,
  * and a focused button or link in the window (a title-bar control, a
  * Calculator key) keeps its native Enter and Space.
+ *
+ * Ask before the desktop's own listeners run: the overlays close on the
+ * Escape or Enter they handle, after which they no longer count as open.
+ * useAppKeyboard (src/components/desktop/app-api.ts) listens in the capture
+ * phase for that reason, as the Astro apps' listeners ran before the
+ * overlays' ones.
  */
 export function isAppKeyboardEvent(
   event: Event,

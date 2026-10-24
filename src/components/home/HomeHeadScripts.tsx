@@ -30,10 +30,11 @@ const siteModeScript = `(() => {
   document.documentElement.dataset.siteMode = mode;
 })();`;
 
-// Apply the saved theme and accent before first paint so website mode does
-// not flash dark or green for light-theme or other-accent visitors. The rest
-// of the preferences (background, glass) are applied at the end of <body>.
 const themeScript = `(() => {
+  // Apply the saved theme and accent before first paint so website mode does
+  // not flash dark or green for light-theme or other-accent visitors. The
+  // rest of the preferences (background, glass) follow in the desktop
+  // preferences script (DesktopScripts.tsx).
   const accentMap = ${scriptValue(accentMap)};
   const root = document.documentElement;
   let prefs = {};

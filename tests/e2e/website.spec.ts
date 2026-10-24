@@ -8,6 +8,7 @@ import experiences from "../../src/data/experiences.json" with {
   type: "json",
 };
 import projects from "../../src/data/projects.json" with { type: "json" };
+import { holdChunks, waitForWindowManager } from "./helpers";
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
@@ -217,8 +218,8 @@ test("accent text keeps AA contrast for every Settings accent", async ({
 test("the saved theme and accent apply before the end-of-body scripts", async ({
   page,
 }) => {
-  // Drop the script at the end of <body> that applies all preferences, so
-  // only the <head> script can have set them.
+  // Drop the desktop's preferences script, so only the <head> theme script
+  // can set them.
   await page.route(
     (url) => url.pathname === "/",
     async (route) => {
@@ -238,17 +239,35 @@ test("the saved theme and accent apply before the end-of-body scripts", async ({
       JSON.stringify({ theme: "light", accent: "purple" }),
     );
   });
-  await page.reload();
+  // The desktop's preferences store applies them too once React hydrates,
+  // which needs the Next.js chunks: hold them back, so only parse-time
+  // scripts have run when the attributes are checked.
+  const chunks = await holdChunks(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  // The page's RSC payload (self.__next_f, data for hydration) repeats the
+  // scripts' text without running it, so it does not count.
   expect(
-    await page.evaluate(() =>
-      Array.from(document.scripts).some((script) =>
-        script.text.includes("Initialize theme immediately"),
+    await page.evaluate(() => ({
+      prefsScript: Array.from(document.scripts).some(
+        (script) =>
+          script.text.includes("Initialize theme immediately") &&
+          !script.text.startsWith("self.__next_f"),
       ),
-    ),
-  ).toBe(false);
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.locator("html")).toHaveCSS("--accent-primary", "#bf5af2");
-  await expect(page.locator("html")).toHaveCSS("--accent-secondary", "#64d2ff");
+      booted:
+        (window as typeof window & { __pepodevWindowManagerReady?: boolean })
+          .__pepodevWindowManagerReady ?? false,
+    })),
+  ).toEqual({ prefsScript: false, booted: false });
+  const html = page.locator("html");
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect(html).toHaveCSS("--accent-primary", "#bf5af2");
+  await expect(html).toHaveCSS("--accent-secondary", "#64d2ff");
+
+  chunks.release();
+  await waitForWindowManager(page);
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect(html).toHaveCSS("--accent-primary", "#bf5af2");
 });
 
 test("website mode follows the Settings theme and is dark by default", async ({

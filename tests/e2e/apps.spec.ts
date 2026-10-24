@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { holdScripts, openApp, prefsStorage, resetPage } from "./helpers";
+import { holdChunks, openApp, prefsStorage, resetPage } from "./helpers";
 import certifications from "../../src/data/certifications.json" with {
   type: "json",
 };
@@ -563,21 +563,18 @@ test.describe("on a touch phone", () => {
   });
 });
 
-test("apps opened before their scripts run still start", async ({ page }) => {
-  // Rocket Loader runs app scripts late, while the window manager runs as
-  // the page parses, so a visitor can open an app before its script ran.
-  const release = await holdScripts(
-    page,
-    /SreGameApp|GalleryApp|\[data-sre-game\]|\[data-gallery-app\]/,
-  );
+test("apps opened before their code has loaded still start", async ({ page }) => {
+  // Each app's body is its own chunk, loaded on the window's first launch
+  // (or once the desktop is idle), so on a slow network a visitor can open
+  // an app before its code has arrived.
   await resetPage(page);
-  await expect(page.locator("script[data-held]")).toHaveCount(2);
+  const chunks = await holdChunks(page);
 
   const game = await openApp(page, "SRE Game", "sregame");
-  await expect(game.locator(".sre-boot-output")).toBeEmpty();
   const gallery = await openWithKeyboard(page, "Gallery", "gallery");
   await expect(gallery).toBeFocused();
-  await release();
+  await expect(gallery.getByRole("status")).toHaveText("Loading…");
+  chunks.release();
 
   await expect(gallery.locator("#gallery-password")).toBeFocused();
   await expect(game.locator(".sre-boot-output")).toContainText("ssh", {

@@ -1,7 +1,10 @@
-// Root layout of / (the desktop and website mode). The head scripts pick the
-// mode and theme before first paint.
+// Root layout of / (the desktop and website mode). It hydrates: the desktop
+// is a React app (MIGRATION.md, "The React desktop"). The head scripts pick
+// the mode, theme and the other desktop preferences before first paint, and
+// take the input made before the desktop boots.
 import type { ReactNode } from "react";
 import { Document } from "@components/Document";
+import { DesktopEarlyInputScript, DesktopPrefsScript } from "@components/desktop/DesktopScripts";
 import { HomeHeadScripts } from "@components/home/HomeHeadScripts";
 import { siteJsonLd, siteViewport } from "@lib/head";
 // Website mode type. Not preloaded: desktop mode never uses it.
@@ -12,13 +15,16 @@ export const viewport = siteViewport;
 export default async function HomeLayout({ children }: { children: ReactNode }) {
   return (
     <Document
-      // The placeholder has no client components. The desktop port switches
-      // to "react" if it starts its controllers from a client component (see
-      // MIGRATION.md, "Page runtime").
-      runtime="none"
+      runtime="react"
       htmlData={{ "data-site-mode": "desktop" }}
       suppressHydrationWarning
-      head={<HomeHeadScripts />}
+      head={
+        <>
+          <HomeHeadScripts />
+          <DesktopPrefsScript />
+          <DesktopEarlyInputScript />
+        </>
+      }
       jsonLd={await siteJsonLd()}
     >
       {children}

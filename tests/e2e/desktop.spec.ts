@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { holdScripts, openApp, resetPage } from "./helpers";
+import { openApp, resetPage } from "./helpers";
 
 const apps = [
   { label: "Welcome", appId: "welcome", title: "Welcome - Login" },
@@ -387,18 +387,30 @@ test("opens a blog article in desktop mode from the blog query parameter", async
   expect(pageErrors).toEqual([]);
 });
 
-test("a first visit from a ?blog= link opens only the article, even when the link script runs late", async ({
+test("a first visit from a ?blog= link opens only the article, even when the Blog app loads late", async ({
   page,
 }) => {
-  // Rocket Loader can run the deep-link script after the first-visit
-  // Welcome timer (1.5s) fires.
-  const release = await holdScripts(page, /URL Deep Linking/);
+  // The Blog app's code is its own chunk, loaded when the link opens its
+  // window; on a slow network it arrives after the first-visit Welcome
+  // timer (1.5s after the desktop boots) fires. Hold that chunk back: the
+  // one with the Blog app's list markup (or, until the app is ported, its
+  // placeholder).
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
+  const late: (() => void)[] = [];
+  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    if (/data-blog-list-view|source: ?"BlogApp\.astro"/.test(body)) {
+      await new Promise<void>((resolve) => late.push(resolve));
+    }
+    await route.fulfill({ response, body });
+  });
   await page.goto("/?blog=aws-local-zone-bangkok-launch");
+  await expect.poll(() => late.length).toBeGreaterThan(0);
   await page.waitForTimeout(2_000);
   await expect(page.locator("#window-welcome")).toBeHidden();
-  await release();
+  late.splice(0).forEach((release) => release());
 
   await expect(page.locator("#window-blog")).toHaveClass(/maximized/);
   await page.waitForTimeout(500);

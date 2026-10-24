@@ -1,0 +1,210 @@
+// The desktop's parse-time scripts (Server Components). They only set
+// attributes and styles from storage before first paint, which hydration
+// keeps (MIGRATION.md, hydration rule 1); the React desktop takes over
+// after hydration with the same functions, which these scripts inline with
+// Function#toString (see icon-grid.ts and prefs-core.ts).
+import { InlineScript, scriptValue } from "@components/InlineScript";
+import { accentMap, backgroundMap } from "@utils/desktop-prefs";
+import {
+  createIconGrid,
+  ICON_STORAGE_PREFIX,
+  LINK_ICON_STORAGE_PREFIX,
+  layoutIcons,
+  readIconPosition,
+  removeStaleIconPositions,
+} from "./icon-grid";
+import { applyDesktopPrefs, loadDesktopPrefs } from "./prefs-core";
+
+// site-mode.ts's VIEW_MODE_KEY (that module is client-only).
+const VIEW_MODE_STORAGE_KEY = "pepodev.viewMode";
+
+// For <head>, after HomeHeadScripts' theme script (which website mode needs
+// even if this one is dropped).
+const prefsScript = `(() => {
+  // Initialize theme immediately to prevent flash: the background, glass,
+  // radius and effect preferences, before first paint.
+  const accentMap = ${scriptValue(accentMap)};
+  const backgroundMap = ${scriptValue(backgroundMap)};
+  const loadPrefs = ${loadDesktopPrefs.toString()};
+  const applyPrefs = ${applyDesktopPrefs.toString()};
+  let storage = null;
+  try {
+    storage = window.localStorage;
+  } catch {}
+  applyPrefs(document.documentElement, loadPrefs(storage, backgroundMap), accentMap, backgroundMap);
+})();`;
+
+/** Applies every desktop preference before first paint (prefs-core.ts). */
+export function DesktopPrefsScript() {
+  return <InlineScript code={prefsScript} />;
+}
+
+/** Input the parse-time input script took before the boot; runtime.tsx replays it. */
+export type EarlyInput =
+  | { type: "launch"; appId: string | undefined }
+  | { type: "control"; control: (typeof EARLY_CONTROLS)[number] }
+  | { type: "palette" };
+
+/** Taskbar controls whose clicks before the boot are replayed. */
+export const EARLY_CONTROLS = [
+  "taskbar-start",
+  "taskbar-command-palette",
+  "taskbar-clock-button",
+  "taskbar-audio-status",
+] as const;
+
+// For <head>, after the mode script: the listeners must exist before the
+// desktop is painted.
+const earlyInputScript = `(() => {
+  // The desktop boots once React has hydrated it, after the page has loaded:
+  // later than the first paint by up to a few seconds on slow devices. Until
+  // then this takes the clicks and keys the desktop would handle, so a quick
+  // visitor's input is not lost: launches ([data-open-app]), the taskbar's
+  // Start, palette and tray buttons, and Ctrl/Cmd + K are kept in order and
+  // replayed by the boot (runtime.tsx). A mode switch applies at once, with
+  // the attributes and storage the site-mode store uses (it takes over at
+  // the boot), and hands focus to the other panel's switch.
+  const early = (window.__pepodevEarlyInput = []);
+  const root = document.documentElement;
+  const isDesktop = () => root.dataset.siteMode !== "website";
+  const controls = ${scriptValue(EARLY_CONTROLS.map((id) => "#" + id).join(", "))};
+  const take = (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (window.__pepodevWindowManagerReady) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+      const modeSwitch = target.closest("[data-site-mode-toggle], [data-site-mode-target]");
+      if (modeSwitch) {
+        take(event);
+        const current = isDesktop() ? "desktop" : "website";
+        const wanted = modeSwitch.hasAttribute("data-site-mode-toggle")
+          ? current === "desktop" ? "website" : "desktop"
+          : modeSwitch.dataset.siteModeTarget;
+        const mode = wanted === "website" ? "website" : "desktop";
+        if (mode === current) return;
+        root.dataset.siteMode = mode;
+        try {
+          localStorage.setItem(${scriptValue(VIEW_MODE_STORAGE_KEY)}, mode);
+        } catch {}
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("blog")) {
+          url.searchParams.delete("blog");
+          history.replaceState(history.state, "", url);
+        }
+        // What was meant for the other mode no longer applies.
+        early.length = 0;
+        // The icon placement script places the icons of a desktop it skipped.
+        if (mode === "desktop") window.dispatchEvent(new Event("resize"));
+        document
+          .querySelector('[data-site-mode-panel="' + mode + '"] [data-site-mode-toggle]')
+          ?.focus({ preventScroll: true });
+        return;
+      }
+      if (!isDesktop()) return;
+      const launcher = target.closest("[data-open-app]");
+      const control = launcher ? null : target.closest(controls);
+      if (launcher) early.push({ type: "launch", appId: launcher.dataset.openApp });
+      else if (control) early.push({ type: "control", control: control.id });
+      else return;
+      take(event);
+    },
+    true,
+  );
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (window.__pepodevWindowManagerReady || !isDesktop()) return;
+      if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === "k") {
+        take(event);
+        early.push({ type: "palette" });
+      }
+    },
+    true,
+  );
+})();`;
+
+/** Takes clicks and Ctrl/Cmd + K made before the desktop boots (replayed by runtime.tsx). */
+export function DesktopEarlyInputScript() {
+  return <InlineScript code={earlyInputScript} />;
+}
+
+// Right after #desktop, so its icons exist and the page's CSS applies.
+const iconScript = `(() => {
+  // Places the desktop icons on their grid before first paint, so they
+  // never show stacked and then jump (icon-layout.ts takes over once the
+  // desktop boots). Above 768px only; phones use the CSS grid. Until the
+  // boot, a resize (or a mode switch to the desktop, which the early-input
+  // script announces as one) places them again.
+  window.__pepodevDesktopIconsReady = true;
+  const createIconGrid = ${createIconGrid.toString()};
+  const layoutIcons = ${layoutIcons.toString()};
+  const removeStale = ${removeStaleIconPositions.toString()};
+  const readPosition = ${readIconPosition.toString()};
+  const appPrefix = ${scriptValue(ICON_STORAGE_PREFIX)};
+  const linkPrefix = ${scriptValue(LINK_ICON_STORAGE_PREFIX)};
+  const index = (value) => Number.parseInt(value || "0", 10);
+  const apps = Array.from(document.querySelectorAll("#desktop-icons .desktop-icon[data-open-app]"));
+  const links = Array.from(document.querySelectorAll("#desktop-links .desktop-link-icon[id]")).sort(
+    (a, b) => index(a.dataset.shortcutIndex) - index(b.dataset.shortcutIndex),
+  );
+  const icons = apps.concat(links);
+  const descriptors = icons.map((icon) =>
+    icon.dataset.openApp
+      ? {
+          id: icon.dataset.openApp,
+          link: false,
+          col: icon.dataset.defaultCol,
+          row: icon.dataset.defaultRow,
+          group: icon.dataset.layoutGroup,
+          index: index(icon.dataset.layoutIndex),
+        }
+      : { id: icon.id, link: true, shortcut: index(icon.dataset.shortcutIndex) },
+  );
+  const setPosition = (icon, left, top, fixed) => {
+    icon.style.position = fixed ? "fixed" : "";
+    icon.style.left = left;
+    icon.style.top = top;
+    icon.style.right = fixed ? "auto" : "";
+    icon.style.bottom = fixed ? "auto" : "";
+  };
+  const place = () => {
+    if (document.documentElement.dataset.siteMode !== "desktop") return;
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      icons.forEach((icon) => setPosition(icon, "", "", false));
+      return;
+    }
+    const first = icons[0];
+    if (!first || !first.offsetWidth) return;
+    const saved = {};
+    try {
+      const storage = window.localStorage;
+      removeStale(storage, appPrefix, linkPrefix);
+      descriptors.forEach((icon) => {
+        const position = readPosition(storage, (icon.link ? linkPrefix : appPrefix) + icon.id);
+        if (position) saved[icon.id] = position;
+      });
+    } catch {}
+    const grid = createIconGrid(window.innerWidth, window.innerHeight, first.offsetWidth, first.offsetHeight);
+    const layout = layoutIcons(grid, descriptors, saved);
+    icons.forEach((icon, i) => {
+      const cell = grid.cellPosition(layout.cells[descriptors[i].id]);
+      const point = grid.clamp(cell.x, cell.y, icon.offsetWidth, icon.offsetHeight);
+      setPosition(icon, point.x + "px", point.y + "px", true);
+      icon.dataset.desktopIconReady = "true";
+    });
+  };
+  place();
+  window.addEventListener("resize", () => {
+    if (!window.__pepodevWindowManagerReady) place();
+  });
+})();`;
+
+/** Places the desktop icons before first paint (icon-grid.ts). */
+export function DesktopIconScript() {
+  return <InlineScript code={iconScript} />;
+}

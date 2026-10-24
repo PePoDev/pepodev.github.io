@@ -70,64 +70,28 @@ export async function openApp(page: Page, label: string, appId: string) {
 }
 
 /**
- * Holds back the page's scripts that `match` (their tag or inline text), as
- * Cloudflare Rocket Loader does on pepo.dev, until the returned function
- * runs them and replays DOMContentLoaded for them. Scripts that must run
- * while the page parses carry data-cfasync="false" and are never held. Call
- * it before loading the page.
+ * Holds back the Next.js chunks requested from now on, as a slow network
+ * would, until `release()`: React's runtime and the desktop when called
+ * before a (re)load (the desktop then has not hydrated, and only parse-time
+ * scripts have run), or an app body's chunk on its window's first launch.
+ * `hold()` holds again (before the next reload); `held()` counts the
+ * requests waiting.
  */
-export async function holdScripts(page: Page, match: RegExp) {
-  await page.route(
-    (url) => url.pathname === "/",
-    async (route) => {
-      const response = await route.fetch();
-      const html = (await response.text()).replace(
-        /<script\b([^>]*)>([\s\S]*?)<\/script>/g,
-        (tag, attributes: string, body: string) => {
-          if (/data-cfasync="false"/.test(attributes)) return tag;
-          if (!match.test(attributes + body)) return tag;
-          const type = /type="module"/.test(attributes) ? "module" : "classic";
-          const rest = attributes.replace(/\s*type="[^"]*"/, "");
-          return `<script type="text/plain" data-held="${type}"${rest}>${body}</script>`;
-        },
-      );
-      await route.fulfill({ response, body: html });
+export async function holdChunks(page: Page) {
+  const waiting: (() => void)[] = [];
+  let holding = true;
+  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+    if (holding) await new Promise<void>((resolve) => waiting.push(resolve));
+    await route.continue();
+  });
+  return {
+    held: () => waiting.length,
+    hold: () => {
+      holding = true;
     },
-  );
-  return () =>
-    page.evaluate(() => {
-      // Inline classic scripts run as they are inserted; only the
-      // DOMContentLoaded listeners they add hear the replayed event.
-      const listeners: EventListenerOrEventListenerObject[] = [];
-      const addEventListener = document.addEventListener;
-      document.addEventListener = function (
-        this: Document,
-        type: string,
-        listener: EventListenerOrEventListenerObject,
-        options?: boolean | AddEventListenerOptions,
-      ) {
-        if (type === "DOMContentLoaded") listeners.push(listener);
-        else addEventListener.call(this, type, listener, options);
-      } as typeof document.addEventListener;
-      document
-        .querySelectorAll<HTMLScriptElement>("script[data-held]")
-        .forEach((held) => {
-          const script = document.createElement("script");
-          if (held.dataset.held === "module") script.type = "module";
-          for (const { name, value } of Array.from(held.attributes)) {
-            if (name !== "type" && name !== "data-held") {
-              script.setAttribute(name, value);
-            }
-          }
-          script.textContent = held.textContent;
-          held.replaceWith(script);
-        });
-      document.addEventListener = addEventListener;
-      const event = new Event("DOMContentLoaded");
-      listeners.forEach((listener) =>
-        typeof listener === "function"
-          ? listener.call(document, event)
-          : listener.handleEvent(event),
-      );
-    });
+    release: () => {
+      holding = false;
+      waiting.splice(0).forEach((resolve) => resolve());
+    },
+  };
 }

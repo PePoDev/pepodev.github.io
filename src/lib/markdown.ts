@@ -9,12 +9,18 @@
 // Markdown becomes an HTML string, which is turned into React elements so the
 // page places it directly inside its own markup (`.prose > p`, no wrapper).
 // MDX is compiled and evaluated into a component.
+//
+// renderMarkdownToHtml gives the same document as an HTML string, for files
+// written at build time (the Blog app's /blog/<id>/article.json): route
+// handlers cannot render React to HTML (react-dom/server is not available
+// to them), so Markdown keeps Sätteri's HTML and MDX is evaluated with a
+// JSX runtime that builds hast, serialized like Shiki does.
 import { type ComponentType, Fragment, type ReactNode } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import Slugger from "github-slugger";
-import type { Element, Root } from "hast";
+import type { Element, ElementContent, Properties, Root } from "hast";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import {
   evaluate,
@@ -23,7 +29,7 @@ import {
   htmlToHast,
   markdownToHtml,
 } from "satteri";
-import { createHighlighter, type Highlighter } from "shiki";
+import { createHighlighter, hastToHtml, type Highlighter } from "shiki";
 import { getResponsiveImage, resolveImage } from "./images";
 
 export interface MarkdownHeading {
@@ -194,3 +200,98 @@ export async function renderMarkdown(
   const Content = () => nodes;
   return { Content, headings };
 }
+
+// --- HTML strings (build-time files) ------------------------------------------
+
+// MDX documents evaluated with this runtime return hast instead of React
+// elements. Props are React-cased (className, htmlFor, srcSet, tabIndex,
+// strokeWidth), which hast-util-to-html maps to attributes itself; style
+// objects become CSS text as React writes it.
+const HAST_FRAGMENT = Symbol("hast fragment");
+
+const UNITLESS = new Set([
+  "animationIterationCount", "aspectRatio", "columnCount", "columns", "flex", "flexGrow", "flexShrink",
+  "fontWeight", "gridColumn", "gridRow", "lineHeight", "opacity", "order", "orphans", "scale", "tabSize",
+  "widows", "zIndex", "zoom", "fillOpacity", "strokeOpacity", "strokeWidth",
+]);
+
+function styleText(style: Record<string, unknown>): string {
+  return Object.entries(style)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "" && typeof value !== "boolean")
+    .map(([name, value]) => {
+      const property = name.startsWith("--")
+        ? name
+        : name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`).replace(/^ms-/, "-ms-");
+      const text =
+        typeof value === "number" && value !== 0 && !name.startsWith("--") && !UNITLESS.has(name)
+          ? `${value}px`
+          : String(value);
+      return `${property}:${text}`;
+    })
+    .join(";");
+}
+
+type HastNode = Root | ElementContent;
+
+function hastChildren(value: unknown): ElementContent[] {
+  if (value === null || value === undefined || typeof value === "boolean") return [];
+  if (Array.isArray(value)) return value.flatMap(hastChildren);
+  if (typeof value === "string" || typeof value === "number") return [{ type: "text", value: String(value) }];
+  const node = value as HastNode;
+  return node.type === "root" ? (node.children as ElementContent[]) : [node];
+}
+
+function hastJsx(type: unknown, props: Record<string, unknown> | null): HastNode {
+  const { children, ...rest } = props ?? {};
+  if (type === HAST_FRAGMENT) return { type: "root", children: hastChildren(children) };
+  if (typeof type === "function") {
+    return { type: "root", children: hastChildren((type as (props: unknown) => unknown)(props ?? {})) };
+  }
+  if (typeof type !== "string") throw new Error(`MDX rendered an element of an unsupported type (${String(type)}).`);
+  const properties: Properties = {};
+  let rawHtml: string | undefined;
+  for (const [name, value] of Object.entries(rest)) {
+    if (name === "key" || name === "ref" || value === undefined || typeof value === "function") continue;
+    if (name === "dangerouslySetInnerHTML") {
+      rawHtml = String((value as { __html?: unknown } | null)?.__html ?? "");
+    } else if (name === "style" && value && typeof value === "object") {
+      properties.style = styleText(value as Record<string, unknown>);
+    } else {
+      properties[name] = value as Properties[string];
+    }
+  }
+  return {
+    type: "element",
+    tagName: type,
+    properties,
+    // "raw" nodes are serialized as is (allowDangerousHtml below).
+    children: rawHtml === undefined ? hastChildren(children) : [{ type: "raw", value: rawHtml } as never],
+  };
+}
+
+/**
+ * Renders a Markdown or MDX document body (frontmatter already removed) to
+ * an HTML string: the document `renderMarkdown` gives as React elements,
+ * through the same pipeline (Shiki, heading ids, build-time images).
+ */
+export async function renderMarkdownToHtml(body: string, filePath: string): Promise<string> {
+  const options = {
+    hastPlugins: plugins(filePath, []),
+    features: FEATURES,
+    fileURL: pathToFileURL(filePath),
+  };
+  if (!filePath.endsWith(".mdx")) return (await markdownToHtml(body, options)).html;
+
+  const module = await evaluate(body, {
+    ...options,
+    Fragment: HAST_FRAGMENT,
+    jsx: hastJsx as (type: unknown, props: unknown, key?: unknown) => unknown,
+    jsxs: hastJsx as (type: unknown, props: unknown, key?: unknown) => unknown,
+  });
+  const content = module.default as (props: Record<string, unknown>) => unknown;
+  return hastToHtml(
+    { type: "root", children: hastChildren(content({})) },
+    { allowDangerousHtml: true, characterReferences: { useNamedReferences: true } },
+  );
+}
+

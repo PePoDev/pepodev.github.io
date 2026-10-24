@@ -321,28 +321,82 @@ test("post content images have alt text and image links have names", async ({
   }
 });
 
+// The desktop Blog app loads each article on demand from the post's
+// /blog/<id>/article.json (src/components/desktop/blog-article.ts) and
+// renders its html in .blog-reader-body.
+async function fetchArticle(page: Page, id: string) {
+  const response = await page.request.get(`/blog/${encodeURIComponent(id)}/article.json`);
+  expect(response.ok(), id).toBe(true);
+  expect(response.headers()["content-type"], id).toContain("application/json");
+  return (await response.json()) as { id: string; html: string };
+}
+
 test("the desktop Blog reader gets the same alt text and image link names", async ({
   page,
 }) => {
-  await page.goto("/");
-  const problems = await page
-    .locator(".blog-reader-body")
-    .evaluateAll((bodies) =>
-      bodies.flatMap((body) => [
-        ...[...body.querySelectorAll("img")]
-          .filter((img) => !img.getAttribute("alt")?.trim())
-          .map((img) => `no alt: ${img.getAttribute("src")}`),
-        ...[...body.querySelectorAll("a")]
-          .filter(
-            (a) =>
-              !a.textContent?.trim() &&
-              ![...a.querySelectorAll("img")].some((img) => img.alt.trim()),
-          )
-          .map((a) => `no name: ${a.getAttribute("href")}`),
-      ]),
+  await page.goto("/blog/");
+  let images = 0;
+  for (const post of posts) {
+    const { html } = await fetchArticle(page, post.id);
+    const result = await page.evaluate((markup) => {
+      const body = new DOMParser().parseFromString(markup, "text/html").body;
+      return {
+        images: body.querySelectorAll("img").length,
+        problems: [
+          ...[...body.querySelectorAll("img")]
+            .filter((img) => !img.getAttribute("alt")?.trim())
+            .map((img) => `no alt: ${img.getAttribute("src")}`),
+          ...[...body.querySelectorAll("a")]
+            .filter(
+              (a) =>
+                !a.textContent?.trim() &&
+                ![...a.querySelectorAll("img")].some((img) => img.alt.trim()),
+            )
+            .map((a) => `no name: ${a.getAttribute("href")}`),
+        ],
+      };
+    }, html);
+    expect(result.problems, post.id).toEqual([]);
+    images += result.images;
+  }
+  expect(images).toBeGreaterThan(0);
+});
+
+test("every post's article file has the body its page renders", async ({ page }) => {
+  for (const post of posts) {
+    const article = await fetchArticle(page, post.id);
+    expect(article.id).toBe(post.id);
+    await page.goto(`/blog/${encodeURIComponent(post.id)}/`);
+    // The page renders the same document inside .prose, after its title
+    // block; compare what each element is, says and shows. (React drops the
+    // whitespace between table cells that the HTML string keeps, so text is
+    // compared without whitespace.)
+    const describe = (elements: Element[]) =>
+      elements.map((element) => ({
+        tag: element.tagName,
+        id: element.id,
+        text: element.textContent?.replace(/\s+/g, ""),
+        images: [...element.querySelectorAll("img")].map((img) => ({
+          src: img.getAttribute("src"),
+          srcset: img.getAttribute("srcset"),
+          alt: img.getAttribute("alt"),
+        })),
+        links: [...element.querySelectorAll("a")].map((a) => a.getAttribute("href")),
+      }));
+    const { fromPage, fromFile } = await page.evaluate(
+      ({ html, describeSource }) => {
+        const describe = new Function(`return ${describeSource}`)() as (elements: Element[]) => unknown;
+        const prose = document.querySelector(".prose")!;
+        const body = new DOMParser().parseFromString(html, "text/html").body;
+        return {
+          fromPage: describe([...prose.children].filter((element) => !element.matches(".title"))),
+          fromFile: describe([...body.children]),
+        };
+      },
+      { html: article.html, describeSource: describe.toString() },
     );
-  expect(problems).toEqual([]);
-  await expect(page.locator(".blog-reader-body img")).not.toHaveCount(0);
+    expect(fromFile, post.id).toEqual(fromPage);
+  }
 });
 
 test("redirected Graviton citations point at Wayback snapshots of the originals", async ({

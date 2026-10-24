@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { expect, test, type Page } from "@playwright/test";
-import { holdScripts, openApp, resetPage } from "./helpers";
+import { holdChunks, openApp, resetPage, waitForWindowManager } from "./helpers";
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
@@ -490,7 +490,7 @@ test("without scripts, mode switches are named right and shortcuts show", async 
   await context.close();
 });
 
-test("website mode reaches assistive tech before its deferred scripts run", async ({
+test("website mode reaches assistive tech before the desktop hydrates", async ({
   page,
   request,
 }) => {
@@ -502,25 +502,174 @@ test("website mode reaches assistive tech before its deferred scripts run", asyn
     expect(tag, id).not.toContain("aria-hidden");
   }
 
-  // Rocket Loader runs SiteModeController late; the panel is shown first.
-  const release = await holdScripts(
-    page,
-    /SiteModeController|function \w\(\w\)\{return \w===`website`/,
-  );
+  // The site-mode state runs once React hydrates the page, which needs the
+  // Next.js chunks; hold them back (a slow network) and the panel the <head>
+  // script picked is shown and reachable first.
   await resetPage(page, { "pepodev.viewMode": "website" });
-  await expect(page.locator("script[data-held]")).toHaveCount(1);
+  const chunks = await holdChunks(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  expect(
+    await page.evaluate(
+      () =>
+        (window as typeof window & { __pepodevWindowManagerReady?: boolean })
+          .__pepodevWindowManagerReady ?? false,
+    ),
+  ).toBe(false);
   await expect(page.locator("#website")).toBeVisible();
   await expect(page.locator("#desktop")).toBeHidden();
   await expect(
     page.getByRole("link", { name: "Skip to content" }),
   ).toBeAttached();
   await expect(page.getByRole("banner")).toBeVisible();
-  await release();
+
+  chunks.release();
+  await waitForWindowManager(page);
   await expect(page.locator("#website")).not.toHaveAttribute(
     "aria-hidden",
     "true",
   );
   await expect(page.locator("#desktop")).toHaveAttribute("aria-hidden", "true");
+});
+
+test("clicks and keys made before the desktop hydrates are not lost", async ({
+  page,
+}) => {
+  // The desktop takes input once React has hydrated it, after the page has
+  // loaded; hold the Next.js chunks back (a slow network) and act first.
+  await resetPage(page);
+  const chunks = await holdChunks(page);
+  const holdHydration = async () => {
+    chunks.hold();
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect.poll(chunks.held).toBeGreaterThan(0);
+    expect(
+      await page.evaluate(
+        () =>
+          (window as typeof window & { __pepodevWindowManagerReady?: boolean })
+            .__pepodevWindowManagerReady ?? false,
+      ),
+    ).toBe(false);
+  };
+  const hydrate = async () => {
+    chunks.release();
+    await waitForWindowManager(page);
+  };
+
+  // A launch and Ctrl+K are replayed, in order, once the desktop boots.
+  await holdHydration();
+  await page.locator('#desktop-icons [data-open-app="me"]').click();
+  await page.keyboard.press("ControlOrMeta+K");
+  await hydrate();
+  await expect(page.locator("#window-me")).toHaveClass(/focused/);
+  await expect(page.locator("#command-palette")).toHaveAttribute(
+    "data-visible",
+    "true",
+  );
+  await expect(page.locator("#command-palette-input")).toBeFocused();
+
+  // The Start button too.
+  await holdHydration();
+  await page.locator("#taskbar-start").click();
+  await hydrate();
+  await expect(page.locator("#start-menu")).toHaveClass(/visible/);
+  await expect(page.locator("#taskbar-start")).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+
+  // A mode switch applies at once, hands focus over, and sticks.
+  await holdHydration();
+  await page.locator("#taskbar-site-mode").click();
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-mode",
+    "website",
+  );
+  await expect(page.locator("#website")).toBeVisible();
+  await expect(page.locator("#desktop")).toBeHidden();
+  await expect(
+    page.locator("#website header [data-site-mode-toggle]"),
+  ).toBeFocused();
+  expect(
+    await page.evaluate(() => localStorage.getItem("pepodev.viewMode")),
+  ).toBe("website");
+  await hydrate();
+  await expect(page.locator("#desktop")).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator("#website")).toHaveAttribute("aria-hidden", "false");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-mode",
+    "website",
+  );
+
+  // And back: the desktop shows with its icons placed, and a resize before
+  // the boot places them again.
+  await holdHydration();
+  await page.locator("#website header [data-site-mode-toggle]").click();
+  await expect(page.locator("#desktop")).toBeVisible();
+  await expect(page.locator("#taskbar-site-mode")).toBeFocused();
+  await expect(
+    page.locator(".desktop-icon:not([data-desktop-icon-ready])"),
+  ).toHaveCount(0);
+  const viewport = page.viewportSize()!;
+  await page.setViewportSize({ width: viewport.width, height: 560 });
+  const taskbarTop = (await page.locator("#taskbar").boundingBox())!.y;
+  const lowest = await page
+    .locator(".desktop-icon")
+    .evaluateAll((icons) =>
+      Math.max(...icons.map((icon) => icon.getBoundingClientRect().bottom)),
+    );
+  expect(lowest).toBeLessThanOrEqual(taskbarTop);
+  await page.setViewportSize(viewport);
+  await hydrate();
+  await expect(page.locator("#desktop")).toHaveAttribute("aria-hidden", "false");
+  expect(
+    await page.evaluate(() => localStorage.getItem("pepodev.viewMode")),
+  ).toBe("desktop");
+});
+
+test("a taskbar button pressed with the pointer leaves the keys to the windows", async ({
+  page,
+}) => {
+  const work = await openApp(page, "Work", "work");
+  const about = await openApp(page, "About Me", "me");
+  const aboutButton = page.locator('#taskbar-apps [data-app-id="me"]');
+  const workButton = page.locator('#taskbar-apps [data-app-id="work"]');
+
+  // Raising a window: the keys go to it, not to the button. Enter would
+  // otherwise press the button again and minimize the window.
+  await workButton.click();
+  await expect(work).toHaveClass(/focused/);
+  await expect(workButton).not.toBeFocused();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Space");
+  await expect(work).toHaveClass(/focused/);
+  await expect(work).not.toHaveClass(/minimized/);
+
+  // Minimizing the focused window hands the keys to the next one.
+  await workButton.click();
+  await expect(work).toHaveClass(/minimized/);
+  await expect(about).toHaveClass(/focused/);
+  await expect(workButton).not.toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(work).toHaveClass(/minimized/);
+  await expect(about).toHaveClass(/focused/);
+
+  // Restoring it.
+  await workButton.click();
+  await expect(work).toHaveClass(/focused/);
+  await expect(work).not.toHaveClass(/minimized/);
+  await expect(workButton).not.toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(work).not.toHaveClass(/minimized/);
+  await expect(aboutButton).not.toBeFocused();
+
+  // From the keyboard, focus follows the window, so Enter restores it again.
+  await workButton.click();
+  await expect(work).toHaveClass(/minimized/);
+  await workButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(work).toHaveClass(/focused/);
+  await expect(work).toBeFocused();
 });
 
 test("two-way mode switches hand focus to the other panel's switch", async ({
@@ -665,14 +814,18 @@ test("reduced motion keeps the desktop background still", async ({ page }) => {
 
 test("scripts that must run while the page parses opt out of Rocket Loader", async ({
   page,
+  request,
 }) => {
+  // The parse-time scripts: mode, theme, the other preferences, the input
+  // made before the desktop boots, and the icon placement. The window
+  // manager and the background are part of the React desktop, which
+  // hydrates through Next.js's scripts (checked below).
   const markers = [
     'storageKey = "pepodev.viewMode"',
     "Apply the saved theme and accent before first paint",
-    "initParticleNetwork",
-    "window.__pepodevWindowManagerReady = true",
+    "Initialize theme immediately",
+    "window.__pepodevEarlyInput = []",
     "window.__pepodevDesktopIconsReady = true",
-    "window.__pepodevExternalLinkIconsReady = true",
   ];
   const attributes = await page.evaluate(
     (texts) =>
@@ -685,6 +838,22 @@ test("scripts that must run while the page parses opt out of Rocket Loader", asy
     markers,
   );
   expect(attributes).toEqual(markers.map(() => "false"));
+
+  // In the export, postbuild gives every script in the HTML, Next.js's own
+  // included (chunks, bootstrap, RSC payload), data-cfasync="false", so
+  // Rocket Loader cannot hold hydration back. `next dev` leaves them unmarked.
+  if (process.env.PLAYWRIGHT_SERVER === "preview") {
+    const html = await (await request.get("/")).text();
+    const unmarked = [...html.matchAll(/<script\b([^>]*)>/g)]
+      .map(([tag, attributes]) => ({ tag, attributes }))
+      .filter(
+        ({ attributes }) =>
+          !/data-cfasync="false"/.test(attributes) &&
+          !/type="application\/ld\+json"/.test(attributes),
+      )
+      .map(({ tag }) => tag);
+    expect(unmarked).toEqual([]);
+  }
 });
 
 test("the desktop shortcut container is a labelled group", async ({ page }) => {
