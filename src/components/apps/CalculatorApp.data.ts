@@ -1,6 +1,4 @@
-// PLACEHOLDER: build-time data of the Calculator app, passed to it as its `data`
-// prop. Its track replaces this loader along with CalculatorApp.tsx (MIGRATION.md,
-// "The React desktop"). Return JSON-serializable data only.
+// Build-time data of the Calculator app: none.
 export default async function loadCalculatorData() {
   return null;
 }

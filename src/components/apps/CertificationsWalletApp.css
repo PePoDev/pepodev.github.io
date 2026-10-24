@@ -1,0 +1,68 @@
+/* The Certifications wallet (scoped styles of CertificationsWalletApp.astro,
+   every selector starting at the .cert-wallet-app root; see MIGRATION.md,
+   CSS). Its shared card, grid and badge rules stay in sre-apps.css. */
+.cert-wallet-app .cert-card {
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.cert-wallet-app .cert-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cert-wallet-app .cert-content {
+  flex: 1;
+}
+
+.cert-wallet-app .cert-provider {
+  margin: 4px 0 8px 0;
+}
+
+.cert-wallet-app .cert-dates {
+  display: grid;
+  gap: 2px;
+  font-family: var(--font-mono);
+}
+
+.cert-wallet-app .cert-dates p {
+  margin: 0;
+  font-size: 11px;
+}
+
+.cert-wallet-app .cert-earned {
+  color: var(--text-primary);
+}
+
+.cert-wallet-app .cert-expiry {
+  color: var(--text-secondary);
+}
+
+.cert-wallet-app .cert-status {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cert-wallet-app .cert-status[hidden] {
+  display: none;
+}
+
+.cert-wallet-app .cert-status-active {
+  background: rgba(48, 209, 88, 0.15);
+  color: var(--app-primary-text, var(--accent-green));
+  border: 1px solid rgba(48, 209, 88, 0.3);
+}
+
+.cert-wallet-app .cert-status-expiring {
+  background: rgba(255, 159, 10, 0.15);
+  color: var(--app-amber-text, var(--accent-amber));
+  border: 1px solid rgba(255, 159, 10, 0.3);
+}

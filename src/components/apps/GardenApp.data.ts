@@ -1,6 +1,5 @@
-// PLACEHOLDER: build-time data of the Garden app, passed to it as its `data`
-// prop. Its track replaces this loader along with GardenApp.tsx (MIGRATION.md,
-// "The React desktop"). Return JSON-serializable data only.
+// Build-time data of the Garden app: none. The window frames /garden/,
+// so no note is inlined in the desktop page.
 export default async function loadGardenData() {
   return null;
 }

@@ -66,7 +66,7 @@ export const APPS: readonly AppDefinition[] = [
     startDescription: "Login & introduction",
     paletteDescription: "Login & introduction",
     icon: { col: "center", row: "0" },
-    mount: "open",
+    mount: "idle",
   },
   {
     id: "blog",

@@ -47,6 +47,10 @@ Done (the desktop core, see [The React desktop](#the-react-desktop)):
   demand), `BrandMark.tsx` for website mode and the garden, and the
   [ownership rules](#parallel-tracks-who-edits-what) for the parallel tracks.
 
+Done (apps, first part): the Certifications wallet, Welcome, Trash,
+Gallery, Terminal, Calculator and the Garden frame are ported (see the
+[checklist](#checklist-still-to-port)).
+
 Still to port: see the [checklist](#checklist-still-to-port) at the end.
 
 ## Commands
@@ -93,7 +97,7 @@ AGENTS.md; keep it that way (README.md is the single source of truth).
 | `src/app/global-not-found.tsx`, `src/app/not-found/` | The branded 404, exported as `out/404.html`. |
 | `src/app/rss.xml/`, `src/app/sitemap-index.xml/`, `src/app/sitemap-0.xml/` | Static route handlers (`dynamic = "force-static"`), written to `out/` as files. |
 | `src/lib/` | Framework plumbing: `content.ts`, `markdown.ts`, `images.ts`, `head.ts`, `static-params.ts`, `sitemap.ts`, `xml.ts`. Alias `@lib/*`. |
-| `src/components/` | React components (`.tsx`), plus the `.astro` files still to port (`WebsiteMode.astro`, `garden/`, the 13 app sources and `ContactIcon.astro` in `apps/`). `Document.tsx`, `InlineScript.tsx`, `JsonLd.tsx`, `ResponsiveImage.tsx`, `FormattedDate.tsx`, `SiteHeader.tsx`, `Prefetch.tsx`, `BrandMark.tsx` (port of `BrandMark.astro`, same `size` prop), `home/HomeHeadScripts.tsx`, `desktop/` are done. |
+| `src/components/` | React components (`.tsx`), plus the `.astro` files still to port (`WebsiteMode.astro`, `garden/`, the app sources not ported yet in `apps/`). `Document.tsx`, `InlineScript.tsx`, `JsonLd.tsx`, `ResponsiveImage.tsx`, `FormattedDate.tsx`, `SiteHeader.tsx`, `Prefetch.tsx`, `BrandMark.tsx` (port of `BrandMark.astro`, same `size` prop), `home/HomeHeadScripts.tsx`, `desktop/` are done. |
 | `src/styles/fonts-desktop.css`, `src/styles/fonts-website.css` | `@font-face` rules and `--font-*` variables; `src/assets/fonts/` holds the 11 committed woff2 files. |
 | `src/astro-legacy/pages/` | The Astro routes not ported yet (`resume.astro`, `garden/`). They were moved out of `src/pages/`, which Next.js treats as the Pages Router. Delete each file once ported (`index.astro` is gone). |
 | `src/layouts/GardenLayout.astro` | Still to port. |
@@ -198,7 +202,7 @@ bytes, gzip -9):
 | --- | --- | --- |
 | `index.html` | 404.1 KB raw / 86.5 KB gzip (every article inlined in the Blog app, every app body, website mode) | 132.6 KB raw / 24.8 KB gzip: about 79 KB the desktop markup (mostly the SVG icons, as before), 37.4 KB raw / 11.3 KB gzip the RSC payload (app data, the inline scripts and Server Component markup repeated for hydration), 15.3 KB the inline scripts (2.4 KB of it the early-input script) |
 | JavaScript before the desktop takes input | 8.4 KB gzip (6 module scripts) | 523.6 KB raw / 155.7 KB gzip (7 chunks): about 134 KB gzip React and Next.js, 71.2 KB raw / 21.6 KB gzip the desktop |
-| JavaScript and data later | none | each app body on its first launch (About, Work and Projects: 4.8 KB raw / 2.0 KB gzip together); the two `mount: "idle"` bodies (1.8 KB raw / 1.0 KB gzip as stubs) once the desktop is idle; a Blog article's `article.json` when it opens (5.0 to 29.8 KB raw, 1.8 to 8.4 KB gzip) |
+| JavaScript and data later | none | each app body on its first launch (About, Work and Projects: 4.8 KB raw / 2.0 KB gzip together); the `mount: "idle"` bodies once the desktop is idle (Music and SRE Game: 1.8 KB raw / 1.0 KB gzip as stubs; Welcome, ported: 3.9 KB raw / 1.6 KB gzip of JavaScript and 1.7 KB raw / 0.7 KB gzip of CSS); a Blog article's `article.json` when it opens (5.0 to 29.8 KB raw, 1.8 to 8.4 KB gzip) |
 | Website mode | same page | the same 155.7 KB gzip (the desktop hydrates while hidden), no app bodies |
 | CSS | 23.2 KB gzip | 23.1 KB gzip |
 
@@ -632,9 +636,13 @@ already retries a chunk once) shows "This app could not load" with a "Try
 again" button; the window's next launch also tries again (each try is a
 new `lazy()`, since React keeps a rejected import). A body mounts on its
 window's first launch and stays mounted when the window closes; `mount:
-"idle"` bodies (Music, SRE Game) mount hidden once the desktop is idle in
-desktop mode, because Settings drives Music, the background asks Music for
-levels, and tests read the SRE game's text before opening it. An app track
+"idle"` bodies (Music, SRE Game, Welcome) mount hidden once the desktop is
+idle in desktop mode, because Settings drives Music, the background asks
+Music for levels, tests read the SRE game's text before opening it, and
+Welcome (opened by itself on a first visit) then opens with its body and
+entry animation in step with the window instead of showing "Loading…"
+first (a body loaded on launch appears about 300 ms after its window, see
+Tests). An app track
 may change the `mount` field of its own entry, and nothing else in
 `apps.ts`.
 
@@ -1047,6 +1055,34 @@ content layer loads and renders MDX posts".
   still opens the article (from its `article.json`) with focus on Back;
   a chunk that fails twice shows the error state, and both "Try again" and
   a relaunch load the app.
+- Status after the first apps track (Certs wallet, Welcome, Trash,
+  Gallery, Terminal, Calculator, Garden; export, 233 tests): 137 passed,
+  89 failed, 7 skipped. No new failures; the 31 tests the track owns pass
+  (also under `next dev`). Every remaining failure is at a step of an app
+  not ported yet (Blog, Snake, SRE game, Music, White Noise, Settings),
+  website mode or the resume page; see the
+  [checklist](#checklist-still-to-port).
+- **Open core issue: an app body appears about 300 ms after its window.**
+  A window opens inside `commit()` (`flushSync`), so a body mounted by
+  that launch suspends synchronously on its `React.lazy` chunk and React
+  commits the "Loading…" fallback; when the chunk arrives (even from
+  cache), React holds the content back for its Suspense fallback throttle
+  (300 ms after the fallback). Measured on the export: the window shows at
+  about 100 ms after the click and the body at about 400 ms, which is when
+  the window drops `opening` and the `openApp()` helper returns. So a test
+  that reads the body right after `openApp()` races it, and an entry
+  animation in the body starts about 300 ms after the window's:
+  `apps.spec.ts` 596 (Trash, `items.count()`) failed 2 of 35 runs under
+  `next dev`; 646 (Welcome focus ring: the Tab arrived before the body, or
+  the ring was sampled during the body's fadeIn) failed 2 of 24 runs on
+  the export with 4 workers, and still 2 of 64 after Welcome moved to
+  `mount: "idle"` (when the idle mount has not happened before the click).
+  Fix in the core, not in the apps: keep a fast load from committing the
+  fallback in `app-bodies.tsx` (start the chunk when the launch begins and
+  mount the body once it has loaded, showing "Loading…" only for slow
+  loads), or let `openApp()` in `helpers.ts` wait for
+  `.window-content > :not(.app-loading)` where the chunk is not held on
+  purpose (`apps.spec.ts` 566 opens the SRE game while its chunk is held).
 
 ## CI (.github/workflows/deploy.yaml)
 
@@ -1088,7 +1124,8 @@ fail it.
 ## Checklist (still to port)
 
 Each open item names the track that owns it and the tests that pass once
-it is done (`spec:line` in the current files; 120 fail today, all listed).
+it is done (`spec:line` in the current files; 89 fail today, after the
+first apps track, all listed).
 A test listed under two tracks needs both.
 
 - [x] Decide the desktop runtime: a React desktop (Page runtime).
@@ -1109,35 +1146,42 @@ A test listed under two tracks needs both.
   if nothing needs it, and `desktop/AppPlaceholder.tsx` with the last stub.
   The Blog app lists metadata from its `.data.ts`, loads each article with
   `loadBlogArticle` into `.blog-reader-body`, opens links in a new tab, and
-  handles `?blog=` with `useDeepLinkHandler`. Tests that pass once the apps
-  are ported:
+  handles `?blog=` with `useDeepLinkHandler`.
+  - [x] Ported (first apps track): Certs wallet, Welcome (`mount: "idle"`,
+    see the app registry), Trash, Gallery, Terminal, Calculator and Garden
+    (the frame of `/garden/`), each with its own CSS file where the Astro
+    component had scoped styles (`CertificationsWalletApp.css`,
+    `WelcomeApp.css`, `GardenApp.css`); their `.astro` sources and
+    `ContactIcon.astro` are deleted. Their tests pass on the export:
+    `apps.spec.ts` 300, 329, 384, 405, 432, 461, 477, 525, 585, 596, 623,
+    646 x2, 835, 967 x2; `keyboard.spec.ts` 234, 285, 335, 368, 395, 405;
+    `desktop.spec.ts` 641, 840, 865, 887; `windows.spec.ts` 244, 423;
+    `overlays.spec.ts` 346; `resume.spec.ts` 153, 190. The tests below that
+    also name these apps fail only at another app's step; their parts for
+    these apps pass when run alone.
+
+  Tests that pass once the remaining apps are ported:
   - `apps.spec.ts`: 134 (Snake on phones, x4), 195, 233, 250, 281 (Snake),
-    215, 705, 757, 814 (SRE game), 300, 329, 384, 405 (Calculator), 432
-    (Gallery), 461, 477, 525 (Terminal and Gallery focus), 554 (SRE game
-    boot log), 566 (Gallery and SRE game opened before their code loaded),
-    585 (Terminal), 596 (Trash), 623, 646 x2 (Welcome), 835 (Certs), 867
-    (the SRE half; the About half passes), 885 x2 (Calculator, Snake, SRE
-    game, Trash contrast), 967 x2 (Certs, Gallery contrast), 1006 x2 (Blog,
-    Welcome and Terminal; About, Work and Projects pass it when checked
-    alone).
-  - `keyboard.spec.ts`: all 16 failing (22, 47, 63, 89, 137, 171, 198,
-    234, 258, 285, 305, 335, 349, 368, 395, 405: Calculator, Snake,
-    Terminal, Gallery); 305 also needs website mode (its page must be tall
-    enough to scroll).
+    215, 705, 757, 814 (SRE game), 554 (SRE game boot log), 566 (the SRE
+    game half of "opened before their code loaded"; Gallery's passes), 867
+    (the SRE half; the About half passes), 885 x2 (Snake and SRE game
+    contrast; Calculator and Trash pass), 1006 x2 (Blog; Welcome,
+    Terminal, About, Work and Projects pass it when checked alone).
+  - `keyboard.spec.ts`: 22, 47, 63, 89, 137, 171, 198, 258, 349 (Snake;
+    their Calculator, Terminal and Gallery parts pass), 305 (Snake, and
+    website mode: its page must be tall enough to scroll).
   - `media.spec.ts`: 143, 166, 214, 237, 259, 287, 299 (Music), 335, 364,
     380 (White Noise), 421, 455,
     478, 514 (Blog reader), 529 (Settings), 686 x3 (Music, White Noise and
     Settings contrast).
-  - `desktop.spec.ts`: 346 and 426 (Blog), 641 (Calculator), 659 (Snake),
-    680 (Settings), 738 and 796 (Music; they also fail locally without
-    AAC), 840 (Terminal), 865 (Gallery), 887 (Certs), 932 (White Noise).
-  - `windows.spec.ts`: 211 and 715 (Blog), 244 (Calculator), 423
-    (Gallery); `overlays.spec.ts`: 346 (Terminal), 589 (Blog list; its
-    toast and maximize parts are the core's and passed with a throwaway
-    Blog); `icons.spec.ts`: 334 (Settings' Reset all settings; the palette
-    half passes); `resume.spec.ts`: 153 and 190 (the desktop Certs wallet);
-    `website.spec.ts`: 273 (Settings, with website mode); `blog.spec.ts`:
-    479 (with website mode).
+  - `desktop.spec.ts`: 346 and 426 (Blog), 659 (Snake), 680 (Settings),
+    738 and 796 (Music; they also fail locally without AAC), 932 (White
+    Noise).
+  - `windows.spec.ts`: 211 and 715 (Blog); `overlays.spec.ts`: 589 (Blog
+    list; its toast and maximize parts are the core's and passed with a
+    throwaway Blog); `icons.spec.ts`: 334 (Settings' Reset all settings;
+    the palette half passes); `website.spec.ts`: 273 (Settings, with
+    website mode); `blog.spec.ts`: 479 (with website mode).
 - [ ] **Website mode** (website track): `WebsiteMode.astro` into
   `src/components/WebsiteMode.tsx` per the
   [website mode contract](#website-mode-contract), using `BrandMark`.

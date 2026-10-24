@@ -1,6 +1,18 @@
-// PLACEHOLDER: build-time data of the Certifications app, passed to it as its `data`
-// prop. Its track replaces this loader along with CertificationsWalletApp.tsx (MIGRATION.md,
-// "The React desktop"). Return JSON-serializable data only.
+// Build-time data of the Certifications wallet: certifications.json in the
+// order of their status when the site is built (Active, Expiring Soon, then
+// Expired; README, Interaction Invariants), as CertificationsWalletApp.astro
+// sorted them. The wallet refreshes each status against the visitor's clock.
+import certifications from "@data/certifications.json";
+import { sortCertificationsByStatus } from "@utils/certifications";
+
 export default async function loadCertificationsWalletData() {
-  return null;
+  return sortCertificationsByStatus(certifications).map(
+    ({ name, provider, issueDate, expirationDate, credlyUrl }) => ({
+      name,
+      provider,
+      issueDate,
+      expirationDate,
+      credlyUrl,
+    }),
+  );
 }
