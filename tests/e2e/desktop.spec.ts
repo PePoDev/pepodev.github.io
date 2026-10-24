@@ -218,8 +218,8 @@ test("pauses the desktop animation loop in website mode and resumes it", async (
     probe.__modeRafCallbacks = {};
     window.requestAnimationFrame = (callback) => {
       const name = callback.name || "anonymous";
-      probe.__modeRafCallbacks[name] =
-        (probe.__modeRafCallbacks[name] ?? 0) + 1;
+      probe.__modeRafCallbacks![name] =
+        (probe.__modeRafCallbacks![name] ?? 0) + 1;
       return requestFrame(callback);
     };
   });

@@ -1,8 +1,9 @@
 /**
  * Desktop accent and background colours, keyed by the ids Settings saves in
- * pepodev.desktopPrefs. The theme scripts in index.astro and SettingsApp get
- * them through define:vars, so every script applies the same values. A
- * missing background follows the theme: "cloud" when light, else "network".
+ * pepodev.desktopPrefs. The <head> theme script (HomeHeadScripts.tsx, which
+ * inlines them with scriptValue) and SettingsApp read them from here, so
+ * every script applies the same values. A missing background follows the
+ * theme: "cloud" when light, else "network".
  */
 export const accentMap: Record<
   string,

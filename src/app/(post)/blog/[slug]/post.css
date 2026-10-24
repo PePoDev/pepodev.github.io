@@ -1,0 +1,58 @@
+/* A blog post's page chrome (page.tsx); the article itself is styled by
+   .prose in src/styles/blog.css. Every selector starts at main.blog-post and
+   reaches only the page's own elements, never the Markdown content, as the
+   Astro <style> did. */
+main.blog-post {
+  width: min(1020px, 100% - 32px);
+  margin: 0 auto;
+  padding: 24px 0 64px;
+}
+.blog-post .hero-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: var(--window-shadow);
+}
+.blog-post .prose > .title {
+  padding-top: 1.5em;
+  text-align: center;
+}
+.blog-post .prose > .title h1 {
+  margin: 0 0 0.5em 0;
+  color: var(--text-primary);
+  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
+  line-height: 1.3;
+}
+.blog-post .title > .date {
+  margin-bottom: 0.75em;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+.blog-post .last-updated-on {
+  font-style: italic;
+}
+.blog-post .post-footer {
+  max-width: 720px;
+  margin: 3em auto 0;
+  padding-top: 1.5em;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  border-top: 1px solid var(--glass-border);
+}
+.blog-post .post-footer a {
+  color: var(--accent-cyan);
+  font-weight: 600;
+  text-decoration: none;
+}
+.blog-post .post-footer a:hover {
+  color: var(--text-primary);
+}
+.blog-post .post-footer a:focus-visible {
+  outline: 3px solid var(--accent-secondary);
+  outline-offset: 3px;
+}

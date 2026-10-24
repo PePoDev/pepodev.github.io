@@ -1,4 +1,9 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import certifications from "../../src/data/certifications.json" with {
   type: "json",
 };
@@ -191,11 +196,37 @@ test("website mode spells resume one way", async ({ page }) => {
   ).toHaveAttribute("href", /resume/);
 });
 
-// A config guard: without the integration, .mdx posts are left out of the
-// build with only a glob-loader warning.
-test("Astro config registers the MDX integration", async () => {
-  const { default: config } = await import("../../astro.config.mjs");
-  expect(
-    config.integrations.map((integration: { name: string }) => integration.name),
-  ).toContain("@astrojs/mdx");
+// A content-layer guard: .mdx files in a collection folder are loaded and
+// rendered as MDX (JSX, expressions, exports), not skipped or shown as text.
+test("the content layer loads and renders MDX posts", async () => {
+  const base = await mkdtemp(path.join(os.tmpdir(), "pepodev-mdx-"));
+  try {
+    await writeFile(
+      path.join(base, "Hello from MDX!.mdx"),
+      [
+        "---",
+        "title: Hello from MDX",
+        "pubDate: 2024-01-01T00:00:00Z",
+        "---",
+        "",
+        'export const answer = 6 * 7;',
+        "",
+        "## Rendered by MDX",
+        "",
+        '<aside className="callout">The answer is {answer}.</aside>',
+        "",
+      ].join("\n"),
+    );
+    const { getCollection, render } = await import("../../src/lib/content");
+    const [post] = await getCollection("blog", undefined, { base });
+    expect(post.id).toBe("hello-from-mdx");
+    expect(post.data.title).toBe("Hello from MDX");
+    const { Content, headings } = await render(post);
+    const html = renderToStaticMarkup(createElement(Content));
+    expect(html).toContain('<h2 id="rendered-by-mdx">Rendered by MDX</h2>');
+    expect(html).toContain('<aside class="callout">The answer is 42.</aside>');
+    expect(headings).toEqual([{ depth: 2, slug: "rendered-by-mdx", text: "Rendered by MDX" }]);
+  } finally {
+    await rm(base, { recursive: true, force: true });
+  }
 });

@@ -1,0 +1,102 @@
+/* The blog index (page.tsx). Every selector starts at main.blog-index, so the
+   rules stay scoped to the page as the Astro <style> was. */
+main.blog-index {
+  width: min(960px, 100% - 32px);
+  margin: 0 auto;
+  padding: 32px 0 64px;
+}
+.blog-index .intro {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+.blog-index .intro h1 {
+  color: var(--text-primary);
+  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
+  line-height: 1.2;
+}
+.blog-index .intro p {
+  max-width: 640px;
+  margin: 0.75rem auto 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.blog-index ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.blog-index ul li {
+  width: calc(50% - 1rem);
+}
+/* Astro's `li *` matched only this template's own elements (the link, cover,
+   title, description and date paragraphs), never the <time> FormattedDate
+   renders. */
+.blog-index ul li :is(a, img, h2, p) {
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+.blog-index ul li:first-child {
+  width: 100%;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.blog-index ul li:first-child .title {
+  font-size: 2.369rem;
+}
+.blog-index ul li img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.5rem;
+  border-radius: 12px;
+}
+.blog-index ul li a {
+  display: block;
+}
+.blog-index .title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+.blog-index .description {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.blog-index .date {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+.blog-index ul li a:hover .title,
+.blog-index ul li a:hover .date {
+  color: var(--accent-cyan);
+}
+.blog-index ul a:hover img {
+  box-shadow: var(--window-shadow);
+}
+.blog-index ul a:focus-visible {
+  outline: 3px solid var(--accent-secondary);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+@media (max-width: 720px) {
+  .blog-index ul {
+    gap: 1.5rem;
+  }
+  .blog-index ul li {
+    width: 100%;
+    text-align: center;
+  }
+  .blog-index ul li:first-child {
+    margin-bottom: 0;
+  }
+  .blog-index ul li:first-child .title {
+    font-size: 1.563em;
+  }
+}

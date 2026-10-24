@@ -265,8 +265,9 @@
   color: var(--text-primary);
 }
 
-/* Standalone article pages (BlogPost.astro). Markdown renders through
-   <slot />, which scoped component styles never reach, so they live here. */
+/* Standalone article pages (src/app/(post)/blog/[slug]/page.tsx). Markdown
+   renders as the post's <Content />, which the page's own scoped stylesheet
+   (post.css) does not reach, so the article styles live here. */
 .prose {
   max-width: 720px;
   margin: 0 auto;

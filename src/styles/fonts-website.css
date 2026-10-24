@@ -1,0 +1,137 @@
+/* Website mode type, also used by the garden: IBM Plex Sans (latin), IBM Plex
+   Sans Thai (thai) and IBM Plex Mono (latin), 400-600, as --font-plex-sans,
+   --font-plex-thai and --font-plex-mono (read by website-mode.css). Imported
+   only by the root layouts that render website-mode type ((home) and
+   (garden)), so other pages carry neither these rules nor the files.
+
+   Committed files and Astro's @font-face rules, like fonts-desktop.css. Plex
+   Mono keeps the metric-adjusted Courier New fallback face that the Astro
+   Fonts API generated for its `monospace` fallback. */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("../assets/fonts/ibm-plex-sans-latin.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("../assets/fonts/ibm-plex-sans-latin.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("../assets/fonts/ibm-plex-sans-latin.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Thai";
+  src: url("../assets/fonts/ibm-plex-sans-thai-400-thai.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Thai";
+  src: url("../assets/fonts/ibm-plex-sans-thai-500-thai.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Thai";
+  src: url("../assets/fonts/ibm-plex-sans-thai-600-thai.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../assets/fonts/ibm-plex-mono-400-latin.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../assets/fonts/ibm-plex-mono-500-latin.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../assets/fonts/ibm-plex-mono-600-latin.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono Fallback";
+  src: local("Courier New");
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  size-adjust: 99.9837%;
+  ascent-override: 102.5167%;
+  descent-override: 27.5045%;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono Fallback";
+  src: local("Courier New");
+  font-display: swap;
+  font-weight: 500;
+  font-style: normal;
+  size-adjust: 99.9837%;
+  ascent-override: 102.5167%;
+  descent-override: 27.5045%;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono Fallback";
+  src: local("Courier New");
+  font-display: swap;
+  font-weight: 600;
+  font-style: normal;
+  size-adjust: 99.9837%;
+  ascent-override: 102.5167%;
+  descent-override: 27.5045%;
+}
+
+:root {
+  /* Bare family names, so website-mode.css can put IBM Plex Sans Thai second
+     for Thai glyphs, ahead of the system fallbacks. */
+  --font-plex-sans: "IBM Plex Sans";
+  --font-plex-thai: "IBM Plex Sans Thai";
+  --font-plex-mono: "IBM Plex Mono", "IBM Plex Mono Fallback", monospace;
+}

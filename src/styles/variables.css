@@ -1,7 +1,8 @@
 /* CSS Variables and Theme Definitions */
 
-/* Inter and JetBrains Mono come from the Fonts API (astro.config.mjs);
-   BaseHead defines --font-inter and --font-jetbrains-mono. */
+/* Inter and JetBrains Mono are self-hosted: fonts-desktop.css, which
+   <Document> imports on every page, defines --font-inter and
+   --font-jetbrains-mono. */
 
 :root {
   /* Dark theme (default) - macOS-inspired */

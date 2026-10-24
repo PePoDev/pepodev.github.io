@@ -158,7 +158,7 @@ test("pages self-host Inter and JetBrains Mono, and website mode does not downlo
       monoStack: read("--font-mono"),
     };
   });
-  // The Fonts API names the families; the stacks are the same as before,
+  // fonts-desktop.css names the families; the stacks are the same as before,
   // with the self-hosted family first.
   expect(fonts.inter).not.toBe("");
   expect(fonts.mono).not.toBe("");

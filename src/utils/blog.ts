@@ -1,4 +1,5 @@
-import { type CollectionEntry, getCollection } from "astro:content";
+import { type CollectionEntry, getCollection } from "@lib/content";
+import type { ImageAsset } from "@lib/images";
 
 export type BlogEntry = CollectionEntry<"blog">;
 
@@ -19,7 +20,7 @@ export function getPostDescription(post: BlogEntry): string {
 }
 
 /** `heroImage`, falling back to the Obsidian `cover-picture` property. */
-export function getPostHeroImage(post: BlogEntry) {
+export function getPostHeroImage(post: BlogEntry): ImageAsset | undefined {
   return post.data.heroImage || post.data["cover-picture"];
 }
 

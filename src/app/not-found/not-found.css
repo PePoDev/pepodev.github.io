@@ -1,0 +1,104 @@
+/* The 404 page (global-not-found.tsx). */
+
+/* The message fills whatever height the header leaves. */
+body.not-found-page {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+main.not-found {
+  display: grid;
+  place-items: center;
+  padding: 48px 16px 64px;
+  background: radial-gradient(
+    circle at 15% 0%,
+    color-mix(in srgb, var(--accent-primary) 14%, transparent),
+    transparent 32rem
+  );
+}
+
+.not-found .not-found-content {
+  width: min(100%, 640px);
+}
+
+.not-found .not-found-eyebrow {
+  margin-bottom: 14px;
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.not-found h1 {
+  color: var(--text-primary);
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.not-found .not-found-lead {
+  margin-top: 16px;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.not-found .not-found-terminal {
+  margin-top: 24px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.not-found .not-found-terminal .prompt {
+  color: var(--accent-primary);
+}
+
+.not-found .not-found-terminal .error {
+  color: var(--accent-red);
+}
+
+.not-found .not-found-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-top: 28px;
+}
+
+.not-found .not-found-links a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 18px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.not-found .not-found-links a:first-child {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
+  color: #07110a;
+}
+
+.not-found .not-found-links a:hover {
+  border-color: var(--accent-secondary);
+}
+
+.not-found .not-found-links a:focus-visible {
+  outline: 3px solid var(--accent-secondary);
+  outline-offset: 3px;
+}

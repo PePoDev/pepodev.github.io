@@ -1,0 +1,58 @@
+/* SiteHeader.tsx. Every selector starts at .site-header, so the rules stay
+   scoped to the component as the Astro <style> was. */
+.site-header {
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.site-header .site-header-inner {
+  width: min(var(--site-header-width), 100% - 32px);
+  min-height: 64px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.site-header .site-header-brand {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-header .site-header-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.site-header .site-header-nav a {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-header .site-header-nav a:hover,
+.site-header .site-header-nav a[aria-current="page"] {
+  background: var(--glass-highlight);
+  color: var(--text-primary);
+}
+
+.site-header a:focus-visible {
+  outline: 3px solid var(--accent-secondary);
+  outline-offset: 3px;
+}
+
+/* High contrast drops the background, so mark the current page with a
+   line instead. */
+@media (forced-colors: active) {
+  .site-header .site-header-nav a[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+}

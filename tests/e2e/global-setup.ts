@@ -1,20 +1,27 @@
 import { chromium, type FullConfig } from "@playwright/test";
 
-// Astro's dev server reloads the first page that connects after it rewrites
-// the content data store on startup. Absorb that reload here so it cannot
-// interrupt the first test.
+// `next dev` compiles each route, and its client chunks, on the first
+// request. Load every kind of page once here, so the first test of each
+// spec does not spend its timeout waiting for the compiler. Against the
+// exported site (PLAYWRIGHT_SERVER=preview) this takes a moment.
+const routes = [
+  "/",
+  "/blog/",
+  "/blog/aws-local-zone-bangkok-launch/",
+  "/resume/",
+  "/garden/",
+  "/this-page-does-not-exist/",
+  "/rss.xml",
+];
+
 export default async function globalSetup(config: FullConfig) {
   const { baseURL, channel, launchOptions } = config.projects[0].use;
   const browser = await chromium.launch({ ...launchOptions, channel });
-  const page = await browser.newPage();
+  const page = await browser.newPage({ baseURL });
 
-  await page.goto(baseURL ?? "/");
-  await page
-    .waitForEvent("framenavigated", {
-      predicate: (frame) => frame === page.mainFrame(),
-      timeout: 3_000,
-    })
-    .catch(() => {});
+  for (const route of routes) {
+    await page.goto(route, { waitUntil: "load", timeout: 120_000 });
+  }
 
   await browser.close();
 }

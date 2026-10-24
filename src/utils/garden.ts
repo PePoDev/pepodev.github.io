@@ -1,4 +1,4 @@
-import { type CollectionEntry, getCollection } from "astro:content";
+import { type CollectionEntry, getCollection } from "@lib/content";
 
 export type GardenNote = CollectionEntry<"garden">;
 

@@ -1,7 +1,10 @@
-# build output
-dist/
-# generated types
-.astro/
+# build output (next build; out/ is the exported site)
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+# images resized at build time by src/lib/images.ts
+public/_img/
 
 # test artifacts
 playwright-report/

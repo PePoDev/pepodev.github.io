@@ -486,7 +486,7 @@ test.describe("Blog reader", () => {
     const blog = await openApp(page, "Blog", "blog");
     const links = blog.locator(".blog-reader-body a[href^='http']");
     expect(await links.count()).toBeGreaterThan(0);
-    const attributes = await links.evaluateAll((anchors) =>
+    const attributes = await links.evaluateAll((anchors: HTMLAnchorElement[]) =>
       anchors.map((anchor) => `${anchor.target} ${anchor.rel}`),
     );
     expect(new Set(attributes)).toEqual(
@@ -598,7 +598,7 @@ async function contrastFailures(page: Page, selectors: string[]) {
     content: `${selectors.join(",")} { color: transparent !important; }`,
   });
   const screenshot = (await page.screenshot()).toString("base64");
-  await hide.evaluate((node) => node.remove());
+  await hide.evaluate((node) => (node as Element).remove());
 
   return page.evaluate(
     async ({ screenshot, items }) => {

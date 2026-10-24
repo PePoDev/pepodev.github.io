@@ -81,14 +81,32 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v6
+      - name: Install pnpm (the version in package.json "packageManager")
+        uses: pnpm/action-setup@v6
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies from the lockfile
+        run: pnpm install --frozen-lockfile
       - name: Download published garden notes
         if: needs.garden.outputs.synced == 'true'
         uses: actions/download-artifact@v8
         with:
           name: garden
           path: src
-      - name: Install, build, and upload your site
-        uses: withastro/action@v6
+      # next build, plus scripts/prebuild.mjs and scripts/postbuild.mjs; the
+      # static export lands in out/.
+      - name: Build the site
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+      - name: Upload the site for GitHub Pages
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: out/
+          include-hidden-files: true
 
   # Runs the Playwright suite against the site the build job uploaded, so the
   # deploy job only ever publishes a build that passed.
@@ -99,9 +117,9 @@ jobs:
     permissions:
       contents: read
     env:
-      # Read by playwright.config.ts: serve dist/ with `astro preview`, in
-      # Google Chrome, which plays the AAC music that Playwright's bundled
-      # Chromium cannot.
+      # Read by playwright.config.ts: serve out/ with scripts/serve-static.mjs
+      # (`pnpm preview`, which behaves like GitHub Pages), in Google Chrome,
+      # which plays the AAC music that Playwright's bundled Chromium cannot.
       PLAYWRIGHT_SERVER: preview
       PLAYWRIGHT_CHANNEL: chrome
     steps:
@@ -112,7 +130,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v7
         with:
-          node-version: 24 # The withastro/action default the build job uses
+          node-version: 24 # The same Node as the build job
           cache: pnpm
       - name: Install dependencies from the lockfile
         run: pnpm install --frozen-lockfile
@@ -123,8 +141,8 @@ jobs:
         with:
           name: github-pages
           path: ${{ runner.temp }}/github-pages
-      - name: Unpack it into dist/
-        run: mkdir dist && tar -xf "$RUNNER_TEMP/github-pages/artifact.tar" -C dist
+      - name: Unpack it into out/
+        run: mkdir out && tar -xf "$RUNNER_TEMP/github-pages/artifact.tar" -C out
       # tests/e2e/garden.spec.ts skips itself without the synced notes.
       - name: Download published garden notes
         if: needs.garden.outputs.synced == 'true'
