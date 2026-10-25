@@ -292,9 +292,10 @@ the icon placement and clock scripts, and `<WebsiteMode />`.
 
 ### Parse-Time Scripts of the Desktop
 
-`DesktopScripts.tsx` and `HomeHeadScripts.tsx`; before hydration they only
-set attributes and styles (hydration rule 1), and the stores take over with
-the same code:
+`DesktopScripts.tsx` and `HomeHeadScripts.tsx`; before hydration they never
+change text (hydration rule 1): they set attributes, styles and globals (the
+early-input script also scrolls, focuses and writes the clipboard), and the
+stores take over with the same code:
 
 - `<head>`: site mode; theme and accent; preferences ("Initialize theme
   immediately": background, glass, radius, effects, with the defaults boot
@@ -733,9 +734,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   fields and controls outside the window keep their keys, a focused button or
   link inside it keeps its Enter and Space, the app's own launcher hands its
   keys over, and Snake pauses whenever it loses the keyboard, including to a
-  hidden tab or another app in front of the browser. Pointer presses
-  on Calculator and Snake buttons do not focus them, so Enter after clicking
-  keys still means "=". Keys typed right after a launch, before the app's code
+  hidden tab or another app in front of the browser. Pointer presses on
+  Calculator and Snake buttons do not focus them, so Enter after clicking keys
+  still means "=". Keys typed right after a launch, before the app's code
   arrives, still reach it. The shared guard is `src/utils/app-keyboard.ts`.
 - Storage keys are `pepodev.desktopPrefs`, `pepodev.theme` (a mirror of
   `desktopPrefs.theme`, read when the preferences have no theme),
