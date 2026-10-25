@@ -461,10 +461,13 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   effects; dispatching `desktop:open-app` from an effect is not.
   `[data-open-app]` elements outside the icons launch their app on click.
   `useAppWindowElement()` returns the window element.
-- Deep links: `useDeepLinkHandler((slug) => boolean)`. For `?blog=<slug>` the
-  desktop opens and maximizes Blog at boot and keeps the slug pending until
-  the handler registers (no time limit); `false` shows "Article not found".
-  Choosing website mode or closing Blog drops it.
+- Deep links: `useDeepLinkHandler((slug, { focus }) => boolean)`. For
+  `?blog=<slug>` the desktop opens and maximizes Blog at boot and keeps the
+  slug pending until the handler registers (no time limit); `false` shows
+  "Article not found". Choosing website mode or closing Blog drops it.
+  `focus` follows the late-mount rule above: false once anything took focus
+  since Blog opened (the palette, the Start menu, another app), and the
+  handler then opens the target without moving focus.
 - Engines (Music, SRE game, Snake, White Noise): create the engine object in a
   `useState` initializer without side effects, start and stop it in effects
   with cleanups that depend on `useAppWindow()`'s primitives; draw canvases
@@ -747,9 +750,11 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   `window.__pepoMusicController.requestAudioFrame()`.
 - The desktop Blog reader opens every article at the top with focus on Back,
   from the list or a `?blog=` link (an unknown slug focuses the first
-  article); Back restores the list position. An article that fails to load
-  shows "Try again", which keeps focus on Back. Links in articles open in a
-  new tab, so the desktop never navigates away.
+  article); a link whose Blog app loads after the visitor moved focus
+  elsewhere opens its article without taking focus. Back restores the list
+  position. An article that fails to load shows "Try again", which keeps
+  focus on Back. Links in articles open in a new tab, so the desktop never
+  navigates away.
 - Anything that changes desktop preferences dispatches `desktop:preferences`;
   Settings re-renders from the preferences store.
 - Welcome opens 1.5 s after a first visit loads unless the visitor acted first

@@ -6,12 +6,24 @@
 // it to open the slug. A handler that returns false shows the "Article not
 // found" toast (the slug never reaches the toast). Picking website mode, or
 // closing the Blog window before the app is ready, drops the pending link.
+// The handler may move focus to the article only if nothing took focus
+// since the window opened (mayTakeFocus): on a slow network the visitor may
+// have moved on to the palette, the Start menu or another app by then.
 import type { AppId } from "./apps";
+import { isOverlayOpen } from "./overlay-state";
 import { getBlogDeepLink, isDesktopSiteMode } from "./site-mode";
 import { showToast } from "./toasts";
-import { requestOpenApp, toggleMaximize, windowsStore } from "./window-manager";
+import {
+  getLaunchFocus,
+  getWindowElement,
+  isWindowFocused,
+  requestOpenApp,
+  toggleMaximize,
+  windowsStore,
+} from "./window-manager";
 
-export type DeepLinkHandler = (slug: string) => boolean;
+/** `focus`: whether the handler may move focus into its window (to the target). */
+export type DeepLinkHandler = (slug: string, options: { focus: boolean }) => boolean;
 
 const handlers = new Map<AppId, DeepLinkHandler>();
 let pendingBlogSlug: string | null = null;
@@ -33,11 +45,26 @@ function runPendingBlogLink() {
   if (!slug || !handler) return;
   pendingBlogSlug = null;
   if (!isDesktopSiteMode() || !windowsStore.get().windows.blog.open) return;
-  if (!handler(slug)) {
+  if (!handler(slug, { focus: mayTakeFocus() })) {
     console.warn(`Blog post with slug "${slug}" not found`);
     // The slug comes from the URL, so it stays out of the toast.
     showToast("Article not found. Showing all articles instead.", { duration: 5000, icon: "⚠️" });
   }
+}
+
+/**
+ * As for a body that renders after its window opened (useFocusOnLaunch):
+ * Blog is still the focused window, no overlay is open, and focus is still
+ * on <body>, on the window, or where its launch left it.
+ */
+function mayTakeFocus(): boolean {
+  const win = getWindowElement("blog");
+  const active = document.activeElement;
+  return (
+    isWindowFocused("blog") &&
+    !isOverlayOpen() &&
+    (!active || active === document.body || active === win || active === getLaunchFocus("blog"))
+  );
 }
 
 /** Opens a ?blog= deep link, if the URL has one. Returns a cleanup. */
