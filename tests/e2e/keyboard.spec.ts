@@ -369,6 +369,66 @@ test("Tab still moves through a loading window's title bar", async ({
   await expect(calculator.locator(".calculator-app")).toBeAttached();
 });
 
+test("a window whose app fails to render drops the keys typed meanwhile and lets Tab through", async ({
+  page,
+}) => {
+  // "This app could not load" replaces an app that threw while rendering.
+  // That window is not loading, so Tab moves through it to the taskbar and
+  // back instead of waiting there, and the Tabs and Enters typed before the
+  // error never reach the app that "Try again" then renders.
+  await emulateSaveData(page);
+  await page.reload();
+  await waitForWindowManager(page);
+  await waitForIdleBodies(page);
+  // Trash's code, held back as a slow network would, and made to throw
+  // while it renders until the test says otherwise.
+  const count = '"data-trash-count":""';
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+    const response = await route.fetch();
+    let body = await response.text();
+    if (body.includes(count)) {
+      await held;
+      body = body.replace(
+        count,
+        '"data-trash-count":(()=>{if(window.__trashThrows)throw Error("Trash failed");return ""})()',
+      );
+    }
+    await route.fulfill({ response, body });
+  });
+  await page.evaluate(() => Object.assign(window, { __trashThrows: true }));
+
+  await page.locator('#desktop-icons [data-open-app="trash"]').focus();
+  await page.keyboard.press("Enter");
+  const trash = page.locator("#window-trash");
+  await expect(trash).toBeFocused();
+  for (let tab = 0; tab < 5; tab += 1) await page.keyboard.press("Tab");
+  for (let enter = 0; enter < 3; enter += 1) await page.keyboard.press("Enter");
+  await expect(trash).toBeFocused();
+
+  release();
+  const error = trash.getByRole("alert");
+  await expect(error).toContainText("This app could not load");
+  const retry = error.getByRole("button", { name: "Try again" });
+  for (let tab = 0; tab < 4; tab += 1) await page.keyboard.press("Tab");
+  await expect(retry).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.locator("#taskbar-start")).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(retry).toBeFocused();
+
+  await page.evaluate(() => Object.assign(window, { __trashThrows: false }));
+  await page.keyboard.press("Enter");
+  await expect(trash.locator("[data-trash-count]")).toHaveText(
+    "5 questionable artifacts quarantined",
+  );
+  await expect(trash.locator("[data-trash-item]")).toHaveCount(5);
+  expect(
+    await trash.evaluate((element) => element.contains(document.activeElement)),
+  ).toBe(true);
+});
+
 test("an open command palette keeps keys from the app behind it", async ({
   page,
 }) => {

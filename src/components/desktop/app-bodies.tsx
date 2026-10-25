@@ -21,7 +21,7 @@ import {
 } from "react";
 import type { AppProps } from "./app-api";
 import { getAppChunk, loadAppChunk, subscribeAppChunks } from "./app-chunks";
-import { setAppBodyReady } from "./app-keys";
+import { setAppBodyFailed, setAppBodyReady } from "./app-keys";
 import type { AppId } from "./apps";
 import { activateWindow, isKeyboardInteraction, windowsStore } from "./window-manager";
 
@@ -60,13 +60,19 @@ function AppLoading() {
  * tries again. Both go through a launch (focusRequest), so focus does not
  * drop to <body> when the button goes: pressed from the keyboard, it moves
  * into the window first, and an app that focuses its input on launch
- * (useFocusOnLaunch) takes it from there once it renders.
+ * (useFocusOnLaunch) takes it from there once it renders. Keys typed while
+ * the app loaded are dropped, and none are kept while this shows
+ * (app-keys.ts).
  */
 function AppLoadError({ appId, onRetry }: { appId: AppId; onRetry: () => void }) {
   const retry = useRef(onRetry);
   useEffect(() => {
     retry.current = onRetry;
   });
+  useEffect(() => {
+    setAppBodyFailed(appId, true);
+    return () => setAppBodyFailed(appId, false);
+  }, [appId]);
   useEffect(() => {
     const seq = () => windowsStore.get().windows[appId].focusRequest.seq;
     const failedAt = seq();

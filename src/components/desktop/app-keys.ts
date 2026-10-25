@@ -17,7 +17,9 @@
 //   replayed once it has, as long as the window is still open: they were the
 //   app's when they were typed, so another window taking over in the
 //   meantime does not drop them (typing "12+3" into Calculator, then opening
-//   Snake, still leaves "12+3"). Closing the window drops them.
+//   Snake, still leaves "12+3"). Closing the window drops them, and so does
+//   the window showing the load error instead (a failed download, a body
+//   that threw: app-bodies.tsx), which keeps no keys while it shows.
 // - Where they go: if the body put focus on a text field in its window
 //   (useFocusOnLaunch: Terminal's input, the Gallery password), the typed
 //   text goes into it, Backspace deletes and Enter submits its form, as if
@@ -39,7 +41,6 @@
 //   with that focus. Tab within the title bar moves as usual.
 import { isAppKeyboardEvent } from "@utils/app-keyboard";
 import { canTakeFocus, focusFirst } from "@utils/overlays";
-import { getAppChunk } from "./app-chunks";
 import type { AppId } from "./apps";
 import { getWindowElement, windowsStore } from "./window-manager";
 
@@ -47,6 +48,7 @@ type KeyHandler = (event: KeyboardEvent) => void;
 
 const handlers = new Map<AppId, Set<KeyHandler>>();
 const readyBodies = new Set<AppId>();
+const failedBodies = new Set<AppId>();
 const earlyKeys = new Map<AppId, KeyboardEvent[]>();
 const MAX_EARLY_KEYS = 64;
 // Tabs held while the body loaded, and where the first one was pressed.
@@ -115,6 +117,22 @@ export function setAppBodyReady(appId: AppId, ready: boolean) {
       }
     }
   });
+}
+
+/**
+ * Marks an app's window as showing the load error (or no longer): "This app
+ * could not load" (app-bodies.tsx). The keys kept while it loaded are
+ * dropped, and none are kept while the error shows: there is no app to type
+ * into, and Tab moves through the window as usual.
+ */
+export function setAppBodyFailed(appId: AppId, failed: boolean) {
+  if (!failed) {
+    failedBodies.delete(appId);
+    return;
+  }
+  failedBodies.add(appId);
+  earlyKeys.delete(appId);
+  tabbedFrom.delete(appId);
 }
 
 // What Tab stops at, in tree order (the desktop sets no positive tabindex).
@@ -206,9 +224,8 @@ function holdTab(appId: AppId, windowEl: HTMLElement, event: KeyboardEvent) {
 
 function onKeyDown(event: KeyboardEvent) {
   const { focused, windows } = windowsStore.get();
-  if (!focused || readyBodies.has(focused) || !windows[focused].mounted) return;
-  // Its download failed: the window shows the error, not an app to type into.
-  if (getAppChunk(focused)?.status === "failed") return;
+  // A window that shows the load error has no app to type into.
+  if (!focused || readyBodies.has(focused) || failedBodies.has(focused) || !windows[focused].mounted) return;
   const windowEl = getWindowElement(focused);
   if (!windowEl || !isAppKeyboardEvent(event, windowEl)) return;
   if (event.key === "Tab") holdTab(focused, windowEl, event);
