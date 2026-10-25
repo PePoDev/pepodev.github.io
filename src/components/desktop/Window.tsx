@@ -1,9 +1,10 @@
 "use client";
 // An app window (port of Window.astro): a non-modal dialog named by its
 // title, rendered from its WindowState (window-manager.ts). The title bar
-// drags it (clamped by the window manager), the handles resize it, and the
-// app body mounts inside .window-content on the first launch. Closed and
-// minimized windows are hidden from assistive tech and inert.
+// drags it (clamped by the window manager), the handles resize it, with a
+// mouse, a finger or a pen, and the app body mounts inside .window-content
+// on the first launch. Closed and minimized windows are hidden from
+// assistive tech and inert.
 import {
   memo,
   useCallback,
@@ -12,6 +13,7 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { AppWindowContext } from "./app-api";
 import { AppBody } from "./app-bodies";
@@ -35,28 +37,37 @@ import {
 const FOCUSABLE =
   'a[href], button, input, select, textarea, summary, iframe, [contenteditable], [tabindex]:not([tabindex="-1"])';
 
-/** Follows the mouse until the button is released (or the page loses focus). */
-function followMouse(session: DragSession | null) {
+/**
+ * Follows the pointer that pressed (a mouse, a finger or a pen) until it is
+ * released or cancelled (or the page loses focus). Other fingers are ignored.
+ */
+function followPointer(session: DragSession | null, pointerId: number) {
   if (!session) return;
   document.body.style.userSelect = "none";
-  const end = () => {
-    document.removeEventListener("mousemove", onMove);
-    document.removeEventListener("mouseup", end);
-    window.removeEventListener("mouseup", end);
-    window.removeEventListener("blur", end);
+  const stop = () => {
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", end);
+    document.removeEventListener("pointercancel", end);
+    window.removeEventListener("pointerup", end);
+    window.removeEventListener("blur", stop);
     document.body.style.userSelect = "";
   };
-  const onMove = (event: MouseEvent) => {
+  const end = (event: PointerEvent) => {
+    if (event.pointerId === pointerId) stop();
+  };
+  const onMove = (event: PointerEvent) => {
+    if (event.pointerId !== pointerId) return;
     if (event.buttons === 0) {
-      end();
+      stop();
       return;
     }
     session.move(event);
   };
-  document.addEventListener("mousemove", onMove);
-  document.addEventListener("mouseup", end);
-  window.addEventListener("mouseup", end);
-  window.addEventListener("blur", end);
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", end);
+  document.addEventListener("pointercancel", end);
+  window.addEventListener("pointerup", end);
+  window.addEventListener("blur", stop);
 }
 
 /**
@@ -135,9 +146,15 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
     if (current.open && !current.minimized) focusWindow(id);
   };
 
-  const onTitlebarMouseDown = (event: ReactMouseEvent) => {
-    if (isMobileMode() || (event.target as Element).closest(".window-controls")) return;
-    followMouse(beginWindowDrag(id, event));
+  // Drags and resizes start from pointer events: a finger that moves sends
+  // no mouse events. The title bar and handles are touch-action: none
+  // (window.css), so the browser does not take the gesture to pan.
+  const onTitlebarPointerDown = (event: ReactPointerEvent) => {
+    if (!event.isPrimary || isMobileMode() || (event.target as Element).closest(".window-controls")) return;
+    // A touch drag (and a pen's, on some systems) sends no mousedown to raise
+    // the window.
+    if (event.pointerType !== "mouse") onWindowMouseDown();
+    followPointer(beginWindowDrag(id, event), event.pointerId);
   };
 
   const onTitlebarDoubleClick = (event: ReactMouseEvent) => {
@@ -145,12 +162,16 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
     toggleMaximize(id);
   };
 
-  const onResizeMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
+  const onResizePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary) return;
+    const direction = event.currentTarget.dataset.resizeDirection || "corner";
+    followPointer(beginWindowResize(id, direction, event), event.pointerId);
+  };
+
+  // A press on a handle neither raises the window nor moves focus.
+  const onResizeMouseDown = (event: ReactMouseEvent) => {
     event.stopPropagation();
-    const session = beginWindowResize(id, event.currentTarget.dataset.resizeDirection || "corner", event);
-    if (!session) return;
     event.preventDefault();
-    followMouse(session);
   };
 
   const className = [
@@ -200,7 +221,7 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
         if (win.open && !win.minimized && current.focused !== id) focusWindow(id);
       }}
     >
-      <div className="window-titlebar" onMouseDown={onTitlebarMouseDown} onDoubleClick={onTitlebarDoubleClick}>
+      <div className="window-titlebar" onPointerDown={onTitlebarPointerDown} onDoubleClick={onTitlebarDoubleClick}>
         <div className="window-titlebar-icon">
           <AppIcon name={id} />
         </div>
@@ -254,16 +275,19 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
       <div
         className="window-resize-handle window-resize-handle-right"
         data-resize-direction="right"
+        onPointerDown={onResizePointerDown}
         onMouseDown={onResizeMouseDown}
       />
       <div
         className="window-resize-handle window-resize-handle-bottom"
         data-resize-direction="bottom"
+        onPointerDown={onResizePointerDown}
         onMouseDown={onResizeMouseDown}
       />
       <div
         className="window-resize-handle window-resize-handle-corner"
         data-resize-direction="corner"
+        onPointerDown={onResizePointerDown}
         onMouseDown={onResizeMouseDown}
       />
     </section>

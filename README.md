@@ -699,7 +699,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   so the window gets the keys and Enter does not press it again; Tab then
   reaches the first window button and Shift+Tab the palette button. From the
   keyboard, focus stays on it or follows into the window.
-- Dragging keeps a window's title bar above the taskbar with at least 120px of
+- Windows drag by the title bar and resize from their handles with a mouse, a
+  finger, or a pen (pointer events; above 768px the title bar and handles are
+  `touch-action: none`), and a touch drag raises the window as a click does.
+  Dragging keeps a window's title bar above the taskbar with at least 120px of
   it on screen. Maximized windows end at the taskbar (`getTaskbarHeight()`),
   and Maximize reads Restore while maximized. An overflowing `.window-content`
   with nothing focusable inside (hidden and disabled controls do not count)

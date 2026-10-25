@@ -554,6 +554,79 @@ test("resizes windows from the right and bottom borders", async ({ page }) => {
   );
 });
 
+// Moves one finger in steps, through Chromium's touch input: a touch that
+// moves sends no mouse events at all, so a mouse-only drag never starts.
+async function touchDrag(
+  page: Page,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+) {
+  const cdp = await page.context().newCDPSession(page);
+  const point = (step: number) => ({
+    x: Math.round(from.x + ((to.x - from.x) * step) / 8),
+    y: Math.round(from.y + ((to.y - from.y) * step) / 8),
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [point(0)],
+  });
+  for (let step = 1; step <= 8; step++) {
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [point(step)],
+    });
+  }
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await cdp.detach();
+}
+
+test.describe("touch tablets in the desktop layout", () => {
+  test.use({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+
+  test("a finger drags a window by its title bar and resizes it from a handle", async ({
+    page,
+  }) => {
+    const about = await openApp(page, "About Me", "me");
+    // Calculator opens focused; park it in the bottom-right corner, clear of
+    // About Me's title bar.
+    const calculator = await openApp(page, "Calculator", "calculator");
+    const calculatorBar = (await calculator
+      .locator(".window-titlebar")
+      .boundingBox())!;
+    await page.mouse.move(calculatorBar.x + 60, calculatorBar.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(1000, 760, { steps: 8 });
+    await page.mouse.up();
+
+    // Dragging raises the window, as a click on it would.
+    const start = (await about.boundingBox())!;
+    const title = (await about.locator(".window-title").boundingBox())!;
+    const grab = { x: title.x + 20, y: title.y + title.height / 2 };
+    await touchDrag(page, grab, { x: grab.x - 100, y: grab.y - 40 });
+    await expect(about).toHaveClass(/focused/);
+    await expect(calculator).not.toHaveClass(/focused/);
+    const moved = (await about.boundingBox())!;
+    expect(Math.round(moved.x - start.x)).toBe(-100);
+    expect(Math.round(moved.y - start.y)).toBe(-40);
+
+    const corner = (await about
+      .locator(".window-resize-handle-corner")
+      .boundingBox())!;
+    const handle = {
+      x: corner.x + corner.width / 2,
+      y: corner.y + corner.height / 2,
+    };
+    await touchDrag(page, handle, { x: handle.x + 100, y: handle.y + 60 });
+    const resized = (await about.boundingBox())!;
+    expect(Math.round(resized.width - moved.width)).toBe(100);
+    expect(Math.round(resized.height - moved.height)).toBe(60);
+    expect(Math.round(resized.x)).toBe(Math.round(moved.x));
+  });
+});
+
 test("searches and launches apps from start menu and command palette", async ({
   page,
 }) => {
