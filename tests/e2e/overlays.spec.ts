@@ -149,6 +149,26 @@ test("command palette ranks name matches first and confirms Reset Desktop", asyn
   expect(await savedTheme(page)).not.toBe("light");
 });
 
+test("typing straight after Ctrl+K searches and Enter opens the match", async ({
+  page,
+}) => {
+  await resetPage(page);
+  await markPage(page);
+  // No waits between keys: the input must already have focus when the
+  // palette opens, or "calc" is lost and Enter arms Reset Desktop.
+  await page.keyboard.press("ControlOrMeta+K");
+  await page.keyboard.type("calc");
+  await page.keyboard.press("Enter");
+
+  await expect(page.locator("#window-calculator")).toBeVisible();
+  await expect(page.locator("#command-palette")).toHaveAttribute(
+    "data-visible",
+    "false",
+  );
+  await expect(page.locator("#command-palette-status")).toHaveText("");
+  await expectNoReload(page);
+});
+
 test("command palette Enter runs the focused item and the highlight follows focus", async ({
   page,
 }) => {

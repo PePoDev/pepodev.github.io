@@ -674,7 +674,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   window's title bar.
 - The Start menu, tray panel, and command palette are `inert` while closed,
   and only one is open at a time: opening one closes the others. Tabbing out
-  of the Start menu or tray closes it. The open palette is modal. Escape, a
+  of the Start menu or tray closes it. The open palette is modal, and its
+  search box takes focus as it opens, so keys typed straight after
+  `Ctrl`/`Cmd` + `K` are searched rather than lost. Escape, a
   toggle button, `Ctrl`/`Cmd` + `K`, or a backdrop click returns focus to the
   opener (a window included), or, when the opener is gone (Close All
   Windows), to the topmost window or the palette button; launching an app

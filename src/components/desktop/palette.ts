@@ -161,7 +161,11 @@ export function openPalette() {
     overlayStore.set("command-palette");
     paletteStore.set({ ...initialState, ...emptyStatus("") });
   });
-  window.setTimeout(() => byId("command-palette-input")?.focus(), 10);
+  // The commit rendered the palette open (no longer inert), so the input
+  // takes focus now: keys typed straight after Ctrl/Cmd + K reach the search
+  // instead of being lost before a delayed focus, which left Enter to run
+  // the first item (arming Reset Desktop).
+  byId("command-palette-input")?.focus();
 }
 
 /**
