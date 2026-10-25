@@ -5,9 +5,9 @@
 // a visitor clicks) and for the small behaviours of static pages.
 //
 // data-cfasync="false" keeps Cloudflare Rocket Loader, which defers scripts
-// on pepo.dev, from holding it back (README, Development Rules). Guard any
-// DOMContentLoaded handler in `code` with a `window.__pepodev…Ready` flag:
-// Rocket Loader can replay the event. React never runs scripts it renders on
+// on pepo.dev, from holding it back (README, Parse-Time Scripts and Rocket
+// Loader). Guard any DOMContentLoaded handler in `code` with a
+// `window.__pepodev…Ready` flag: Rocket Loader can replay the event. React never runs scripts it renders on
 // the client, so these only work in the server-rendered HTML; render them
 // from Server Components. A script that changes <html> attributes needs
 // <Document suppressHydrationWarning>.

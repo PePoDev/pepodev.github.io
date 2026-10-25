@@ -586,6 +586,39 @@ test("the command-palette tip dismisses itself", async ({ page }) => {
   await expect(tip).toHaveCount(0, { timeout: 12_000 });
 });
 
+test("with reduced motion, toasts fade in without sliding", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await resetPage(page);
+  await page.evaluate(() =>
+    document.dispatchEvent(
+      new CustomEvent("desktop:show-toast", {
+        detail: { message: "Saved", duration: 5000 },
+      }),
+    ),
+  );
+  const toast = page.locator("#toast-container .toast", { hasText: "Saved" });
+  await expect(toast).toHaveClass(/toast-show/);
+  await expect(toast).toHaveCSS("transform", "none");
+  await expect(toast).toHaveCSS("transition-property", "opacity");
+});
+
+test("in forced colors, the palette outlines the item Enter opens", async ({
+  page,
+}) => {
+  // The selection is a background colour, which forced colors drop.
+  await page.emulateMedia({ forcedColors: "active" });
+  await resetPage(page);
+  await openPalette(page);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  const items = page.locator("#command-palette-results .command-palette-item");
+  const selected = items.and(page.locator(".selected"));
+  await expect(selected).toHaveCount(1);
+  await expect(page.locator("#command-palette-input")).toBeFocused();
+  await expect(selected).toHaveCSS("outline-style", "solid");
+  await expect(items.first()).toHaveCSS("outline-style", "none");
+});
+
 test("an unknown ?blog= slug opens the article list with a toast", async ({
   page,
 }) => {

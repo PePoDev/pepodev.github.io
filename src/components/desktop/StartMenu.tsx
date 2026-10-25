@@ -3,17 +3,23 @@
 // with the query first, then other label matches, then descriptions
 // (rankMatch in src/utils/search.ts); Enter opens the first match. Items are
 // [data-open-app] launchers, which the desktop opens on click.
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { memo, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { rankMatch } from "@utils/search";
 import { AppIcon } from "./AppIcon";
 import { APPS } from "./apps";
-import { startQueryStore, useOpenOverlay, useStartQuery } from "./overlay-state";
+import { startQueryStore, useOverlayOpen, useStartQuery } from "./overlay-state";
 
-function Uptime() {
+// Counts from the desktop's start, and ticks only while the menu is open
+// (it is the one thing on the desktop that would re-render every second).
+// Memoized: typing in the search box re-renders the menu, not the uptime.
+const Uptime = memo(function Uptime({ open }: { open: boolean }) {
   const [text, setText] = useState("uptime: --");
   const startedAt = useRef(0);
   useEffect(() => {
     startedAt.current = Date.now();
+  }, []);
+  useEffect(() => {
+    if (!open) return;
     const update = () => {
       const diff = Date.now() - startedAt.current;
       setText("uptime: " + Math.floor(diff / 60000) + "m " + Math.floor((diff % 60000) / 1000) + "s");
@@ -21,12 +27,12 @@ function Uptime() {
     update();
     const id = window.setInterval(update, 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [open]);
   return <span id="start-menu-uptime">{text}</span>;
-}
+});
 
 export function StartMenu() {
-  const open = useOpenOverlay() === "start-menu";
+  const open = useOverlayOpen("start-menu");
   const query = useStartQuery();
   const q = query.trim().toLowerCase();
   // Matches first, by rank, so Enter opens the closest one.
@@ -90,7 +96,7 @@ export function StartMenu() {
       </p>
       <div id="start-menu-footer">
         <span>system status: nominal</span>
-        <Uptime />
+        <Uptime open={open} />
       </div>
     </div>
   );

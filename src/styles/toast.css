@@ -105,6 +105,20 @@
   transform: scale(0.95);
 }
 
+/* Reduced motion: toasts fade in and out without sliding, as windows open
+   without scaling. */
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast-show,
+  .toast-hide {
+    transform: none;
+  }
+
+  .toast {
+    transition: opacity 0.2s ease;
+  }
+}
+
 /* Light Theme Overrides */
 [data-theme="light"] .toast {
   box-shadow:

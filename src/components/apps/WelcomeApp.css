@@ -1,5 +1,5 @@
 /* Welcome - Login (scoped styles of WelcomeApp.astro, every selector starting
-   at the .welcome-app root; see MIGRATION.md, CSS). .app-content.welcome-app
+   at the .welcome-app root; README, Development Rules). .app-content.welcome-app
    keeps Astro's specificity for the root. */
 .app-content.welcome-app {
   font-family: "Courier New", monospace;

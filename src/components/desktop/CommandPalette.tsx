@@ -6,7 +6,7 @@
 // visual, Tab and arrow-key order agree.
 import type { FocusEvent } from "react";
 import "./CommandPalette.css";
-import { useOpenOverlay } from "./overlay-state";
+import { useOverlayOpen } from "./overlay-state";
 import {
   closePalette,
   executePaletteEntry,
@@ -23,7 +23,7 @@ const SECTIONS: PaletteSection[] = ["Commands", "Apps", "External Links"];
 const ORDER = new Map(PALETTE_ENTRIES.map((entry, index) => [entry.id, index]));
 
 export function CommandPalette() {
-  const open = useOpenOverlay() === "command-palette";
+  const open = useOverlayOpen("command-palette");
   const { query, selected, armed, status, tone } = usePalette();
   const searching = query.trim() !== "";
   const visible = rankPaletteEntries(query);

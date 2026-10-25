@@ -20,9 +20,11 @@ yarn-error.log*
 pnpm-debug.log*
 
 
-# environment variables
+# environment variables (Next.js also loads .env.local and
+# .env.<mode>.local, and inlines NEXT_PUBLIC_* values into the export)
 .env
 .env.production
+.env*.local
 
 # macOS-specific files
 .DS_Store

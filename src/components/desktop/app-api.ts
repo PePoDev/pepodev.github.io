@@ -1,4 +1,4 @@
-// The API desktop apps use (MIGRATION.md, "App contract"). An app is the
+// The API desktop apps use (README, "App Contract"). An app is the
 // default export of src/components/apps/<Name>App.tsx, rendered inside its
 // window's .window-content once the window first opens (or, for apps the
 // registry marks mount: "idle", once the desktop is idle), and kept mounted
@@ -98,11 +98,12 @@ const TOUCH_QUERY = "(max-width: 768px), (hover: none), (pointer: coarse)";
  * Focuses `target` on every launch of the window (Terminal's input, the
  * Gallery password). Touch screens wait for a tap unless the keyboard opened
  * the window, so a tap does not raise the on-screen keyboard. A body that
- * mounts after its window opened (every first launch: its chunk loads after
- * the window opens) takes focus only if nothing took it since the launch:
+ * renders after its window opened (a first launch before its chunk arrived,
+ * app-chunks.ts) takes focus only if nothing took it since the launch:
  * focus is still on <body>, on the window, or where the launch left it (the
- * icon that was clicked). A body mounted before any launch (registry
- * mount: "idle") waits for the first one.
+ * icon that was clicked). A body that renders with its window (its chunk was
+ * prefetched) or before any launch (registry mount: "idle") handles the
+ * launch like any other.
  */
 export function useFocusOnLaunch(target: RefObject<HTMLElement | null>) {
   const appId = useAppId();

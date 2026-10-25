@@ -1,6 +1,6 @@
 /* The Certifications wallet (scoped styles of CertificationsWalletApp.astro,
-   every selector starting at the .cert-wallet-app root; see MIGRATION.md,
-   CSS). Its shared card, grid and badge rules stay in sre-apps.css. */
+   every selector starting at the .cert-wallet-app root; README, Development
+   Rules). Its shared card, grid and badge rules stay in sre-apps.css. */
 .cert-wallet-app .cert-card {
   text-decoration: none;
   color: inherit;

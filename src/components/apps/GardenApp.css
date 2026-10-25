@@ -1,5 +1,5 @@
-/* The Garden window's frame (scoped style of GardenApp.astro; see
-   MIGRATION.md, CSS). The frame is the component's root; the attribute keeps
+/* The Garden window's frame (scoped style of GardenApp.astro; README,
+   Development Rules). The frame is the component's root; the attribute keeps
    Astro's specificity. */
 .garden-frame[data-garden-frame] {
   display: block;

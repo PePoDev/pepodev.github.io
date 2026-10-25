@@ -1,7 +1,7 @@
 // Deep links into apps. A ?blog=<slug> link opens desktop mode (the head
 // script), the Blog window maximized, and the article: the desktop keeps the
 // slug pending until the Blog app registers its handler
-// (useDeepLinkHandler in app-api.ts), which happens once its lazy chunk has
+// (useDeepLinkHandler in app-api.ts), which happens once its chunk has
 // loaded and the body has mounted, however long that takes, and then asks
 // it to open the slug. A handler that returns false shows the "Article not
 // found" toast (the slug never reaches the toast). Picking website mode, or

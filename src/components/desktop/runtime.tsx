@@ -3,14 +3,16 @@
 // replayed, then window.__pepodevWindowManagerReady tells tests (and the
 // parse-time input script) the desktop takes input. Also here: generic
 // [data-open-app] launchers, the command-palette tip and the "idle" app
-// bodies (registry mount: "idle").
+// bodies (registry mount: "idle"); app-chunks.ts prefetches the other apps.
 import { useEffect } from "react";
 import { migrateLegacySnakeBest } from "@components/apps/snake-best";
 import { APPS, isAppId } from "./apps";
+import { startAppPrefetch } from "./app-chunks";
 import { startAppKeys } from "./app-keys";
 import { startBlogDeepLink } from "./deep-link";
 import type { EarlyInput } from "./DesktopScripts";
 import { startIconLayout } from "./icon-layout";
+import { whenIdle } from "./idle";
 import { isOverlayOpen, setStartMenu, setTrayOpen, startOverlays } from "./overlay-state";
 import { openPalette, startPalette, togglePalette } from "./palette";
 import { startPrefs } from "./prefs";
@@ -126,22 +128,20 @@ function startPaletteTip() {
   };
 }
 
-// "idle" app bodies mount, hidden, once the desktop is idle in desktop mode.
+// "idle" app bodies mount, hidden, once the desktop is idle in desktop mode
+// (waiting at most a second for that: idle.ts).
 function startIdleMounts() {
-  let handle = 0;
+  let cancel: (() => void) | null = null;
   let mounted = false;
   const mountAll = () => {
-    handle = 0;
+    cancel = null;
     if (mounted || !isDesktopSiteMode()) return;
     mounted = true;
     APPS.filter((app) => app.mount === "idle").forEach((app) => mountWindowBody(app.id));
   };
   const schedule = () => {
-    if (mounted || handle || !isDesktopSiteMode()) return;
-    handle =
-      typeof window.requestIdleCallback === "function"
-        ? window.requestIdleCallback(mountAll, { timeout: 3000 })
-        : window.setTimeout(mountAll, 1500);
+    if (mounted || cancel || !isDesktopSiteMode()) return;
+    cancel = whenIdle(mountAll, 1000);
   };
   const onModeChange = (event: Event) => {
     if ((event as CustomEvent<{ mode?: string }>).detail?.mode === "desktop") schedule();
@@ -149,8 +149,7 @@ function startIdleMounts() {
   schedule();
   document.addEventListener("site:mode-change", onModeChange);
   return () => {
-    if (handle && typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(handle);
-    window.clearTimeout(handle);
+    cancel?.();
     document.removeEventListener("site:mode-change", onModeChange);
   };
 }
@@ -172,6 +171,7 @@ function boot(): () => void {
     startLaunchers(),
     startPaletteTip(),
     startIdleMounts(),
+    startAppPrefetch(),
     startAppKeys(),
     startSystemAudio(),
     startBlogDeepLink(),

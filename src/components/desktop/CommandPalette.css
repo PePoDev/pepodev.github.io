@@ -1,5 +1,5 @@
 /* The command palette (scoped styles of CommandPalette.astro, every selector
-   starting at the .command-palette root; see MIGRATION.md, CSS). */
+   starting at the .command-palette root; README, Development Rules). */
 .command-palette {
   position: fixed;
   inset: 0;
@@ -157,6 +157,15 @@
 .command-palette .command-palette-item.confirming {
   background: color-mix(in srgb, var(--accent-red) 16%, transparent);
   border-color: color-mix(in srgb, var(--accent-red) 60%, transparent);
+}
+
+/* Forced colors drop the selection's background: outline the item that
+   Enter opens (arrow keys move it) in the system highlight colour. */
+@media (forced-colors: active) {
+  .command-palette .command-palette-item.selected {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 
 .command-palette .command-palette-item-icon {

@@ -3,14 +3,15 @@
 // per open window (named by its label, which phone widths hide only
 // visually), the mode switch, and the tray: system audio and the clock,
 // which open the tray panel (calendar, volume, mute).
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { memo, useEffect, useRef, useState, type CSSProperties } from "react";
 import { AppIcon } from "./AppIcon";
 import { APPS, taskbarLabel, type AppDefinition } from "./apps";
 import { ModeSwitch } from "./ModeSwitch";
-import { setStartMenu, setTrayOpen, useOpenOverlay } from "./overlay-state";
+import { setStartMenu, setTrayOpen, useOverlayOpen } from "./overlay-state";
 import { openPalette } from "./palette";
 import { setSystemAudio, useSystemAudio } from "./system-audio";
 import { useStore } from "./store";
+import { formatTaskbarClock } from "./taskbar-clock";
 import {
   activateWindow,
   isKeyboardInteraction,
@@ -31,7 +32,23 @@ export function useNow(interval: number): Date | null {
   return now;
 }
 
-function TaskbarApp({ app }: { app: AppDefinition }) {
+/**
+ * Drops DOM focus from a window button pressed with the pointer, and starts
+ * sequential focus at the start of the window buttons (#taskbar-apps), as
+ * when the Astro taskbar rebuilt them: Tab then reaches the first window
+ * button and Shift+Tab the palette button, not whatever follows the
+ * pressed one. Browsers start Tab from the element that lost focus, so the
+ * list itself takes focus for a moment.
+ */
+function releaseTaskbarFocus(apps: HTMLElement | null) {
+  if (!apps) return;
+  apps.tabIndex = -1;
+  apps.focus({ preventScroll: true });
+  apps.blur();
+  apps.removeAttribute("tabindex");
+}
+
+const TaskbarApp = memo(function TaskbarApp({ app }: { app: AppDefinition }) {
   // Only what the button shows, so drags, resizes and z-order changes of its
   // window do not re-render it.
   const open = useStore(windowsStore, (state) => state.windows[app.id].open);
@@ -63,16 +80,15 @@ function TaskbarApp({ app }: { app: AppDefinition }) {
         // taskbar control as the target, and Enter or Space would press it
         // again (minimizing the window). Keyboard users keep focus on it, or
         // follow it into the window.
-        if (!moveFocus && document.activeElement === button) button.blur();
+        if (!moveFocus && document.activeElement === button) releaseTaskbarFocus(button.parentElement);
       }}
     >
       <AppIcon name={app.id} />
       <span>{label}</span>
     </button>
   );
-}
+});
 
-const shortDate = new Intl.DateTimeFormat("en", { weekday: "short", month: "short", day: "numeric" });
 const longDate = new Intl.DateTimeFormat("en", {
   weekday: "long",
   year: "numeric",
@@ -80,10 +96,10 @@ const longDate = new Intl.DateTimeFormat("en", {
   day: "numeric",
 });
 const monthTitle = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" });
-const clock = (date: Date) =>
-  date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
 
-function Calendar({ today }: { today: Date | null }) {
+// Memoized, as are AudioControls: the tray panel re-renders on opening and
+// closing, which changes neither.
+const Calendar = memo(function Calendar({ today }: { today: Date | null }) {
   const [visibleMonth, setVisibleMonth] = useState<Date | null>(null);
   useEffect(() => setVisibleMonth((month) => month ?? new Date()), []);
   const shift = (delta: number) =>
@@ -142,9 +158,9 @@ function Calendar({ today }: { today: Date | null }) {
       </div>
     </div>
   );
-}
+});
 
-function AudioControls() {
+const AudioControls = memo(function AudioControls() {
   const { volume, muted } = useSystemAudio();
   const volumePercent = Math.round(volume * 100);
   const rangeRef = useRef<HTMLInputElement>(null);
@@ -184,31 +200,122 @@ function AudioControls() {
       />
     </>
   );
+});
+
+function StartButton() {
+  const open = useOverlayOpen("start-menu");
+  return (
+    <button
+      id="taskbar-start"
+      type="button"
+      aria-label="Open start menu"
+      aria-haspopup="dialog"
+      aria-expanded={open}
+      aria-controls="start-menu"
+      onClick={() => setStartMenu(!open, { restoreFocus: true })}
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
+      </svg>
+    </button>
+  );
 }
 
-export function Taskbar() {
-  const overlay = useOpenOverlay();
+// Opens the tray, so it has a fixed name and no pressed state; the mute
+// toggle is in the tray. Its title carries the current state.
+function AudioStatusButton() {
+  const trayOpen = useOverlayOpen("tray-panel");
   const { muted } = useSystemAudio();
-  const now = useNow(30_000);
-  const trayOpen = overlay === "tray-panel";
-  const clockRef = useRef<HTMLButtonElement>(null);
-  const audioRef = useRef<HTMLButtonElement>(null);
+  const ref = useRef<HTMLButtonElement>(null);
+  return (
+    <button
+      ref={ref}
+      id="taskbar-audio-status"
+      type="button"
+      aria-label="Audio settings"
+      title={muted ? "Muted" : "Audio on"}
+      className={muted ? "muted" : undefined}
+      aria-expanded={trayOpen}
+      aria-controls="tray-panel"
+      onClick={() => setTrayOpen(!trayOpen, { opener: ref.current, restoreFocus: true })}
+    >
+      <svg className="audio-icon audio-icon-on" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path
+          d="M16 8c1.3 1.2 1.3 6.8 0 8M19 5c2.7 3 2.7 11 0 14"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+      <svg className="audio-icon audio-icon-muted" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M17 9l4 4m0-4l-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+}
 
+// Named by its text, the time and date. DesktopClockScript writes them
+// before first paint (hence suppressHydrationWarning: the server renders
+// them empty, having no visitor's clock), so the button is never blank or
+// nameless while the desktop loads.
+function ClockButton({ now }: { now: Date | null }) {
+  const trayOpen = useOverlayOpen("tray-panel");
+  const ref = useRef<HTMLButtonElement>(null);
+  const text = now ? formatTaskbarClock(now) : null;
+  return (
+    <button
+      ref={ref}
+      id="taskbar-clock-button"
+      type="button"
+      aria-expanded={trayOpen}
+      aria-controls="tray-panel"
+      onClick={() => setTrayOpen(!trayOpen, { opener: ref.current, restoreFocus: true })}
+    >
+      <span id="taskbar-clock" suppressHydrationWarning>
+        {text?.time ?? ""}
+      </span>
+      <span id="taskbar-date" suppressHydrationWarning>
+        {text?.date ?? ""}
+      </span>
+    </button>
+  );
+}
+
+function TrayPanel({ now }: { now: Date | null }) {
+  const open = useOverlayOpen("tray-panel");
+  return (
+    <div id="tray-panel" className={open ? "visible" : undefined} aria-hidden={!open} inert={!open}>
+      <div className="tray-panel-header">
+        <div>
+          <div id="tray-time">{now ? formatTaskbarClock(now).time : ""}</div>
+          <div id="tray-date">{now ? longDate.format(now) : ""}</div>
+        </div>
+        <span className="tray-status">Nominal</span>
+      </div>
+
+      <div className="tray-section">
+        <div className="tray-section-title">Calendar</div>
+        <Calendar today={now} />
+      </div>
+
+      <div className="tray-section">
+        <div className="tray-section-title">Audio</div>
+        <AudioControls />
+      </div>
+    </div>
+  );
+}
+
+// Each part reads only the state it shows: opening an overlay re-renders
+// its own button and panel, not every window button (measured with a render
+// counter: 3 components for the tray, where the whole taskbar re-rendered).
+export function Taskbar() {
+  const now = useNow(30_000);
   return (
     <div id="taskbar">
-      <button
-        id="taskbar-start"
-        type="button"
-        aria-label="Open start menu"
-        aria-haspopup="dialog"
-        aria-expanded={overlay === "start-menu"}
-        aria-controls="start-menu"
-        onClick={() => setStartMenu(overlay !== "start-menu", { restoreFocus: true })}
-      >
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
-        </svg>
-      </button>
+      <StartButton />
       <button
         id="taskbar-command-palette"
         type="button"
@@ -228,64 +335,10 @@ export function Taskbar() {
       </div>
       <div id="taskbar-tray">
         <ModeSwitch id="taskbar-site-mode" variant="taskbar" />
-        {/* Opens the tray, so it has a fixed name and no pressed state; the
-            mute toggle is in the tray. Its title carries the current state. */}
-        <button
-          ref={audioRef}
-          id="taskbar-audio-status"
-          type="button"
-          aria-label="Audio settings"
-          title={muted ? "Muted" : "Audio on"}
-          className={muted ? "muted" : undefined}
-          aria-expanded={trayOpen}
-          aria-controls="tray-panel"
-          onClick={() => setTrayOpen(!trayOpen, { opener: audioRef.current, restoreFocus: true })}
-        >
-          <svg className="audio-icon audio-icon-on" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-            <path
-              d="M16 8c1.3 1.2 1.3 6.8 0 8M19 5c2.7 3 2.7 11 0 14"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-          </svg>
-          <svg className="audio-icon audio-icon-muted" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-            <path d="M17 9l4 4m0-4l-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </button>
-        <button
-          ref={clockRef}
-          id="taskbar-clock-button"
-          type="button"
-          aria-expanded={trayOpen}
-          aria-controls="tray-panel"
-          onClick={() => setTrayOpen(!trayOpen, { opener: clockRef.current, restoreFocus: true })}
-        >
-          <span id="taskbar-clock">{now ? clock(now) : ""}</span>
-          <span id="taskbar-date">{now ? shortDate.format(now) : ""}</span>
-        </button>
+        <AudioStatusButton />
+        <ClockButton now={now} />
       </div>
-      <div id="tray-panel" className={trayOpen ? "visible" : undefined} aria-hidden={!trayOpen} inert={!trayOpen}>
-        <div className="tray-panel-header">
-          <div>
-            <div id="tray-time">{now ? clock(now) : ""}</div>
-            <div id="tray-date">{now ? longDate.format(now) : ""}</div>
-          </div>
-          <span className="tray-status">Nominal</span>
-        </div>
-
-        <div className="tray-section">
-          <div className="tray-section-title">Calendar</div>
-          <Calendar today={now} />
-        </div>
-
-        <div className="tray-section">
-          <div className="tray-section-title">Audio</div>
-          <AudioControls />
-        </div>
-      </div>
+      <TrayPanel now={now} />
     </div>
   );
 }

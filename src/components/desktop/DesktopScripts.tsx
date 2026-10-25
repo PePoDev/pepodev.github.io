@@ -1,8 +1,10 @@
 // The desktop's parse-time scripts (Server Components). They only set
-// attributes and styles from storage before first paint, which hydration
-// keeps (MIGRATION.md, hydration rule 1); the React desktop takes over
-// after hydration with the same functions, which these scripts inline with
-// Function#toString (see icon-grid.ts and prefs-core.ts).
+// attributes and styles from storage before first paint, and the taskbar
+// clock's text (in elements marked suppressHydrationWarning), which
+// hydration keeps (README, Hydration Rules, rule 1); the React desktop takes
+// over after hydration with the same functions, which these scripts inline
+// with Function#toString (see icon-grid.ts, prefs-core.ts and
+// taskbar-clock.ts).
 import { InlineScript, scriptValue } from "@components/InlineScript";
 import { accentMap, backgroundMap } from "@utils/desktop-prefs";
 import {
@@ -14,6 +16,7 @@ import {
   removeStaleIconPositions,
 } from "./icon-grid";
 import { applyDesktopPrefs, loadDesktopPrefs } from "./prefs-core";
+import { formatTaskbarClock } from "./taskbar-clock";
 
 // site-mode.ts's VIEW_MODE_KEY (that module is client-only).
 const VIEW_MODE_STORAGE_KEY = "pepodev.viewMode";
@@ -207,4 +210,23 @@ const iconScript = `(() => {
 /** Places the desktop icons before first paint (icon-grid.ts). */
 export function DesktopIconScript() {
   return <InlineScript code={iconScript} />;
+}
+
+// After #desktop, with the icon script.
+const clockScript = `(() => {
+  // Writes the taskbar clock before first paint: the server has no
+  // visitor's clock, and the taskbar's own one starts with hydration, which
+  // on a slow device comes seconds later (an empty, nameless button until
+  // then). Its spans carry suppressHydrationWarning (Taskbar.tsx).
+  const format = ${formatTaskbarClock.toString()};
+  const now = format(new Date());
+  const time = document.getElementById("taskbar-clock");
+  const date = document.getElementById("taskbar-date");
+  if (time) time.textContent = now.time;
+  if (date) date.textContent = now.date;
+})();`;
+
+/** Fills the taskbar clock before first paint (taskbar-clock.ts). */
+export function DesktopClockScript() {
+  return <InlineScript code={clockScript} />;
 }

@@ -1,5 +1,5 @@
 // Root layout of / (the desktop and website mode). It hydrates: the desktop
-// is a React app (MIGRATION.md, "The React desktop"). The head scripts pick
+// is a React app (README, "The React Desktop"). The head scripts pick
 // the mode, theme and the other desktop preferences before first paint, and
 // take the input made before the desktop boots.
 import type { ReactNode } from "react";

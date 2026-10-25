@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "garden:sync": "node scripts/sync-garden.mjs",
-    "test:garden": "node --test scripts/sync-garden.test.mjs"
+    "test:garden": "node --test scripts/sync-garden.test.mjs",
+    "test:scripts": "node --test \"scripts/*.test.mjs\""
   },
   "dependencies": {
     "github-slugger": "^2.0.0",

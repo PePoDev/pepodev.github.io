@@ -2,7 +2,7 @@
 // The desktop (#desktop panel): background, icons, link shortcuts, windows,
 // Start menu, taskbar, command palette and toasts. The (home) page renders
 // it with each app's build-time data; it boots after hydration
-// (runtime.tsx). See MIGRATION.md, "The React desktop".
+// (runtime.tsx). See README, "The React Desktop".
 import type { AppDataMap } from "@components/apps/app-data";
 import { APPS, DESKTOP_ICON_ORDER, getApp } from "./apps";
 import { CommandPalette } from "./CommandPalette";

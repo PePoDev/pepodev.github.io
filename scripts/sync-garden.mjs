@@ -20,7 +20,8 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-// The CommonMark parser Astro renders with, so "what is code" matches the page.
+// The CommonMark parser the site renders with (src/lib/markdown.ts), so
+// "what is code" matches the page.
 import { markdownToMdast } from "satteri";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -54,7 +55,7 @@ export function slugify(text) {
   return slug || text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-");
 }
 
-/** Heading ids as Astro's github-slugger writes them. */
+/** Heading ids as github-slugger writes them (src/lib/markdown.ts). */
 const headingId = (text) =>
   text
     .trim()

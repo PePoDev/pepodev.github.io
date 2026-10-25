@@ -535,6 +535,30 @@ test("the Bangkok clock is pre-rendered and kept current", async ({
   await expect(website.locator(".ws-sc-time")).toContainText("ICT");
 });
 
+test("the Copy email button is there from first paint", async ({ page }) => {
+  // As on the Astro site: the e-mail row does not grow (and push the
+  // channels and the footer down) when the page hydrates.
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.viewMode", "website");
+  });
+  const chunks = await holdChunks(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  const website = page.locator("#website");
+  await expect(website).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const copy = website.getByRole("button", { name: "Copy email address" });
+  await expect(copy).toBeVisible();
+  const row = await website.locator(".ws-email-row").boundingBox();
+
+  chunks.release();
+  await waitForWindowManager(page);
+  await expect(copy).toBeVisible();
+  expect(await website.locator(".ws-email-row").boundingBox()).toEqual(row);
+});
+
 test("website mode keeps a skip link, visible focus and reduced motion", async ({
   page,
 }) => {

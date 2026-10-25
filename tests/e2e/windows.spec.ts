@@ -627,6 +627,91 @@ test("clicks and keys made before the desktop hydrates are not lost", async ({
   ).toBe("desktop");
 });
 
+test("Enter or Space on an icon hydrated before the boot is kept for the boot", async ({
+  page,
+}) => {
+  // React attaches the icons' key handlers when it hydrates; the desktop
+  // boots a little later (a few hundred ms on a slow device). A key pressed
+  // in between must not be swallowed: the icon leaves it its native click,
+  // which the parse-time input script keeps for the boot to replay. The
+  // flag is what the icon and that script read, so lowering it again puts
+  // the page back in that gap. (The boot replaces __pepodevEarlyInput, so
+  // keep the script's own queue.)
+  await page.addInitScript(() => {
+    const queues: unknown[][] = [];
+    let current: unknown[] | undefined;
+    Object.defineProperty(window, "__pepodevEarlyInput", {
+      configurable: true,
+      get: () => current,
+      set: (queue: unknown[]) => {
+        current = queue;
+        queues.push(queue);
+      },
+    });
+    (window as typeof window & { __earlyQueues?: unknown[][] }).__earlyQueues =
+      queues;
+  });
+  await page.reload();
+  await waitForWindowManager(page);
+  const setReady = (ready: boolean) =>
+    page.evaluate((value) => {
+      (
+        window as typeof window & { __pepodevWindowManagerReady?: boolean }
+      ).__pepodevWindowManagerReady = value;
+    }, ready);
+  const early = () =>
+    page.evaluate(
+      () =>
+        (window as typeof window & { __earlyQueues?: unknown[][] })
+          .__earlyQueues?.[0],
+    );
+  await setReady(false);
+  await page.locator('#desktop-icons [data-open-app="me"]').focus();
+  await page.keyboard.press("Enter");
+  await page.locator('#desktop-icons [data-open-app="work"]').focus();
+  await page.keyboard.press("Space");
+  expect(await early()).toEqual([
+    { type: "launch", appId: "me" },
+    { type: "launch", appId: "work" },
+  ]);
+  await expect(page.locator("#window-me")).toBeHidden();
+
+  // Once booted, the icon opens its app itself.
+  await setReady(true);
+  await page.locator('#desktop-icons [data-open-app="me"]').press("Enter");
+  await expect(page.locator("#window-me")).toHaveClass(/focused/);
+});
+
+test("the taskbar clock tells the time before the desktop hydrates", async ({
+  page,
+}) => {
+  // The server cannot know the visitor's time, and the taskbar's own clock
+  // starts with hydration: a parse-time script fills it in meanwhile, so the
+  // button is never empty and nameless.
+  const chunks = await holdChunks(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  const button = page.locator("#taskbar-clock-button");
+  const time = page.locator("#taskbar-clock");
+  const date = page.locator("#taskbar-date");
+  await expect(time).toHaveText(/^\d{2}:\d{2}$/);
+  await expect(date).toHaveText(/^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}$/);
+  await expect(button).toHaveAccessibleName(/^\d{2}:\d{2} [A-Z]/);
+
+  chunks.release();
+  await waitForWindowManager(page);
+  await expect(time).toHaveText(/^\d{2}:\d{2}$/);
+  expect(await date.textContent()).toBe(
+    await page.evaluate(() =>
+      new Intl.DateTimeFormat("en", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      }).format(new Date()),
+    ),
+  );
+});
+
 test("a taskbar button pressed with the pointer leaves the keys to the windows", async ({
   page,
 }) => {
@@ -670,6 +755,35 @@ test("a taskbar button pressed with the pointer leaves the keys to the windows",
   await page.keyboard.press("Enter");
   await expect(work).toHaveClass(/focused/);
   await expect(work).toBeFocused();
+});
+
+test("after a pointer press on a taskbar button, Tab starts at the window buttons", async ({
+  page,
+}) => {
+  // As when the Astro taskbar rebuilt its buttons: Tab reaches the first
+  // window button and Shift+Tab the palette button, whichever button was
+  // pressed, never the mode switch that follows the last one (Tab and Enter
+  // would then switch the site to website mode).
+  const work = await openApp(page, "Work", "work");
+  const about = await openApp(page, "About Me", "me");
+  const workButton = page.locator('#taskbar-apps [data-app-id="work"]');
+  const aboutButton = page.locator('#taskbar-apps [data-app-id="me"]');
+
+  await workButton.click();
+  await expect(work).toHaveClass(/focused/);
+  await page.keyboard.press("Tab");
+  await expect(workButton).toBeFocused();
+
+  await aboutButton.click();
+  await expect(about).toHaveClass(/focused/);
+  await page.keyboard.press("Tab");
+  await expect(workButton).toBeFocused();
+
+  await workButton.click();
+  await expect(work).toHaveClass(/focused/);
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.locator("#taskbar-command-palette")).toBeFocused();
+  await expect(page.locator("html")).toHaveAttribute("data-site-mode", "desktop");
 });
 
 test("two-way mode switches hand focus to the other panel's switch", async ({
@@ -817,7 +931,8 @@ test("scripts that must run while the page parses opt out of Rocket Loader", asy
   request,
 }) => {
   // The parse-time scripts: mode, theme, the other preferences, the input
-  // made before the desktop boots, and the icon placement. The window
+  // made before the desktop boots, the icon placement and the taskbar
+  // clock. The window
   // manager and the background are part of the React desktop, which
   // hydrates through Next.js's scripts (checked below).
   const markers = [
@@ -826,6 +941,7 @@ test("scripts that must run while the page parses opt out of Rocket Loader", asy
     "Initialize theme immediately",
     "window.__pepodevEarlyInput = []",
     "window.__pepodevDesktopIconsReady = true",
+    "Writes the taskbar clock before first paint",
   ];
   const attributes = await page.evaluate(
     (texts) =>

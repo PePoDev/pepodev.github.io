@@ -54,9 +54,16 @@ export async function resetPage(
 /**
  * Opens an app from its desktop icon (a pointer open, so focus stays where
  * it was) and waits until its window is shown, focused and done fading in,
- * so screenshots see the window, not a blend.
+ * so screenshots see the window, not a blend, and until its body has
+ * rendered (its code can arrive after the window opened; pass
+ * `{ body: false }` when a test holds that code back on purpose).
  */
-export async function openApp(page: Page, label: string, appId: string) {
+export async function openApp(
+  page: Page,
+  label: string,
+  appId: string,
+  { body = true }: { body?: boolean } = {},
+) {
   await page
     .locator("#desktop-icons")
     .getByRole("button", { name: label })
@@ -66,6 +73,11 @@ export async function openApp(page: Page, label: string, appId: string) {
   await expect(window).toHaveAttribute("aria-hidden", "false");
   await expect(window).toHaveClass(/focused/);
   await expect(window).not.toHaveClass(/opening/);
+  if (body) {
+    await expect(
+      window.locator(".window-content > :not(.app-loading)").first(),
+    ).toBeAttached();
+  }
   return window;
 }
 
@@ -94,4 +106,64 @@ export async function holdChunks(page: Page) {
       waiting.splice(0).forEach((resolve) => resolve());
     },
   };
+}
+
+/**
+ * Holds back the chunks of some app bodies, as a slow network would, until
+ * `release()`: each chunk whose code contains one of `markers` (text only
+ * that app's code has, such as one of its messages), however the page asks
+ * for it (a launch, a launcher's hover or focus, idle prefetching). Every
+ * other chunk passes, so call it before the page loads. `requested(marker)`
+ * gives the URL of that app's chunk once the page has asked for it;
+ * `release(marker)` lets one app's chunk through, `release()` all of them.
+ */
+export async function holdAppChunks(page: Page, markers: string[]) {
+  const waiting = new Map<string, (() => void)[]>();
+  const released = new Set<string>();
+  const requested = new Map<string, string>();
+  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+    // Idle prefetching keeps fetching app code, so a request can still be in
+    // flight when the test ends and closes the page: let it go quietly.
+    try {
+      const response = await route.fetch();
+      const body = await response.text();
+      const marker = markers.find((text) => body.includes(text));
+      if (marker) {
+        requested.set(marker, route.request().url());
+        if (!released.has(marker)) {
+          await new Promise<void>((resolve) =>
+            waiting.set(marker, [...(waiting.get(marker) ?? []), resolve]),
+          );
+        }
+      }
+      await route.fulfill({ response, body });
+    } catch (error) {
+      if (!page.isClosed() && !String(error).includes("has been closed")) {
+        throw error;
+      }
+    }
+  });
+  return {
+    requested: (marker: string) => requested.get(marker),
+    release: (marker?: string) => {
+      for (const text of marker ? [marker] : markers) {
+        released.add(text);
+        waiting.get(text)?.splice(0).forEach((resolve) => resolve());
+      }
+    },
+  };
+}
+
+/**
+ * Makes the page see a visitor who asked to save data (the Save-Data
+ * setting), so the desktop does not prefetch app code in idle time. Call
+ * before the page loads.
+ */
+export async function emulateSaveData(page: Page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, "connection", {
+      configurable: true,
+      get: () => ({ saveData: true, effectiveType: "4g" }),
+    });
+  });
 }

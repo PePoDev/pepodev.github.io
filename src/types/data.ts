@@ -20,11 +20,6 @@ export interface Experience {
   details: string[];
 }
 
-export interface Skill {
-  name: string;
-  level: number;
-}
-
 export interface Education {
   degree: string;
   degreeShort: string;

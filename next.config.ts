@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // A fully static site: `next build` prerenders every route into out/, which
-// GitHub Pages serves as is (see MIGRATION.md and scripts/serve-static.mjs).
+// GitHub Pages serves as is (README, Pages and Runtime; scripts/serve-static.mjs).
 const nextConfig: NextConfig = {
   output: "export",
   // /blog/<id>/index.html, like the Astro build: GitHub Pages redirects

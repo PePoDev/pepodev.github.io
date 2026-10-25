@@ -21,11 +21,11 @@ export function useSystemAudio(): SystemAudio {
   return useStore(systemAudioStore, (audio) => audio);
 }
 
-/** The saved settings over the defaults. */
+/** The saved settings over the defaults (only valid fields: a volume of "loud" or 5 is not one). */
 export function readSystemAudio(): SystemAudio {
   try {
     const raw = localStorage.getItem(SYSTEM_AUDIO_KEY);
-    if (raw) return { ...defaults, ...JSON.parse(raw) };
+    if (raw) return { ...defaults, ...validChange(JSON.parse(raw)) };
   } catch {
     // Ignore corrupt persisted settings.
   }

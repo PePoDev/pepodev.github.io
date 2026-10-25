@@ -1,62 +1,33 @@
 "use client";
-// Every app body, each loaded on demand from its fixed path
-// (src/components/apps/<Name>App.tsx) into its own chunk. Window.tsx
-// renders one once its window first opens, with a small loading state while
-// the chunk downloads and an error state if it fails. A failed download is
-// tried again from the error state's button or on the window's next launch
-// (React.lazy keeps a rejected import, so each try gets a new one).
+// An app's body inside its window. Window.tsx renders it once the window
+// first opens (or, for registry mount: "idle" apps, once the desktop is
+// idle). The body's code is its own chunk (app-chunks.ts), rendered here as
+// plain state rather than through React.lazy: a body whose chunk has arrived
+// renders in the same commit as its window, one that arrives later renders
+// as soon as it does (React would hold a Suspense reveal back until 300 ms
+// after the latest fallback on the page). Slow downloads show "Loading…";
+// a failed one shows an error with "Try again", and the window's next launch
+// also tries again. A body that throws while rendering gets the same error
+// state, and trying again mounts it afresh.
 import {
   Component,
-  lazy,
   Suspense,
   useEffect,
+  useRef,
   useState,
+  useSyncExternalStore,
   type ComponentType,
-  type LazyExoticComponent,
   type ReactNode,
 } from "react";
 import type { AppProps } from "./app-api";
+import { getAppChunk, loadAppChunk, subscribeAppChunks } from "./app-chunks";
 import { setAppBodyReady } from "./app-keys";
 import type { AppId } from "./apps";
-import { windowsStore } from "./window-manager";
+import { activateWindow, isKeyboardInteraction, windowsStore } from "./window-manager";
 
-type Loader<Id extends AppId> = () => Promise<{ default: ComponentType<AppProps<Id>> }>;
-type Body<Id extends AppId> = LazyExoticComponent<ComponentType<AppProps<Id>>>;
-
-const loaders: { [Id in AppId]: Loader<Id> } = {
-  welcome: () => import("@components/apps/WelcomeApp"),
-  blog: () => import("@components/apps/BlogApp"),
-  garden: () => import("@components/apps/GardenApp"),
-  project: () => import("@components/apps/ProjectsApp"),
-  work: () => import("@components/apps/WorkApp"),
-  me: () => import("@components/apps/AboutApp"),
-  sregame: () => import("@components/apps/SreGameApp"),
-  snake: () => import("@components/apps/SnakeApp"),
-  music: () => import("@components/apps/MusicPlayerApp"),
-  whitenoise: () => import("@components/apps/WhiteNoiseApp"),
-  calculator: () => import("@components/apps/CalculatorApp"),
-  settings: () => import("@components/apps/SettingsApp"),
-  terminal: () => import("@components/apps/TerminalApp"),
-  certs: () => import("@components/apps/CertificationsWalletApp"),
-  gallery: () => import("@components/apps/GalleryApp"),
-  trash: () => import("@components/apps/TrashBinApp"),
-};
-
-// One lazy component per app and try, so renders (and Strict Mode's double
-// renders) of the same try share it.
-const bodies = new Map<AppId, { attempt: number; Body: Body<AppId> }>();
-
-function getBody<Id extends AppId>(appId: Id, attempt: number): Body<Id> {
-  const cached = bodies.get(appId);
-  if (cached?.attempt === attempt) return cached.Body as unknown as Body<Id>;
-  const Body = lazy(loaders[appId] as Loader<Id>);
-  bodies.set(appId, { attempt, Body: Body as unknown as Body<AppId> });
-  return Body;
-}
-
-// Rendered after the body inside its Suspense boundary, so its effect runs
-// once the body has rendered (and after the body's own effects): keys typed
-// while the chunk loaded go to the app now (app-keys.ts).
+// Rendered after the body, so its effect runs once the body has rendered
+// (and after the body's own effects): keys typed while the chunk loaded go
+// to the app now (app-keys.ts).
 function BodyReady({ appId }: { appId: AppId }) {
   useEffect(() => {
     setAppBodyReady(appId, true);
@@ -65,11 +36,58 @@ function BodyReady({ appId }: { appId: AppId }) {
   return null;
 }
 
+// Most chunks arrive within this time (prefetched ones at once), and a
+// "Loading…" line that flashes for a few frames while the window scales in
+// reads as a glitch; slower downloads show it after this delay.
+const LOADING_DELAY_MS = 150;
+
 function AppLoading() {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShown(true), LOADING_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  if (!shown) return null;
   return (
     <p className="app-loading" role="status">
       Loading…
     </p>
+  );
+}
+
+/**
+ * "This app could not load", with "Try again"; the window's next launch also
+ * tries again. Both go through a launch (focusRequest), so focus does not
+ * drop to <body> when the button goes: pressed from the keyboard, it moves
+ * into the window first, and an app that focuses its input on launch
+ * (useFocusOnLaunch) takes it from there once it renders.
+ */
+function AppLoadError({ appId, onRetry }: { appId: AppId; onRetry: () => void }) {
+  const retry = useRef(onRetry);
+  useEffect(() => {
+    retry.current = onRetry;
+  });
+  useEffect(() => {
+    const seq = () => windowsStore.get().windows[appId].focusRequest.seq;
+    const failedAt = seq();
+    let retried = false;
+    return windowsStore.subscribe(() => {
+      if (retried || seq() === failedAt) return;
+      retried = true;
+      retry.current();
+    });
+  }, [appId]);
+  return (
+    <div className="app-loading app-loading-error" role="alert">
+      <p>This app could not load. Check your connection and try again.</p>
+      <button
+        type="button"
+        className="app-loading-retry"
+        onClick={() => activateWindow(appId, isKeyboardInteraction())}
+      >
+        Try again
+      </button>
+    </div>
   );
 }
 
@@ -79,63 +97,47 @@ interface BoundaryProps {
   children: ReactNode;
 }
 
+// A body that throws while rendering.
 class AppErrorBoundary extends Component<BoundaryProps, { failed: boolean }> {
   state = { failed: false };
-  private stopWatching: (() => void) | null = null;
 
   static getDerivedStateFromError() {
     return { failed: true };
   }
 
-  componentDidMount() {
-    this.watchForLaunch();
-  }
-
-  componentDidUpdate() {
-    this.watchForLaunch();
-  }
-
-  componentWillUnmount() {
-    this.stopWatching?.();
-  }
-
-  // After a failure, the window's next launch (desktop:window-focus) tries again.
-  private watchForLaunch() {
-    if (!this.state.failed || this.stopWatching) return;
-    const seq = () => windowsStore.get().windows[this.props.appId].focusRequest.seq;
-    const failedAt = seq();
-    const unsubscribe = windowsStore.subscribe(() => {
-      if (seq() === failedAt) return;
-      this.stopWatching?.();
-      this.props.onRetry();
-    });
-    this.stopWatching = () => {
-      unsubscribe();
-      this.stopWatching = null;
-    };
-  }
-
   render() {
-    if (this.state.failed) {
-      return (
-        <div className="app-loading app-loading-error" role="alert">
-          <p>This app could not load. Check your connection and try again.</p>
-          <button type="button" className="app-loading-retry" onClick={this.props.onRetry}>
-            Try again
-          </button>
-        </div>
-      );
-    }
+    if (this.state.failed) return <AppLoadError appId={this.props.appId} onRetry={this.props.onRetry} />;
     return this.props.children;
   }
 }
 
+function retryDownload(appId: AppId) {
+  loadAppChunk(appId).catch(() => {
+    // Shown by the error state.
+  });
+}
+
 export function AppBody<Id extends AppId>({ appId, data }: AppProps<Id>) {
+  const chunk = useSyncExternalStore(
+    subscribeAppChunks,
+    () => getAppChunk(appId),
+    () => undefined,
+  );
   const [attempt, setAttempt] = useState(0);
-  const Body = getBody(appId, attempt);
+
+  // The launch or idle mount that rendered the body started its download
+  // (window-manager.ts); this only covers a body rendered some other way.
+  useEffect(() => {
+    if (!getAppChunk(appId)) retryDownload(appId);
+  }, [appId]);
+
+  if (!chunk) return <AppLoading />;
+  if (chunk.status === "failed") return <AppLoadError appId={appId} onRetry={() => retryDownload(appId)} />;
+  const Body = chunk.Body as ComponentType<AppProps<Id>>;
   return (
-    // A new key gives the next try a fresh boundary and Suspense.
+    // A new key mounts the body afresh after it threw.
     <AppErrorBoundary key={attempt} appId={appId} onRetry={() => setAttempt((count) => count + 1)}>
+      {/* Only for a body that suspends on something of its own. */}
       <Suspense fallback={<AppLoading />}>
         <Body appId={appId} data={data} />
         <BodyReady appId={appId} />

@@ -122,10 +122,13 @@ export function DesktopIcon({ app }: { app: AppDefinition }) {
       }}
       onPointerCancel={handlers.onPointerCancel}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openApp();
-        }
+        if (event.key !== "Enter" && event.key !== " ") return;
+        // Hydrated but not booted yet: nothing would open the window. Leave
+        // the key its native click, which the parse-time input script keeps
+        // for the boot to replay (DesktopScripts.tsx).
+        if (!window.__pepodevWindowManagerReady) return;
+        event.preventDefault();
+        openApp();
       }}
       // Pointer and key opens are handled above. A click with detail 0 comes
       // from assistive tech (screen-reader activation), which sends no

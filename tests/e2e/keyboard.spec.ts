@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openApp, resetPage } from "./helpers";
+import { holdAppChunks, openApp, resetPage } from "./helpers";
 
 // Open windows can cover desktop icons, so later apps launch from the start menu.
 async function openFromStartMenu(page: Page, appId: string) {
@@ -193,6 +193,60 @@ test("Enter and Space activate taskbar and Start menu controls while an app is f
   await page.keyboard.press("Space");
   await expect(page.locator("#website")).toBeVisible();
   await expect(snake.locator("[data-snake-status]")).toHaveText("Ready");
+});
+
+test("keys typed while an app's code loads reach it, even after another window took over", async ({
+  page,
+}) => {
+  // On a slow network a window opens before its app's code has arrived.
+  // The keys typed into it meanwhile are the app's: they are kept and
+  // replayed, in order, once its body renders, also when the visitor has
+  // moved on to another window by then.
+  const chunks = await holdAppChunks(page, ["Incomplete expression"]);
+  await resetPage(page);
+  const calculator = await openApp(page, "Calculator", "calculator", {
+    body: false,
+  });
+  await expect(calculator.getByRole("status")).toHaveText("Loading…");
+  await page.keyboard.type("12*3");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type("4");
+
+  await page.locator("#taskbar-start").focus();
+  await page.keyboard.press("Enter");
+  await page.locator('#start-menu [data-open-app="snake"]').focus();
+  await page.keyboard.press("Enter");
+  const snake = page.locator("#window-snake");
+  await expect(snake).toHaveClass(/focused/);
+  await expect(calculator.getByRole("status")).toHaveText("Loading…");
+
+  chunks.release();
+  const value = calculator.locator(".calculator-value");
+  await expect(value).toHaveText("12*4");
+  await expect(snake.locator("[data-snake-status]")).toHaveText("Ready");
+  await focusFromTaskbar(page, /Calculator/);
+  await page.keyboard.press("Enter");
+  await expect(value).toHaveText("48");
+});
+
+test("keys typed into a window that closes before its code arrives are dropped", async ({
+  page,
+}) => {
+  const chunks = await holdAppChunks(page, ["Incomplete expression"]);
+  await resetPage(page);
+  const calculator = await openApp(page, "Calculator", "calculator", {
+    body: false,
+  });
+  await page.keyboard.type("99");
+  await calculator.getByRole("button", { name: "Close Calculator" }).click();
+  await expect(calculator).toBeHidden();
+  chunks.release();
+
+  await openApp(page, "Calculator", "calculator");
+  const value = calculator.locator(".calculator-value");
+  await expect(value).toHaveText("0");
+  await page.keyboard.type("7");
+  await expect(value).toHaveText("7");
 });
 
 test("an open command palette keeps keys from the app behind it", async ({

@@ -1,12 +1,14 @@
 "use client";
 // Website mode's "Copy" button next to the e-mail address, and the status
-// line that announces the result. The server renders the button hidden; it
-// shows once hydrated, and only where the Clipboard API exists.
+// line that announces the result. The server renders the button, so it is
+// there from first paint (as on the Astro site, where the e-mail row never
+// grew when scripts ran); hydration hides it where the Clipboard API is
+// missing (an insecure context, an old browser).
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const subscribeNever = () => () => {};
 const hasClipboard = () => Boolean(navigator.clipboard);
-const serverHasClipboard = () => false;
+const serverHasClipboard = () => true;
 
 export function CopyEmailButton({ email }: { email: string }) {
   const supported = useSyncExternalStore(subscribeNever, hasClipboard, serverHasClipboard);

@@ -80,6 +80,9 @@ export class MusicPlayer {
   private canvasContext: CanvasRenderingContext2D | null = null;
   private reducedMotion: MediaQueryList | null = null;
   private playbackRequestId = 0;
+  // Playback was asked for (Play, Settings, a track change while playing)
+  // and not stopped since: only then does a media error show its message.
+  private playRequested = false;
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private outputGain: GainNode | null = null;
@@ -151,9 +154,15 @@ export class MusicPlayer {
     };
     const onTime = () => this.updatePlaybackTime();
     const onEnded = () => this.step(1);
+    // Opening the window loads the track's metadata. A browser that cannot
+    // decode it fails then, before anyone pressed Play: say so once playback
+    // is asked for (play() fails too), as the Astro player did, instead of
+    // greeting the visitor with an error.
     const onError = () => {
       const code = media?.error?.code;
       this.saveSettings({ playing: false });
+      if (!this.playRequested) return;
+      this.playRequested = false;
       this.update({ status: code ? `${PLAY_FAILED} Media error ${code}.` : PLAY_FAILED });
     };
     const onVisibility = () => this.syncVisualizer();
@@ -221,6 +230,7 @@ export class MusicPlayer {
       await this.startPlayback();
     } else {
       this.playbackRequestId += 1;
+      this.playRequested = false;
       this.media.pause();
       this.saveSettings({ playing: false });
     }
@@ -490,6 +500,7 @@ export class MusicPlayer {
     this.loadTrackSource();
     const requestId = this.playbackRequestId + 1;
     this.playbackRequestId = requestId;
+    this.playRequested = true;
     this.resumeAudioContext();
     this.applyVolume();
     try {
@@ -499,6 +510,7 @@ export class MusicPlayer {
       return true;
     } catch (error) {
       if (requestId !== this.playbackRequestId) return false;
+      this.playRequested = false;
       this.saveSettings({ playing: false });
       this.update({
         status: error instanceof Error && error.name === "NotAllowedError" ? "Playback was blocked by the browser." : PLAY_FAILED,

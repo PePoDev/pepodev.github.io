@@ -17,7 +17,6 @@
     "paths": {
       "@/*": ["./src/*"],
       "@components/*": ["./src/components/*"],
-      "@layouts/*": ["./src/layouts/*"],
       "@lib/*": ["./src/lib/*"],
       "@data/*": ["./src/data/*"],
       "@utils/*": ["./src/utils/*"],
@@ -32,5 +31,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "out", ".next", "src/astro-legacy", "**/*.astro"]
+  "exclude": ["node_modules", "out", ".next"]
 }

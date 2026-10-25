@@ -5,8 +5,9 @@
 // returns the <img> attributes. `next dev` serves public/ directly, and
 // `next build` exports it into out/_img/ (scripts/postbuild.mjs then checks
 // that every image a page references exists). Names carry a hash of the
-// source file and the transform, so a file is written once and cached by
-// browsers forever.
+// source file and the transform, so a file is written once per build and a
+// URL never changes its content (safe to cache for as long as the host
+// allows; GitHub Pages sends max-age=600).
 //
 // The rules follow Astro's `image.layout: "constrained"` with the breakpoints
 // in IMAGE_BREAKPOINTS, so the srcsets match the Astro build: 1x and 2x the
@@ -17,7 +18,7 @@ import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
-/** Screen widths for srcsets; keep the list short (every article is also in index.html). */
+/** Screen widths for srcsets; keep the list short (every Blog article file carries them). */
 export const IMAGE_BREAKPOINTS = [640, 960, 1280, 1920] as const;
 
 /** Share cards (og:image) are JPEGs at most this wide. */

@@ -14,8 +14,9 @@ export type OverlayId = "start-menu" | "tray-panel" | "command-palette";
 
 export const overlayStore = createStore<OverlayId | null>(null);
 
-export function useOpenOverlay(): OverlayId | null {
-  return useStore(overlayStore, (open) => open);
+/** Whether `id` is the open overlay; re-renders only when that changes. */
+export function useOverlayOpen(id: OverlayId): boolean {
+  return useStore(overlayStore, (open) => open === id);
 }
 
 export function isOverlayOpen(id?: OverlayId): boolean {

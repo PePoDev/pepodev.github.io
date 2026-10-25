@@ -21,6 +21,7 @@
 // - Dragging keeps a title bar above the taskbar with 120px of it on screen;
 //   maximized windows end at the taskbar; phones get full-screen windows.
 import { canTakeFocus } from "@utils/overlays";
+import { loadAppChunk } from "./app-chunks";
 import { APPS, getApp, isAppId, type AppDefinition, type AppId } from "./apps";
 import { closeStartMenu, isOverlayOpen } from "./overlay-state";
 import { getBlogDeepLink, isDesktopSiteMode } from "./site-mode";
@@ -379,6 +380,9 @@ function later(callback: () => void, ms: number) {
 export function openWindow(appId: AppId, moveFocus = false) {
   const state = get(appId);
   if (!state) return;
+  // Before rendering: a body whose code is there renders with its window;
+  // otherwise its download starts now (or starts again after a failure).
+  startBodyDownload(appId);
   if (state.open && state.minimized) {
     restoreWindow(appId, moveFocus);
     return;
@@ -524,9 +528,16 @@ export function closeAllWindows() {
   }
 }
 
+function startBodyDownload(appId: AppId) {
+  loadAppChunk(appId).catch(() => {
+    // The window shows the error and tries again on its next launch.
+  });
+}
+
 /** Mounts an app body without opening its window ("idle" apps). */
 export function mountWindowBody(appId: AppId) {
   if (get(appId).mounted) return;
+  startBodyDownload(appId);
   commit(() => patch(appId, { mounted: true }));
 }
 

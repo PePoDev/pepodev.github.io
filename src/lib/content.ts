@@ -211,14 +211,6 @@ export async function getCollection<C extends CollectionName>(
   return filter ? entries.filter(filter) : [...entries];
 }
 
-/** One entry by id, or undefined. */
-export async function getEntry<C extends CollectionName>(
-  collection: C,
-  id: string,
-): Promise<CollectionEntry<C> | undefined> {
-  return (await loadCollection(collection)).find((entry) => entry.id === id);
-}
-
 const rendered = new WeakMap<object, Promise<RenderedContent>>();
 
 /**

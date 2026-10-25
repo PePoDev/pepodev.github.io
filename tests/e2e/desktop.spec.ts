@@ -393,15 +393,14 @@ test("a first visit from a ?blog= link opens only the article, even when the Blo
   // The Blog app's code is its own chunk, loaded when the link opens its
   // window; on a slow network it arrives after the first-visit Welcome
   // timer (1.5s after the desktop boots) fires. Hold that chunk back: the
-  // one with the Blog app's list markup (or, until the app is ported, its
-  // placeholder).
+  // one with the Blog app's list markup.
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   const late: (() => void)[] = [];
   await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
     const response = await route.fetch();
     const body = await response.text();
-    if (/data-blog-list-view|source: ?"BlogApp\.astro"/.test(body)) {
+    if (body.includes("data-blog-list-view")) {
       await new Promise<void>((resolve) => late.push(resolve));
     }
     await route.fulfill({ response, body });
@@ -835,6 +834,56 @@ test("music player recovers from stale saved playback state", async ({
         .evaluate((media: HTMLMediaElement) => media.paused),
     )
     .toBe(true);
+});
+
+test("a track the browser cannot play says so once playback is asked for", async ({
+  page,
+}) => {
+  // Opening the player loads the track's metadata; a browser that cannot
+  // decode the file fails right then. The message waits for Play, as on the
+  // Astro site, instead of greeting the visitor.
+  await page.route("**/music/**", (route) =>
+    route.fulfill({ contentType: "video/mp4", body: "not a media file" }),
+  );
+  const music = await openApp(page, "Music", "music");
+  const media = music.locator("[data-music-media]");
+  const status = music.locator("[data-music-status]");
+  const mediaError = () =>
+    media.evaluate((element: HTMLMediaElement) => element.error?.code ?? 0);
+  await expect.poll(mediaError).toBeGreaterThan(0);
+  await expect(status).toHaveText("");
+
+  await music.getByRole("button", { name: "Play", exact: true }).click();
+  await expect(status).toContainText(
+    "This browser could not play the selected file.",
+  );
+  await expect(
+    music.getByRole("button", { name: "Play", exact: true }),
+  ).toBeVisible();
+
+  // Another track clears it, and fails as quietly until Play is pressed.
+  await music.getByRole("button", { name: "Next track" }).click();
+  await expect(status).toHaveText("");
+  await expect.poll(mediaError).toBeGreaterThan(0);
+  await page.waitForTimeout(200);
+  await expect(status).toHaveText("");
+});
+
+test("corrupt saved system audio falls back to valid values", async ({
+  page,
+}) => {
+  for (const [saved, shown] of [
+    ['{"volume":"loud","muted":"yes"}', "100%"],
+    ['{"volume":5}', "100%"],
+    ['{"volume":0.4,"muted":null}', "40%"],
+  ]) {
+    await resetPage(page, { "pepodev.systemAudio": saved });
+    await page.locator("#taskbar-clock-button").click();
+    await expect(page.locator("#audio-volume-value"), saved).toHaveText(shown);
+    await expect(page.locator("#taskbar-audio-status")).toHaveAccessibleDescription(
+      "Audio on",
+    );
+  }
 });
 
 test("terminal commands print output and can open apps", async ({ page }) => {

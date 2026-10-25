@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { holdChunks, openApp, prefsStorage, resetPage } from "./helpers";
+import {
+  emulateSaveData,
+  holdAppChunks,
+  holdChunks,
+  openApp,
+  prefsStorage,
+  resetPage,
+} from "./helpers";
 import certifications from "../../src/data/certifications.json" with {
   type: "json",
 };
@@ -570,7 +577,7 @@ test("apps opened before their code has loaded still start", async ({ page }) =>
   await resetPage(page);
   const chunks = await holdChunks(page);
 
-  const game = await openApp(page, "SRE Game", "sregame");
+  const game = await openApp(page, "SRE Game", "sregame", { body: false });
   const gallery = await openWithKeyboard(page, "Gallery", "gallery");
   await expect(gallery).toBeFocused();
   await expect(gallery.getByRole("status")).toHaveText("Loading…");
@@ -580,6 +587,208 @@ test("apps opened before their code has loaded still start", async ({ page }) =>
   await expect(game.locator(".sre-boot-output")).toContainText("ssh", {
     timeout: 5_000,
   });
+});
+
+// Text only that app's code has, to tell its chunk apart (holdAppChunks).
+const CALCULATOR_CODE = "Incomplete expression";
+const TERMINAL_CODE = "Available commands: ";
+const GALLERY_CODE = "Please enter the password";
+
+async function openFromStartMenu(page: Page, appId: string) {
+  await page.getByRole("button", { name: "Open start menu" }).click();
+  await page.locator(`#start-menu [data-open-app="${appId}"]`).click();
+  const window = page.locator(`#window-${appId}`);
+  await expect(window).toHaveClass(/focused/);
+  return window;
+}
+
+test("apps whose code arrives after their window opened still take focus", async ({
+  page,
+}) => {
+  // The first launch from an icon or the Start menu with the pointer: the
+  // body takes focus when it renders, since nothing else took it meanwhile.
+  const chunks = await holdAppChunks(page, [TERMINAL_CODE, GALLERY_CODE]);
+  await resetPage(page);
+  const terminal = await openApp(page, "Terminal", "terminal", { body: false });
+  await expect(terminal.getByRole("status")).toHaveText("Loading…");
+  chunks.release(TERMINAL_CODE);
+  await expect(terminal.locator("[data-terminal-input]")).toBeFocused();
+
+  const gallery = await openFromStartMenu(page, "gallery");
+  await expect(gallery.getByRole("status")).toHaveText("Loading…");
+  chunks.release(GALLERY_CODE);
+  await expect(gallery.locator("#gallery-password")).toBeFocused();
+});
+
+test("text typed while an app's code loads goes into its input", async ({
+  page,
+}) => {
+  // The Astro desktop had every app in the page, so typing right after a
+  // click always reached Terminal's input. Now the keys typed before the
+  // body renders are kept, and typed into the input it focuses.
+  const chunks = await holdAppChunks(page, [TERMINAL_CODE, GALLERY_CODE]);
+  await resetPage(page);
+  const terminal = await openApp(page, "Terminal", "terminal", { body: false });
+  await expect(terminal.getByRole("status")).toHaveText("Loading…");
+  await page.keyboard.type("hepl");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type("lp");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("who");
+  chunks.release(TERMINAL_CODE);
+  const input = terminal.locator("[data-terminal-input]");
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue("who");
+  await expect(terminal.locator("[data-terminal-output]")).toContainText(
+    "pepo@desktop:~$ help",
+  );
+  await page.keyboard.type("ami");
+  await expect(input).toHaveValue("whoami");
+
+  // From the keyboard, through the Start menu.
+  await page.locator("#taskbar-start").focus();
+  await page.keyboard.press("Enter");
+  await page.locator('#start-menu [data-open-app="gallery"]').focus();
+  await page.keyboard.press("Enter");
+  const gallery = page.locator("#window-gallery");
+  await expect(gallery.getByRole("status")).toHaveText("Loading…");
+  await page.keyboard.type("letmein");
+  chunks.release(GALLERY_CODE);
+  await expect(gallery.locator("#gallery-password")).toBeFocused();
+  await expect(gallery.locator("#gallery-password")).toHaveValue("letmein");
+  await expect(input).toHaveValue("whoami");
+});
+
+test("an app whose code arrives late leaves focus where the visitor moved it", async ({
+  page,
+}) => {
+  const chunks = await holdAppChunks(page, [GALLERY_CODE]);
+  await resetPage(page);
+  const terminal = await openApp(page, "Terminal", "terminal");
+  const input = terminal.locator("[data-terminal-input]");
+  const gallery = await openFromStartMenu(page, "gallery");
+  await expect(gallery.getByRole("status")).toHaveText("Loading…");
+  // Back to the Terminal before the Gallery has loaded.
+  await input.focus();
+  await expect(terminal).toHaveClass(/focused/);
+  chunks.release();
+
+  await expect(gallery.locator("#gallery-password")).toBeAttached();
+  await expect(input).toBeFocused();
+  await expect(gallery).not.toHaveClass(/focused/);
+});
+
+test("a launcher's hover fetches its app, which then opens with its body at once", async ({
+  page,
+}) => {
+  // Only intent fetches app code here: a visitor who saves data gets no
+  // idle prefetching.
+  await emulateSaveData(page);
+  const chunks = await holdAppChunks(page, [CALCULATOR_CODE]);
+  chunks.release();
+  await resetPage(page);
+  // The page's own code holds no app body: Calculator's arrives on demand,
+  // even once the desktop has been idle (the "idle" Welcome has mounted).
+  await expect(page.locator("#window-welcome .welcome-app")).toBeAttached();
+  expect(chunks.requested(CALCULATOR_CODE)).toBeUndefined();
+
+  const icon = page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: "Calculator" });
+  await icon.hover();
+  await expect.poll(() => chunks.requested(CALCULATOR_CODE)).toBeTruthy();
+  // Let the chunk arrive and run.
+  await page.waitForFunction(
+    (url) => performance.getEntriesByName(url).length > 0,
+    chunks.requested(CALCULATOR_CODE)!,
+  );
+  await page.waitForTimeout(300);
+
+  // Shown with its body in the same commit, never "Loading…" or empty.
+  await page.evaluate(() => {
+    const win = document.getElementById("window-calculator")!;
+    const seen = { empty: false };
+    new MutationObserver(() => {
+      if (!win.hidden && !win.querySelector(".calculator-app")) seen.empty = true;
+    }).observe(win, { attributes: true, childList: true, subtree: true });
+    (window as typeof window & { __calculatorSeen?: typeof seen }).__calculatorSeen = seen;
+  });
+  await icon.click();
+  const calculator = page.locator("#window-calculator");
+  await expect(calculator).toHaveClass(/focused/);
+  await page.keyboard.type("7*6");
+  await page.keyboard.press("Enter");
+  await expect(calculator.locator(".calculator-value")).toHaveText("42");
+  expect(
+    await page.evaluate(
+      () =>
+        (window as typeof window & { __calculatorSeen?: { empty: boolean } })
+          .__calculatorSeen?.empty,
+    ),
+  ).toBe(false);
+});
+
+test("the desktop fetches app code in idle time once it has settled", async ({
+  page,
+}) => {
+  const chunks = await holdAppChunks(page, [CALCULATOR_CODE, TERMINAL_CODE]);
+  chunks.release();
+  await resetPage(page);
+  // No launcher touched.
+  await expect
+    .poll(
+      () =>
+        Boolean(
+          chunks.requested(CALCULATOR_CODE) && chunks.requested(TERMINAL_CODE),
+        ),
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+  expect(await page.locator("#window-calculator").isHidden()).toBe(true);
+});
+
+test("an app whose code fails to download can be tried again", async ({
+  page,
+}) => {
+  // The chunk fails (Turbopack tries it twice), then the network is back.
+  let failing = true;
+  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    if (failing && (body.includes(CALCULATOR_CODE) || body.includes(TERMINAL_CODE))) {
+      await route.abort("failed");
+      return;
+    }
+    await route.fulfill({ response, body });
+  });
+  await resetPage(page);
+  const calculator = await openApp(page, "Calculator", "calculator", {
+    body: false,
+  });
+  const error = calculator.getByRole("alert");
+  await expect(error).toContainText("This app could not load");
+  const terminal = await openFromStartMenu(page, "terminal");
+  await expect(terminal.getByRole("alert")).toContainText(
+    "This app could not load",
+  );
+  failing = false;
+
+  // "Try again" loads it (pressed from the keyboard: the Terminal window
+  // may cover it), and so does the window's next launch. Focus moves into
+  // the window as the button goes, instead of dropping to <body>.
+  await error.getByRole("button", { name: "Try again" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(calculator.locator(".calculator-value")).toHaveText("0");
+  await expect(calculator).toHaveClass(/focused/);
+  expect(
+    await calculator.evaluate((element) =>
+      element.contains(document.activeElement),
+    ),
+  ).toBe(true);
+  await openFromStartMenu(page, "terminal");
+  await expect(terminal.locator("[data-terminal-input]")).toBeVisible();
+  await expect(terminal.getByRole("alert")).toHaveCount(0);
 });
 
 test("Terminal skills lists skills.json", async ({ page }) => {
@@ -661,6 +870,20 @@ for (const theme of ["light", "dark"] as const) {
     await page.keyboard.press("Tab");
     await expect(quote).toBeFocused();
     await expect(quote).toHaveCSS("outline-style", "solid");
+    // The body fades in with its window (WelcomeApp.css): measure the quote
+    // where it comes to rest, which is what the screenshot below shows (it
+    // finishes animations).
+    await welcome.evaluate((element) =>
+      Promise.allSettled(
+        element
+          .getAnimations({ subtree: true })
+          .filter(
+            (animation) =>
+              animation.effect?.getComputedTiming().iterations !== Infinity,
+          )
+          .map((animation) => animation.finished),
+      ),
+    );
     // The ring is drawn at once, not faded in.
     expect(
       await quote.evaluate(

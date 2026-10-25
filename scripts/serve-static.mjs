@@ -119,7 +119,9 @@ const server = createServer(async (request, response) => {
     response.writeHead(405, { Allow: "GET, HEAD" }).end();
     return;
   }
-  const url = new URL(request.url ?? "/", "http://localhost");
+  // A path, never an authority: "//blog" is /blog (GitHub Pages redirects it
+  // to /blog/), and no redirect can start with "//" (another host).
+  const url = new URL("/" + (request.url ?? "/").replace(/^\/+/, ""), "http://localhost");
   let pathname;
   try {
     pathname = decodeURIComponent(url.pathname);
