@@ -44,9 +44,11 @@ export function DesktopPrefsScript() {
 
 /** Input the parse-time input script took before the boot; runtime.tsx replays it. */
 export type EarlyInput =
-  | { type: "launch"; appId: string | undefined }
+  | { type: "launch"; appId: string | undefined; keyboard: boolean }
   | { type: "control"; control: (typeof EARLY_CONTROLS)[number] }
-  | { type: "palette" };
+  | { type: "palette" }
+  // A mode switch, already applied; it only counts as interaction.
+  | { type: "mode" };
 
 /** Taskbar controls whose clicks before the boot are replayed. */
 export const EARLY_CONTROLS = [
@@ -64,9 +66,13 @@ const earlyInputScript = `(() => {
   // then this takes the clicks and keys the desktop would handle, so a quick
   // visitor's input is not lost: launches ([data-open-app]), the taskbar's
   // Start, palette and tray buttons, and Ctrl/Cmd + K are kept in order and
-  // replayed by the boot (runtime.tsx). A mode switch applies at once, with
-  // the attributes and storage the site-mode store uses (it takes over at
-  // the boot), and hands focus to the other panel's switch.
+  // replayed by the boot (runtime.tsx); a launch from the keyboard (a click
+  // with detail 0) still moves focus into its window. A mode switch applies
+  // at once, with the attributes and storage the site-mode store uses (it
+  // takes over at the boot), keeps the website scroll position
+  // (window.__pepodevWebsiteScrollY, which the store takes over too), hands
+  // focus to the other panel's switch, and counts as interaction. Website
+  // mode's Copy email button copies until React has hydrated it.
   const early = (window.__pepodevEarlyInput = []);
   const root = document.documentElement;
   const isDesktop = () => root.dataset.siteMode !== "website";
@@ -75,12 +81,38 @@ const earlyInputScript = `(() => {
     event.preventDefault();
     event.stopImmediatePropagation();
   };
+  // A hydration error (text a browser extension or Cloudflare changed before
+  // React hydrated) makes React render the page again from scratch, which
+  // resets <html> to its server attributes: the desktop, no theme. Until the
+  // boot, put back what the parse-time scripts set (the mode, and the theme
+  // and preferences' attributes and variables) before the next paint.
+  const kept = ["data-site-mode", "data-theme", "data-background-effect", "data-window-glass", "style"];
+  const saved = {};
+  const save = () => kept.forEach((name) => (saved[name] = root.getAttribute(name)));
+  save();
+  const keeper = new MutationObserver(() => {
+    if (window.__pepodevWindowManagerReady) return keeper.disconnect();
+    kept.forEach((name) => {
+      if (saved[name] !== null && root.getAttribute(name) !== saved[name]) root.setAttribute(name, saved[name]);
+    });
+  });
+  keeper.observe(root, { attributeFilter: kept });
   document.addEventListener(
     "click",
     (event) => {
-      if (window.__pepodevWindowManagerReady) return;
       const target = event.target instanceof Element ? event.target : null;
       if (!target) return;
+      const copyButton = window.__pepodevCopyEmailReady ? null : target.closest("#website [data-copy-email]");
+      if (copyButton) {
+        take(event);
+        // Now, while the press still allows it; the button shows the
+        // result once it has hydrated (CopyEmailButton.tsx).
+        window.__pepodevEarlyCopyEmail = new Promise((resolve) =>
+          resolve(navigator.clipboard.writeText(copyButton.dataset.copyEmail)),
+        ).then(() => true, () => false);
+        return;
+      }
+      if (window.__pepodevWindowManagerReady) return;
       const modeSwitch = target.closest("[data-site-mode-toggle], [data-site-mode-target]");
       if (modeSwitch) {
         take(event);
@@ -90,7 +122,10 @@ const earlyInputScript = `(() => {
           : modeSwitch.dataset.siteModeTarget;
         const mode = wanted === "website" ? "website" : "desktop";
         if (mode === current) return;
+        // Desktop mode locks the page to one screen, which resets its scroll.
+        if (mode === "desktop") window.__pepodevWebsiteScrollY = window.scrollY;
         root.dataset.siteMode = mode;
+        save();
         try {
           localStorage.setItem(${scriptValue(VIEW_MODE_STORAGE_KEY)}, mode);
         } catch {}
@@ -99,10 +134,13 @@ const earlyInputScript = `(() => {
           url.searchParams.delete("blog");
           history.replaceState(history.state, "", url);
         }
-        // What was meant for the other mode no longer applies.
+        // What was meant for the other mode no longer applies; the switch
+        // itself is the visitor acting first (Welcome stays closed).
         early.length = 0;
+        early.push({ type: "mode" });
         // The icon placement script places the icons of a desktop it skipped.
         if (mode === "desktop") window.dispatchEvent(new Event("resize"));
+        else window.scrollTo({ top: window.__pepodevWebsiteScrollY || 0, behavior: "instant" });
         document
           .querySelector('[data-site-mode-panel="' + mode + '"] [data-site-mode-toggle]')
           ?.focus({ preventScroll: true });
@@ -111,7 +149,7 @@ const earlyInputScript = `(() => {
       if (!isDesktop()) return;
       const launcher = target.closest("[data-open-app]");
       const control = launcher ? null : target.closest(controls);
-      if (launcher) early.push({ type: "launch", appId: launcher.dataset.openApp });
+      if (launcher) early.push({ type: "launch", appId: launcher.dataset.openApp, keyboard: event.detail === 0 });
       else if (control) early.push({ type: "control", control: control.id });
       else return;
       take(event);
@@ -131,7 +169,10 @@ const earlyInputScript = `(() => {
   );
 })();`;
 
-/** Takes clicks and Ctrl/Cmd + K made before the desktop boots (replayed by runtime.tsx). */
+/**
+ * Takes clicks and Ctrl/Cmd + K made before the desktop boots (replayed by
+ * runtime.tsx), and keeps the parse-time <html> attributes until then.
+ */
 export function DesktopEarlyInputScript() {
   return <InlineScript code={earlyInputScript} />;
 }

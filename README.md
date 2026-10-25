@@ -302,8 +302,21 @@ the same code:
   takes clicks on `[data-open-app]` launchers and the taskbar's Start,
   palette, clock and audio buttons, Enter or Space on a desktop icon, and
   Ctrl/Cmd + K, in order; the boot replays them and they count as
-  interaction (Welcome stays closed). A mode switch applies at once. Other
-  keys, icon drags, and other clicks are lost before the boot.
+  interaction (Welcome stays closed), and a launch from the keyboard (a
+  click with `detail` 0) moves focus into its window. A mode switch applies
+  at once, keeps the website scroll position
+  (`window.__pepodevWebsiteScrollY`, which site mode takes over at the
+  boot), and counts as interaction too. Until website mode's Copy email
+  button hydrates, a press on it copies at once
+  (`window.__pepodevEarlyCopyEmail`) and the button shows the result when it
+  hydrates (`window.__pepodevCopyEmailReady`). Other keys, icon drags, and
+  other clicks are lost before the boot. Until the boot the script also
+  keeps the `<html>` attributes the parse-time scripts set (mode, theme,
+  preference attributes and variables): a hydration error (text that an
+  extension or Cloudflare's e-mail obfuscation changed) makes React render
+  the page again and reset `<html>` to its server attributes
+  (`data-site-mode="desktop"`, no theme), and the script puts them back
+  before the next paint.
 - After `#desktop`: icon placement (above 768px in desktop mode; sets
   `data-desktop-icon-ready` and `window.__pepodevDesktopIconsReady`, and
   re-places on resize until the boot) and the taskbar clock (time and date in
@@ -344,7 +357,8 @@ tests.
   `#command-palette-status` (`data-tone`); `#toast-container` (`aria-live`)
   with `.toast(.toast-show|.toast-hide)`, `.toast-icon`, `.toast-message`,
   `.toast-close`. Hidden Start menu and palette items are `display: none`.
-- Events on `document`: in `desktop:open-app` `{ appId }`,
+- Events on `document`: in `desktop:open-app` `{ appId, keyboard }`
+  (`keyboard: true` moves focus into the window, as a key press does),
   `desktop:close-all-windows`, `desktop:open-command-palette`,
   `desktop:toggle-theme`, `desktop:show-toast` `{ message, duration }` (plain
   text); in and out `desktop:overlay-open` `{ id }`,
@@ -353,7 +367,9 @@ tests.
   `desktop:window-open` `{ appId, firstOpen }`, `desktop:window-focus`
   `{ appId, keyboard }`, `desktop:window-close` `{ appId }`.
 - Globals: `__pepodevWindowManagerReady`, `__pepodevDesktopIconsReady`,
-  `__pepodevEarlyInput`, `__pepoMusicController`.
+  `__pepodevEarlyInput`, `__pepodevWebsiteScrollY`,
+  `__pepodevEarlyCopyEmail`, `__pepodevCopyEmailReady`,
+  `__pepoMusicController`.
 - Key listener order: app handlers (`useAppKeyboard`, capture phase on
   `document`), then React's handlers, overlays and palette (`document`,
   bubble), then the window manager's Escape on `window`, which skips a key
@@ -527,7 +543,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   lean); only `SiteModePanel` and two islands hydrate. The Bangkok clock's
   parse-time script writes the current time before first paint; the Copy
   email button renders from first paint and hydration hides it only where
-  the Clipboard API is missing.
+  the Clipboard API is missing. A press before hydration copies at once
+  (the early-input script), and "Copied" shows when the button hydrates.
 - All type is self-hosted from the woff2 files committed in
   `src/assets/fonts/` (`src/styles/fonts-desktop.css`,
   `src/styles/fonts-website.css`): Inter and JetBrains Mono (`--font-sans`,

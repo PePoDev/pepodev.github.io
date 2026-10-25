@@ -671,8 +671,8 @@ test("Enter or Space on an icon hydrated before the boot is kept for the boot", 
   await page.locator('#desktop-icons [data-open-app="work"]').focus();
   await page.keyboard.press("Space");
   expect(await early()).toEqual([
-    { type: "launch", appId: "me" },
-    { type: "launch", appId: "work" },
+    { type: "launch", appId: "me", keyboard: true },
+    { type: "launch", appId: "work", keyboard: true },
   ]);
   await expect(page.locator("#window-me")).toBeHidden();
 
@@ -680,6 +680,61 @@ test("Enter or Space on an icon hydrated before the boot is kept for the boot", 
   await setReady(true);
   await page.locator('#desktop-icons [data-open-app="me"]').press("Enter");
   await expect(page.locator("#window-me")).toHaveClass(/focused/);
+});
+
+test("an app opened from the keyboard before the boot takes the focus", async ({
+  page,
+}) => {
+  // The boot replays the launch after the key press is long gone; the
+  // window still takes keyboard focus, as it does from the keyboard later.
+  await resetPage(page);
+  const chunks = await holdChunks(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  const icon = page.locator('#desktop-icons [data-open-app="me"]');
+  await icon.focus();
+  await page.keyboard.press("Enter");
+  chunks.release();
+  await waitForWindowManager(page);
+  const about = page.locator("#window-me");
+  await expect(about).toHaveClass(/focused/);
+  await expect
+    .poll(() =>
+      page.evaluate(() => !!document.activeElement?.closest("#window-me")),
+    )
+    .toBe(true);
+
+  // Closed from the keyboard, it hands focus back to its icon.
+  await page.keyboard.press("Escape");
+  await expect(about).toBeHidden();
+  await expect(icon).toBeFocused();
+});
+
+test("a mode switch before the boot keeps a first visit's Welcome window closed", async ({
+  page,
+}) => {
+  // Switching modes is acting first, like any input the boot replays.
+  await page.goto("/robots.txt");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.commandPaletteHintShown", String(Date.now()));
+  });
+  const chunks = await holdChunks(page);
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  const html = page.locator("html");
+  await page.locator("#taskbar-site-mode").click();
+  await expect(html).toHaveAttribute("data-site-mode", "website");
+  await page.locator("#website header [data-site-mode-toggle]").click();
+  await expect(html).toHaveAttribute("data-site-mode", "desktop");
+  chunks.release();
+  await waitForWindowManager(page);
+
+  // The Welcome timer marks the visit once it has decided.
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("pepodev.hasVisited")))
+    .toBe("true");
+  await expect(page.locator("#window-welcome")).toBeHidden();
 });
 
 test("the taskbar clock tells the time before the desktop hydrates", async ({
@@ -824,6 +879,53 @@ test("switching to desktop and back keeps the website scroll position", async ({
 
   await expect(page.locator("#website")).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(2000);
+});
+
+test("a round trip to desktop before the boot keeps the website scroll position", async ({
+  page,
+}) => {
+  // The parse-time input script switches modes until the desktop boots
+  // (held back here, as on a slow network).
+  await resetPage(page, { "pepodev.viewMode": "website" });
+  const chunks = await holdChunks(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  const taskbarSwitch = page.locator("#taskbar-site-mode");
+  const websiteSwitch = page.locator("#website header [data-site-mode-toggle]");
+  // Once the fonts are in, so the page above no longer changes height (and
+  // the browser no longer moves the scroll position to make up for it).
+  await page.evaluate(() => document.fonts.ready);
+  const scrollTo = async (top: number) => {
+    await page.evaluate(
+      (y) => window.scrollTo({ top: y, behavior: "instant" }),
+      top,
+    );
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(top);
+  };
+  // Keyboard presses, so nothing scrolls the header into view first.
+  const pressWebsiteSwitch = async () => {
+    await websiteSwitch.evaluate((button: HTMLElement) =>
+      button.focus({ preventScroll: true }),
+    );
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#desktop")).toBeVisible();
+    await expect(taskbarSwitch).toBeFocused();
+  };
+
+  await scrollTo(2000);
+  await pressWebsiteSwitch();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#website")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(2000);
+
+  // To desktop before the boot, back after it.
+  await scrollTo(1500);
+  await pressWebsiteSwitch();
+  chunks.release();
+  await waitForWindowManager(page);
+  await taskbarSwitch.press("Enter");
+  await expect(page.locator("#website")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(1500);
 });
 
 test("after a ?blog= deep link, choosing website mode survives a reload", async ({

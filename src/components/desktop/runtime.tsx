@@ -29,6 +29,8 @@ declare global {
     __pepodevDesktopIconsReady?: boolean;
     /** Input made before the boot (DesktopScripts.tsx); the boot replays it. */
     __pepodevEarlyInput?: EarlyInput[];
+    /** The website scroll position an early switch to desktop saved (DesktopScripts.tsx). */
+    __pepodevWebsiteScrollY?: number;
   }
 }
 
@@ -39,12 +41,15 @@ declare global {
 function replayEarlyInput() {
   const early = window.__pepodevEarlyInput ?? [];
   window.__pepodevEarlyInput = [];
-  if (!isDesktopSiteMode() || early.length === 0) return;
+  if (early.length === 0) return;
   // The visitor acted first, so the first-visit Welcome window stays closed.
   noteUserInteraction();
+  if (!isDesktopSiteMode()) return;
   for (const input of early) {
+    if (input.type === "mode") continue;
     if (input.type === "launch") {
-      if (isAppId(input.appId)) requestOpenApp(input.appId);
+      // The key press came before the window manager listened for keys.
+      if (isAppId(input.appId)) requestOpenApp(input.appId, input.keyboard);
     } else if (input.type === "palette") {
       togglePalette();
     } else if (input.control === "taskbar-start") {
