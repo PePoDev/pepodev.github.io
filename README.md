@@ -443,10 +443,11 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   window manager then leaves that Escape alone; to reset as the window
   closes, react to `open`), and use the hook rather than a `keydown`
   listener. `hasAppKeyboard(appId)`/`isAppKeyboardOwner(element)` tell Snake
-  when to pause. Keys typed while the body loads are kept and replayed once
-  it renders, while its window is open (dropped if it closes or shows the
-  load error, and none are kept while the error shows): into the text field
-  it focused (characters, Backspace, Enter submits the form; other keys are
+  when to pause; Snake also checks `document.hidden` and
+  `document.hasFocus()`. Keys typed while the body loads are kept and
+  replayed once it renders, while its window is open (dropped if it closes
+  or shows the load error, and none are kept while the error shows): into
+  the text field it focused (characters, Backspace, Enter submits the form; other keys are
   dropped), else to its handlers. Tab stays in a loading window: a Tab past
   its title bar, and every Tab after it, leaves focus on the window (so the
   keys after it are kept too), and the replay moves focus on as those Tabs
@@ -728,7 +729,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   mode with no overlay open and no Ctrl, Meta, or Alt (AltGr is allowed). Form
   fields and controls outside the window keep their keys, a focused button or
   link inside it keeps its Enter and Space, the app's own launcher hands its
-  keys over, and Snake pauses whenever it loses the keyboard. Pointer presses
+  keys over, and Snake pauses whenever it loses the keyboard, including to a
+  hidden tab or another app in front of the browser. Pointer presses
   on Calculator and Snake buttons do not focus them, so Enter after clicking
   keys still means "=". Keys typed right after a launch, before the app's code
   arrives, still reach it. The shared guard is `src/utils/app-keyboard.ts`.
@@ -772,7 +774,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   input when opened, restored, or launched again; on touch screens only when
   the keyboard opened them, so a tap does not raise the on-screen keyboard.
   The SRE game resets to its boot log on every opening, stops on close, and
-  freezes (timers and music) while minimized or in website mode.
+  freezes (timers and music) while minimized, while its tab is hidden, or in
+  website mode.
 - Gallery password is intentionally the literal `password`.
 - Certifications sort as Active (at least 90 days remaining), Expiring Soon,
   then Expired; badges refresh hourly. Data and sorting live in
