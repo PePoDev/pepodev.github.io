@@ -18,6 +18,7 @@ import {
   type MouseEvent,
 } from "react";
 import { useAppKeyboard, type AppProps } from "@components/desktop/app-api";
+import { evaluateExpression } from "./calculator-expression";
 
 interface CalculatorState {
   expression: string;
@@ -92,7 +93,7 @@ function calculate(state: CalculatorState): CalculatorState {
 
   let result: number;
   try {
-    result = Function(`"use strict"; return (${normalizePercentExpression(expression)})`)();
+    result = evaluateExpression(normalizePercentExpression(expression));
   } catch {
     return redraw(state, {}, "Invalid expression");
   }

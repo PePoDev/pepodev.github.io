@@ -510,6 +510,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   and `public/robots.txt` repeats `SITE_URL`; update them together
   (`pages.spec.ts` checks this).
 - Avoid broad shared-component refactors.
+- No `eval`, `new Function`, or string timers: the Content-Security-Policy
+  (`scripts/security-headers.mjs`) has no `'unsafe-eval'`. Anything loaded
+  from another origin (script, style, image, font, frame, request) needs a
+  policy change there and in the Cloudflare rule.
 - CSS: `global.css` comes through `<Document>`; a feature stylesheet is
   imported by the component that needs it. A component's own styles are a
   plain CSS file next to it with every selector starting at the component's
@@ -777,7 +781,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   or followed a `?blog=` link.
 - Snake's board shrinks with the window and never covers its controls; a new
   visitor's best score is 0. Calculator keeps the newest digits in view and
-  reports errors without clearing the input. Terminal and Gallery focus their
+  reports errors without clearing the input; it evaluates with
+  `calculator-expression.ts`, which gives JavaScript's results without eval.
+  Terminal and Gallery focus their
   input when opened, restored, or launched again; on touch screens only when
   the keyboard opened them, so a tap does not raise the on-screen keyboard.
   The SRE game resets to its boot log on every opening, stops on close, and

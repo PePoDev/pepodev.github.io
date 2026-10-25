@@ -271,12 +271,24 @@ test("the security headers allow everything the site does, Cloudflare Web Analyt
         .first(),
     ).toBeAttached();
   }
-  // Opening Blog again brings it to the front.
-  await page.evaluate(() =>
-    document.dispatchEvent(
-      new CustomEvent("desktop:open-app", { detail: { appId: "blog" } }),
-    ),
-  );
+  // Opening an app again brings it to the front.
+  const bringToFront = (appId: string) =>
+    page.evaluate(
+      (appId) =>
+        document.dispatchEvent(
+          new CustomEvent("desktop:open-app", { detail: { appId } }),
+        ),
+      appId,
+    );
+  // The Calculator evaluates without eval, which the policy blocks.
+  await bringToFront("calculator");
+  const calculator = page.locator("#window-calculator");
+  for (const token of ["1", "+", "2"]) {
+    await calculator.locator(`[data-token="${token}"]`).click();
+  }
+  await calculator.locator('[data-action="equals"]').click();
+  await expect(calculator.locator(".calculator-value")).toHaveText("3");
+  await bringToFront("blog");
   await page.locator("#window-blog .blog-item-title").first().click();
   await expect(
     page.locator("#window-blog article:not([hidden]) .blog-reader-body"),
