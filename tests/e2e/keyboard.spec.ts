@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
-import { holdAppChunks, openApp, resetPage } from "./helpers";
+import {
+  emulateSaveData,
+  holdAppChunks,
+  holdChunks,
+  openApp,
+  resetPage,
+  waitForWindowManager,
+} from "./helpers";
 
 // Open windows can cover desktop icons, so later apps launch from the start menu.
 async function openFromStartMenu(page: Page, appId: string) {
@@ -13,6 +20,29 @@ async function openFromStartMenu(page: Page, appId: string) {
 
 async function focusFromTaskbar(page: Page, name: RegExp) {
   await page.locator("#taskbar-apps").getByRole("button", { name }).click();
+}
+
+// The bodies the desktop mounts once it is idle (registry mount: "idle").
+// Waiting for them leaves no app code in flight that the test did not ask
+// for, so none is cut off when the test ends.
+async function waitForIdleBodies(page: Page) {
+  for (const appId of ["welcome", "sregame", "music"]) {
+    await expect(
+      page.locator(`#window-${appId} .window-content > :not(.app-loading)`),
+    ).not.toHaveCount(0);
+  }
+}
+
+// Reloads for a visitor who saves data, where only a launch (or a
+// launcher's hover or focus) asks for an app's code, and once the desktop
+// has its own code and idle bodies, holds back the code asked for from
+// then on, as a slow network would.
+async function reloadAndHoldApps(page: Page) {
+  await emulateSaveData(page);
+  await page.reload();
+  await waitForWindowManager(page);
+  await waitForIdleBodies(page);
+  return holdChunks(page);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -247,6 +277,96 @@ test("keys typed into a window that closes before its code arrives are dropped",
   await expect(value).toHaveText("0");
   await page.keyboard.type("7");
   await expect(value).toHaveText("7");
+});
+
+test("Tab typed while an app's code loads stays in its window, then moves into the app", async ({
+  page,
+}) => {
+  // Until the body renders, the window holds only its title-bar controls,
+  // so a fourth Tab would reach the taskbar's Start button and a fifth its
+  // palette button: Enter, Enter, Enter would then open the palette, arm
+  // Reset Desktop and run it. Tab waits in the window instead, and once the
+  // body renders it moves on into it, so the Enters press the control
+  // those Tabs reached (the first Restore button, after Empty trash).
+  await page.evaluate(() =>
+    localStorage.setItem("pepodev.snake.best.v2", "42"),
+  );
+  const chunks = await reloadAndHoldApps(page);
+  let loads = 0;
+  page.on("load", () => (loads += 1));
+
+  await page.keyboard.press("ControlOrMeta+K");
+  await expect(page.locator("#command-palette-input")).toBeFocused();
+  await page.keyboard.type("trash");
+  await page.keyboard.press("Enter");
+  const trash = page.locator("#window-trash");
+  await expect(trash).toBeFocused();
+  for (let tab = 0; tab < 5; tab += 1) await page.keyboard.press("Tab");
+  for (let enter = 0; enter < 3; enter += 1) await page.keyboard.press("Enter");
+  await expect(trash.locator("[data-trash-app]")).toHaveCount(0);
+  await expect(trash).toBeFocused();
+  await expect(page.locator("#command-palette")).toHaveAttribute(
+    "data-visible",
+    "false",
+  );
+  await expect(page.locator("#start-menu")).not.toHaveClass(/visible/);
+
+  chunks.release();
+  await expect(trash.locator("[data-trash-count]")).toHaveText(
+    "2 questionable artifacts quarantined",
+  );
+  await expect(trash.locator("[data-restore-trash]").first()).toBeFocused();
+  expect(loads).toBe(0);
+  expect(
+    await page.evaluate(() => localStorage.getItem("pepodev.snake.best.v2")),
+  ).toBe("42");
+});
+
+test("keys typed after Tabs that pass a loading app never press controls outside its window", async ({
+  page,
+}) => {
+  // With the body there, the fourth and fifth Tabs reach its two controls,
+  // and the sixth and seventh the taskbar's Start and palette buttons. Focus
+  // ends up there once the body renders, but the Enter typed meanwhile was
+  // kept for the app, so it does not open the palette.
+  const chunks = await reloadAndHoldApps(page);
+  await page.locator('#desktop-icons [data-open-app="whitenoise"]').focus();
+  await page.keyboard.press("Enter");
+  const noise = page.locator("#window-whitenoise");
+  await expect(noise).toBeFocused();
+  for (let tab = 0; tab < 7; tab += 1) await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  await expect(noise.locator("[data-noise-toggle]")).toHaveCount(0);
+  await expect(noise).toBeFocused();
+
+  chunks.release();
+  await expect(page.locator("#taskbar-command-palette")).toBeFocused();
+  await expect(page.locator("#command-palette")).toHaveAttribute(
+    "data-visible",
+    "false",
+  );
+});
+
+test("Tab still moves through a loading window's title bar", async ({
+  page,
+}) => {
+  const chunks = await reloadAndHoldApps(page);
+  await page
+    .locator("#desktop-icons")
+    .getByRole("button", { name: "Calculator" })
+    .focus();
+  await page.keyboard.press("Enter");
+  const calculator = page.locator("#window-calculator");
+  await expect(calculator).toBeFocused();
+  for (let tab = 0; tab < 3; tab += 1) await page.keyboard.press("Tab");
+  await expect(calculator.locator(".calculator-value")).toHaveCount(0);
+  await expect(
+    calculator.getByRole("button", { name: "Close Calculator" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(calculator).toBeHidden();
+  chunks.release();
+  await expect(calculator.locator(".calculator-app")).toBeAttached();
 });
 
 test("an open command palette keeps keys from the app behind it", async ({

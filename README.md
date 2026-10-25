@@ -444,7 +444,13 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   when to pause. Keys typed while the body loads are kept and replayed once
   it renders, while its window is open (dropped if it closed): into the text
   field it focused (characters, Backspace, Enter submits the form; other
-  keys are dropped), else to its handlers.
+  keys are dropped), else to its handlers. Tab stays in a loading window: a
+  Tab past its title bar, and every Tab after it, leaves focus on the window
+  (so the keys after it are kept too), and the replay moves focus on as
+  those Tabs would have with the body there. The keys typed after them
+  replay as if typed there: text goes into a field, Enter (or Space, except
+  on a link) presses a button or link in the window, other form fields and
+  controls outside the window get none, and the rest go to its handlers.
 - Desktop actions: `useDesktopPrefs()` (null before boot),
   `updateDesktopPrefs(change)`, `toggleTheme()`, `useSystemAudio()` (the one
   source of truth, it follows `desktop:audio-settings`),
