@@ -433,7 +433,9 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   launch and focus hand-off, after the window manager moved focus.
   `useFocusOnLaunch(ref)` focuses `ref` then (Terminal, Gallery), on touch
   screens only when `keyboard` is true. A body that renders after its window
-  opened takes focus only if nothing took it since the launch.
+  opened takes focus only if nothing took it since the launch: its window is
+  still focused, and focus is still on `<body>`, on the window or where the
+  launch left it.
 - Keyboard ownership (Calculator, Snake): `useAppKeyboard(handler)` gets only
   keys that belong to the app (`isAppKeyboardEvent`), in the capture phase,
   so the Escape or Enter that closes an overlay never reaches it. Register
@@ -450,7 +452,10 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   those Tabs would have with the body there. The keys typed after them
   replay as if typed there: text goes into a field, Enter (or Space, except
   on a link) presses a button or link in the window, other form fields and
-  controls outside the window get none, and the rest go to its handlers.
+  controls outside the window get none, and the rest go to its handlers. A
+  body that takes focus as it renders (`useFocusOnLaunch`, a `?blog=`
+  article) drops the held Tabs instead, and the other keys replay with that
+  focus.
 - Desktop actions: `useDesktopPrefs()` (null before boot),
   `updateDesktopPrefs(change)`, `toggleTheme()`, `useSystemAudio()` (the one
   source of truth, it follows `desktop:audio-settings`),
@@ -465,9 +470,11 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   `?blog=<slug>` the desktop opens and maximizes Blog at boot and keeps the
   slug pending until the handler registers (no time limit); `false` shows
   "Article not found". Choosing website mode or closing Blog drops it.
-  `focus` follows the late-mount rule above: false once anything took focus
-  since Blog opened (the palette, the Start menu, another app), and the
-  handler then opens the target without moving focus.
+  `focus` is the late-mount rule above, checked as the handler runs (and
+  false while an overlay is open): when false, the visitor has moved on (the
+  palette, the Start menu, another app) and the handler opens the target
+  without moving focus. What the handler opens commits at once, before the
+  keys typed while the app loaded replay.
 - Engines (Music, SRE game, Snake, White Noise): create the engine object in a
   `useState` initializer without side effects, start and stop it in effects
   with cleanups that depend on `useAppWindow()`'s primitives; draw canvases

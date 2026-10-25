@@ -33,8 +33,10 @@
 //   with the body there (into it, or past it), and the keys typed after them
 //   go to the control they reached: a text field as above, Enter (or Space,
 //   except on a link) presses a button or link in the window, and other
-//   form fields and controls outside the window get none. Tab within the
-//   title bar moves as usual.
+//   form fields and controls outside the window get none. A body that took
+//   focus as it rendered (useFocusOnLaunch, a ?blog= article: deep-link.ts)
+//   drops the held Tabs instead, and the other keys go where they would
+//   with that focus. Tab within the title bar moves as usual.
 import { isAppKeyboardEvent } from "@utils/app-keyboard";
 import { canTakeFocus, focusFirst } from "@utils/overlays";
 import { getAppChunk } from "./app-chunks";
@@ -73,7 +75,8 @@ export function addAppKeyHandler(appId: AppId, handler: KeyHandler): () => void 
  * Marks an app's body as rendered (or gone), and replays the keys typed
  * while it loaded, if its window is still open. The replay waits for a
  * microtask: this runs in an effect, after the body's own effects
- * registered its handlers and moved focus.
+ * registered its handlers and moved focus, and after the deep link their
+ * registration runs in an earlier microtask (deep-link.ts) has opened.
  */
 export function setAppBodyReady(appId: AppId, ready: boolean) {
   if (!ready) {

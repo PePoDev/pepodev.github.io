@@ -8,10 +8,15 @@
 // closing the Blog window before the app is ready, drops the pending link.
 // The handler may move focus to the article only if nothing took focus
 // since the window opened (mayTakeFocus): on a slow network the visitor may
-// have moved on to the palette, the Start menu or another app by then.
+// have moved on to the palette, the Start menu or another app by then. What
+// it opens commits at once, before the keys typed while Blog loaded replay
+// (app-keys.ts): an article that takes focus drops the Tabs held meanwhile,
+// as a body that focuses its field does, so none of those keys acts on the
+// list the article replaced.
 import type { AppId } from "./apps";
 import { isOverlayOpen } from "./overlay-state";
 import { getBlogDeepLink, isDesktopSiteMode } from "./site-mode";
+import { commit } from "./store";
 import { showToast } from "./toasts";
 import {
   getLaunchFocus,
@@ -45,7 +50,14 @@ function runPendingBlogLink() {
   if (!slug || !handler) return;
   pendingBlogSlug = null;
   if (!isDesktopSiteMode() || !windowsStore.get().windows.blog.open) return;
-  if (!handler(slug, { focus: mayTakeFocus() })) {
+  const focus = mayTakeFocus();
+  // Committed before the keys typed while Blog loaded replay (a later
+  // microtask), so they meet the article, not the list it replaces.
+  let found = false;
+  commit(() => {
+    found = handler(slug, { focus });
+  });
+  if (!found) {
     console.warn(`Blog post with slug "${slug}" not found`);
     // The slug comes from the URL, so it stays out of the toast.
     showToast("Article not found. Showing all articles instead.", { duration: 5000, icon: "⚠️" });
@@ -55,7 +67,8 @@ function runPendingBlogLink() {
 /**
  * As for a body that renders after its window opened (useFocusOnLaunch):
  * Blog is still the focused window, no overlay is open, and focus is still
- * on <body>, on the window, or where its launch left it.
+ * on <body>, on the window (where Tabs typed while Blog loaded wait), or
+ * where its launch left it.
  */
 function mayTakeFocus(): boolean {
   const win = getWindowElement("blog");

@@ -574,6 +574,34 @@ test("a ?blog= article that arrives late leaves the Start menu open", async ({
   await expect(terminal.locator("[data-terminal-input]")).toBeFocused();
 });
 
+test("a ?blog= article that arrives after Tabs past its title bar still opens", async ({
+  page,
+}) => {
+  // A click on the title bar starts Tab there, and the fourth Tab waits on
+  // the window (its app is not there yet) with the Enter after it. The
+  // article then takes focus, which drops the held Tab, so the Enter does
+  // not press what the list had where the article is now.
+  const slug = "aws-local-zone-bangkok-launch";
+  const { chunks, blogWindow } = await openLateDeepLink(page, slug);
+  await blogWindow.locator(".window-title").click();
+  for (let tab = 0; tab < 4; tab += 1) await page.keyboard.press("Tab");
+  await expect(blogWindow).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  chunks.release();
+  const article = blogWindow.locator(
+    `[data-blog-post][data-blog-slug="${slug}"]`,
+  );
+  const command = blogWindow.locator("[data-blog-command]");
+  await expect(article.locator("[data-blog-back]")).toBeFocused();
+  await expect(command).toHaveText(`cat articles/${slug}`);
+  // Still so once the article's text has loaded.
+  await expect(article.locator(".blog-reader-body")).not.toBeEmpty();
+  await expect(article.locator("[data-blog-back]")).toBeFocused();
+  await expect(command).toHaveText(`cat articles/${slug}`);
+  await expect(blogWindow.locator("[data-blog-post]:visible")).toHaveCount(1);
+});
+
 test("the Blog app and website mode list real titles and dates", async ({
   page,
 }) => {
