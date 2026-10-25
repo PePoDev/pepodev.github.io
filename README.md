@@ -823,7 +823,7 @@ GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`
 | --- | --- | --- | --- |
 | `garden` | Syncs the vault when `VAULT_DEPLOY_KEY` is set | Skips its steps | Skips its steps |
 | `build` | `pnpm install --frozen-lockfile`, `pnpm build`, uploads `out/` (`actions/upload-pages-artifact`) | Same, without garden notes | Same, without garden notes |
-| `test` | `pnpm test:scripts`, then Playwright against that artifact in Google Chrome | Same | Same |
+| `test` | `pnpm test:scripts`, then Playwright against that artifact in Google Chrome, on `ubuntu-24.04` (Playwright 1.60 cannot install its ffmpeg on Ubuntu 26.04, the new `ubuntu-latest`) | Same | Same |
 | `deploy` | Publishes the artifact (`actions/deploy-pages`) after `build` and `test` pass | Skipped | Skipped |
 
 - Concurrency: runs of `main` share the group `pages`, one at a time; a newer
