@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openApp, resetPage } from "./helpers";
+import { holdAppChunks, openApp, resetPage } from "./helpers";
 
 const apps = [
   { label: "Welcome", appId: "welcome", title: "Welcome - Login" },
@@ -396,20 +396,14 @@ test("a first visit from a ?blog= link opens only the article, even when the Blo
   // one with the Blog app's list markup.
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
-  const late: (() => void)[] = [];
-  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
-    const response = await route.fetch();
-    const body = await response.text();
-    if (body.includes("data-blog-list-view")) {
-      await new Promise<void>((resolve) => late.push(resolve));
-    }
-    await route.fulfill({ response, body });
-  });
+  const chunks = await holdAppChunks(page, ["data-blog-list-view"]);
   await page.goto("/?blog=aws-local-zone-bangkok-launch");
-  await expect.poll(() => late.length).toBeGreaterThan(0);
+  await expect
+    .poll(() => chunks.requested("data-blog-list-view"))
+    .toBeTruthy();
   await page.waitForTimeout(2_000);
   await expect(page.locator("#window-welcome")).toBeHidden();
-  late.splice(0).forEach((release) => release());
+  chunks.release();
 
   await expect(page.locator("#window-blog")).toHaveClass(/maximized/);
   await page.waitForTimeout(500);
