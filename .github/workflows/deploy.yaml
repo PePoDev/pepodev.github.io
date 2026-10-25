@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Checkout your repository using git
         if: env.SYNC_GARDEN == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Set up Node
@@ -60,7 +60,7 @@ jobs:
         run: npx --yes pnpm@10.33.2 install --frozen-lockfile --ignore-scripts
       - name: Check out the Obsidian vault
         if: env.SYNC_GARDEN == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: PePoDev/obsidian-vault
           ssh-key: ${{ secrets.VAULT_DEPLOY_KEY }}
@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout your repository using git
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install pnpm (the version in package.json "packageManager")
         uses: pnpm/action-setup@v6
       - name: Install Node
@@ -142,7 +142,7 @@ jobs:
       PLAYWRIGHT_CHANNEL: chrome
     steps:
       - name: Checkout your repository using git
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install pnpm (the version in package.json "packageManager")
         uses: pnpm/action-setup@v6
       - name: Install Node
