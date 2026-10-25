@@ -1,7 +1,14 @@
 // Site-wide pages and files that no other area owns: the 404 page,
-// robots.txt, the web manifest, favicons, and self-hosted fonts.
+// robots.txt, the web manifest, favicons, self-hosted fonts, and the
+// security headers.
 import { expect, test } from "@playwright/test";
+import { SECURITY_HEADERS } from "../../scripts/security-headers.mjs";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "../../src/consts";
+import { resetPage } from "./helpers";
+
+// Cloudflare adds the security headers on pepo.dev and serve-static.mjs adds
+// the same ones, so only the export (PLAYWRIGHT_SERVER=preview) has them.
+const servesSecurityHeaders = process.env.PLAYWRIGHT_SERVER === "preview";
 
 test("unknown URLs get the branded 404 page", async ({ page }) => {
   const response = await page.goto("/this-page-does-not-exist/");
@@ -186,4 +193,117 @@ test("pages self-host Inter and JetBrains Mono, and website mode does not downlo
     await expect(page.locator('link[rel="preload"][as="font"]')).toHaveCount(0);
   }
   expect(fontHosts).toEqual([]);
+});
+
+test("every response carries the security headers Cloudflare adds", async ({
+  request,
+}) => {
+  test.skip(!servesSecurityHeaders, "next dev sends no security headers");
+  for (const path of ["/", "/blog/", "/this-page-does-not-exist/", "/rss.xml"]) {
+    const headers = (await request.get(path)).headers();
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+      expect(headers[name.toLowerCase()], `${name} on ${path}`).toBe(value);
+    }
+  }
+});
+
+test("the security headers allow everything the site does, Cloudflare Web Analytics included", async ({
+  page,
+}) => {
+  test.skip(!servesSecurityHeaders, "next dev sends no security headers");
+  test.setTimeout(120_000);
+  // Every document reports the policy violations it sees, frames included.
+  const violations: string[] = [];
+  await page.exposeFunction("reportViolation", (text: string) =>
+    violations.push(text),
+  );
+  await page.addInitScript(() => {
+    document.addEventListener("securitypolicyviolation", (event) => {
+      (
+        window as typeof window & { reportViolation: (text: string) => void }
+      ).reportViolation(
+        `${location.pathname}: ${event.effectiveDirective} ${event.blockedURI}`,
+      );
+    });
+  });
+  // Cloudflare injects its beacon into every HTML page, and the beacon
+  // reports to cloudflareinsights.com.
+  const reports: string[] = [];
+  await page.route("https://cloudflareinsights.com/**", (route) => {
+    reports.push(route.request().url());
+    return route.fulfill({ status: 204 });
+  });
+  await page.route("https://static.cloudflareinsights.com/**", (route) =>
+    route.fulfill({
+      contentType: "text/javascript",
+      body: 'navigator.sendBeacon("https://cloudflareinsights.com/cdn-cgi/rum", "{}");',
+    }),
+  );
+  await page.route("**/*", async (route) => {
+    if (route.request().resourceType() !== "document") return route.fallback();
+    const response = await route.fetch();
+    const body = (await response.text()).replace(
+      "</body>",
+      `<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v1" data-cf-beacon='{"token":"test"}'></script></body>`,
+    );
+    await route.fulfill({ response, body });
+  });
+
+  // The desktop with every app open, a Blog article, and the Garden frame.
+  await resetPage(page);
+  await expect.poll(() => reports.length).toBeGreaterThan(0);
+  const appIds = await page
+    .locator("#desktop-icons [data-open-app]")
+    .evaluateAll((icons) =>
+      icons.map((icon) => (icon as HTMLElement).dataset.openApp),
+    );
+  for (const appId of appIds) {
+    await page.evaluate(
+      (appId) =>
+        document.dispatchEvent(
+          new CustomEvent("desktop:open-app", { detail: { appId } }),
+        ),
+      appId,
+    );
+    await expect(
+      page
+        .locator(`#window-${appId} .window-content > :not(.app-loading)`)
+        .first(),
+    ).toBeAttached();
+  }
+  // Opening Blog again brings it to the front.
+  await page.evaluate(() =>
+    document.dispatchEvent(
+      new CustomEvent("desktop:open-app", { detail: { appId: "blog" } }),
+    ),
+  );
+  await page.locator("#window-blog .blog-item-title").first().click();
+  await expect(
+    page.locator("#window-blog article:not([hidden]) .blog-reader-body"),
+  ).not.toBeEmpty();
+  await expect(
+    page.frameLocator("#window-garden iframe").locator("body"),
+  ).toBeVisible();
+
+  // Website mode, then every kind of static page.
+  await page.evaluate(() =>
+    localStorage.setItem("pepodev.viewMode", "website"),
+  );
+  await page.reload();
+  await expect(page.locator("#website")).toBeVisible();
+  for (const path of [
+    "/blog/",
+    "/blog/aws-local-zone-bangkok-launch/",
+    "/garden/",
+    "/this-page-does-not-exist/",
+    "/resume/",
+  ]) {
+    await page.goto(path);
+  }
+  // The resume builds its PDF in the browser.
+  const download = page.waitForEvent("download");
+  await page.locator("[data-resume-download]").click();
+  expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
+
+  expect(violations).toEqual([]);
 });

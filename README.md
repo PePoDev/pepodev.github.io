@@ -22,7 +22,7 @@ Requires Node `>=22.22.0` and pnpm 10.33 (pinned by `packageManager` in
 | `pnpm install` | Install dependencies |
 | `pnpm dev` | Start the development server (`next dev`, Turbopack, port 3000, in the foreground) |
 | `pnpm build` | Build the static site into `out/`: `scripts/prebuild.mjs` (clears `public/_img/`), `next build`, then `scripts/postbuild.mjs`, which finishes `out/` and fails the build when it is not deployable (see Page Runtime) |
-| `pnpm preview` | Serve `out/` the way GitHub Pages does (`scripts/serve-static.mjs`: `/dir` 301 to `/dir/`, `/page` from `page.html`, `404.html` with status 404, byte ranges; build first) |
+| `pnpm preview` | Serve `out/` the way pepo.dev does (`scripts/serve-static.mjs`: GitHub Pages' `/dir` 301 to `/dir/`, `/page` from `page.html`, `404.html` with status 404, byte ranges, plus the security headers Cloudflare adds; build first) |
 | `pnpm check` | Type-check `src/`, `tests/` and the configs (`next typegen && tsc --noEmit`); keep it at 0 errors |
 | `pnpm test:e2e` | Run Playwright tests |
 | `pnpm test:e2e:ui` | Run Playwright in UI mode |
@@ -94,7 +94,8 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 | `public/music/` | Local audio library |
 | `public/robots.txt`, `public/manifest.webmanifest` | Sitemap pointer and web app manifest (icons: `favicon.svg`, `icon-192.png`, `icon-512.png`) |
 | `public/_img/` | Images resized at build time; generated, gitignored |
-| `scripts/postbuild.mjs`, `scripts/serve-static.mjs` | Export checks (see Page Runtime); GitHub Pages-like static server |
+| `scripts/postbuild.mjs`, `scripts/serve-static.mjs` | Export checks (see Page Runtime); pepo.dev-like static server |
+| `scripts/security-headers.mjs` | The security headers pepo.dev sends (Cloudflare adds them; see Cloudflare) |
 | `scripts/generate-og-image.mjs` | Default Open Graph image generator |
 | `tests/e2e/*.spec.ts` | Playwright coverage, one spec per area; `data.spec.ts` checks rules the portfolio JSON must keep, not its current values |
 | `.github/workflows/deploy.yaml`, `.github/dependabot.yml` | Build, test gate, and GitHub Pages deploy; weekly dependency updates |
@@ -165,7 +166,9 @@ It also removes `out/404/` and `out/_not-found/` (copies of the 404 that
 would answer with status 200). Its HTML helpers are unit-tested in
 `scripts/postbuild.test.mjs`.
 
-Weight: static pages carry no external JavaScript. `/` loads about 159 KB
+Weight: the site's own pages load no JavaScript from other origins; the
+only such script is Cloudflare Web Analytics' beacon, which Cloudflare adds
+to every page (see Cloudflare). `/` loads about 159 KB
 gzip of JavaScript before the desktop takes input (React and Next.js about
 134 KB); `index.html` is about 44 KB gzip. Keep app bodies out of the
 initial chunks.
@@ -853,3 +856,53 @@ GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`
 
 Preserve existing worktree changes, avoid destructive Git commands unless
 explicitly requested, and do not commit generated artifacts unless tracked.
+
+### Cloudflare
+
+pepo.dev is GitHub Pages behind Cloudflare. GitHub Pages cannot send headers
+or redirect hosts, so these zone settings belong to the site; keep them as
+written here.
+
+- DNS: `pepo.dev` is a proxied CNAME to `pepodev.github.io`. `www` is
+  proxied too (its target does not matter): GitHub Pages has no certificate
+  for `www.pepo.dev`, so the redirect rule below must answer it at
+  Cloudflare. A DNS-only `www` reaches GitHub Pages, and HTTPS fails there.
+- Redirect rule "www to pepo.dev" (Rules > Overview > Create rule >
+  Redirect Rule): wildcard pattern, request URL `http*://www.pepo.dev/*`,
+  target URL `https://pepo.dev/${2}`, status 301, preserve query string.
+- Email Address Obfuscation (Security > Settings): off. It rewrites the
+  address in the HTML React hydrates, and shows "[email protected]" without
+  JavaScript.
+- Web Analytics: on, set up automatically. Its beacon is the one script from
+  another origin, so the Content-Security-Policy allows
+  `https://static.cloudflareinsights.com` (script) and
+  `https://cloudflareinsights.com` (reports).
+- Response header transform rule "Security headers" (Rules > Overview >
+  Create rule > Response Header Transform Rule): all incoming requests, Set
+  static for each header in `scripts/security-headers.mjs`, with the same
+  value. `scripts/serve-static.mjs` sends the same headers, so the Playwright
+  suite runs under them, and `pages.spec.ts` checks that every page and app
+  (Cloudflare's beacon included) works without a policy violation. Update the
+  rule whenever that file changes.
+- HSTS (SSL/TLS > Edge Certificates): on, max-age 12 months, subdomains off
+  (DNS-only subdomains such as `ds925` may not serve HTTPS), no preload. It is
+  not part of the transform rule.
+- Cache rules (Caching > Cache Rules), in this order:
+  1. "Build assets", `starts_with(http.request.uri.path, "/_next/static/") or
+     starts_with(http.request.uri.path, "/_img/")`: eligible for cache; edge
+     TTL: ignore cache-control header, 1 year; browser TTL: override origin,
+     1 year. Their names carry content hashes, so a deploy never changes a
+     file at the same URL.
+  2. "Music", `starts_with(http.request.uri.path, "/music/")`: eligible for
+     cache; edge TTL: ignore cache-control header, 1 day; browser TTL:
+     respect origin. Purge the cache after replacing a track under the same
+     name.
+  Everything else, HTML included, keeps GitHub Pages' `max-age=600` and is
+  not cached at the edge, so a deploy shows within 10 minutes. If assets
+  still answer `cf-cache-status: DYNAMIC`, check that Development Mode
+  (Caching > Configuration) is off and no other rule bypasses the cache.
+- Rocket Loader may stay on (see Parse-Time Scripts and Rocket Loader).
+
+To check: `curl -sI https://pepo.dev/` shows the headers, and
+`curl -sI 'https://www.pepo.dev/blog/?a=1'` answers 301 with
+`location: https://pepo.dev/blog/?a=1`.

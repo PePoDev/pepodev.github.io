@@ -5,7 +5,9 @@
 // - /dir/ serves dir/index.html, and /dir redirects to /dir/ (301);
 // - /page serves page.html when there is no page/ directory (not /page/);
 // - anything else is out/404.html with status 404;
-// - byte ranges (206) for audio and video, HEAD, and conditional GETs.
+// - byte ranges (206) for audio and video, HEAD, and conditional GETs;
+// - every response carries the security headers Cloudflare adds on pepo.dev
+//   (security-headers.mjs), so the site is tested under them.
 //
 // Usage: node scripts/serve-static.mjs [--dir out] [--host 127.0.0.1] [--port 4321]
 // (--hostname and -H/-p are accepted too, as `next dev` spells them).
@@ -14,6 +16,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { SECURITY_HEADERS } from "./security-headers.mjs";
 
 const { values } = parseArgs({
   options: {
@@ -115,6 +118,7 @@ async function notFound(request, response) {
 }
 
 const server = createServer(async (request, response) => {
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.setHeader(name, value);
   if (request.method !== "GET" && request.method !== "HEAD") {
     response.writeHead(405, { Allow: "GET, HEAD" }).end();
     return;
