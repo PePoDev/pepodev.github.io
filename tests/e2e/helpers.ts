@@ -123,7 +123,8 @@ export async function holdAppChunks(page: Page, markers: string[]) {
   const requested = new Map<string, string>();
   await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
     // Idle prefetching keeps fetching app code, so a request can still be in
-    // flight when the test ends and closes the page: let it go quietly.
+    // flight when the test ends and closes the page (or its context, which
+    // disposes the fetched response): let it go quietly.
     try {
       const response = await route.fetch();
       const body = await response.text();
@@ -138,7 +139,10 @@ export async function holdAppChunks(page: Page, markers: string[]) {
       }
       await route.fulfill({ response, body });
     } catch (error) {
-      if (!page.isClosed() && !String(error).includes("has been closed")) {
+      if (
+        !page.isClosed() &&
+        !/has been (closed|disposed)/.test(String(error))
+      ) {
         throw error;
       }
     }

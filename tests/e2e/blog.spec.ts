@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { expect, test, type Page } from "@playwright/test";
-import { resetPage } from "./helpers";
+import {
+  emulateSaveData,
+  holdAppChunks,
+  resetPage,
+  waitForWindowManager,
+} from "./helpers";
 import {
   BLOG_DESCRIPTION,
   BLOG_TITLE,
@@ -474,6 +479,127 @@ test("the desktop stays locked to one screen while website mode scrolls", async 
   await expect
     .poll(() => page.evaluate(() => window.scrollY))
     .toBeGreaterThan(0);
+});
+
+// The bodies the desktop mounts once it is idle (registry mount: "idle").
+// Waiting for them leaves no app code in flight that the test did not ask
+// for, so none is cut off when the test ends.
+async function waitForIdleBodies(page: Page) {
+  for (const appId of ["welcome", "sregame", "music"]) {
+    await expect(
+      page.locator(`#window-${appId} .window-content > :not(.app-loading)`),
+    ).not.toHaveCount(0);
+  }
+}
+
+// Loads a ?blog= link with the Blog app's code held back, as a slow network
+// would, and waits until its window is open. A returning visitor's storage
+// is set on a page without scripts, so no chunk is in flight when the link
+// loads; the visitor saves data, so no idle prefetching is either.
+async function openLateDeepLink(page: Page, slug: string) {
+  await emulateSaveData(page);
+  const chunks = await holdAppChunks(page, ["data-blog-list-view"]);
+  await page.goto("/robots.txt");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.hasVisited", "true");
+    localStorage.setItem(
+      "pepodev.commandPaletteHintShown",
+      String(Date.now()),
+    );
+  });
+  // The held chunk can be asked for before the load event, which then
+  // waits for it.
+  await page.goto(`/?blog=${slug}`, { waitUntil: "domcontentloaded" });
+  await waitForWindowManager(page);
+  const blogWindow = page.locator("#window-blog");
+  await expect(blogWindow).toHaveClass(/maximized/);
+  await expect
+    .poll(() => chunks.requested("data-blog-list-view"))
+    .toBeTruthy();
+  await waitForIdleBodies(page);
+  return { chunks, blogWindow };
+}
+
+test("a ?blog= article that arrives late leaves the palette its keys", async ({
+  page,
+}) => {
+  // The article still opens, but focus stays where the visitor moved it
+  // since the page loaded: the palette keeps its search, and Enter runs
+  // the match for all of it.
+  const slug = "aws-local-zone-bangkok-launch";
+  const { chunks, blogWindow } = await openLateDeepLink(page, slug);
+  const input = page.locator("#command-palette-input");
+  await page.keyboard.press("ControlOrMeta+K");
+  await expect(input).toBeFocused();
+  await page.keyboard.type("calc");
+
+  chunks.release();
+  await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
+    `cat articles/${slug}`,
+  );
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue("calc");
+  await page.keyboard.press("Enter");
+  const calculator = page.locator("#window-calculator");
+  await expect(calculator).toHaveClass(/focused/);
+  await page.keyboard.type("7");
+  await expect(calculator.locator(".calculator-value")).toHaveText("7");
+  await expect(
+    blogWindow.locator(`[data-blog-post][data-blog-slug="${slug}"]`),
+  ).toBeVisible();
+});
+
+test("a ?blog= article that arrives late leaves the Start menu open", async ({
+  page,
+}) => {
+  const slug = "aws-local-zone-bangkok-launch";
+  const { chunks, blogWindow } = await openLateDeepLink(page, slug);
+  await page.getByRole("button", { name: "Open start menu" }).click();
+  const startMenu = page.locator("#start-menu");
+  await expect(startMenu).toHaveClass(/visible/);
+
+  chunks.release();
+  await expect(blogWindow.locator("[data-blog-command]")).toHaveText(
+    `cat articles/${slug}`,
+  );
+  await expect(startMenu).toHaveClass(/visible/);
+  await expect(
+    blogWindow.locator(`[data-blog-slug="${slug}"] [data-blog-back]`),
+  ).not.toBeFocused();
+  await page.keyboard.type("term");
+  await page.keyboard.press("Enter");
+  const terminal = page.locator("#window-terminal");
+  await expect(terminal).toHaveClass(/focused/);
+  await expect(terminal.locator("[data-terminal-input]")).toBeFocused();
+});
+
+test("a ?blog= article that arrives after Tabs past its title bar still opens", async ({
+  page,
+}) => {
+  // A click on the title bar starts Tab there, and the fourth Tab waits on
+  // the window (its app is not there yet) with the Enter after it. The
+  // article then takes focus, which drops the held Tab, so the Enter does
+  // not press what the list had where the article is now.
+  const slug = "aws-local-zone-bangkok-launch";
+  const { chunks, blogWindow } = await openLateDeepLink(page, slug);
+  await blogWindow.locator(".window-title").click();
+  for (let tab = 0; tab < 4; tab += 1) await page.keyboard.press("Tab");
+  await expect(blogWindow).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  chunks.release();
+  const article = blogWindow.locator(
+    `[data-blog-post][data-blog-slug="${slug}"]`,
+  );
+  const command = blogWindow.locator("[data-blog-command]");
+  await expect(article.locator("[data-blog-back]")).toBeFocused();
+  await expect(command).toHaveText(`cat articles/${slug}`);
+  // Still so once the article's text has loaded.
+  await expect(article.locator(".blog-reader-body")).not.toBeEmpty();
+  await expect(article.locator("[data-blog-back]")).toBeFocused();
+  await expect(command).toHaveText(`cat articles/${slug}`);
+  await expect(blogWindow.locator("[data-blog-post]:visible")).toHaveCount(1);
 });
 
 test("the Blog app and website mode list real titles and dates", async ({

@@ -925,11 +925,9 @@ async function expectMusicBack(
   }
 }
 
-test("the SRE game freezes while minimized and resumes on restore", async ({
-  page,
-  browserName,
-}) => {
-  test.setTimeout(60_000);
+// Counts the oscillators the page creates (the SRE game's music and sounds).
+// Call before the page loads; returns the counter's reader.
+async function countOscillators(page: Page) {
   await page.addInitScript(() => {
     const created = { count: 0 };
     (window as unknown as { __oscillators: typeof created }).__oscillators =
@@ -940,14 +938,45 @@ test("the SRE game freezes while minimized and resumes on restore", async ({
       return original.apply(this, args);
     };
   });
-  await resetPage(page);
-  const game = await openApp(page, "SRE Game", "sregame");
-  const oscillators = () =>
+  return () =>
     page.evaluate(
       () =>
         (window as unknown as { __oscillators: { count: number } })
           .__oscillators.count,
     );
+}
+
+// Headless pages are never hidden or in the background, so this makes the
+// page report what a browser does for a tab in the background (hidden) or
+// for another app in front of the browser (not focused), with the events
+// that announce it.
+async function emulatePageVisibility(
+  page: Page,
+  state: { hidden: boolean; focused: boolean },
+) {
+  await page.evaluate(({ hidden, focused }) => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => hidden,
+    });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => (hidden ? "hidden" : "visible"),
+    });
+    document.hasFocus = () => focused;
+    window.dispatchEvent(new Event(focused ? "focus" : "blur"));
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, state);
+}
+
+test("the SRE game freezes while minimized and resumes on restore", async ({
+  page,
+  browserName,
+}) => {
+  test.setTimeout(60_000);
+  const oscillators = await countOscillators(page);
+  await resetPage(page);
+  const game = await openApp(page, "SRE Game", "sregame");
 
   await game.getByRole("button", { name: "Enter Production" }).click({
     timeout: 15_000,
@@ -982,24 +1011,9 @@ test("the SRE game freezes in website mode and resumes in desktop mode", async (
   browserName,
 }) => {
   test.setTimeout(60_000);
-  await page.addInitScript(() => {
-    const created = { count: 0 };
-    (window as unknown as { __oscillators: typeof created }).__oscillators =
-      created;
-    const original = AudioContext.prototype.createOscillator;
-    AudioContext.prototype.createOscillator = function (...args) {
-      created.count += 1;
-      return original.apply(this, args);
-    };
-  });
+  const oscillators = await countOscillators(page);
   await resetPage(page);
   const game = await openApp(page, "SRE Game", "sregame");
-  const oscillators = () =>
-    page.evaluate(
-      () =>
-        (window as unknown as { __oscillators: { count: number } })
-          .__oscillators.count,
-    );
 
   await game.getByRole("button", { name: "Enter Production" }).click({
     timeout: 15_000,
@@ -1032,6 +1046,81 @@ test("the SRE game freezes in website mode and resumes in desktop mode", async (
     .click();
   await expect(timer).not.toHaveText(frozenTimer ?? "", { timeout: 3_000 });
   await expectMusicBack(game, browserName, oscillators, frozenSounds);
+});
+
+test("the SRE game freezes while its tab is hidden and resumes when shown", async ({
+  page,
+  browserName,
+}) => {
+  test.setTimeout(60_000);
+  const oscillators = await countOscillators(page);
+  await resetPage(page);
+  const game = await openApp(page, "SRE Game", "sregame");
+
+  await game.getByRole("button", { name: "Enter Production" }).click({
+    timeout: 15_000,
+  });
+  const timer = game.locator(".sre-alert-timer");
+  await expect(timer).toBeVisible({ timeout: 10_000 });
+  await expect(timer).not.toHaveText("Time remaining: 15s");
+
+  await emulatePageVisibility(page, { hidden: true, focused: false });
+  const frozenTimer = await timer.textContent();
+  const frozenHealth = await game.locator(".sre-health-pct").textContent();
+  const frozenSounds = await oscillators();
+  await page.waitForTimeout(3_000);
+  expect(await timer.textContent()).toBe(frozenTimer);
+  expect(await game.locator(".sre-health-pct").textContent()).toBe(
+    frozenHealth,
+  );
+  expect(await oscillators()).toBe(frozenSounds);
+
+  await emulatePageVisibility(page, { hidden: false, focused: true });
+  await expect(timer).not.toHaveText(frozenTimer ?? "", { timeout: 3_000 });
+  await expectMusicBack(game, browserName, oscillators, frozenSounds);
+});
+
+// A tick after the game can no longer hear its keys, it pauses: a run never
+// goes on, or ends, while the visitor is away. Hidden tabs still run timers
+// (Chrome about once a second), and from the start a run hits the wall in
+// eleven ticks.
+test("Snake pauses while its tab is hidden and stays paused when shown", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const window = await openApp(page, "Snake", "snake");
+  const status = window.locator("[data-snake-status]");
+  const score = window.locator("[data-snake-score]");
+
+  await page.keyboard.press("Space");
+  await expect(status).toHaveText("Running");
+  await emulatePageVisibility(page, { hidden: true, focused: false });
+  await expect(status).toHaveText("Paused");
+  const pausedScore = (await score.textContent()) ?? "";
+  await page.waitForTimeout(1_500);
+
+  await emulatePageVisibility(page, { hidden: false, focused: true });
+  await expect(status).toHaveText("Paused");
+  await expect(score).toHaveText(pausedScore);
+  await page.keyboard.press("Space");
+  await expect(status).toHaveText("Running");
+});
+
+test("Snake pauses while another app is in front of the browser", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const window = await openApp(page, "Snake", "snake");
+  const status = window.locator("[data-snake-status]");
+
+  await page.keyboard.press("Space");
+  await expect(status).toHaveText("Running");
+  await emulatePageVisibility(page, { hidden: false, focused: false });
+  await expect(status).toHaveText("Paused");
+
+  await emulatePageVisibility(page, { hidden: false, focused: true });
+  await page.keyboard.press("Space");
+  await expect(status).toHaveText("Running");
 });
 
 test("the SRE game starts even when the browser cannot start audio", async ({

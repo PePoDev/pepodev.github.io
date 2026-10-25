@@ -292,9 +292,10 @@ the icon placement and clock scripts, and `<WebsiteMode />`.
 
 ### Parse-Time Scripts of the Desktop
 
-`DesktopScripts.tsx` and `HomeHeadScripts.tsx`; before hydration they only
-set attributes and styles (hydration rule 1), and the stores take over with
-the same code:
+`DesktopScripts.tsx` and `HomeHeadScripts.tsx`; before hydration they never
+change text (hydration rule 1): they set attributes, styles and globals (the
+early-input script also scrolls, focuses and writes the clipboard), and the
+stores take over with the same code:
 
 - `<head>`: site mode; theme and accent; preferences ("Initialize theme
   immediately": background, glass, radius, effects, with the defaults boot
@@ -302,8 +303,21 @@ the same code:
   takes clicks on `[data-open-app]` launchers and the taskbar's Start,
   palette, clock and audio buttons, Enter or Space on a desktop icon, and
   Ctrl/Cmd + K, in order; the boot replays them and they count as
-  interaction (Welcome stays closed). A mode switch applies at once. Other
-  keys, icon drags, and other clicks are lost before the boot.
+  interaction (Welcome stays closed), and a launch from the keyboard (a
+  click with `detail` 0) moves focus into its window. A mode switch applies
+  at once, keeps the website scroll position
+  (`window.__pepodevWebsiteScrollY`, which site mode takes over at the
+  boot), and counts as interaction too. Until website mode's Copy email
+  button hydrates, a press on it copies at once
+  (`window.__pepodevEarlyCopyEmail`) and the button shows the result when it
+  hydrates (`window.__pepodevCopyEmailReady`). Other keys, icon drags, and
+  other clicks are lost before the boot. Until the boot the script also
+  keeps the `<html>` attributes the parse-time scripts set (mode, theme,
+  preference attributes and variables): a hydration error (text that an
+  extension or Cloudflare's e-mail obfuscation changed) makes React render
+  the page again and reset `<html>` to its server attributes
+  (`data-site-mode="desktop"`, no theme), and the script puts them back
+  before the next paint.
 - After `#desktop`: icon placement (above 768px in desktop mode; sets
   `data-desktop-icon-ready` and `window.__pepodevDesktopIconsReady`, and
   re-places on resize until the boot) and the taskbar clock (time and date in
@@ -344,7 +358,8 @@ tests.
   `#command-palette-status` (`data-tone`); `#toast-container` (`aria-live`)
   with `.toast(.toast-show|.toast-hide)`, `.toast-icon`, `.toast-message`,
   `.toast-close`. Hidden Start menu and palette items are `display: none`.
-- Events on `document`: in `desktop:open-app` `{ appId }`,
+- Events on `document`: in `desktop:open-app` `{ appId, keyboard }`
+  (`keyboard: true` moves focus into the window, as a key press does),
   `desktop:close-all-windows`, `desktop:open-command-palette`,
   `desktop:toggle-theme`, `desktop:show-toast` `{ message, duration }` (plain
   text); in and out `desktop:overlay-open` `{ id }`,
@@ -353,7 +368,9 @@ tests.
   `desktop:window-open` `{ appId, firstOpen }`, `desktop:window-focus`
   `{ appId, keyboard }`, `desktop:window-close` `{ appId }`.
 - Globals: `__pepodevWindowManagerReady`, `__pepodevDesktopIconsReady`,
-  `__pepodevEarlyInput`, `__pepoMusicController`.
+  `__pepodevEarlyInput`, `__pepodevWebsiteScrollY`,
+  `__pepodevEarlyCopyEmail`, `__pepodevCopyEmailReady`,
+  `__pepoMusicController`.
 - Key listener order: app handlers (`useAppKeyboard`, capture phase on
   `document`), then React's handlers, overlays and palette (`document`,
   bubble), then the window manager's Escape on `window`, which skips a key
@@ -417,7 +434,9 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   launch and focus hand-off, after the window manager moved focus.
   `useFocusOnLaunch(ref)` focuses `ref` then (Terminal, Gallery), on touch
   screens only when `keyboard` is true. A body that renders after its window
-  opened takes focus only if nothing took it since the launch.
+  opened takes focus only if nothing took it since the launch: its window is
+  still focused, and focus is still on `<body>`, on the window or where the
+  launch left it.
 - Keyboard ownership (Calculator, Snake): `useAppKeyboard(handler)` gets only
   keys that belong to the app (`isAppKeyboardEvent`), in the capture phase,
   so the Escape or Enter that closes an overlay never reaches it. Register
@@ -425,10 +444,20 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   window manager then leaves that Escape alone; to reset as the window
   closes, react to `open`), and use the hook rather than a `keydown`
   listener. `hasAppKeyboard(appId)`/`isAppKeyboardOwner(element)` tell Snake
-  when to pause. Keys typed while the body loads are kept and replayed once
-  it renders, while its window is open (dropped if it closed): into the text
-  field it focused (characters, Backspace, Enter submits the form; other
-  keys are dropped), else to its handlers.
+  when to pause; Snake also checks `document.hidden` and
+  `document.hasFocus()`. Keys typed while the body loads are kept and
+  replayed once it renders, while its window is open (dropped if it closes
+  or shows the load error, and none are kept while the error shows): into
+  the text field it focused (characters, Backspace, Enter submits the form; other keys are
+  dropped), else to its handlers. Tab stays in a loading window: a Tab past
+  its title bar, and every Tab after it, leaves focus on the window (so the
+  keys after it are kept too), and the replay moves focus on as those Tabs
+  would have with the body there. The keys typed after them replay as if
+  typed there: text goes into a field, Enter (or Space, except on a link)
+  presses a button or link in the window, other form fields and controls
+  outside the window get none, and the rest go to its handlers. A body that
+  takes focus as it renders (`useFocusOnLaunch`, a `?blog=` article) drops
+  the held Tabs instead, and the other keys replay with that focus.
 - Desktop actions: `useDesktopPrefs()` (null before boot),
   `updateDesktopPrefs(change)`, `toggleTheme()`, `useSystemAudio()` (the one
   source of truth, it follows `desktop:audio-settings`),
@@ -439,10 +468,15 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   effects; dispatching `desktop:open-app` from an effect is not.
   `[data-open-app]` elements outside the icons launch their app on click.
   `useAppWindowElement()` returns the window element.
-- Deep links: `useDeepLinkHandler((slug) => boolean)`. For `?blog=<slug>` the
-  desktop opens and maximizes Blog at boot and keeps the slug pending until
-  the handler registers (no time limit); `false` shows "Article not found".
-  Choosing website mode or closing Blog drops it.
+- Deep links: `useDeepLinkHandler((slug, { focus }) => boolean)`. For
+  `?blog=<slug>` the desktop opens and maximizes Blog at boot and keeps the
+  slug pending until the handler registers (no time limit); `false` shows
+  "Article not found". Choosing website mode or closing Blog drops it.
+  `focus` is the late-mount rule above, checked as the handler runs (and
+  false while an overlay is open): when false, the visitor has moved on (the
+  palette, the Start menu, another app) and the handler opens the target
+  without moving focus. What the handler opens commits at once, before the
+  keys typed while the app loaded replay.
 - Engines (Music, SRE game, Snake, White Noise): create the engine object in a
   `useState` initializer without side effects, start and stop it in effects
   with cleanups that depend on `useAppWindow()`'s primitives; draw canvases
@@ -527,7 +561,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   lean); only `SiteModePanel` and two islands hydrate. The Bangkok clock's
   parse-time script writes the current time before first paint; the Copy
   email button renders from first paint and hydration hides it only where
-  the Clipboard API is missing.
+  the Clipboard API is missing. A press before hydration copies at once
+  (the early-input script), and "Copied" shows when the button hydrates.
 - All type is self-hosted from the woff2 files committed in
   `src/assets/fonts/` (`src/styles/fonts-desktop.css`,
   `src/styles/fonts-website.css`): Inter and JetBrains Mono (`--font-sans`,
@@ -665,7 +700,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   so the window gets the keys and Enter does not press it again; Tab then
   reaches the first window button and Shift+Tab the palette button. From the
   keyboard, focus stays on it or follows into the window.
-- Dragging keeps a window's title bar above the taskbar with at least 120px of
+- Windows drag by the title bar and resize from their handles with a mouse, a
+  finger, or a pen (pointer events; above 768px the title bar and handles are
+  `touch-action: none`), and a touch drag raises the window as a click does.
+  Dragging keeps a window's title bar above the taskbar with at least 120px of
   it on screen. Maximized windows end at the taskbar (`getTaskbarHeight()`),
   and Maximize reads Restore while maximized. An overflowing `.window-content`
   with nothing focusable inside (hidden and disabled controls do not count)
@@ -674,7 +712,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   window's title bar.
 - The Start menu, tray panel, and command palette are `inert` while closed,
   and only one is open at a time: opening one closes the others. Tabbing out
-  of the Start menu or tray closes it. The open palette is modal. Escape, a
+  of the Start menu or tray closes it. The open palette is modal, and its
+  search box takes focus as it opens, so keys typed straight after
+  `Ctrl`/`Cmd` + `K` are searched rather than lost. Escape, a
   toggle button, `Ctrl`/`Cmd` + `K`, or a backdrop click returns focus to the
   opener (a window included), or, when the opener is gone (Close All
   Windows), to the topmost window or the palette button; launching an app
@@ -693,9 +733,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   mode with no overlay open and no Ctrl, Meta, or Alt (AltGr is allowed). Form
   fields and controls outside the window keep their keys, a focused button or
   link inside it keeps its Enter and Space, the app's own launcher hands its
-  keys over, and Snake pauses whenever it loses the keyboard. Pointer presses
-  on Calculator and Snake buttons do not focus them, so Enter after clicking
-  keys still means "=". Keys typed right after a launch, before the app's code
+  keys over, and Snake pauses whenever it loses the keyboard, including to a
+  hidden tab or another app in front of the browser. Pointer presses on
+  Calculator and Snake buttons do not focus them, so Enter after clicking keys
+  still means "=". Keys typed right after a launch, before the app's code
   arrives, still reach it. The shared guard is `src/utils/app-keyboard.ts`.
 - Storage keys are `pepodev.desktopPrefs`, `pepodev.theme` (a mirror of
   `desktopPrefs.theme`, read when the preferences have no theme),
@@ -722,9 +763,11 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   `window.__pepoMusicController.requestAudioFrame()`.
 - The desktop Blog reader opens every article at the top with focus on Back,
   from the list or a `?blog=` link (an unknown slug focuses the first
-  article); Back restores the list position. An article that fails to load
-  shows "Try again", which keeps focus on Back. Links in articles open in a
-  new tab, so the desktop never navigates away.
+  article); a link whose Blog app loads after the visitor moved focus
+  elsewhere opens its article without taking focus. Back restores the list
+  position. An article that fails to load shows "Try again", which keeps
+  focus on Back. Links in articles open in a new tab, so the desktop never
+  navigates away.
 - Anything that changes desktop preferences dispatches `desktop:preferences`;
   Settings re-renders from the preferences store.
 - Welcome opens 1.5 s after a first visit loads unless the visitor acted first
@@ -735,7 +778,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   input when opened, restored, or launched again; on touch screens only when
   the keyboard opened them, so a tap does not raise the on-screen keyboard.
   The SRE game resets to its boot log on every opening, stops on close, and
-  freezes (timers and music) while minimized or in website mode.
+  freezes (timers and music) while minimized, while its tab is hidden, or in
+  website mode.
 - Gallery password is intentionally the literal `password`.
 - Certifications sort as Active (at least 90 days remaining), Expiring Soon,
   then Expired; badges refresh hourly. Data and sorting live in
@@ -779,7 +823,7 @@ GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`
 | --- | --- | --- | --- |
 | `garden` | Syncs the vault when `VAULT_DEPLOY_KEY` is set | Skips its steps | Skips its steps |
 | `build` | `pnpm install --frozen-lockfile`, `pnpm build`, uploads `out/` (`actions/upload-pages-artifact`) | Same, without garden notes | Same, without garden notes |
-| `test` | `pnpm test:scripts`, then Playwright against that artifact in Google Chrome | Same | Same |
+| `test` | `pnpm test:scripts`, then Playwright against that artifact in Google Chrome, on `ubuntu-24.04` (Playwright 1.60 cannot install its ffmpeg on Ubuntu 26.04, the new `ubuntu-latest`) | Same | Same |
 | `deploy` | Publishes the artifact (`actions/deploy-pages`) after `build` and `test` pass | Skipped | Skipped |
 
 - Concurrency: runs of `main` share the group `pages`, one at a time; a newer

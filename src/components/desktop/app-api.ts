@@ -150,7 +150,11 @@ export function useAppKeyboard(handler: (event: KeyboardEvent) => void) {
  * Handles deep links into this app (today: ?blog=<slug> for the Blog app).
  * Return whether the target exists; false shows the "Article not found"
  * toast. The desktop calls it after opening and maximizing the window, once
- * the app has mounted.
+ * the app has mounted. Move focus to the target only when `focus` is true:
+ * as for useFocusOnLaunch, the app mounting late (its chunk arrived after
+ * the window opened) takes focus only if nothing took it since then. The
+ * state it sets commits as it returns, before the keys typed while the app
+ * loaded replay (app-keys.ts).
  */
 export function useDeepLinkHandler(handler: DeepLinkHandler) {
   const appId = useAppId();
@@ -159,7 +163,7 @@ export function useDeepLinkHandler(handler: DeepLinkHandler) {
     latest.current = handler;
   });
   useEffect(() => {
-    setDeepLinkHandler(appId, (slug) => latest.current(slug));
+    setDeepLinkHandler(appId, (slug, options) => latest.current(slug, options));
     return () => setDeepLinkHandler(appId, null);
   }, [appId]);
 }

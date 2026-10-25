@@ -5,9 +5,10 @@
 //
 // README rules: every article opens at its title with focus on Back, from
 // the list or a ?blog= link (an unknown slug leaves the list open with
-// focus on its first item and the desktop shows "Article not found"); Back
-// restores the list position and focuses the article's item; closing the
-// window resets the list; links in articles open in a new tab.
+// focus on its first item and the desktop shows "Article not found"; a link
+// that arrives after the visitor moved focus elsewhere leaves focus there);
+// Back restores the list position and focuses the article's item; closing
+// the window resets the list; links in articles open in a new tab.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   loadBlogArticle,
@@ -90,12 +91,12 @@ export default function BlogApp({ data: posts }: AppProps<"blog">) {
   );
 
   const openArticle = useCallback(
-    (slug: string) => {
+    (slug: string, focus = true) => {
       const content = scroller();
       if (content && shownView.current.slug === null) listScrollTop.current = content.scrollTop;
       // An article whose load failed loads again (loadBlogArticle retries a failed fetch).
       setArticles((current) => (current[slug]?.status === "error" ? withoutArticle(current, slug) : current));
-      setView((current) => ({ slug, focus: { kind: "back" }, nav: current.nav + 1 }));
+      setView((current) => ({ slug, focus: focus ? { kind: "back" } : null, nav: current.nav + 1 }));
     },
     [scroller],
   );
@@ -132,13 +133,14 @@ export default function BlogApp({ data: posts }: AppProps<"blog">) {
     if (!open) showList(false);
   }, [open, showList]);
 
-  // ?blog=<slug> links (the desktop calls this once the app has mounted).
-  useDeepLinkHandler((slug) => {
+  // ?blog=<slug> links (the desktop calls this once the app has mounted;
+  // `focus` is false once the visitor moved focus elsewhere).
+  useDeepLinkHandler((slug, { focus }) => {
     if (!posts.some((post) => post.id === slug)) {
-      if (posts.length) listItem(posts[0].id)?.focus({ preventScroll: true });
+      if (focus && posts.length) listItem(posts[0].id)?.focus({ preventScroll: true });
       return false;
     }
-    openArticle(slug);
+    openArticle(slug, focus);
     return true;
   });
 

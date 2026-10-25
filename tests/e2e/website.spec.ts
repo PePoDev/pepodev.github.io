@@ -559,6 +559,108 @@ test("the Copy email button is there from first paint", async ({ page }) => {
   expect(await website.locator(".ws-email-row").boundingBox()).toEqual(row);
 });
 
+test("the Copy email button copies when pressed before the page hydrates", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const copied: string[] = [];
+    (window as typeof window & { __copied?: string[] }).__copied = copied;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText = async (text: string) => {
+        copied.push(text);
+      };
+    }
+  });
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.viewMode", "website");
+  });
+  const chunks = await holdChunks(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect.poll(chunks.held).toBeGreaterThan(0);
+  const copied = () =>
+    page.evaluate(
+      () => (window as typeof window & { __copied?: string[] }).__copied,
+    );
+  const copy = page.locator("#website [data-copy-email]");
+  const status = page.locator("#website [data-copy-status]");
+
+  // It copies at once; the text says so once React has the button.
+  await copy.click();
+  await expect.poll(copied).toEqual(["pepo@pepo.dev"]);
+  chunks.release();
+  await waitForWindowManager(page);
+  await expect(copy).toHaveText("Copied email address");
+  await expect(status).toHaveText("Email address copied");
+
+  // From then on the button handles its presses itself, once each.
+  await expect(copy).toHaveText("Copy email address", { timeout: 4_000 });
+  await copy.click();
+  await expect(copy).toHaveText("Copied email address");
+  expect(await copied()).toEqual(["pepo@pepo.dev", "pepo@pepo.dev"]);
+});
+
+test("a hydration error keeps website mode and the theme", async ({ page }) => {
+  // Text that changed before React hydrated (a browser extension, or
+  // Cloudflare's e-mail obfuscation) makes React render the page again from
+  // scratch, resetting <html> to its server attributes (the desktop, no
+  // theme). Not even one frame may show that.
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.route(
+    (url) => url.pathname === "/",
+    async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace(
+        ">pepo@pepo.dev<",
+        ">[email&#160;protected]<",
+      );
+      await route.fulfill({ response, body });
+    },
+  );
+  // What every frame shows from the end of the <head> scripts (the last one
+  // sets __pepodevEarlyInput) to the boot.
+  await page.addInitScript(() => {
+    type Win = typeof window & {
+      __seen?: Set<string>;
+      __pepodevEarlyInput?: unknown;
+      __pepodevWindowManagerReady?: boolean;
+    };
+    const seen = new Set<string>();
+    (window as Win).__seen = seen;
+    const sample = () => {
+      const root = document.documentElement;
+      if ((window as Win).__pepodevEarlyInput) {
+        seen.add(`${root.dataset.siteMode} ${root.dataset.theme}`);
+      }
+      if (!(window as Win).__pepodevWindowManagerReady) {
+        requestAnimationFrame(sample);
+      }
+    };
+    requestAnimationFrame(sample);
+  });
+  const website = await openWebsite(page, { theme: "light" });
+  await waitForWindowManager(page);
+  expect(errors.join("\n")).toMatch(/#418|[Hh]ydrat/);
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-site-mode",
+    "website",
+  );
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(website).toBeVisible();
+  await expect(page.locator("#desktop")).toBeHidden();
+  expect(
+    await page.evaluate(() => [
+      ...((window as typeof window & { __seen?: Set<string> }).__seen ?? []),
+    ]),
+  ).toEqual(["website light"]);
+});
+
 test("website mode keeps a skip link, visible focus and reduced motion", async ({
   page,
 }) => {

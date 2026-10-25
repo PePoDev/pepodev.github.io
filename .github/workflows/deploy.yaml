@@ -127,7 +127,10 @@ jobs:
   # deploy job only ever publishes a build that passed.
   test:
     needs: [garden, build]
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: Playwright 1.60 has no ffmpeg build (video recording)
+    # for Ubuntu 26.04, so `playwright install chrome` fails there. Go back to
+    # ubuntu-latest with a Playwright release that supports it.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read

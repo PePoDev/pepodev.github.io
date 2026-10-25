@@ -67,6 +67,8 @@
 .window-resize-handle {
   position: absolute;
   z-index: 10;
+  /* A finger resizes (Window.tsx); the browser must not pan or zoom. */
+  touch-action: none;
 }
 
 .window-resize-handle-right {
@@ -123,6 +125,8 @@
   cursor: default;
   flex-shrink: 0;
   gap: 10px;
+  /* A finger drags (Window.tsx); the browser must not pan or zoom. */
+  touch-action: none;
 }
 
 .window.focused .window-titlebar {
@@ -265,6 +269,8 @@
     padding-right: max(10px, env(safe-area-inset-right));
     padding-left: max(12px, env(safe-area-inset-left));
     cursor: default;
+    /* Full-screen windows do not drag. */
+    touch-action: auto;
   }
 
   .window-titlebar-icon {

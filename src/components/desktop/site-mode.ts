@@ -110,6 +110,8 @@ function onClick(event: MouseEvent) {
 
 /** Boots site mode: applies the head script's choice and handles the switches. */
 export function startSiteMode(): () => void {
+  // A switch to the desktop made before the boot saved it (DesktopScripts.tsx).
+  websiteScrollY = window.__pepodevWebsiteScrollY ?? 0;
   document.addEventListener("click", onClick);
   applySiteMode(normalizeMode(document.documentElement.dataset.siteMode), false);
   return () => document.removeEventListener("click", onClick);

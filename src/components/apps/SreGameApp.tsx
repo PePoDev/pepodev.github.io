@@ -3,13 +3,18 @@
 // desktop is idle (registry mount: "idle"), so its text exists before the
 // window opens. Each opening starts from the boot log, including an opening
 // that happened before the body mounted; closing stops the game; a
-// minimized window or website mode freezes it (timers and music), and it
-// resumes where it left off. The engine is sre-game.ts; reduced motion is
-// sre-game.css's.
+// minimized window, a hidden tab or website mode freezes it (timers and
+// music), and it resumes where it left off. The engine is sre-game.ts;
+// reduced motion is sre-game.css's.
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useAppWindow, useSiteMode, useSystemAudio, type AppProps } from "@components/desktop/app-api";
 import { SreGame, type SreAlertView } from "./sre-game";
 import { ALERTS, BOOT_LINES } from "./sre-game-script";
+
+function subscribeVisibility(onChange: () => void) {
+  document.addEventListener("visibilitychange", onChange);
+  return () => document.removeEventListener("visibilitychange", onChange);
+}
 
 function screenClass(screen: number, active: number) {
   return screen === active ? "sre-game-screen sre-game-screen-active" : "sre-game-screen";
@@ -57,11 +62,14 @@ export default function SreGameApp({ data }: AppProps<"sregame">) {
   const { open, minimized } = useAppWindow();
   const mode = useSiteMode();
   const audio = useSystemAudio();
+  // A hidden tab still runs timers (Chrome about once a second), so rounds
+  // would expire unseen.
+  const tabHidden = useSyncExternalStore(subscribeVisibility, () => document.hidden, () => false);
   const outputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => game.dispose(), [game]);
   useEffect(() => game.setSystemAudio(audio), [game, audio]);
-  useEffect(() => game.setPaused(minimized || mode === "website"), [game, minimized, mode]);
+  useEffect(() => game.setPaused(minimized || tabHidden || mode === "website"), [game, minimized, tabHidden, mode]);
   useEffect(() => {
     if (!open) return;
     game.reset();

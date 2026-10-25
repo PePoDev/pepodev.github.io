@@ -3,7 +3,8 @@
 // live in snake-game.ts; this body renders its snapshot. It takes keys only
 // while its window owns the keyboard (useAppKeyboard: focused in desktop
 // mode, no overlay open, no Ctrl, Meta or Alt), and the game pauses on its
-// next tick whenever it loses the keyboard. Pointer presses leave the
+// next tick whenever it loses the keyboard, which a hidden tab or another
+// app in front of the browser also takes. Pointer presses leave the
 // buttons unfocused, so Space after clicking Start still pauses.
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent } from "react";
 import { hasAppKeyboard, useAppKeyboard, useSystemAudio, type AppProps } from "@components/desktop/app-api";
@@ -34,7 +35,7 @@ export default function SnakeApp({ appId }: AppProps<"snake">) {
 
   // Before the first paint, so the board and the best score never flash empty.
   useLayoutEffect(() => {
-    game.ownsKeyboard = () => hasAppKeyboard(appId);
+    game.ownsKeyboard = () => !document.hidden && document.hasFocus() && hasAppKeyboard(appId);
     game.restoreBest();
     game.attach(canvasRef.current);
     return () => game.dispose();

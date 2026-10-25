@@ -691,12 +691,13 @@ function scheduleWelcomeWindow() {
 
 function onOpenApp(event: Event) {
   if (!isDesktopSiteMode()) return;
-  const appId = (event as CustomEvent<{ appId?: unknown }>).detail?.appId;
+  const detail = (event as CustomEvent<{ appId?: unknown; keyboard?: unknown }>).detail;
+  const appId = detail?.appId;
   // The Start menu closes on every launch, without taking focus back.
   closeStartMenu();
   if (!isAppId(appId)) return;
   userOpenedWindow = true;
-  openWindow(appId, keyboardInteraction);
+  openWindow(appId, keyboardInteraction || detail?.keyboard === true);
 }
 
 function onKeyTracking(event: KeyboardEvent) {
@@ -781,7 +782,11 @@ export function startWindowManager(): () => void {
   };
 }
 
-/** Asks the desktop to open an app, as every launcher does (desktop:open-app). */
-export function requestOpenApp(appId: AppId) {
-  document.dispatchEvent(new CustomEvent("desktop:open-app", { detail: { appId } }));
+/**
+ * Asks the desktop to open an app, as every launcher does (desktop:open-app).
+ * `keyboard` moves focus into the window even when the key press came before
+ * the window manager started (the boot's replay, runtime.tsx).
+ */
+export function requestOpenApp(appId: AppId, keyboard = false) {
+  document.dispatchEvent(new CustomEvent("desktop:open-app", { detail: { appId, keyboard } }));
 }
