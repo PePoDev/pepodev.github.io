@@ -20,7 +20,8 @@ GitHub Actions deploy.yaml (push, hourly, manual)    │
     1. sparse, blob-less checkout: *.md, Attachments/, .obsidian/app.json
     2. node scripts/sync-garden.mjs --vault .vault
     3. upload src/content/garden + src/assets/garden (published notes only)
-  build job: download that artifact, then withastro/action builds dist/
+  build job: download that artifact, then pnpm build exports out/
+  test job: Playwright against that export
   deploy job: GitHub Pages
 ```
 
@@ -38,7 +39,7 @@ GitHub Actions deploy.yaml (push, hourly, manual)    │
     removed, so properties such as `candidate-id` never reach the site.
   - Only the attachments that published notes embed are copied. That is 412
     of the 482 files in `Attachments/`.
-  - Code is found with the same CommonMark parser Astro renders with
+  - Code is found with the same CommonMark parser the site renders with
     (`satteri`), so nothing inside code is rewritten and nothing outside it
     escapes the rewrites.
   - Every converted note is parsed again before it is written. If it would
@@ -80,8 +81,8 @@ vault steps skip when the secret is missing.
   `gh workflow run deploy.yaml -R PePoDev/pepodev.github.io`, then
   `gh run watch -R PePoDev/pepodev.github.io`. The "Sync published garden notes"
   step should log `Garden: 90 notes, 412 attachments, …`. The first run
-  optimizes all 412 images, which can take a few minutes; later runs reuse
-  Astro's image cache.
+  optimizes all 412 images, which can take a few minutes (every build
+  resizes them again; there is no image cache).
 - [ ] **3. Spot-check production.** Check `/garden/`,
   `/garden/knowledge/technical/kubernetes/cks/`, the desktop Garden app, and the
   website-mode Garden section.

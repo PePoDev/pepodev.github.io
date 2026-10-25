@@ -3,6 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Pull requests into main (Dependabot's included) build and test, never
+  # deploy, and never get the vault key (see the garden and deploy jobs).
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   # Hourly: picks up notes published in the Obsidian vault, and keeps values
   # computed at build time (years of experience, tenure, the career-uptime
@@ -13,41 +17,49 @@ on:
 permissions:
   contents: read
 
-# One run at a time, so an older build can never deploy over a newer one
-# while the test job runs. A newer run waits (replacing any already waiting)
-# instead of cancelling a deploy in progress.
+# Runs of main (push, schedule, manual) share the group "pages": one at a
+# time, so an older build can never deploy over a newer one while the test
+# job runs, and a newer run waits (replacing any already waiting) instead of
+# cancelling a deploy in progress. Every other ref gets its own group, so a
+# pull request or a manual run on another branch can never cancel, replace
+# or delay a main run; a new push to a pull request cancels its older run.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && 'pages' || format('deploy-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # The vault is private and this repo is public. Only this job sees the vault
-  # deploy key. It installs packages without running their scripts and runs
-  # only the sync (plus the Markdown parser it loads), fetches just Markdown and
-  # attachments, and hands the build the published notes only (already public
-  # on the site).
+  # deploy key, and only for runs of main (push, schedule, manual), never for
+  # a pull request (fork and Dependabot pull requests get no secrets anyway).
+  # It installs packages without running their scripts and runs only the
+  # sync (plus the Markdown parser it loads), fetches just Markdown and
+  # attachments, and hands the build the published notes only (already
+  # public on the site). Elsewhere (a pull request, no key, or a manual run on
+  # another branch) its steps skip and the site builds without garden notes.
   garden:
     runs-on: ubuntu-latest
     env:
-      HAS_VAULT_KEY: ${{ secrets.VAULT_DEPLOY_KEY != '' }}
+      SYNC_GARDEN: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && secrets.VAULT_DEPLOY_KEY != '' }}
     outputs:
-      synced: ${{ env.HAS_VAULT_KEY }}
+      synced: ${{ env.SYNC_GARDEN }}
     steps:
       - name: Checkout your repository using git
-        if: env.HAS_VAULT_KEY == 'true'
+        if: env.SYNC_GARDEN == 'true'
         uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Set up Node
-        if: env.HAS_VAULT_KEY == 'true'
-        uses: actions/setup-node@v6
+        if: env.SYNC_GARDEN == 'true'
+        uses: actions/setup-node@v7
         with:
           node-version: 24
+          # No cache in the job that holds the vault key.
+          package-manager-cache: false
       - name: Install dependencies without running their scripts
-        if: env.HAS_VAULT_KEY == 'true'
+        if: env.SYNC_GARDEN == 'true'
         run: npx --yes pnpm@10.33.2 install --frozen-lockfile --ignore-scripts
       - name: Check out the Obsidian vault
-        if: env.HAS_VAULT_KEY == 'true'
+        if: env.SYNC_GARDEN == 'true'
         uses: actions/checkout@v6
         with:
           repository: PePoDev/obsidian-vault
@@ -63,16 +75,19 @@ jobs:
           persist-credentials: false
           show-progress: false
       - name: Sync published garden notes
-        if: env.HAS_VAULT_KEY == 'true'
+        if: env.SYNC_GARDEN == 'true'
         run: node scripts/sync-garden.mjs --vault .vault
       - name: Upload published garden notes
-        if: env.HAS_VAULT_KEY == 'true'
+        if: env.SYNC_GARDEN == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: garden
           path: |
             src/content/garden
             src/assets/garden
+          # A sync that published nothing fails here, not in the build job's
+          # download (and the live site keeps its notes).
+          if-no-files-found: error
           retention-days: 1
 
   build:
@@ -134,6 +149,8 @@ jobs:
           cache: pnpm
       - name: Install dependencies from the lockfile
         run: pnpm install --frozen-lockfile
+      - name: Unit-test the build scripts
+        run: pnpm test:scripts
       - name: Install Google Chrome
         run: pnpm exec playwright install chrome
       - name: Download the site the build job uploaded
@@ -164,8 +181,11 @@ jobs:
             test-results/
           retention-days: 7
 
+  # Only runs of main deploy: a pull request, or a manual run on another
+  # branch, builds and tests without deploying.
   deploy:
     needs: [build, test]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       pages: write

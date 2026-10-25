@@ -1,0 +1,36 @@
+# Weekly dependency updates. Each pull request runs the deploy workflow's
+# build and test jobs (never the deploy, never with the vault key); see
+# README.md, Deployment and Git.
+version: 2
+updates:
+  # package.json and pnpm-lock.yaml (pnpm 10, lockfile v9).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # A dependency joins the first group that matches it.
+    groups:
+      # Next.js and React move together, majors included.
+      next-react:
+        patterns:
+          - next
+          - react
+          - react-dom
+          - "@types/react*"
+      # Every other minor and patch update in one pull request; majors come
+      # one per pull request.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # `pnpm check` runs on TypeScript 6 (README.md, Setup); move to 7 by
+      # hand, not through Dependabot.
+      - dependency-name: typescript
+        versions: [">=7"]
+
+  # The actions in .github/workflows/.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
