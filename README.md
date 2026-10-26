@@ -888,7 +888,9 @@ written here.
   `https://cloudflareinsights.com` is there for a beacon added by hand,
   which reports there.
 - Response header transform rule "Security headers" (Rules > Overview >
-  Create rule > Response Header Transform Rule): all incoming requests, Set
+  Create rule > Response Header Transform Rule; its form reads "Modify
+  response header". A request header rule sends the headers to GitHub
+  Pages instead, and visitors never see them): all incoming requests, Set
   static for each header that `node scripts/security-headers.mjs` prints,
   with the name and value exactly as printed. Paste each value whole: the
   policy's directives are separated by `; `, and a comma would start a
