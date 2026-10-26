@@ -30,6 +30,8 @@ html[data-site-mode="website"] {
   --ws-accent-soft: color-mix(in srgb, var(--accent-primary) 12%, transparent);
   --ws-accent-ink-on: color-mix(in srgb, var(--accent-primary) 18%, #05080c);
   --ws-gap-bar: #26303b;
+  /* The career uptime bars: a status-page green, whatever the accent. */
+  --ws-uptime-bar: #2ea043;
   --ws-mark-bg: #e9eef3;
   --ws-mark-fg: #0b0f14;
   --ws-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -61,6 +63,7 @@ html[data-site-mode="website"][data-theme="light"] {
   --ws-accent-soft: color-mix(in srgb, var(--accent-primary) 10%, #f5f5f3);
   --ws-accent-ink-on: #ffffff;
   --ws-gap-bar: #d8d8cf;
+  --ws-uptime-bar: #1a7f37;
   --ws-mark-bg: #111417;
   --ws-mark-fg: #f4f4ef;
   --ws-shadow:
@@ -321,7 +324,7 @@ html[data-site-mode="website"] body {
 }
 
 .ws-key--on {
-  background: var(--ws-accent-bar);
+  background: var(--ws-uptime-bar);
 }
 
 .ws-key--gap {
@@ -798,7 +801,7 @@ html[data-site-mode="website"] body {
   display: block;
   height: 100%;
   border-radius: 2px;
-  background: var(--ws-accent-bar);
+  background: var(--ws-uptime-bar);
   transition: opacity 0.15s;
 }
 
