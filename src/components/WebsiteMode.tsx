@@ -200,6 +200,13 @@ export async function WebsiteMode() {
   const buildTime = bangkokTime(now);
   const buildDate = now.toISOString().slice(0, 10);
   const roleSegments = career.timeline.filter((segment) => segment.role);
+  // Each company's bars in its own shade of the accent: the current company
+  // in the accent itself, each earlier one a step further from it
+  // (website-mode.css mixes toward --ws-tone-mix).
+  const companies = [...new Set(roleSegments.map((segment) => segment.role!.companyShortName))];
+  const toneStep = companies.length > 1 ? Math.min(18, 54 / (companies.length - 1)) : 0;
+  const companyTone = (company: string) =>
+    `${Math.round(100 - (companies.length - 1 - companies.indexOf(company)) * toneStep)}%`;
 
   return (
     <>
@@ -402,7 +409,11 @@ export async function WebsiteMode() {
                         segment.kind === "gap" && "ws-seg--gap",
                         segment.role?.current && "ws-seg--current",
                       )}
-                      style={cssVars({ "--start": segment.offset + 1, "--n": segment.months })}
+                      style={cssVars({
+                        "--start": segment.offset + 1,
+                        "--n": segment.months,
+                        ...(segment.role ? { "--tone": companyTone(segment.role.companyShortName) } : {}),
+                      })}
                       role="img"
                       aria-label={segmentLabel(segment)}
                       title={segmentLabel(segment)}
