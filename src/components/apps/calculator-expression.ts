@@ -3,9 +3,10 @@
 // (scripts/security-headers.mjs). The grammar is what the Calculator can
 // produce: decimal numbers (with exponents, as large results show them),
 // unary + and -, then *, / and % before + and -, left to right, and
-// parentheses (from percentages). What strict-mode JavaScript rejects
-// (05, 1.2.3, 2(3), ++, a missing operand) throws, and every operation is
-// JavaScript's own, so results match eval's to the last bit.
+// parentheses (from percentages). What strict-mode JavaScript would throw
+// on (05, 1.2.3, ++, a missing operand, or 2(3), which calls a number)
+// throws, and every operation is JavaScript's own, so results match eval's
+// to the last bit.
 
 function invalid(): never {
   throw new SyntaxError("Invalid expression");

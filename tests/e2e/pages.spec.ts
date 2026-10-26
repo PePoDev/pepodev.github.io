@@ -226,17 +226,18 @@ test("the security headers allow everything the site does, Cloudflare Web Analyt
       );
     });
   });
-  // Cloudflare injects its beacon into every HTML page, and the beacon
-  // reports to cloudflareinsights.com.
+  // Cloudflare injects its beacon into every HTML page as a cross-origin
+  // module script, and the beacon reports to the site's own /cdn-cgi/rum.
   const reports: string[] = [];
-  await page.route("https://cloudflareinsights.com/**", (route) => {
+  await page.route("**/cdn-cgi/rum*", (route) => {
     reports.push(route.request().url());
     return route.fulfill({ status: 204 });
   });
   await page.route("https://static.cloudflareinsights.com/**", (route) =>
     route.fulfill({
       contentType: "text/javascript",
-      body: 'navigator.sendBeacon("https://cloudflareinsights.com/cdn-cgi/rum", "{}");',
+      headers: { "access-control-allow-origin": "*" },
+      body: 'navigator.sendBeacon("/cdn-cgi/rum", "{}");',
     }),
   );
   await page.route("**/*", async (route) => {
@@ -244,7 +245,7 @@ test("the security headers allow everything the site does, Cloudflare Web Analyt
     const response = await route.fetch();
     const body = (await response.text()).replace(
       "</body>",
-      `<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v1" data-cf-beacon='{"token":"test"}'></script></body>`,
+      `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v1" data-cf-beacon='{"version":"2024.11.0","token":"test","spa":2}' crossorigin="anonymous"></script></body>`,
     );
     await route.fulfill({ response, body });
   });

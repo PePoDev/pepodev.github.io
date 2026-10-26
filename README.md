@@ -879,20 +879,28 @@ written here.
 - Email Address Obfuscation (Security > Settings): off. It rewrites the
   address in the HTML React hydrates, and shows "[email protected]" without
   JavaScript.
-- Web Analytics: on, set up automatically. Its beacon is the one script from
-  another origin, so the Content-Security-Policy allows
-  `https://static.cloudflareinsights.com` (script) and
-  `https://cloudflareinsights.com` (reports).
+- Web Analytics: on, set up automatically. Cloudflare injects its beacon, a
+  module script from `https://static.cloudflareinsights.com/beacon.min.js/v…`
+  with `crossorigin`, into every HTML page. It is the one script from
+  another origin, so `script-src` allows that whole host (a path such as
+  `…/beacon.min.js` would block the versioned URL). The beacon reports to
+  the site's own `/cdn-cgi/rum` (`connect-src 'self'`);
+  `https://cloudflareinsights.com` is there for a beacon added by hand,
+  which reports there.
 - Response header transform rule "Security headers" (Rules > Overview >
   Create rule > Response Header Transform Rule): all incoming requests, Set
-  static for each header in `scripts/security-headers.mjs`, with the same
-  value. `scripts/serve-static.mjs` sends the same headers, so the Playwright
+  static for each header that `node scripts/security-headers.mjs` prints,
+  with the name and value exactly as printed. Paste each value whole: the
+  policy's directives are separated by `; `, and a comma would start a
+  second policy that blocks every inline script, so the desktop would never
+  boot. `scripts/serve-static.mjs` sends the same headers, so the Playwright
   suite runs under them, and `pages.spec.ts` checks that every page and app
-  (Cloudflare's beacon included) works without a policy violation. Update the
-  rule whenever that file changes.
+  (with a stand-in for Cloudflare's beacon) works without a policy
+  violation. Update the rule whenever that file changes.
 - HSTS (SSL/TLS > Edge Certificates): on, max-age 12 months, subdomains off
-  (DNS-only subdomains such as `ds925` may not serve HTTPS), no preload. It is
-  not part of the transform rule.
+  (DNS-only subdomains such as `ds925` may not serve HTTPS), no preload,
+  No-Sniff header off (the transform rule sets X-Content-Type-Options). It
+  is not part of the transform rule.
 - Cache rules (Caching > Cache Rules), in this order:
   1. "Build assets", `starts_with(http.request.uri.path, "/_next/static/") or
      starts_with(http.request.uri.path, "/_img/")`: eligible for cache; edge
@@ -903,12 +911,22 @@ written here.
      cache; edge TTL: ignore cache-control header, 1 day; browser TTL:
      respect origin. Purge the cache after replacing a track under the same
      name.
-  Everything else, HTML included, keeps GitHub Pages' `max-age=600` and is
-  not cached at the edge, so a deploy shows within 10 minutes. If assets
-  still answer `cf-cache-status: DYNAMIC`, check that Development Mode
-  (Caching > Configuration) is off and no other rule bypasses the cache.
+- Browser Cache TTL (Caching > Configuration): Respect Existing Headers.
+  Everything the cache rules do not cover keeps GitHub Pages' `max-age=600`:
+  HTML is never cached at the edge, and files with an extension Cloudflare
+  caches by default (`favicon.ico`, the icons, `og-image.png`, `robots.txt`)
+  are cached for those 10 minutes, so a deploy shows within 10 minutes.
+- Nothing may bypass the cache. `cf-cache-status: DYNAMIC` on such a file
+  (as on every file, even `favicon.ico`, in October 2026) means something
+  does: Development Mode (Caching > Configuration), a cache rule set to
+  Bypass cache (the last matching cache rule wins), or a legacy "Cache Level:
+  Bypass" Configuration Rule or Page Rule. Cloudflare Trace on
+  `https://pepo.dev/favicon.ico` shows which.
 - Rocket Loader may stay on (see Parse-Time Scripts and Rocket Loader).
 
-To check: `curl -sI https://pepo.dev/` shows the headers, and
+To check, after any change: `node scripts/security-headers.mjs --check`
+prints "Every header matches." (it checks `/` and the 404 page);
 `curl -sI 'https://www.pepo.dev/blog/?a=1'` answers 301 with
-`location: https://pepo.dev/blog/?a=1`.
+`location: https://pepo.dev/blog/?a=1`; and `curl -sI
+https://pepo.dev/favicon.ico` run twice answers `cf-cache-status: MISS`,
+then `HIT`.

@@ -386,6 +386,15 @@ test("Calculator results read from the first digit and stay usable", async ({
   await expect(value).toHaveText("5+7");
   await page.keyboard.press("Enter");
   await expect(value).toHaveText("12");
+
+  // * before +, a percentage, and a negative result.
+  await window.getByRole("button", { name: "AC", exact: true }).click();
+  await page.keyboard.type("2+3*4-10%");
+  await page.keyboard.press("Enter");
+  await expect(value).toHaveText("13.9");
+  await page.keyboard.type("-20");
+  await page.keyboard.press("Enter");
+  await expect(value).toHaveText("-6.1");
 });
 
 test("Calculator allows one decimal point per number", async ({ page }) => {
