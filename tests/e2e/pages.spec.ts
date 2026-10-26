@@ -320,3 +320,29 @@ test("the security headers allow everything the site does, Cloudflare Web Analyt
 
   expect(violations).toEqual([]);
 });
+
+test("the garden follows the saved theme and accent, and its skip link is readable", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "pepodev.desktopPrefs",
+      JSON.stringify({ theme: "light", accent: "purple" }),
+    ),
+  );
+  await page.goto("/garden/");
+  const html = page.locator("html");
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect(html).toHaveCSS("--accent-primary", "#bf5af2");
+
+  await page.keyboard.press("Tab");
+  const skip = page.locator(".website-skip-link");
+  await expect(skip).toBeFocused();
+  const [color, background] = await skip.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return [style.color, style.backgroundColor];
+  });
+  expect(color).not.toBe(background);
+});
+

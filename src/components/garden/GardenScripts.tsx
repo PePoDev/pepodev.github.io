@@ -1,27 +1,39 @@
 // The garden's parse-time scripts. The garden is a static page (runtime
 // "none"), so its behaviour is <InlineScript>s, never client components.
-import { InlineScript } from "@components/InlineScript";
+import { InlineScript, scriptValue } from "@components/InlineScript";
+import { accentMap } from "@utils/desktop-prefs";
 
-// <head>, before first paint: the saved light or dark theme, or the
-// desktop's own inside the desktop Garden window (whose titlebar then
-// replaces the site header: html[data-embed], garden.css). Theme changes
-// made in other tabs are followed live. It sets <html> attributes, so the
-// layout renders <Document suppressHydrationWarning>.
+// <head>, before first paint: the saved light or dark theme (the desktop's
+// own inside the desktop Garden window, whose titlebar then replaces the
+// site header: html[data-embed], garden.css) and the Settings accent, as /
+// and the blog apply them to website mode. Changes saved in other tabs (or
+// by the desktop around the Garden window) are followed live. It sets
+// <html> attributes, so the layout renders <Document
+// suppressHydrationWarning>.
 const themeScript = `(() => {
+  const accentMap = ${scriptValue(accentMap)};
   const root = document.documentElement;
   const embedded = window.top !== window.self;
   if (embedded) root.dataset.embed = "";
-  try {
-    root.dataset.theme =
-      (embedded && parent.document.documentElement.dataset.theme) ||
-      JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}").theme ||
-      localStorage.getItem("pepodev.theme") ||
-      "dark";
-  } catch {
-    root.dataset.theme = "dark";
-  }
+  const apply = () => {
+    let prefs = {};
+    try {
+      prefs = JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}");
+      root.dataset.theme =
+        (embedded && parent.document.documentElement.dataset.theme) ||
+        prefs.theme ||
+        localStorage.getItem("pepodev.theme") ||
+        "dark";
+    } catch {
+      root.dataset.theme = "dark";
+    }
+    const accent = accentMap[prefs?.accent] || accentMap.green;
+    root.style.setProperty("--accent-primary", accent.primary);
+    root.style.setProperty("--accent-secondary", accent.secondary);
+  };
+  apply();
   addEventListener("storage", (event) => {
-    if (event.key === "pepodev.theme" && event.newValue) root.dataset.theme = event.newValue;
+    if (event.key === "pepodev.desktopPrefs" || event.key === "pepodev.theme") apply();
   });
 })();`;
 

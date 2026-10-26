@@ -10,7 +10,9 @@
   line-height: 1.6;
 }
 
-.garden-shell :where(a) {
+/* No specificity, so website-mode.css's own link colours (the skip link's
+   among them) still win. */
+:where(.garden-shell a) {
   color: inherit;
 }
 
