@@ -814,15 +814,17 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   `inert` while closed, and only one is open at a time: opening one closes
   the other. Both are non-modal (no focus trap, no backdrop): Tab moves
   through Quick Access's search box and visible items, and tabbing out of
-  either, or a click outside, closes it. The Start button or `Ctrl`/`Cmd` +
-  `K` (any case, desktop mode, also forwarded by the garden frame) opens
-  Quick Access. `Ctrl`/`Cmd` + `K` focuses its search box synchronously
-  after the commit, on every screen, so keys typed straight after it are
-  searched rather than lost; the Start button focuses the search box too,
-  but on phones and touch tablets the menu itself, so no on-screen keyboard
-  covers it. Escape, the Start button, or `Ctrl`/`Cmd` + `K` return focus to
-  what had it before Quick Access opened (a window or its content
-  included), or, when that is gone, to the topmost window, else the Start
+  either (into the Garden's frame too), or a click outside, closes it. The
+  Start button or `Ctrl`/`Cmd` + `K` (any case, desktop mode, also
+  forwarded by the garden frame) opens Quick Access, scrolled to the top.
+  `Ctrl`/`Cmd` + `K` focuses its search box synchronously after the commit,
+  on every screen, so keys typed straight after it are searched rather
+  than lost; the Start button focuses the search box too, but on phones and
+  touch tablets the menu itself, so no on-screen keyboard covers it.
+  Escape, the Start button, or `Ctrl`/`Cmd` + `K` return focus to what had
+  it before Quick Access opened (a window or its content included, also
+  the field focused inside the Garden's frame), or, when that is gone, to
+  the topmost window, else the Start
   button; launching an app does not (the window takes focus), and Close All
   Windows sends focus to the Start button. Escape or a toggle returns focus
   from the tray to the button that opened it. The tray's audio button opens

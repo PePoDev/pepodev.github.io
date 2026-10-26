@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { resetPage, waitForWindowManager } from "./helpers";
+import { openApp, resetPage, waitForWindowManager } from "./helpers";
 
 const savedPrefs = {
   theme: "light",
@@ -265,6 +265,79 @@ test("Quick Access Enter runs the focused item and the highlight follows focus",
       JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}"),
     ),
   ).toMatchObject({ theme: "dark", accent: "purple", radius: 14 });
+});
+
+test("Quick Access reopens scrolled to the top, where its highlight is", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const results = page.locator("#start-menu-results");
+  const items = results.locator(".start-menu-item");
+  const welcome = page.locator('[data-id="welcome"]');
+  const scrollTop = () => results.evaluate((element) => element.scrollTop);
+  const expectAtTop = async () => {
+    await expect(welcome).toHaveClass(/selected/);
+    expect(await scrollTop()).toBe(0);
+    await expect(welcome).toBeInViewport();
+    await expect(page.locator("#start-menu-section-apps")).toBeInViewport();
+  };
+
+  // Ctrl+K after the highlight went down to the last link.
+  await openQuickAccess(page);
+  for (let i = await items.count(); i > 0; i--) {
+    await page.keyboard.press("ArrowDown");
+  }
+  await expect(items.last()).toHaveClass(/selected/);
+  expect(await scrollTop()).toBeGreaterThan(0);
+  await page.keyboard.press("Escape");
+  await expectClosed(page);
+  await openQuickAccess(page);
+  await expectAtTop();
+
+  // The Start button after a scroll with the wheel.
+  await results.hover();
+  await page.mouse.wheel(0, 2000);
+  await expect.poll(scrollTop).toBeGreaterThan(0);
+  await page.locator("#taskbar-start").click();
+  await expectClosed(page);
+  await page.locator("#taskbar-start").click();
+  await expect(page.locator("#start-menu")).toHaveClass(/visible/);
+  await expectAtTop();
+});
+
+test("Quick Access closes when Tab leaves it for the Garden's frame and hands focus back to the field in it", async ({
+  page,
+}) => {
+  await resetPage(page);
+  await openApp(page, "Garden", "garden");
+  const frame = page.frameLocator("#window-garden iframe");
+  const filter = frame.getByRole("searchbox", { name: "Filter notes" });
+  // The garden's own script, which forwards Ctrl/Cmd + K, ends its page.
+  await expect
+    .poll(() => filter.evaluate(() => document.readyState))
+    .toBe("complete");
+
+  // Escape, or Ctrl+K again, returns focus to the field inside the frame,
+  // not only to the frame, so typing goes on there.
+  await filter.click();
+  await page.keyboard.type("ab");
+  for (const close of ["Escape", "ControlOrMeta+K"]) {
+    await openQuickAccess(page);
+    await page.keyboard.press(close);
+    await expectClosed(page);
+    await expect(filter).toBeFocused();
+  }
+  await page.keyboard.type("c");
+  await expect(filter).toHaveValue("abc");
+
+  // With the Garden the last window before Quick Access, Shift+Tab from the
+  // search box moves focus into its frame, which has no relatedTarget.
+  await openQuickAccess(page);
+  await page.keyboard.press("Shift+Tab");
+  await expectClosed(page);
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe(
+    "IFRAME",
+  );
 });
 
 test("closed overlays leave the tab order and return focus to their opener", async ({

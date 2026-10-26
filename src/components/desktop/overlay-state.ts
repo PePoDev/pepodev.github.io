@@ -5,8 +5,9 @@
 // hands focus back to its button first. Closed overlays are inert. Escape, a
 // toggle button or Ctrl/Cmd + K return focus to what had it before the
 // overlay opened; launching an app does not. Both are non-modal: tabbing out
-// of one closes it. Every overlay calls preventDefault() on the Escape it
-// handles, so the window manager does not also close the window behind it.
+// of one (into a frame too) closes it. Every overlay calls preventDefault()
+// on the Escape it handles, so the window manager does not also close the
+// window behind it.
 import { focusFirst, getFocusedWindow } from "@utils/overlays";
 import { commit, createStore, useStore } from "./store";
 
@@ -44,7 +45,7 @@ function onOverlayOpen(event: Event) {
  * `update` (which renders it closed and inert), then with restoreFocus moves
  * focus that was inside it (or on its `toggle` button, which a press on it
  * focuses, or had dropped to <body>) to the first of `returnTo` that can
- * take it.
+ * take it, and returns that element.
  */
 export function closeOverlayPanel(
   panel: HTMLElement | null,
@@ -54,13 +55,13 @@ export function closeOverlayPanel(
     returnTo = [],
     toggle = null,
   }: { restoreFocus?: boolean; returnTo?: (Element | null | undefined)[]; toggle?: Element | null },
-) {
+): HTMLElement | null {
   const active = document.activeElement;
   const hadFocus =
     !active || active === document.body || Boolean(panel?.contains(active)) || (toggle !== null && active === toggle);
   if (active instanceof HTMLElement && panel?.contains(active)) active.blur();
   commit(update);
-  if (restoreFocus && hadFocus) focusFirst(returnTo);
+  return restoreFocus && hadFocus ? focusFirst(returnTo) : null;
 }
 
 const byId = (id: string) => document.getElementById(id);
@@ -87,17 +88,29 @@ export const quickAccessStore = createStore<QuickAccessState>({ ...QUICK_ACCESS_
 // keyboard over the menu.
 const TOUCH_QUERY = "(max-width: 768px), (hover: none), (pointer: coarse)";
 
-// What had focus before Quick Access opened.
+// What had focus before Quick Access opened, and when that is a frame (the
+// Garden window), the element focused inside it, which the frame forgets as
+// focus leaves it.
 let quickAccessOpener: HTMLElement | null = null;
+let quickAccessOpenerInFrame: HTMLElement | null = null;
+
+/** The element focused inside a same-origin frame, if any. */
+function focusedInFrame(element: Element | null): HTMLElement | null {
+  if (!(element instanceof HTMLIFrameElement)) return null;
+  const frameDocument = element.contentDocument;
+  const inner = frameDocument?.activeElement;
+  return frameDocument && inner && inner !== frameDocument.body ? (inner as HTMLElement) : null;
+}
 
 /**
  * Opens or closes Quick Access (the Start menu). Opening focuses its search
  * box, or on phones and touch tablets the menu itself, so no on-screen
  * keyboard covers it; focusSearch (Ctrl/Cmd + K) focuses the search box on
- * every screen. Closing with restoreFocus returns focus to what had it
- * before Quick Access opened (a window included), else to the topmost
- * window, else to the Start button; `returnTo` replaces that order.
- * Launching an app skips it: the window takes focus.
+ * every screen. It opens scrolled to the top, where the highlight is.
+ * Closing with restoreFocus returns focus to what had it before Quick Access
+ * opened (a window or a field inside the Garden's frame included), else to
+ * the topmost window, else to the Start button; `returnTo` replaces that
+ * order. Launching an app skips it: the window takes focus.
  */
 export function setStartMenu(
   open: boolean,
@@ -117,10 +130,14 @@ export function setStartMenu(
     const active = document.activeElement;
     quickAccessOpener =
       active instanceof HTMLElement && active !== document.body && !menu?.contains(active) ? active : null;
+    quickAccessOpenerInFrame = focusedInFrame(quickAccessOpener);
     commit(() => {
       overlayStore.set("start-menu");
       quickAccessStore.set(QUICK_ACCESS_FRESH);
     });
+    // The results keep their scroll position while closed.
+    const results = byId("start-menu-results");
+    if (results) results.scrollTop = 0;
     // The commit rendered the menu open (no longer inert), so focus moves
     // now: keys typed straight after Ctrl/Cmd + K reach the search instead
     // of being lost before a delayed focus, which left Enter to run the
@@ -130,8 +147,9 @@ export function setStartMenu(
     return;
   }
   const opener = quickAccessOpener;
-  quickAccessOpener = null;
-  closeOverlayPanel(
+  const openerInFrame = quickAccessOpenerInFrame;
+  quickAccessOpener = quickAccessOpenerInFrame = null;
+  const restored = closeOverlayPanel(
     menu,
     () => {
       overlayStore.set(null);
@@ -145,6 +163,8 @@ export function setStartMenu(
       returnTo: returnTo ?? [opener, getFocusedWindow(), startButton],
     },
   );
+  // Focusing the frame alone leaves focus on its <body>.
+  if (restored === opener && openerInFrame?.isConnected) openerInFrame.focus({ preventScroll: true });
 }
 
 export function closeStartMenu() {
@@ -198,14 +218,27 @@ function onEscape(event: KeyboardEvent) {
   }
 }
 
+// Focus that leaves a panel for a frame (Shift+Tab into the Garden window)
+// has no relatedTarget, so where it went shows only once it has moved: on
+// the frame, while the page keeps focus (it does not when the browser
+// window loses it).
+function closeForFocusedFrame() {
+  if (!(document.activeElement instanceof HTMLIFrameElement) || !document.hasFocus()) return;
+  setStartMenu(false);
+  setTrayOpen(false);
+}
+
 // Tabbing out of a panel closes it, as a click outside does. Pressing its
 // button (:active) also moves focus there, but that click toggles it itself.
 function onFocusOut(event: FocusEvent) {
   const next = event.relatedTarget instanceof Element ? event.relatedTarget : null;
-  if (!next) return;
   const target = event.target instanceof Element ? event.target : null;
   const menu = byId("start-menu");
   const tray = byId("tray-panel");
+  if (!next) {
+    if (target && (menu?.contains(target) || tray?.contains(target))) window.setTimeout(closeForFocusedFrame);
+    return;
+  }
   if (isOverlayOpen("start-menu") && menu && target && menu.contains(target) && !menu.contains(next)) {
     const startButton = byId("taskbar-start");
     if (startButton?.contains(next) && startButton.matches(":active")) return;
