@@ -1,6 +1,6 @@
-// Site mode: the desktop or the conventional website (port of the bundled
-// half of SiteModeController.astro; the <head> half is HomeHeadScripts.tsx,
-// which sets <html data-site-mode> before first paint).
+// Site mode: the desktop or the conventional website. This is the bundled half
+// of its controller; the <head> half is HomeHeadScripts.tsx, which sets
+// <html data-site-mode> before first paint.
 //
 // pepodev.viewMode stores "desktop" or "website". First visits default to
 // desktop; a non-empty ?blog= deep link opens desktop mode without

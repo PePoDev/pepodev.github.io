@@ -1,8 +1,7 @@
-// The page around every garden page (port of GardenLayout.astro's body):
-// website mode's header, the note itself, the filterable note tree and, on
-// wide screens, the note's table of contents. The <html> shell, the theme
-// script and the stylesheets are the garden root layout's
-// (src/app/(garden)/garden/[[...slug]]/layout.tsx).
+// The page around every garden page: website mode's header, the note itself,
+// the filterable note tree and, on wide screens, the note's table of contents.
+// The <html> shell, the theme script and the stylesheets are the garden root
+// layout's (src/app/(garden)/garden/[[...slug]]/layout.tsx).
 import type { ReactNode } from "react";
 import { BrandMark } from "@components/BrandMark";
 import type { MarkdownHeading } from "@lib/content";

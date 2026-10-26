@@ -1,6 +1,6 @@
-/* Welcome - Login (scoped styles of WelcomeApp.astro, every selector starting
-   at the .welcome-app root; README, Development Rules). .app-content.welcome-app
-   keeps Astro's specificity for the root. */
+/* Welcome - Login (every selector starts at the .welcome-app root; README,
+   Development Rules). .app-content.welcome-app gives the root the specificity
+   of two classes. */
 .app-content.welcome-app {
   font-family: "Courier New", monospace;
 }

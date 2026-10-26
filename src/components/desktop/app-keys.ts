@@ -4,16 +4,14 @@
 //
 // - App handlers listen on document in the capture phase, so they run
 //   before the desktop's own key listeners (React's handlers, the overlays,
-//   the palette; the window manager's Escape is on window), as the Astro
-//   apps' listeners did. isAppKeyboardEvent then still sees an overlay that
-//   is about to close on this very Escape or Enter as open, and ignores the
-//   key; and the app's own launcher, which re-launches on Enter, still hands
-//   the key over.
+//   the palette; the window manager's Escape is on window). isAppKeyboardEvent
+//   then still sees an overlay that is about to close on this very Escape or
+//   Enter as open, and ignores the key; and the app's own launcher, which
+//   re-launches on Enter, still hands the key over.
 // - A body can render after its window opened (its chunk was not there yet:
-//   app-chunks.ts), so keys typed meanwhile would be lost; the Astro desktop
-//   had every body in the page. Until the body has rendered (app-bodies.tsx
-//   marks it ready), keys that belong to the focused window
-//   (isAppKeyboardEvent, as for a rendered app) are kept, in order, and
+//   app-chunks.ts), so keys typed meanwhile would be lost. Until the body has
+//   rendered (app-bodies.tsx marks it ready), keys that belong to the focused
+//   window (isAppKeyboardEvent, as for a rendered app) are kept, in order, and
 //   replayed once it has, as long as the window is still open: they were the
 //   app's when they were typed, so another window taking over in the
 //   meantime does not drop them (typing "12+3" into Calculator, then opening
@@ -28,17 +26,16 @@
 // - Tab: meanwhile the window holds only its title-bar controls, so Tab
 //   from the last of them would leave it for the taskbar, and the keys
 //   typed next would act there (the Start menu, the palette's Reset
-//   Desktop); the Astro window had its body to Tab into. That Tab, and every
-//   Tab or Shift+Tab after it, is held instead: focus waits on the window,
-//   so the keys typed next are kept too. The replay then moves focus on from
-//   where the first held Tab was pressed, as those Tabs would have moved it
-//   with the body there (into it, or past it), and the keys typed after them
-//   go to the control they reached: a text field as above, Enter (or Space,
-//   except on a link) presses a button or link in the window, and other
-//   form fields and controls outside the window get none. A body that took
-//   focus as it rendered (useFocusOnLaunch, a ?blog= article: deep-link.ts)
-//   drops the held Tabs instead, and the other keys go where they would
-//   with that focus. Tab within the title bar moves as usual.
+//   Desktop). That Tab, and every Tab or Shift+Tab after it, is held instead:
+//   focus waits on the window, so the keys typed next are kept too. The replay
+//   then moves focus on from where the first held Tab was pressed, as those
+//   Tabs would have moved it with the body there (into it, or past it), and
+//   the keys typed after them go to the control they reached: a text field as
+//   above, Enter (or Space, except on a link) presses a button or link in the
+//   window, and other form fields and controls outside the window get none. A
+//   body that took focus as it rendered (useFocusOnLaunch, a ?blog= article:
+//   deep-link.ts) drops the held Tabs instead, and the other keys go where
+//   they would with that focus. Tab within the title bar moves as usual.
 import { isAppKeyboardEvent } from "@utils/app-keyboard";
 import { canTakeFocus, focusFirst } from "@utils/overlays";
 import type { AppId } from "./apps";

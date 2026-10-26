@@ -1,6 +1,5 @@
-// The desktop background: a particle network drawn on #bg-canvas (port of
-// the particle script at the end of index.astro). It reads its colours from
-// the CSS variables the preferences set (--desktop-bg-color,
+// The desktop background: a particle network drawn on #bg-canvas. It reads its
+// colours from the CSS variables the preferences set (--desktop-bg-color,
 // --particle-primary-rgb, --particle-secondary-rgb) and reacts to music:
 // every frame asks window.__pepoMusicController?.requestAudioFrame?.() for
 // levels, which the Music player answers with a desktop:music-audio-frame

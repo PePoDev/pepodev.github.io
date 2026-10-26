@@ -14,6 +14,6 @@ export async function getSitemapUrls(): Promise<string[]> {
     ...(await getGardenNotes()).map(gardenHref),
     "/resume/",
   ];
-  // Sorted by URL, as @astrojs/sitemap listed them.
+  // Sorted by URL.
   return [...new Set(paths.map((path) => new URL(path, SITE_URL).href))].sort();
 }

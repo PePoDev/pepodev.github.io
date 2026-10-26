@@ -1,10 +1,10 @@
 // Markdown and MDX rendering for the content layer (src/lib/content.ts).
 //
 // Sätteri parses both, the same parser `pnpm garden:sync` uses to check notes,
-// with the pipeline Astro's markdown-satteri processor ran: GFM, no smart
-// punctuation (so `--flags` and straight quotes match Obsidian), Shiki code
-// highlighting (github-dark), github-slugger heading ids, and local images
-// swapped for build-time WebP srcsets (src/lib/images.ts).
+// with this pipeline: GFM, no smart punctuation (so `--flags` and straight
+// quotes match Obsidian), Shiki code highlighting (github-dark), github-slugger
+// heading ids, and local images swapped for build-time WebP srcsets
+// (src/lib/images.ts).
 //
 // Markdown becomes an HTML string, which is turned into React elements so the
 // page places it directly inside its own markup (`.prose > p`, no wrapper).
@@ -46,7 +46,7 @@ export interface RenderedContent {
 
 const FEATURES = { gfm: true, smartPunctuation: false } as const;
 
-/** Heading ids (github-slugger, as Astro and the garden sync write them). */
+/** Heading ids (github-slugger, as the garden sync writes them). */
 function headingIdsPlugin(headings: MarkdownHeading[]): HastPluginDefinition {
   const slugger = new Slugger();
   return {
@@ -66,7 +66,7 @@ function headingIdsPlugin(headings: MarkdownHeading[]): HastPluginDefinition {
 
 let highlighter: Promise<Highlighter> | undefined;
 
-/** Shiki code blocks, like Astro's default `syntaxHighlight: "shiki"`. */
+/** Shiki code blocks. */
 function highlightPlugin(): HastPluginDefinition {
   return {
     name: "shiki",
@@ -105,8 +105,7 @@ function highlightPlugin(): HastPluginDefinition {
           transformers: [
             {
               pre(pre) {
-                // As Astro rendered them: language on the block, scrolling
-                // instead of wrapping.
+                // Language on the block, scrolling instead of wrapping.
                 pre.properties.dataLanguage = lang;
                 pre.properties.style = `${pre.properties.style ?? ""}; overflow-x: auto;`;
               },

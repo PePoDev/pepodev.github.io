@@ -1,11 +1,10 @@
 "use client";
-// Gallery (port of GalleryApp.astro): a locked gallery. The password is
-// intentionally the literal "password" (README). A wrong one is explained
-// and marks the field invalid; unlocking moves focus to the pictures. Every
-// launch puts the keyboard where it is needed (useFocusOnLaunch): the
-// password field while locked, the pictures once unlocked; touch screens
-// wait for a tap unless the keyboard opened the window, since the field
-// raises the on-screen keyboard over it.
+// Gallery: a locked gallery. The password is intentionally the literal
+// "password" (README). A wrong one is explained and marks the field invalid;
+// unlocking moves focus to the pictures. Every launch puts the keyboard where
+// it is needed (useFocusOnLaunch): the password field while locked, the
+// pictures once unlocked; touch screens wait for a tap unless the keyboard
+// opened the window, since the field raises the on-screen keyboard over it.
 import { Fragment, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { flushSync } from "react-dom";
 import { useFocusOnLaunch, type AppProps } from "@components/desktop/app-api";
@@ -38,9 +37,8 @@ const PASSWORD = "password";
 export default function GalleryApp(_props: AppProps<"gallery">) {
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState("");
-  // Every wrong attempt writes the message as a new text node, as the Astro
-  // script's textContent did, so the live region announces it again even
-  // when it reads the same as last time.
+  // Every wrong attempt writes the message as a new text node, so the live
+  // region announces it again even when it reads the same as last time.
   const [attempts, setAttempts] = useState(0);
   const passwordRef = useRef<HTMLInputElement>(null);
   const picturesRef = useRef<HTMLElement>(null);

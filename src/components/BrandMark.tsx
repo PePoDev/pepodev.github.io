@@ -1,7 +1,7 @@
-// The pepo.dev "P" mark used in website mode and the garden header (port of
-// BrandMark.astro). Colors come from the website shell's --ws-mark-* tokens
-// and the Settings accent. A Server Component (no client code), so both the
-// website-mode panel and the garden layout render it without hydrating it.
+// The pepo.dev "P" mark used in website mode and the garden header. Colors
+// come from the website shell's --ws-mark-* tokens and the Settings accent. A
+// Server Component (no client code), so both the website-mode panel and the
+// garden layout render it without hydrating it.
 export function BrandMark({ size }: { size: number }) {
   return (
     <svg className="ws-mark" width={size} height={size} viewBox="0 0 28 28" aria-hidden="true" focusable="false">

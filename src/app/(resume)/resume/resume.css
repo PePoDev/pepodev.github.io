@@ -1,6 +1,5 @@
-/* The resume page (page.tsx), ported from resume.astro's scoped <style>.
-   Every selector starts at .resume-page, the page's root, so the rules stay
-   on the page as the Astro scoping kept them; the print variables go on
+/* The resume page (page.tsx). Every selector starts at .resume-page, the
+   page's root, so the rules stay on the page; the print variables go on
    html.resume-document, which the (resume) layout sets. */
 .resume-page {
   --resume-content-width: 920px;

@@ -1,10 +1,10 @@
 "use client";
-// Desktop icons (port of DesktopIcon.astro, ExternalLinkIcon.astro and the
-// pointer half of their controllers). App icons are buttons that open their
-// app on a click without movement, Enter or Space; link shortcuts are real
-// links. Above 768px both drag to the grid (icon-layout.ts). Before
-// hydration the parse-time placement script sets their position and
-// data-desktop-icon-ready, so they carry suppressHydrationWarning.
+// Desktop icons and the pointer half of their controllers. App icons are
+// buttons that open their app on a click without movement, Enter or Space;
+// link shortcuts are real links. Above 768px both drag to the grid
+// (icon-layout.ts). Before hydration the parse-time placement script sets
+// their position and data-desktop-icon-ready, so they carry
+// suppressHydrationWarning.
 import { useCallback, useRef, type CSSProperties, type PointerEvent } from "react";
 import { AppIcon } from "./AppIcon";
 import type { AppDefinition } from "./apps";

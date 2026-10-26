@@ -1,11 +1,11 @@
-// The content layer, replacing `astro:content`.
+// The content layer.
 //
 // Collections are folders of Markdown/MDX files under src/content/. Entries
-// get the ids Astro's glob loader gave them (each path segment through
-// github-slugger, file extension dropped, a trailing /index removed, or a
-// frontmatter `slug`), so post URLs, RSS links and `?blog=` deep links stay
-// the same. Frontmatter is YAML parsed like Astro (timestamps as dates) and
-// validated with the zod schemas below; an invalid entry fails the build.
+// get stable ids (each path segment through github-slugger, file extension
+// dropped, a trailing /index removed, or a frontmatter `slug`), so existing
+// post URLs, RSS links and `?blog=` deep links stay the same. Frontmatter is
+// YAML, with timestamps parsed as dates, and validated with the zod schemas
+// below; an invalid entry fails the build.
 //
 // Server-only: it reads the file system. List posts through
 // src/utils/blog.ts and notes through src/utils/garden.ts, not getCollection.
@@ -79,7 +79,7 @@ export interface CollectionEntry<C extends CollectionName> {
   data: z.output<ReturnType<(typeof schemas)[C]>>;
 }
 
-// Astro's frontmatter fence: at the very start (after an optional BOM) or
+// The frontmatter fence: at the very start (after an optional BOM) or
 // after leading blank lines.
 const FRONTMATTER = /(?:^﻿?|^\s*\n)---([\s\S]*?\n)---/;
 
@@ -125,7 +125,7 @@ async function listFiles(dir: string, extensions: string[]): Promise<string[]> {
   return files.flat().sort();
 }
 
-/** Astro's glob-loader id: slugged path segments, no extension or /index. */
+/** An entry's id: slugged path segments, no extension or /index. */
 export function entryId(relativePath: string, frontmatterSlug?: unknown): string {
   if (frontmatterSlug) return String(frontmatterSlug);
   return relativePath

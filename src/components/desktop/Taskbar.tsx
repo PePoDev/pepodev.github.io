@@ -1,8 +1,8 @@
 "use client";
-// The taskbar (port of Taskbar.astro): Start and palette buttons, one button
-// per open window (named by its label, which phone widths hide only
-// visually), the mode switch, and the tray: system audio and the clock,
-// which open the tray panel (calendar, volume, mute).
+// The taskbar: Start and palette buttons, one button per open window (named by
+// its label, which phone widths hide only visually), the mode switch, and the
+// tray: system audio and the clock, which open the tray panel (calendar,
+// volume, mute).
 import { memo, useEffect, useRef, useState, type CSSProperties } from "react";
 import { AppIcon } from "./AppIcon";
 import { APPS, taskbarLabel, type AppDefinition } from "./apps";
@@ -34,11 +34,10 @@ export function useNow(interval: number): Date | null {
 
 /**
  * Drops DOM focus from a window button pressed with the pointer, and starts
- * sequential focus at the start of the window buttons (#taskbar-apps), as
- * when the Astro taskbar rebuilt them: Tab then reaches the first window
- * button and Shift+Tab the palette button, not whatever follows the
- * pressed one. Browsers start Tab from the element that lost focus, so the
- * list itself takes focus for a moment.
+ * sequential focus at the start of the window buttons (#taskbar-apps): Tab
+ * then reaches the first window button and Shift+Tab the palette button, not
+ * whatever follows the pressed one. Browsers start Tab from the element that
+ * lost focus, so the list itself takes focus for a moment.
  */
 function releaseTaskbarFocus(apps: HTMLElement | null) {
   if (!apps) return;

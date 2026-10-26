@@ -1,8 +1,7 @@
 // The garden home (/garden/: the vault's home note and the recently tended
-// notes) and every note (/garden/<id>/: breadcrumbs, the note, backlinks),
-// ported from src/pages/garden/index.astro and [...slug].astro. Notes come
-// only from `pnpm garden:sync` (src/utils/garden.ts); see garden-data.ts for
-// why both live in one optional catch-all route.
+// notes) and every note (/garden/<id>/: breadcrumbs, the note, backlinks).
+// Notes come only from `pnpm garden:sync` (src/utils/garden.ts); see
+// garden-data.ts for why both live in one optional catch-all route.
 import { FormattedDate } from "@components/FormattedDate";
 import { GardenShell } from "@components/garden/GardenShell";
 import { render } from "@lib/content";

@@ -1,7 +1,6 @@
-/* External link shortcuts (scoped styles of ExternalLinkIcon.astro). Astro
-   scoped them to the link, its .icon-wrapper, the badge and the label, not
-   to the AppIcon inside; .desktop-icon.desktop-link-icon keeps Astro's
-   specificity against desktop.css. */
+/* External link shortcuts. The rules style the link, its .icon-wrapper, the
+   badge and the label, not the AppIcon inside; .desktop-icon.desktop-link-icon
+   outranks the .desktop-icon rules in desktop.css. */
 .desktop-icon.desktop-link-icon {
   text-decoration: none;
   color: inherit;

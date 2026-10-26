@@ -1,9 +1,9 @@
 // /resume/: the resume as a standalone HTML page, rendered at build time
 // from experiences.json, skills.json, education.json and
-// certifications.json (port of resume.astro). A static page (runtime
-// "none"): Download PDF builds the PDF in the browser from the same data
-// (ResumeDownloadScript.tsx, resume-pdf.ts). GitHub Pages redirects /resume
-// to /resume/, so link to it with the slash.
+// certifications.json. A static page (runtime "none"): Download PDF builds the
+// PDF in the browser from the same data (ResumeDownloadScript.tsx,
+// resume-pdf.ts). GitHub Pages redirects /resume to /resume/, so link to it
+// with the slash.
 import "./resume.css";
 import certifications from "@data/certifications.json";
 import education from "@data/education.json";

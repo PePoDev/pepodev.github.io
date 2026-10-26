@@ -1,4 +1,4 @@
-/* Website mode: the "operations console" portfolio (WebsiteMode.astro).
+/* Website mode: the "operations console" portfolio (WebsiteMode.tsx).
    Everything here is scoped to html[data-site-mode="website"] or the
    #website shell, so desktop mode is untouched. */
 

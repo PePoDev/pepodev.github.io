@@ -1,11 +1,10 @@
 "use client";
-// Music Player (port of MusicPlayerApp.astro). Mounted once the desktop is
-// idle (registry mount: "idle"), hidden in its closed window, because
-// Settings drives the music and the desktop background asks it for levels
-// (window.__pepoMusicController, music-settings.ts). The engine in
-// music-player.ts owns playback, the analyser and the visualizer; this body
-// renders its snapshot and tells it about the window, the site mode and the
-// system audio.
+// The Music Player app. Mounted once the desktop is idle (registry mount:
+// "idle"), hidden in its closed window, because Settings drives the music and
+// the desktop background asks it for levels (window.__pepoMusicController,
+// music-settings.ts). The engine in music-player.ts owns playback, the
+// analyser and the visualizer; this body renders its snapshot and tells it
+// about the window, the site mode and the system audio.
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { useAppWindow, useSiteMode, useSystemAudio, type AppProps } from "@components/desktop/app-api";
 import { MusicPlayer, SEEK_MAX } from "./music-player";

@@ -1,12 +1,12 @@
 "use client";
-// Garden (port of GardenApp.astro). The garden pages are full static pages,
-// so the window frames /garden/ instead of rendering every note into the
-// desktop. Mouse events over the frame never reach the page, so a window
-// drag or resize that starts on the title bar or a resize handle lets the
-// pointer pass over the frame until the button is released. Inside the
-// frame, the garden page re-dispatches mousedown, click and focusin on this
-// <iframe> element (they bubble to the window and the desktop) and forwards
-// Escape and Ctrl/Cmd + K to the desktop's document.
+// The Garden app. The garden pages are full static pages, so the window frames
+// /garden/ instead of rendering every note into the desktop. Mouse events over
+// the frame never reach the page, so a window drag or resize that starts on
+// the title bar or a resize handle lets the pointer pass over the frame until
+// the button is released. Inside the frame, the garden page re-dispatches
+// mousedown, click and focusin on this <iframe> element (they bubble to the
+// window and the desktop) and forwards Escape and Ctrl/Cmd + K to the
+// desktop's document.
 import { useEffect, useState } from "react";
 import { useAppWindowElement, type AppProps } from "@components/desktop/app-api";
 import "./GardenApp.css";

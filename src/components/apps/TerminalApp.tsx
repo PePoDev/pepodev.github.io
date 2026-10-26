@@ -1,9 +1,8 @@
 "use client";
-// Terminal (port of TerminalApp.astro): a tiny shell. `skills` prints
-// skills.json and `projects` opens Projects. The input takes focus on every
-// launch (useFocusOnLaunch; on touch screens only when the keyboard opened
-// the window, so a tap does not raise the on-screen keyboard), and a click
-// or tap anywhere in the app focuses it.
+// Terminal: a tiny shell. `skills` prints skills.json and `projects` opens
+// Projects. The input takes focus on every launch (useFocusOnLaunch; on touch
+// screens only when the keyboard opened the window, so a tap does not raise
+// the on-screen keyboard), and a click or tap anywhere in the app focuses it.
 import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import skills from "@data/skills.json";
 import { openApp, useFocusOnLaunch, type AppProps } from "@components/desktop/app-api";

@@ -1,5 +1,5 @@
 "use client";
-// Projects - Showcase (port of ProjectsApp.astro).
+// The Projects - Showcase app.
 import type { AppProps } from "@components/desktop/app-api";
 
 export default function ProjectsApp({ data: projects }: AppProps<"project">) {

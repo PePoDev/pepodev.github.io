@@ -1,5 +1,5 @@
 /* SiteHeader.tsx. Every selector starts at .site-header, so the rules stay
-   scoped to the component as the Astro <style> was. */
+   scoped to the component. */
 .site-header {
   border-bottom: 1px solid var(--glass-border);
 }

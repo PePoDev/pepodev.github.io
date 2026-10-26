@@ -1,5 +1,5 @@
-// A responsive WebP <img> made at build time, the counterpart of Astro's
-// <Image layout="constrained">. See src/lib/images.ts for the srcset rules.
+// A responsive WebP <img> made at build time. See src/lib/images.ts for the
+// srcset rules.
 import type { ImgHTMLAttributes } from "react";
 import { getResponsiveImage, type ImageAsset } from "@lib/images";
 

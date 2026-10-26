@@ -4,8 +4,8 @@ import type { NextConfig } from "next";
 // GitHub Pages serves as is (README, Pages and Runtime; scripts/serve-static.mjs).
 const nextConfig: NextConfig = {
   output: "export",
-  // /blog/<id>/index.html, like the Astro build: GitHub Pages redirects
-  // /blog/<id> to /blog/<id>/ and serves the directory's index.html.
+  // /blog/<id>/index.html: GitHub Pages redirects /blog/<id> to /blog/<id>/
+  // and serves the directory's index.html.
   trailingSlash: true,
   // There is no image server on GitHub Pages. src/lib/images.ts resizes
   // images with sharp at build time instead (WebP srcsets, JPEG share cards).
@@ -19,8 +19,7 @@ const nextConfig: NextConfig = {
     // root layouts (src/app/(group)/layout.tsx). Exported as out/404.html.
     globalNotFound: true,
   },
-  // The Astro site had its dev toolbar off; keep dev pages looking like the
-  // built ones.
+  // No dev indicator, so dev pages look like the built ones.
   devIndicators: false,
   // `next dev` otherwise writes its own instructions into AGENTS.md when it
   // detects a coding agent. README.md is this repository's single source of

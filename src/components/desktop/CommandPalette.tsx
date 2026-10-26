@@ -1,9 +1,8 @@
 "use client";
-// The command palette (port of CommandPalette.astro's markup; its rules are
-// in palette.ts). While searching, matches leave their sections for one
-// flat list sorted by rank, so "set" puts Settings above Reset Desktop;
-// every item stays in the DOM, hidden ones with display: none, so the
-// visual, Tab and arrow-key order agree.
+// The command palette's markup (its rules are in palette.ts). While searching,
+// matches leave their sections for one flat list sorted by rank, so "set" puts
+// Settings above Reset Desktop; every item stays in the DOM, hidden ones with
+// display: none, so the visual, Tab and arrow-key order agree.
 import type { FocusEvent } from "react";
 import "./CommandPalette.css";
 import { useOverlayOpen } from "./overlay-state";

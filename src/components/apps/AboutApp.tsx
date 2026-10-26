@@ -1,5 +1,5 @@
 "use client";
-// About Me (port of AboutApp.astro).
+// The About Me app.
 import type { AppProps } from "@components/desktop/app-api";
 
 export default function AboutApp({ data }: AppProps<"me">) {

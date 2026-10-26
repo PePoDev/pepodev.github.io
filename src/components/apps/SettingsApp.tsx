@@ -1,12 +1,11 @@
 "use client";
-// Settings (port of SettingsApp.astro). Appearance renders from the
-// desktop preferences (useDesktopPrefs) and changes them through
-// updateDesktopPrefs, which applies, saves and announces them
-// (desktop:preferences), so a change made elsewhere (the palette's Toggle
-// Theme) shows here too. Music drives the Music player through its
-// controller (music-settings.ts) and follows what the player saves. Reset
-// all settings, like the palette's Reset Desktop, only runs on a second
-// click, tap or Enter.
+// The Settings app. Appearance renders from the desktop preferences
+// (useDesktopPrefs) and changes them through updateDesktopPrefs, which
+// applies, saves and announces them (desktop:preferences), so a change made
+// elsewhere (the palette's Toggle Theme) shows here too. Music drives the
+// Music player through its controller (music-settings.ts) and follows what the
+// player saves. Reset all settings, like the palette's Reset Desktop, only
+// runs on a second click, tap or Enter.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   mountApp,

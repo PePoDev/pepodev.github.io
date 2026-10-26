@@ -1,11 +1,10 @@
-// The command palette (port of CommandPalette.astro's script): Ctrl/Cmd + K
-// (any case) or the taskbar button opens it in desktop mode. The open
-// palette is modal: Tab and Shift+Tab cycle through its input and visible
-// results. Search ranks names that start with the query first, then other
-// name matches, then description matches (rankMatch in src/utils/search.ts),
-// as one flat list across sections. Enter runs the top match, or the focused
-// item; Reset Desktop runs only on a second Enter, click or tap, with the
-// reason in the status line.
+// The command palette's rules: Ctrl/Cmd + K (any case) or the taskbar button
+// opens it in desktop mode. The open palette is modal: Tab and Shift+Tab cycle
+// through its input and visible results. Search ranks names that start with
+// the query first, then other name matches, then description matches
+// (rankMatch in src/utils/search.ts), as one flat list across sections. Enter
+// runs the top match, or the focused item; Reset Desktop runs only on a second
+// Enter, click or tap, with the reason in the status line.
 import type { SocialLink } from "@app-types/data";
 import socialLinks from "@data/social-links.json";
 import { getFocusedWindow } from "@utils/overlays";

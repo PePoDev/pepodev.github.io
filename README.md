@@ -248,8 +248,7 @@ On `/`, `<body>` starts with React's `<div hidden="">`; mind that in
 
 Owner decision: the desktop is a React app whose windows, taskbar, menus,
 icons, and apps render from React state, not a static desktop with bundled
-DOM controllers. It costs about 150 KB more gzip JavaScript than the Astro
-desktop did, accepted for that architecture.
+DOM controllers.
 
 `src/app/(home)/page.tsx` loads every app's build-time data
 (`loadAppData()`), then renders `<Desktop appData>` (the `#desktop` panel),

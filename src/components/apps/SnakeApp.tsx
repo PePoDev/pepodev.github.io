@@ -1,11 +1,11 @@
 "use client";
-// Snake (port of SnakeApp.astro). The rules, the board and the best score
-// live in snake-game.ts; this body renders its snapshot. It takes keys only
-// while its window owns the keyboard (useAppKeyboard: focused in desktop
-// mode, no overlay open, no Ctrl, Meta or Alt), and the game pauses on its
-// next tick whenever it loses the keyboard, which a hidden tab or another
-// app in front of the browser also takes. Pointer presses leave the
-// buttons unfocused, so Space after clicking Start still pauses.
+// The Snake app. The rules, the board and the best score live in
+// snake-game.ts; this body renders its snapshot. It takes keys only while its
+// window owns the keyboard (useAppKeyboard: focused in desktop mode, no
+// overlay open, no Ctrl, Meta or Alt), and the game pauses on its next tick
+// whenever it loses the keyboard, which a hidden tab or another app in front
+// of the browser also takes. Pointer presses leave the buttons unfocused, so
+// Space after clicking Start still pauses.
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent } from "react";
 import { hasAppKeyboard, useAppKeyboard, useSystemAudio, type AppProps } from "@components/desktop/app-api";
 import { SnakeGame, type SnakeState } from "./snake-game";

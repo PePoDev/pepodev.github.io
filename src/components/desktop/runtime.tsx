@@ -169,7 +169,7 @@ function boot(): () => void {
     startOverlays(),
     startPalette(),
     // Site mode first: its boot site:mode-change reaches only what started
-    // before it, as on the Astro site.
+    // before it.
     startSiteMode(),
     startIconLayout(),
     startWindowManager(),

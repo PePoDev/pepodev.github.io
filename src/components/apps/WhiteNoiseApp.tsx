@@ -1,9 +1,8 @@
 "use client";
-// White Noise (port of WhiteNoiseApp.astro): a rain loop made with Web
-// Audio (filtered noise plus random drops). It follows the system volume
-// and mute (useSystemAudio), and stops when its window closes and in
-// website mode, which has no audio controls. Intentionally no rain
-// animation (README).
+// White Noise: a rain loop made with Web Audio (filtered noise plus random
+// drops). It follows the system volume and mute (useSystemAudio), and stops
+// when its window closes and in website mode, which has no audio controls.
+// Intentionally no rain animation (README).
 import { useEffect, useRef, useState } from "react";
 import { useAppWindow, useSiteMode, useSystemAudio, type AppProps, type SystemAudio } from "@components/desktop/app-api";
 

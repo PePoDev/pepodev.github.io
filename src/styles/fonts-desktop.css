@@ -5,11 +5,10 @@
 
    The woff2 files in src/assets/fonts/ are committed, so builds never contact
    Google and work offline; Turbopack serves them from /_next/static/media/
-   under hashed names. They are the files, and these the @font-face rules,
-   that the Astro Fonts API downloaded from Google Fonts for 98f1fd8 (same
-   weights, subsets, unicode-range and font-display; only the family names
-   lost Astro's hash suffix). No preload: browsers fetch a face only when text
-   on the page uses it, so website mode, which renders in IBM Plex
+   under hashed names. They are the files, and these the @font-face rules
+   (weights, subsets, unicode-range and font-display), downloaded from Google
+   Fonts for 98f1fd8. No preload: browsers fetch a face only when text on the
+   page uses it, so website mode, which renders in IBM Plex
    (fonts-website.css), never downloads these. Never load fonts from Google
    at runtime. */
 

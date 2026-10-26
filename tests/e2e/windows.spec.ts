@@ -815,10 +815,9 @@ test("a taskbar button pressed with the pointer leaves the keys to the windows",
 test("after a pointer press on a taskbar button, Tab starts at the window buttons", async ({
   page,
 }) => {
-  // As when the Astro taskbar rebuilt its buttons: Tab reaches the first
-  // window button and Shift+Tab the palette button, whichever button was
-  // pressed, never the mode switch that follows the last one (Tab and Enter
-  // would then switch the site to website mode).
+  // Tab reaches the first window button and Shift+Tab the palette button,
+  // whichever button was pressed, never the mode switch that follows the last
+  // one (Tab and Enter would then switch the site to website mode).
   const work = await openApp(page, "Work", "work");
   const about = await openApp(page, "About Me", "me");
   const workButton = page.locator('#taskbar-apps [data-app-id="work"]');

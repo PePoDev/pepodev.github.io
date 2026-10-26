@@ -1,10 +1,9 @@
 "use client";
-// An app window (port of Window.astro): a non-modal dialog named by its
-// title, rendered from its WindowState (window-manager.ts). The title bar
-// drags it (clamped by the window manager), the handles resize it, with a
-// mouse, a finger or a pen, and the app body mounts inside .window-content
-// on the first launch. Closed and minimized windows are hidden from
-// assistive tech and inert.
+// An app window: a non-modal dialog named by its title, rendered from its
+// WindowState (window-manager.ts). The title bar drags it (clamped by the
+// window manager), the handles resize it, with a mouse, a finger or a pen, and
+// the app body mounts inside .window-content on the first launch. Closed and
+// minimized windows are hidden from assistive tech and inert.
 import {
   memo,
   useCallback,
@@ -200,7 +199,7 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
       aria-labelledby={`window-${id}-title`}
       aria-hidden={shown ? "false" : "true"}
       hidden={state.hidden}
-      // A window that never opened is hidden anyway (as in the Astro markup).
+      // A window that never opened is hidden anyway.
       inert={!shown && state.hasOpened}
       style={state.style}
       onMouseDown={onWindowMouseDown}

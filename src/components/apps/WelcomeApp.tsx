@@ -1,7 +1,6 @@
 "use client";
-// Welcome - Login (port of WelcomeApp.astro). The quote is a button: each
-// press fades the text out, swaps in another random quote after 200 ms and
-// fades it back in.
+// The Welcome - Login app. The quote is a button: each press fades the text
+// out, swaps in another random quote after 200 ms and fades it back in.
 import { useEffect, useRef, useState } from "react";
 import type { AppProps } from "@components/desktop/app-api";
 import "./WelcomeApp.css";
@@ -42,7 +41,7 @@ const ASCII_ART = [
   " ██║███╗██║██╔══╝  ██║     ██║     ██║   ██║██║╚██╔╝██║██╔══╝  ",
   " ╚███╔███╔╝███████╗███████╗╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗",
   "  ╚══╝╚══╝ ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝",
-  // The Astro markup ended the <pre> with an indented line; it adds height.
+  // The <pre> ends with an indented line; it adds height.
   "    ",
 ].join("\n");
 

@@ -1,8 +1,7 @@
-// The garden's note tree in the sidebar (port of GardenTree.astro): vault
-// folders as <details>, notes as links. data-note holds the folder path and
-// title in lower case for the sidebar filter (GardenScripts.tsx), and
-// data-open marks the folders open by default, which the filter restores
-// when it is cleared.
+// The garden's note tree in the sidebar: vault folders as <details>, notes as
+// links. data-note holds the folder path and title in lower case for the
+// sidebar filter (GardenScripts.tsx), and data-open marks the folders open by
+// default, which the filter restores when it is cleared.
 import { type GardenFolder, gardenHref, type GardenNote } from "@utils/garden";
 
 function NoteItem({ note, current, path }: { note: GardenNote; current?: string; path: string[] }) {

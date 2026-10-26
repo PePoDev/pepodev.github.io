@@ -1,9 +1,9 @@
 "use client";
-// Certifications wallet (port of CertificationsWalletApp.astro). The cards
-// keep the build's order (CertificationsWalletApp.data.ts); each status is
-// worked out against the visitor's clock when the app mounts and again every
-// hour, so a certification that lapses while the page is open turns into
-// quiet history: "Expired <Month YYYY>" and no badge.
+// The Certifications wallet. The cards keep the build's order
+// (CertificationsWalletApp.data.ts); each status is worked out against the
+// visitor's clock when the app mounts and again every hour, so a
+// certification that lapses while the page is open turns into quiet history:
+// "Expired <Month YYYY>" and no badge.
 import { useEffect, useState } from "react";
 import type { AppProps } from "@components/desktop/app-api";
 import {

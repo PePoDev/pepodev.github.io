@@ -1,7 +1,6 @@
-// The desktop's app and shortcut icons (port of AppIcon.astro): desktop
-// icons, window title bars, taskbar buttons, the Start menu and link
-// shortcuts all draw them. Decorative: every icon is aria-hidden, and the
-// control around it carries the name.
+// The desktop's app and shortcut icons: desktop icons, window title bars,
+// taskbar buttons, the Start menu and link shortcuts all draw them. Decorative:
+// every icon is aria-hidden, and the control around it carries the name.
 import { memo } from "react";
 import webringIcon from "@/assets/icons/webring.svg";
 

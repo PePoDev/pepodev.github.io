@@ -156,8 +156,8 @@ export class MusicPlayer {
     const onEnded = () => this.step(1);
     // Opening the window loads the track's metadata. A browser that cannot
     // decode it fails then, before anyone pressed Play: say so once playback
-    // is asked for (play() fails too), as the Astro player did, instead of
-    // greeting the visitor with an error.
+    // is asked for (play() fails too), instead of greeting the visitor with
+    // an error.
     const onError = () => {
       const code = media?.error?.code;
       this.saveSettings({ playing: false });
@@ -519,8 +519,8 @@ export class MusicPlayer {
     }
   }
 
-  // Refreshes the view from the settings and the media element (the Astro
-  // player's render()): it also clears an earlier error message.
+  // Refreshes the view from the settings and the media element; it also clears
+  // an earlier error message.
   private render() {
     const track = this.currentTrack();
     if (!track) {

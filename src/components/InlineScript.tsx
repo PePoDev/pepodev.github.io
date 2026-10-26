@@ -19,10 +19,9 @@ export function InlineScript({ code, id }: { code: string; id?: string }) {
 }
 
 /**
- * A build-time value as a JavaScript literal for InlineScript code: the
- * counterpart of Astro's define:vars. Like Astro's stringifyForScript, it
- * escapes `<`, so a string holding `</script>` or `<!--` cannot end or
- * corrupt the inline script. U+2028 and U+2029 are escaped too.
+ * A build-time value as a JavaScript literal for InlineScript code. It escapes
+ * `<`, so a string holding `</script>` or `<!--` cannot end or corrupt the
+ * inline script. U+2028 and U+2029 are escaped too.
  */
 export function scriptValue(value: unknown): string {
   const json = JSON.stringify(value);

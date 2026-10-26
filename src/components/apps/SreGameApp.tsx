@@ -1,11 +1,10 @@
 "use client";
-// SRE Game - Taming Chaos (port of SreGameApp.astro). Mounted once the
-// desktop is idle (registry mount: "idle"), so its text exists before the
-// window opens. Each opening starts from the boot log, including an opening
-// that happened before the body mounted; closing stops the game; a
-// minimized window, a hidden tab or website mode freezes it (timers and
-// music), and it resumes where it left off. The engine is sre-game.ts;
-// reduced motion is sre-game.css's.
+// The SRE Game - Taming Chaos app. Mounted once the desktop is idle (registry
+// mount: "idle"), so its text exists before the window opens. Each opening
+// starts from the boot log, including an opening that happened before the body
+// mounted; closing stops the game; a minimized window, a hidden tab or website
+// mode freezes it (timers and music), and it resumes where it left off. The
+// engine is sre-game.ts; reduced motion is sre-game.css's.
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useAppWindow, useSiteMode, useSystemAudio, type AppProps } from "@components/desktop/app-api";
 import { SreGame, type SreAlertView } from "./sre-game";

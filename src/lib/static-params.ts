@@ -1,11 +1,11 @@
 // generateStaticParams helpers for routes whose params can hold non-ASCII
 // text (Thai post ids, garden note paths).
 //
-// `next build` writes each param set as given: out/blog/<Thai id>/index.html,
-// like the Astro build. `next dev` (with output: "export") checks a request's
-// percent-encoded path against those params and rejects raw non-ASCII ones,
-// so in development the encoded form is listed as well. Pages must decode
-// what they receive (decodeParam).
+// `next build` writes each param set as given: out/blog/<Thai id>/index.html.
+// `next dev` (with output: "export") checks a request's percent-encoded path
+// against those params and rejects raw non-ASCII ones, so in development the
+// encoded form is listed as well. Pages must decode what they receive
+// (decodeParam).
 
 type Params = Record<string, string | string[]>;
 

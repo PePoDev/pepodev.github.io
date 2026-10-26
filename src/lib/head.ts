@@ -1,5 +1,5 @@
-// Page metadata, the port of BaseHead.astro. Every page describes itself
-// with a PageHead and gets the same tags the Astro site had:
+// Page metadata. Every page describes itself with a PageHead and gets its tags
+// from it:
 //
 //   export const generateMetadata = () => buildMetadata(head);   // page.tsx
 //   <Document jsonLd={await buildJsonLd(head)}>                   // layout.tsx

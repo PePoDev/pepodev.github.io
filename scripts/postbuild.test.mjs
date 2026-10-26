@@ -32,7 +32,7 @@ test("static pages lose Next.js's scripts and keep their own and the content's",
     "<p>Escaping test: <script>alert(1)</script> and 5 &lt; 6</p></main>";
   const { html, problems } = stripRuntime(page(content), new Map());
   assert.deepEqual(problems, []);
-  assert.ok(html.includes(content), "the post's raw HTML scripts stay, as on the Astro site");
+  assert.ok(html.includes(content), "the post's raw HTML scripts stay");
   assert.ok(html.includes('<script data-cfasync="false">(() => { window.__pepodevPrefetchReady'));
   assert.ok(html.includes('<script type="application/ld+json">'));
   for (const gone of ["/_next/", "__next_f", "TURBOPACK", "pepodev-runtime", "next-size-adjust", '<div hidden="">']) {

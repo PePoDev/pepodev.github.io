@@ -1,12 +1,12 @@
 "use client";
-// Calculator (port of CalculatorApp.astro). Its state is a reducer, so keys
-// that arrive in one burst (typed while the chunk loaded, replayed by
-// useAppKeyboard) apply in order. While typing, the display keeps the newest
-// digits in view; a result reads from its first digit; a faded edge marks
-// digits scrolled out of view. Errors keep the expression so it can be fixed.
-// The keyboard belongs to it only while its window is focused
-// (useAppKeyboard); a focused key keeps its own Enter and Space, and a
-// pointer press does not focus a key, so Enter after clicking still means "=".
+// The Calculator app. Its state is a reducer, so keys that arrive in one burst
+// (typed while the chunk loaded, replayed by useAppKeyboard) apply in order.
+// While typing, the display keeps the newest digits in view; a result reads
+// from its first digit; a faded edge marks digits scrolled out of view. Errors
+// keep the expression so it can be fixed. The keyboard belongs to it only while
+// its window is focused (useAppKeyboard); a focused key keeps its own Enter and
+// Space, and a pointer press does not focus a key, so Enter after clicking
+// still means "=".
 import {
   Fragment,
   useCallback,
@@ -28,9 +28,8 @@ interface CalculatorState {
   result: boolean;
   /**
    * Bumped whenever the display is redrawn: it then scrolls into place, and
-   * its text is written as new text nodes, as the Astro calculator's
-   * textContent did, so the live region announces a repeated message (a
-   * second "Incomplete expression") again.
+   * its text is written as new text nodes, so the live region announces a
+   * repeated message (a second "Incomplete expression") again.
    */
   redraws: number;
 }
@@ -50,7 +49,7 @@ const INITIAL_STATE: CalculatorState = {
   redraws: 0,
 };
 
-/** Redraws the display with `changes` applied (the Astro calculator's render()). */
+/** Redraws the display with `changes` applied. */
 function redraw(
   state: CalculatorState,
   changes: Partial<CalculatorState>,

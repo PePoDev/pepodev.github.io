@@ -9,8 +9,7 @@
 //    - pages marked <meta name="pepodev-runtime" content="none"> lose
 //      Next.js's scripts, script preloads, inline RSC payload, hydration-only
 //      markup and their .txt payload files, so they ship only their own
-//      inline scripts (and any script a post or note writes as raw HTML), as
-//      on the Astro site;
+//      inline scripts (and any script a post or note writes as raw HTML);
 //    - every other page hydrates, and its Next.js scripts get
 //      data-cfasync="false" so Cloudflare Rocket Loader does not hold back
 //      hydration (README, Parse-Time Scripts and Rocket Loader).

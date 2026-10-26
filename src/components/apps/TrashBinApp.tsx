@@ -1,9 +1,9 @@
 "use client";
-// Trash Bin (port of TrashBinApp.astro). Restore marks an item "Restored-ish",
-// fades it out and removes it 450 ms later; Empty trash removes every item,
-// one every 80 ms. When the restored item held focus (a keyboard press, or a
-// click, which focuses the button), focus moves to the next Restore button,
-// the previous one, or Empty trash.
+// The Trash Bin app. Restore marks an item "Restored-ish", fades it out and
+// removes it 450 ms later; Empty trash removes every item, one every 80 ms.
+// When the restored item held focus (a keyboard press, or a click, which
+// focuses the button), focus moves to the next Restore button, the previous
+// one, or Empty trash.
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import type { AppProps } from "@components/desktop/app-api";
 

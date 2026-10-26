@@ -1,6 +1,5 @@
-// The garden's parse-time scripts (ported from GardenLayout.astro). The
-// garden is a static page (runtime "none"), so its behaviour is
-// <InlineScript>s, never client components.
+// The garden's parse-time scripts. The garden is a static page (runtime
+// "none"), so its behaviour is <InlineScript>s, never client components.
 import { InlineScript } from "@components/InlineScript";
 
 // <head>, before first paint: the saved light or dark theme, or the

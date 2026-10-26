@@ -632,9 +632,8 @@ test("apps whose code arrives after their window opened still take focus", async
 test("text typed while an app's code loads goes into its input", async ({
   page,
 }) => {
-  // The Astro desktop had every app in the page, so typing right after a
-  // click always reached Terminal's input. Now the keys typed before the
-  // body renders are kept, and typed into the input it focuses.
+  // A body renders only once its app's code has loaded. The keys typed before
+  // it renders are kept, and typed into the input it focuses.
   const chunks = await holdAppChunks(page, [TERMINAL_CODE, GALLERY_CODE]);
   await resetPage(page);
   const terminal = await openApp(page, "Terminal", "terminal", { body: false });

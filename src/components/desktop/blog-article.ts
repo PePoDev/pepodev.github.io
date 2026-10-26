@@ -10,7 +10,7 @@ export interface BlogArticle {
   id: string;
   /**
    * The rendered article body: what the post page renders inside `.prose`
-   * after its title block, and what BlogApp.astro rendered into
+   * after its title block, and what the Blog app renders into
    * `.blog-reader-body`. Trusted, build-time HTML.
    */
   html: string;

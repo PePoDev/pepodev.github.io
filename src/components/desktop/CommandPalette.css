@@ -1,5 +1,5 @@
-/* The command palette (scoped styles of CommandPalette.astro, every selector
-   starting at the .command-palette root; README, Development Rules). */
+/* The command palette (every selector starts at the .command-palette root;
+   README, Development Rules). */
 .command-palette {
   position: fixed;
   inset: 0;

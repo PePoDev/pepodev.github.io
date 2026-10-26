@@ -1,6 +1,6 @@
-// /rss.xml, written at build time. The output matches what @astrojs/rss
-// wrote. README: item links and guids come from post ids (file names) and
-// must not change; they open the post in the desktop Blog reader.
+// /rss.xml, written at build time. README: item links and guids come from post
+// ids (file names) and must not change; they open the post in the desktop Blog
+// reader.
 import { BLOG_DESCRIPTION, BLOG_TITLE, SITE_URL } from "@/consts";
 import { escapeXml as x, xmlResponse } from "@lib/xml";
 import {

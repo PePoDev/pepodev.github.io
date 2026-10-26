@@ -1,8 +1,8 @@
 "use client";
-// The Start menu (port of StartMenu.astro). Search ranks labels that start
-// with the query first, then other label matches, then descriptions
-// (rankMatch in src/utils/search.ts); Enter opens the first match. Items are
-// [data-open-app] launchers, which the desktop opens on click.
+// The Start menu. Search ranks labels that start with the query first, then
+// other label matches, then descriptions (rankMatch in src/utils/search.ts);
+// Enter opens the first match. Items are [data-open-app] launchers, which the
+// desktop opens on click.
 import { memo, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { rankMatch } from "@utils/search";
 import { AppIcon } from "./AppIcon";

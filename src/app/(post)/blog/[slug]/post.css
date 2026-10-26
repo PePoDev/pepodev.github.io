@@ -1,7 +1,6 @@
 /* A blog post's page chrome (page.tsx); the article itself is styled by
    .prose in src/styles/blog.css. Every selector starts at main.blog-post and
-   reaches only the page's own elements, never the Markdown content, as the
-   Astro <style> did. */
+   reaches only the page's own elements, never the Markdown content. */
 main.blog-post {
   width: min(1020px, 100% - 32px);
   margin: 0 auto;

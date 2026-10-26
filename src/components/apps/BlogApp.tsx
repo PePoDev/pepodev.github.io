@@ -1,7 +1,7 @@
 "use client";
-// Blog - Articles (port of BlogApp.astro): the article list and a reader
-// that loads each article's body on demand from /blog/<id>/article.json
-// (loadBlogArticle), so the home page carries list metadata only.
+// Blog - Articles: the article list and a reader that loads each article's
+// body on demand from /blog/<id>/article.json (loadBlogArticle), so the home
+// page carries list metadata only.
 //
 // README rules: every article opens at its title with focus on Back, from
 // the list or a ?blog= link (an unknown slug leaves the list open with

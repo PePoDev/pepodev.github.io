@@ -56,8 +56,7 @@ export function isAppKeyboardOwner(
  * Ask before the desktop's own listeners run: the overlays close on the
  * Escape or Enter they handle, after which they no longer count as open.
  * useAppKeyboard (src/components/desktop/app-api.ts) listens in the capture
- * phase for that reason, as the Astro apps' listeners ran before the
- * overlays' ones.
+ * phase for that reason, so app listeners run before the overlays' ones.
  */
 export function isAppKeyboardEvent(
   event: Event,

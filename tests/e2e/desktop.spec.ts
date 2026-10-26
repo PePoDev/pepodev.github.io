@@ -907,8 +907,8 @@ test("a track the browser cannot play says so once playback is asked for", async
   page,
 }) => {
   // Opening the player loads the track's metadata; a browser that cannot
-  // decode the file fails right then. The message waits for Play, as on the
-  // Astro site, instead of greeting the visitor.
+  // decode the file fails right then. The message waits for Play instead of
+  // greeting the visitor.
   await page.route("**/music/**", (route) =>
     route.fulfill({ contentType: "video/mp4", body: "not a media file" }),
   );

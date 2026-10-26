@@ -1,7 +1,7 @@
-// The two parse-time scripts in the <head> of / (ported from
-// SiteModeController.astro and index.astro). They set <html data-site-mode>,
-// data-theme and the accent colours before first paint, so website-mode and
-// light-theme visitors never see a flash of the desktop or the dark theme.
+// The two parse-time scripts in the <head> of /. They set
+// <html data-site-mode>, data-theme and the accent colours before first paint,
+// so website-mode and light-theme visitors never see a flash of the desktop or
+// the dark theme.
 // The (home) layout renders them with <Document suppressHydrationWarning>.
 import { InlineScript, scriptValue } from "@components/InlineScript";
 import { accentMap } from "@utils/desktop-prefs";

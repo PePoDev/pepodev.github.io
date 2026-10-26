@@ -1,11 +1,11 @@
 "use client";
 // Website mode's "Copy" button next to the e-mail address, and the status
 // line that announces the result. The server renders the button, so it is
-// there from first paint (as on the Astro site, where the e-mail row never
-// grew when scripts ran); hydration hides it where the Clipboard API is
-// missing (an insecure context, an old browser). Until it hydrates, the
-// parse-time input script (DesktopScripts.tsx) copies on a press, and the
-// button shows that result once it has hydrated.
+// there from first paint (the e-mail row never grows when scripts run);
+// hydration hides it where the Clipboard API is missing (an insecure context,
+// an old browser). Until it hydrates, the parse-time input script
+// (DesktopScripts.tsx) copies on a press, and the button shows that result
+// once it has hydrated.
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 declare global {

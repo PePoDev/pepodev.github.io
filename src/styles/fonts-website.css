@@ -4,9 +4,9 @@
    only by the root layouts that render website-mode type ((home) and
    (garden)), so other pages carry neither these rules nor the files.
 
-   Committed files and Astro's @font-face rules, like fonts-desktop.css. Plex
-   Mono keeps the metric-adjusted Courier New fallback face that the Astro
-   Fonts API generated for its `monospace` fallback. */
+   Committed files and Google Fonts' @font-face rules, like fonts-desktop.css.
+   Plex Mono has a metric-adjusted Courier New fallback face ahead of its
+   `monospace` fallback. */
 
 @font-face {
   font-family: "IBM Plex Sans";

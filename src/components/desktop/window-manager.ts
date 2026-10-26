@@ -1,8 +1,8 @@
-// The window manager (port of WindowController.astro): which windows are
-// open, minimized, maximized and focused, their z-order, bounds and
-// animation classes, and the focus rules around them. Window.tsx renders a
-// window from its WindowState; the functions here change state with
-// commit(), so the DOM is current when they move focus or dispatch events.
+// The window manager: which windows are open, minimized, maximized and
+// focused, their z-order, bounds and animation classes, and the focus rules
+// around them. Window.tsx renders a window from its WindowState; the functions
+// here change state with commit(), so the DOM is current when they move focus
+// or dispatch events.
 //
 // Rules (README, Interaction Invariants):
 // - Windows are non-modal dialogs labelled by their title. Escape closes the

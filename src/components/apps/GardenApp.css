@@ -1,6 +1,6 @@
-/* The Garden window's frame (scoped style of GardenApp.astro; README,
-   Development Rules). The frame is the component's root; the attribute keeps
-   Astro's specificity. */
+/* The Garden window's frame (README, Development Rules). The frame is the
+   component's root; the attribute gives its selector the specificity of two
+   classes. */
 .garden-frame[data-garden-frame] {
   display: block;
   width: 100%;

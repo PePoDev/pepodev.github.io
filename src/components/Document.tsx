@@ -4,8 +4,8 @@
 // Page metadata comes from buildMetadata (src/lib/head.ts); Next.js adds
 // those tags, the stylesheets and its scripts to <head>.
 import type { ReactNode } from "react";
-// Shared desktop, app, and article styles on every page (BaseHead imported
-// it on every Astro page). Feature styles are imported by their components.
+// Shared desktop, app, and article styles on every page. Feature styles are
+// imported by their components.
 import "@styles/global.css";
 // Inter and JetBrains Mono (--font-inter, --font-jetbrains-mono), defined on
 // every page and downloaded only where text uses them.
@@ -20,9 +20,9 @@ type DataAttributes = { [key: `data-${string}`]: string | undefined };
  *
  * - "none": a static page. scripts/postbuild.mjs removes Next.js's scripts,
  *   script preloads and inline RSC payload from the exported HTML (and the
- *   page's .txt payload files), so only <InlineScript>s run, as on the Astro
- *   site. For pages without client components ("use client"): their
- *   server-rendered HTML is all there is, and nothing hydrates.
+ *   page's .txt payload files), so only <InlineScript>s run. For pages without
+ *   client components ("use client"): their server-rendered HTML is all there
+ *   is, and nothing hydrates.
  * - "react": the page hydrates (about 133 KB of gzipped JavaScript, plus an
  *   RSC payload that roughly doubles the HTML). Needed as soon as the page
  *   renders a client component. postbuild adds data-cfasync="false" to

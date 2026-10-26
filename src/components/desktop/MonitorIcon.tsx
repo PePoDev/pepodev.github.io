@@ -1,5 +1,5 @@
 // The monitor glyph shared by the mode switch and the "open desktop mode"
-// buttons (port of MonitorIcon.astro). Without `size` it is sized by CSS.
+// buttons. Without `size` it is sized by CSS.
 export function MonitorIcon({ size }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} fill="none" aria-hidden="true" focusable="false">

@@ -1,8 +1,7 @@
-// Prefetches same-origin pages linked from the current one, as the Astro site
-// did (`prefetch: { prefetchAll: true, defaultStrategy: "viewport" }`): a
-// link that stays in view for 300ms gets a <link rel="prefetch">, so the next
-// full page load comes from the HTTP cache. On slow or data-saving
-// connections only a tap prefetches. Links opt out with data-prefetch="false".
+// Prefetches same-origin pages linked from the current one: a link that stays
+// in view for 300ms gets a <link rel="prefetch">, so the next full page load
+// comes from the HTTP cache. On slow or data-saving connections only a tap
+// prefetches. Links opt out with data-prefetch="false".
 // Pages navigate with plain <a> (full loads, not client-side routing), since
 // every page runs its own parse-time scripts.
 //

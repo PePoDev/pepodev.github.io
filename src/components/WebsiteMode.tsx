@@ -1,10 +1,9 @@
-// Website mode: the conventional, responsive portfolio (the #website panel
-// of /, port of WebsiteMode.astro). A Server Component: its markup is
-// rendered at build time, for search engines and for the first paint of
-// returning website-mode visitors (the <head> mode script shows this panel
-// before anything hydrates), and repeated in the page's RSC payload. Only
-// SiteModePanel and two small islands hydrate: the Bangkok clock and the
-// copy-e-mail button (src/components/website/).
+// Website mode: the conventional, responsive portfolio (the #website panel of
+// /). A Server Component: its markup is rendered at build time, for search
+// engines and for the first paint of returning website-mode visitors (the
+// <head> mode script shows this panel before anything hydrates), and repeated
+// in the page's RSC payload. Only SiteModePanel and two small islands hydrate:
+// the Bangkok clock and the copy-e-mail button (src/components/website/).
 //
 // Mode switching, focus handover, `?blog=` removal and the scroll restore
 // are site-mode's (src/components/desktop/site-mode.ts) and, before the

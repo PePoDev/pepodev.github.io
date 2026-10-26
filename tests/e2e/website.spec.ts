@@ -536,8 +536,8 @@ test("the Bangkok clock is pre-rendered and kept current", async ({
 });
 
 test("the Copy email button is there from first paint", async ({ page }) => {
-  // As on the Astro site: the e-mail row does not grow (and push the
-  // channels and the footer down) when the page hydrates.
+  // The e-mail row does not grow (and push the channels and the footer down)
+  // when the page hydrates.
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.clear();

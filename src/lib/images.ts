@@ -1,4 +1,4 @@
-// Build-time image pipeline, replacing Astro's `astro:assets`.
+// Build-time image pipeline.
 //
 // Server Components ask for an image at a display size; this module writes
 // the WebP variants (and JPEG share cards) with sharp into public/_img/ and
@@ -9,10 +9,9 @@
 // URL never changes its content (safe to cache for as long as the host
 // allows; GitHub Pages sends max-age=600).
 //
-// The rules follow Astro's `image.layout: "constrained"` with the breakpoints
-// in IMAGE_BREAKPOINTS, so the srcsets match the Astro build: 1x and 2x the
-// display width plus every breakpoint in between, never wider than the
-// source (no upscaling). SVGs are copied as they are.
+// The srcsets use the breakpoints in IMAGE_BREAKPOINTS: 1x and 2x the display
+// width plus every breakpoint in between, never wider than the source (no
+// upscaling). SVGs are copied as they are.
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -28,7 +27,7 @@ export const SOCIAL_IMAGE_MAX_WIDTH = 1200;
 export const IMAGE_OUTPUT_DIR = path.join(process.cwd(), "public", "_img");
 const IMAGE_URL_PREFIX = "/_img/";
 
-/** A local source image, the counterpart of Astro's ImageMetadata. */
+/** A local source image. */
 export interface ImageAsset {
   /** Absolute path of the source file. */
   path: string;
@@ -60,7 +59,7 @@ export interface ResponsiveImageOptions {
 }
 
 // sharp's libvips cache races when many small files are written at once
-// (lovell/sharp#3935); Astro turns it off for the same reason.
+// (lovell/sharp#3935), so it is turned off.
 sharp.cache(false);
 
 const assetCache = new Map<string, Promise<ImageAsset & { hash: string }>>();
@@ -153,7 +152,6 @@ async function emit(asset: ImageAsset, transform: Transform): Promise<string> {
     .slice(0, 10);
   const name = `${stem}.${transform.width}x${transform.height}.${hash}.${transform.format}`;
   await writeOnce(name, async () => {
-    // The same sharp calls as Astro's image service.
     const image = sharp(await readFile(source.path), {
       failOn: "none",
       pages: -1,
@@ -199,9 +197,8 @@ async function writeOnce(name: string, produce: () => Promise<Buffer>) {
 }
 
 /**
- * A responsive WebP <img> for `asset` at a display size, like Astro's
- * <Image layout="constrained">: `src` is the display size, `srcSet` adds 2x
- * and the breakpoints up to the source width.
+ * A responsive WebP <img> for `asset` at a display size: `src` is the display
+ * size, `srcSet` adds 2x and the breakpoints up to the source width.
  */
 export async function getResponsiveImage(
   asset: ImageAsset,

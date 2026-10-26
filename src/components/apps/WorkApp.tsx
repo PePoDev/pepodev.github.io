@@ -1,5 +1,5 @@
 "use client";
-// Work - Experience (port of WorkApp.astro).
+// The Work - Experience app.
 import type { AppProps } from "@components/desktop/app-api";
 
 export default function WorkApp({ data }: AppProps<"work">) {

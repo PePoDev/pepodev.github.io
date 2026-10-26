@@ -1,4 +1,4 @@
-// /sitemap-index.xml (robots.txt points here), as @astrojs/sitemap wrote it.
+// /sitemap-index.xml (robots.txt points here).
 import { SITE_URL } from "@/consts";
 import { escapeXml as x, xmlResponse } from "@lib/xml";
 
