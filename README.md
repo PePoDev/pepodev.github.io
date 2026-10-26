@@ -363,11 +363,15 @@ tests.
   `.muted`), `#taskbar-clock-button`, `#tray-panel(.visible)` (`#calendar-*`,
   `#audio-mute`, `#audio-volume`, `#audio-volume-value`); Quick Access,
   `#start-menu(.visible)` (`role="dialog"` named "Start menu",
-  `tabindex="-1"`, no `aria-modal`), with `#start-menu-search`,
-  `#start-menu-results` holding `#start-menu-matches` (the flat list while
-  searching) and `.start-menu-section` (`role="group"`, `hidden` while
-  searching) with `.start-menu-section-title` (Apps, Commands, Links), the
-  items `.start-menu-item[data-type][data-id]` (`.selected`, `.confirming`):
+  `tabindex="-1"`, no `aria-modal`), with `#start-menu-search`
+  (`role="combobox"`, `aria-expanded`, `aria-activedescendant` naming the
+  highlighted item), `#start-menu-results` (`role="listbox"`) holding
+  `#start-menu-matches` (the flat list while searching) and
+  `.start-menu-section` (`role="group"`, `hidden` while searching) with
+  `.start-menu-section-title` (Apps, Commands, Links; `role="presentation"`,
+  it names the group), the items
+  `.start-menu-item#start-menu-item-<id>[data-type][data-id]`
+  (`role="option"`, `aria-selected`; `.selected`, `.confirming`):
   `button.start-menu-app[data-open-app]`, `button.start-menu-command`,
   `a.start-menu-link[href][target="_blank"]`, and `#start-menu-status`
   (`role="status"`, `data-tone="warning"` while Reset Desktop is armed);
@@ -609,8 +613,11 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   (`app-base.css`, set only in the light theme, falling back to the accent
   in the dark one), or `--text-primary`/`--text-secondary`, and keeps the
   accent for borders and tints. Labels on the translucent Quick Access
-  menu, tray, and taskbar use `--text-secondary`. Surfaces that stay dark
-  in both themes (the Snake board, the SRE game, Terminal) point the
+  menu, tray, and taskbar use `--text-secondary`. Quick Access's search
+  focus ring and highlight border mark state, so they keep 3:1 for every
+  accent: the accent in the dark theme, half mixed with black in the light
+  one (`start-menu.css`). Surfaces that stay dark in both themes (the
+  Snake board, the SRE game, Terminal) point the
   `--text-*` variables at the `--dark-text-*` ones in `variables.css`. In
   the light theme the garden's links, inline code, and callout titles use
   their accent's hue at OKLCH lightness 0.42 (`garden.css`). The
@@ -620,9 +627,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   over one of those dark windows shows grey behind its text.
 - Honor `prefers-reduced-motion`: the desktop background paints one still
   frame, window, icon, app, and website-mode animations stop, and toasts
-  fade without sliding. Keep focus and selection visible in
-  forced-colors mode (the highlighted Quick Access item gets a `Highlight`
-  outline).
+  and Quick Access fade without sliding or zooming. Keep focus and
+  selection visible in forced-colors mode (Quick Access's search box gets
+  a `Highlight` focus ring, and its highlighted item the selection colours,
+  `Highlight` and `HighlightText`, so it does not look focused).
 - Website mode is dark by default and follows the Settings theme
   (`data-theme="light"` on `<html>`) and accent, both applied by the `<head>`
   script before first paint (on `/`, the blog pages and the garden; the
@@ -842,8 +850,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   DOM (hidden ones `display: none`), so the visual, Tab and arrow-key orders
   agree. The top match is highlighted; ArrowUp and ArrowDown move the
   highlight (and focus, when it is on an item), it follows focus and
-  clicks, and Enter in the search box runs it. When nothing matches, the
-  status line says "No matching apps, commands or links". Reset Desktop,
+  clicks, and Enter in the search box runs it. The search box is a
+  combobox whose active option is the highlight, so screen readers name
+  what Enter runs as it moves. When nothing matches, the status line says
+  "No matching apps, commands or links". Reset Desktop,
   and Settings' Reset all settings, run only on a second Enter, click, or
   tap, with the reason shown in a status line that stays in view on phones
   (touch wording on coarse pointers); typing, choosing another item, or

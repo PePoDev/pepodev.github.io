@@ -1,5 +1,15 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { expect, test, type Page } from "@playwright/test";
-import { openApp, resetPage, waitForWindowManager } from "./helpers";
+import {
+  openApp,
+  prefsStorage,
+  resetPage,
+  waitForWindowManager,
+} from "./helpers";
+
+const require = createRequire(import.meta.url);
+const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 
 const savedPrefs = {
   theme: "light",
@@ -265,6 +275,73 @@ test("Quick Access Enter runs the focused item and the highlight follows focus",
       JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}"),
     ),
   ).toMatchObject({ theme: "dark", accent: "purple", radius: 14 });
+});
+
+test("the Quick Access search box is a combobox whose active option is the highlight", async ({
+  page,
+}) => {
+  await resetPage(page);
+  await openQuickAccess(page);
+  const search = page.getByRole("combobox", {
+    name: "Search apps, commands and links",
+  });
+  const listbox = page.getByRole("listbox", {
+    name: "Apps, commands and links",
+  });
+  const active = listbox.getByRole("option", { selected: true });
+  await expect(search).toBeFocused();
+  await expect(search).toHaveAttribute("aria-expanded", "true");
+  await expect(search).toHaveAttribute("aria-controls", "start-menu-results");
+  await expect(
+    listbox.getByRole("group", { name: "Commands" }).getByRole("option"),
+  ).toHaveText([/Toggle Theme/, /Close All Windows/, /Reset Desktop/]);
+
+  // Opening, ArrowDown and typing move the active option with the highlight,
+  // which is what Enter runs.
+  const expectActive = async (id: string) => {
+    await expect(active).toHaveCount(1);
+    await expect(active).toHaveAttribute("data-id", id);
+    await expect(active).toHaveClass(/selected/);
+    await expect(search).toHaveAttribute(
+      "aria-activedescendant",
+      `start-menu-item-${id}`,
+    );
+  };
+  await expectActive("welcome");
+  await page.keyboard.press("ArrowDown");
+  await expectActive("blog");
+  await page.keyboard.type("set");
+  await expectActive("settings");
+  await page.keyboard.press("ArrowDown");
+  await expectActive("reset-desktop");
+  await search.fill("zzzz");
+  await expect(active).toHaveCount(0);
+  await expect(search).not.toHaveAttribute("aria-activedescendant");
+
+  // Valid roles, states and names throughout, searching or not.
+  await page.addScriptTag({ content: axeSource });
+  for (const query of ["", "set"]) {
+    await search.fill(query);
+    const violations = await page.evaluate(async () => {
+      const axe = (
+        window as typeof window & {
+          axe: {
+            run: (
+              context: string,
+              options: object,
+            ) => Promise<{ violations: { id: string }[] }>;
+          };
+        }
+      ).axe;
+      const result = await axe.run("#start-menu", {
+        runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] },
+        // axe cannot judge text on the translucent glass.
+        rules: { "color-contrast": { enabled: false } },
+      });
+      return result.violations.map((violation) => violation.id);
+    });
+    expect(violations, `query "${query}"`).toEqual([]);
+  }
 });
 
 test("Quick Access reopens scrolled to the top, where its highlight is", async ({
@@ -878,23 +955,175 @@ test("with reduced motion, toasts fade in without sliding", async ({ page }) => 
   await expect(toast).toHaveCSS("transition-property", "opacity");
 });
 
-test("in forced colors, Quick Access outlines the item Enter opens", async ({
+test("with reduced motion, Quick Access fades without zooming or sliding", async ({
   page,
 }) => {
-  // The highlight is a background colour, which forced colors drop.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await resetPage(page);
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 720 });
+    // Read in the same task as each change, before a frame can pass.
+    const result = await page.evaluate(async () => {
+      const menu = document.querySelector<HTMLElement>("#start-menu")!;
+      const transitions = () =>
+        menu.getAnimations().map((animation) => {
+          const timing = animation.effect!.getTiming();
+          return `${(animation as CSSTransition).transitionProperty} ${timing.duration} ${timing.delay}`;
+        });
+      const settle = () =>
+        Promise.all(menu.getAnimations().map((animation) => animation.finished));
+      document.dispatchEvent(new CustomEvent("desktop:open-quick-access"));
+      const opening = {
+        transform: getComputedStyle(menu).transform,
+        transitions: transitions(),
+      };
+      await settle();
+      const open = getComputedStyle(menu).transform;
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+      );
+      const closing = transitions();
+      await settle();
+      return { opening, open, closing };
+    });
+    // It opens in place while still transparent, and moves back only once
+    // it has faded out.
+    expect(result.opening.transform, `${width}px`).toBe(result.open);
+    expect(result.opening.transitions, `${width}px`).toEqual([
+      "opacity 200 0",
+    ]);
+    expect(result.closing.sort(), `${width}px`).toEqual([
+      "opacity 200 0",
+      "transform 0 200",
+    ]);
+  }
+});
+
+test("in forced colors, Quick Access rings its search box and shows the highlight as selected", async ({
+  page,
+}) => {
+  // The highlight's tint and border are colours, which forced colors drop.
   await page.emulateMedia({ forcedColors: "active" });
   await resetPage(page);
   await openQuickAccess(page);
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
+  const search = page.locator("#start-menu-search");
   const items = page.locator("#start-menu-results .start-menu-item");
   const selected = items.and(page.locator(".selected"));
   await expect(selected).toHaveCount(1);
   await expect(selected).toHaveAttribute("data-id", "garden");
-  await expect(page.locator("#start-menu-search")).toBeFocused();
-  await expect(selected).toHaveCSS("outline-style", "solid");
-  await expect(items.first()).toHaveCSS("outline-style", "none");
+  await expect(search).toBeFocused();
+  const [highlight, highlightText] = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.backgroundColor = "Highlight";
+    probe.style.color = "HighlightText";
+    document.querySelector("#start-menu")!.append(probe);
+    const style = getComputedStyle(probe);
+    const colors = [style.backgroundColor, style.color];
+    probe.remove();
+    return colors;
+  });
+
+  // Focus: a ring on the search box. The highlight takes the selection
+  // colours instead, so it does not look focused.
+  await expect(search).toHaveCSS("outline-style", "solid");
+  await expect(search).toHaveCSS("outline-width", "2px");
+  await expect(search).toHaveCSS("outline-color", highlight);
+  await expect(selected).toHaveCSS("background-color", highlight);
+  await expect(selected).toHaveCSS("color", highlightText);
+  await expect(selected.locator("small")).toHaveCSS("color", highlightText);
+  await expect(selected).toHaveCSS("outline-style", "none");
+  await expect(items.first()).not.toHaveCSS("background-color", highlight);
+
+  // An armed Reset Desktop adds a dashed ring.
+  await search.fill("reset desktop");
+  await page.keyboard.press("Enter");
+  const armed = page.locator('[data-id="reset-desktop"]');
+  await expect(armed).toHaveClass(/confirming/);
+  await expect(armed).toHaveCSS("background-color", highlight);
+  await expect(armed).toHaveCSS("outline-style", "dashed");
+  await page.keyboard.press("Escape");
 });
+
+// Composites the menu in a screenshot and measures each stroke against the
+// colours on both sides of it: the search box's focus ring (beyond its
+// border) and the highlight's border.
+async function strokeContrast(page: Page) {
+  const boxes = await page.evaluate(() =>
+    ["#start-menu-search", "#start-menu-results .selected"].map((selector) => {
+      const rect = document.querySelector(selector)!.getBoundingClientRect();
+      return { left: rect.left, y: Math.round(rect.top + rect.height / 2) };
+    }),
+  );
+  const screenshot = (await page.screenshot()).toString("base64");
+  return page.evaluate(
+    async ({ screenshot, boxes }) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${screenshot}`;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext("2d", { willReadFrequently: true })!;
+      context.drawImage(image, 0, 0);
+      const pixel = (x: number, y: number) =>
+        Array.from(context.getImageData(x, y, 1, 1).data.slice(0, 3));
+      const channel = (value: number) => {
+        const c = value / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      };
+      const luminance = ([r, g, b]: number[]) =>
+        0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      const ratio = (a: number[], b: number[]) => {
+        const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+        return (high + 0.05) / (low + 0.05);
+      };
+      // The ring is 2px left of the search box's edge, the highlight's
+      // border the 1px at its edge; then the menu outside, the fill inside.
+      const [ring, highlight] = boxes.map(({ left, y }, index) => {
+        const edge = Math.round(left);
+        const stroke = index === 0 ? [edge - 2, edge - 1] : [edge];
+        const outside = pixel(edge - 6, y);
+        const inside = pixel(edge + 4, y);
+        return Math.min(
+          ...stroke.flatMap((x) => [
+            ratio(pixel(x, y), outside),
+            ratio(pixel(x, y), inside),
+          ]),
+        );
+      });
+      return { ring, highlight };
+    },
+    { screenshot, boxes },
+  );
+}
+
+for (const theme of ["dark", "light"] as const) {
+  test(`Quick Access's focus ring and highlight reach 3:1 for every accent in the ${theme} theme`, async ({
+    page,
+  }) => {
+    for (const accent of ["green", "cyan", "purple", "amber"]) {
+      // A still background, so the glass over it is one colour.
+      await resetPage(
+        page,
+        prefsStorage({ theme, accent, backgroundEffect: false }),
+      );
+      await openQuickAccess(page);
+      await page
+        .locator("#start-menu")
+        .evaluate((element) =>
+          Promise.all(element.getAnimations().map((a) => a.finished)),
+        );
+      const contrast = await strokeContrast(page);
+      expect(contrast.ring, `focus ring, ${accent}`).toBeGreaterThanOrEqual(3);
+      expect(
+        contrast.highlight,
+        `highlight border, ${accent}`,
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+}
 
 test("an unknown ?blog= slug opens the article list with a toast", async ({
   page,

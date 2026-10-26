@@ -633,9 +633,10 @@ test("searches and launches apps from Quick Access, opened by the Start button o
 }) => {
   await page.getByRole("button", { name: "Open start menu" }).click();
   await page.locator("#start-menu-search").fill("certs");
+  // Quick Access items are the options of its search box's listbox.
   await page
     .locator("#start-menu")
-    .getByRole("button", { name: /Certs/ })
+    .getByRole("option", { name: /Certs/ })
     .click();
   const certsWindow = page.locator("#window-certs");
   await expect(certsWindow).toBeVisible();
@@ -649,7 +650,7 @@ test("searches and launches apps from Quick Access, opened by the Start button o
   await expect(page.locator("#start-menu")).toHaveClass(/visible/);
   await page.locator("#start-menu-search").fill("gallery");
   await page
-    .getByRole("button", { name: /Gallery\s*Password protected pictures/ })
+    .getByRole("option", { name: /Gallery\s*Password protected pictures/ })
     .click();
   await expect(page.locator("#window-gallery")).toBeVisible();
 });

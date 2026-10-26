@@ -25,6 +25,11 @@
   pointer-events: none;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  /* Accent strokes that mark state, at 3:1 or more on the menu: the search
+     box's focus ring and the highlight's border. The accents are pale in
+     the light theme, so there they darken (below). */
+  --start-menu-ring: var(--accent-cyan);
+  --start-menu-highlight: var(--accent-primary);
 }
 
 #start-menu.visible {
@@ -67,9 +72,10 @@
   color: var(--text-muted);
 }
 
+/* A 2px ring just outside the border, which forced colors keep. */
 #start-menu-search:focus {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.15);
+  border-color: var(--start-menu-ring);
+  outline: 2px solid var(--start-menu-ring);
 }
 
 #start-menu-results {
@@ -146,10 +152,11 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* The item Enter runs; ArrowUp and ArrowDown move it. */
+/* The item Enter runs; ArrowUp and ArrowDown move it. The tint is too faint
+   to show it alone, so the border carries it. */
 .start-menu-item.selected {
   background: color-mix(in srgb, var(--accent-primary) 16%, transparent);
-  border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
+  border-color: var(--start-menu-highlight);
 }
 
 /* Reset Desktop, armed: the next Enter, click or tap runs it. */
@@ -331,27 +338,6 @@
   }
 }
 
-/* Forced colors drop the highlight's background: outline the item Enter
-   runs in the system highlight colour, and the armed Reset Desktop too.
-   The items lose their borders, which forced colors would draw on all of
-   them. */
-@media (forced-colors: active) {
-  .start-menu-item {
-    border: 0;
-    padding: 10px 12px;
-  }
-
-  .start-menu-item.selected,
-  .start-menu-item.confirming {
-    outline: 2px solid Highlight;
-    outline-offset: -2px;
-  }
-
-  .start-menu-item.confirming {
-    outline-style: dashed;
-  }
-}
-
 /* Light Theme Overrides */
 [data-theme="light"] #start-menu {
   box-shadow:
@@ -359,6 +345,8 @@
     0 8px 16px rgba(0, 0, 0, 0.08);
   -webkit-backdrop-filter: blur(30px) saturate(1.2);
   backdrop-filter: blur(30px) saturate(1.2);
+  --start-menu-ring: color-mix(in srgb, var(--accent-cyan) 50%, #000);
+  --start-menu-highlight: color-mix(in srgb, var(--accent-primary) 50%, #000);
 }
 
 [data-theme="light"] #start-menu-search {
@@ -373,10 +361,11 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
-/* The accents are pale in the light theme: a stronger tint and border. */
+/* The accents are pale in the light theme: a stronger tint (and the darker
+   border from #start-menu). */
 [data-theme="light"] .start-menu-item.selected {
   background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
-  border-color: color-mix(in srgb, var(--accent-primary) 80%, #000);
+  border-color: var(--start-menu-highlight);
 }
 
 [data-theme="light"] .start-menu-item.confirming {
@@ -397,5 +386,53 @@
   [data-theme="light"] .start-menu-item {
     border-color: rgba(0, 0, 0, 0.06);
     background: rgba(0, 0, 0, 0.03);
+  }
+}
+
+/* Forced colors drop the highlight's tint and border: the item Enter runs
+   takes the system selection colours, as a selected option does, so it
+   does not look like the search box's focus ring (Highlight). The armed
+   Reset Desktop also gets a dashed ring. The items lose their borders,
+   which forced colors would draw on all of them. #start-menu outranks the
+   theme's highlight and confirmation tints, and forced-color-adjust keeps
+   the Canvas backplate from covering the text. */
+@media (forced-colors: active) {
+  .start-menu-item {
+    border: 0;
+    padding: 10px 12px;
+  }
+
+  #start-menu .start-menu-item.selected {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  #start-menu .start-menu-item.selected :is(small, .start-menu-item-external) {
+    color: inherit;
+  }
+
+  #start-menu .start-menu-item.confirming {
+    outline: 2px dashed HighlightText;
+    outline-offset: -4px;
+  }
+
+  #start-menu-search:focus {
+    outline-color: Highlight;
+  }
+}
+
+/* Reduced motion: Quick Access only fades, wherever an experience puts it.
+   Opening moves it into place at once, while it is still transparent;
+   closing moves it only once it has faded out. */
+@media (prefers-reduced-motion: reduce) {
+  #start-menu {
+    transition:
+      opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0s 0.2s;
+  }
+
+  #start-menu.visible {
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }

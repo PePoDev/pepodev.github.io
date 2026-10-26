@@ -5,9 +5,11 @@
 // Apps, Commands and Links sections. While searching, matches leave their
 // sections for one flat list sorted by rank, so "set" puts Settings above
 // Reset Desktop; every item stays in the DOM, hidden ones with display: none,
-// so the visual, Tab and arrow-key orders agree. App items are
-// [data-open-app] launchers, which the desktop opens on click (runtime.tsx)
-// and app-chunks.ts prefetches on hover or focus.
+// so the visual, Tab and arrow-key orders agree. The search box is a
+// combobox and the results a listbox of options (in groups for the
+// sections), with the highlight as the active, selected option. App items
+// are [data-open-app] launchers, which the desktop opens on click
+// (runtime.tsx) and app-chunks.ts prefetches on hover or focus.
 import { memo, useEffect, useRef, useState, type FocusEvent, type KeyboardEvent } from "react";
 import { AppIcon } from "./AppIcon";
 import { useOverlayOpen } from "./overlay-state";
@@ -25,6 +27,8 @@ import {
 } from "./quick-access";
 
 const NO_MATCH = "No matching apps, commands or links";
+
+const itemId = (id: string) => `start-menu-item-${id}`;
 
 // Counts from the desktop's start, and ticks only while the menu is open
 // (it is the one thing on the desktop that would re-render every second).
@@ -108,17 +112,25 @@ export function StartMenu() {
   const visibleIndex = new Map(visible.map((entry, index) => [entry.id, index]));
   const status = armed ? confirm : searching && visible.length === 0 ? NO_MATCH : "";
 
+  // The combobox's active option, so screen readers name what Enter runs as
+  // the arrow keys and typing move the highlight.
+  const highlighted = visible[selected];
+
   const item = (entry: QuickAccessEntry, hidden: boolean) => {
+    const isSelected = !hidden && visibleIndex.get(entry.id) === selected;
     const className = [
       "start-menu-item",
       `start-menu-${entry.type}`,
-      !hidden && visibleIndex.get(entry.id) === selected && "selected",
+      isSelected && "selected",
       armed === entry.id && "confirming",
     ]
       .filter(Boolean)
       .join(" ");
     const shared = {
+      id: itemId(entry.id),
       className,
+      role: "option",
+      "aria-selected": isSelected,
       "data-type": entry.type,
       "data-id": entry.id,
       style: hidden ? { display: "none" } : undefined,
@@ -224,16 +236,20 @@ export function StartMenu() {
         <input
           type="text"
           id="start-menu-search"
+          role="combobox"
           placeholder="Search apps, commands and links..."
           aria-label="Search apps, commands and links"
           aria-controls="start-menu-results"
+          aria-expanded={open}
+          aria-autocomplete="list"
+          aria-activedescendant={highlighted ? itemId(highlighted.id) : undefined}
           autoComplete="off"
           spellCheck={false}
           value={query}
           onChange={(event) => setQuickAccessQuery(event.target.value)}
         />
       </div>
-      <div id="start-menu-results" onFocus={onResultsFocus}>
+      <div id="start-menu-results" role="listbox" aria-label="Apps, commands and links" onFocus={onResultsFocus}>
         <div id="start-menu-matches" className="start-menu-items" hidden={!searching || visible.length === 0}>
           {searching && visible.map((entry) => item(entry, false))}
         </div>
@@ -247,7 +263,8 @@ export function StartMenu() {
               aria-labelledby={titleId}
               hidden={searching}
             >
-              <h4 id={titleId} className="start-menu-section-title">
+              {/* A listbox holds only groups and options; the title names its group. */}
+              <h4 id={titleId} className="start-menu-section-title" role="presentation">
                 {section}
               </h4>
               <div className="start-menu-items">
