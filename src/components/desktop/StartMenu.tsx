@@ -183,6 +183,7 @@ export function StartMenu() {
               strokeLinejoin="round"
             />
           </svg>
+          <span className="start-menu-item-new-tab"> (opens in a new tab)</span>
         </a>
       );
     }

@@ -382,18 +382,39 @@ test("Quick Access reopens scrolled to the top, where its highlight is", async (
   await expectAtTop();
 });
 
-test("Quick Access closes when Tab leaves it for the Garden's frame and hands focus back to the field in it", async ({
-  page,
-}) => {
-  await resetPage(page);
+/** Opens the Garden and returns its filter, once the frame's script has run. */
+async function openGardenFilter(page: Page) {
   await openApp(page, "Garden", "garden");
-  const frame = page.frameLocator("#window-garden iframe");
-  const filter = frame.getByRole("searchbox", { name: "Filter notes" });
+  const filter = page
+    .frameLocator("#window-garden iframe")
+    .getByRole("searchbox", { name: "Filter notes" });
   // The garden's own script, which forwards Ctrl/Cmd + K, ends its page.
   await expect
     .poll(() => filter.evaluate(() => document.readyState))
     .toBe("complete");
+  return filter;
+}
 
+test("Quick Access closes when Shift+Tab leaves it for the Garden's frame", async ({
+  page,
+}) => {
+  await resetPage(page);
+  await openGardenFilter(page);
+  // With the Garden the last window before Quick Access, Shift+Tab from the
+  // search box moves focus into its frame, which has no relatedTarget.
+  await openQuickAccess(page);
+  await page.keyboard.press("Shift+Tab");
+  await expectClosed(page);
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe(
+    "IFRAME",
+  );
+});
+
+test("Escape and Ctrl+K hand focus back to the field inside the Garden's frame", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const filter = await openGardenFilter(page);
   // Escape, or Ctrl+K again, returns focus to the field inside the frame,
   // not only to the frame, so typing goes on there.
   await filter.click();
@@ -406,15 +427,31 @@ test("Quick Access closes when Tab leaves it for the Garden's frame and hands fo
   }
   await page.keyboard.type("c");
   await expect(filter).toHaveValue("abc");
+});
 
-  // With the Garden the last window before Quick Access, Shift+Tab from the
-  // search box moves focus into its frame, which has no relatedTarget.
-  await openQuickAccess(page);
-  await page.keyboard.press("Shift+Tab");
-  await expectClosed(page);
-  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe(
-    "IFRAME",
-  );
+test("the tray closes when focus moves from it into the Garden's frame", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const filter = await openGardenFilter(page);
+  const tray = page.locator("#tray-panel");
+  const mute = page.locator("#audio-mute");
+
+  // A click: the frame forwards it, and focus leaves the tray for the frame.
+  await page.locator("#taskbar-clock-button").click();
+  await expect(tray).toHaveClass(/visible/);
+  await mute.focus();
+  await filter.click();
+  await expect(tray).not.toHaveClass(/visible/);
+  await expect(filter).toBeFocused();
+
+  // Focus alone, with no click to forward (as a screen reader can move it).
+  await page.locator("#taskbar-clock-button").click();
+  await expect(tray).toHaveClass(/visible/);
+  await mute.focus();
+  await filter.focus();
+  await expect(tray).not.toHaveClass(/visible/);
+  await expect(filter).toBeFocused();
 });
 
 test("closed overlays leave the tab order and return focus to their opener", async ({
@@ -706,6 +743,11 @@ test("Quick Access links open in a new tab and hand focus back", async ({
   await expect(github).toHaveAttribute("href", "https://github.com/pepodev");
   await expect(github).toHaveAttribute("target", "_blank");
   await expect(github).toHaveText(/GitHub\s*Open GitHub - @pepodev/);
+  // An option is not announced as a link, so its name says where it opens.
+  await expect(github).toHaveRole("option");
+  await expect(github).toHaveAccessibleName(
+    /^GitHub\s*Open GitHub - @pepodev\s*\(opens in a new tab\)$/,
+  );
 
   const aboutIcon = page
     .locator("#desktop-icons")
@@ -1099,27 +1141,60 @@ async function strokeContrast(page: Page) {
   );
 }
 
+// The defaults, and a phone with the most opaque glass, where the dark
+// theme's highlight comes closest to 3:1 (purple, against its own tint).
+const STROKE_SETUPS = [
+  { width: 1280, glass: 72 },
+  { width: 390, glass: 90 },
+];
+
+/** Waits for Quick Access's open transition and its items' to end. */
+function settleQuickAccess(page: Page) {
+  return page
+    .locator("#start-menu")
+    .evaluate((element) =>
+      Promise.all(
+        element.getAnimations({ subtree: true }).map((a) => a.finished),
+      ),
+    );
+}
+
 for (const theme of ["dark", "light"] as const) {
-  test(`Quick Access's focus ring and highlight reach 3:1 for every accent in the ${theme} theme`, async ({
+  test(`Quick Access's focus ring, highlight and armed Reset Desktop reach 3:1 for every accent in the ${theme} theme`, async ({
     page,
   }) => {
-    for (const accent of ["green", "cyan", "purple", "amber"]) {
-      // A still background, so the glass over it is one colour.
-      await resetPage(
-        page,
-        prefsStorage({ theme, accent, backgroundEffect: false }),
-      );
-      await openQuickAccess(page);
-      await page
-        .locator("#start-menu")
-        .evaluate((element) =>
-          Promise.all(element.getAnimations().map((a) => a.finished)),
+    for (const { width, glass } of STROKE_SETUPS) {
+      await page.setViewportSize({ width, height: 800 });
+      for (const accent of ["green", "cyan", "purple", "amber"]) {
+        // A still background, so the glass over it is one colour.
+        await resetPage(
+          page,
+          prefsStorage({ theme, accent, glass, backgroundEffect: false }),
         );
-      const contrast = await strokeContrast(page);
-      expect(contrast.ring, `focus ring, ${accent}`).toBeGreaterThanOrEqual(3);
+        await openQuickAccess(page);
+        await settleQuickAccess(page);
+        const contrast = await strokeContrast(page);
+        const where = `${accent}, ${width}px, glass ${glass}`;
+        expect(contrast.ring, `focus ring, ${where}`).toBeGreaterThanOrEqual(
+          3,
+        );
+        expect(
+          contrast.highlight,
+          `highlight border, ${where}`,
+        ).toBeGreaterThanOrEqual(3);
+      }
+
+      // Armed, the highlighted Reset Desktop's border turns red.
+      await page.keyboard.type("reset desktop");
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#start-menu-results .selected")).toHaveClass(
+        /confirming/,
+      );
+      await settleQuickAccess(page);
+      const armed = await strokeContrast(page);
       expect(
-        contrast.highlight,
-        `highlight border, ${accent}`,
+        armed.highlight,
+        `armed Reset Desktop border, ${width}px, glass ${glass}`,
       ).toBeGreaterThanOrEqual(3);
     }
   });

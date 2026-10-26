@@ -375,7 +375,9 @@ tests.
   `.start-menu-item#start-menu-item-<id>[data-type][data-id]`
   (`role="option"`, `aria-selected`; `.selected`, `.confirming`):
   `button.start-menu-app[data-open-app]`, `button.start-menu-command`,
-  `a.start-menu-link[href][target="_blank"]`, and `#start-menu-status`
+  `a.start-menu-link[href][target="_blank"]` (an option is not announced
+  as a link, so a visually hidden "(opens in a new tab)" ends its name),
+  and `#start-menu-status`
   (`role="status"`, `data-tone="warning"` while Reset Desktop is armed);
   `#toast-container` (`aria-live`) with `.toast(.toast-show|.toast-hide)`,
   `.toast-icon`, `.toast-message`, `.toast-close`. Hidden Quick Access
@@ -616,10 +618,13 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   in the dark one), or `--text-primary`/`--text-secondary`, and keeps the
   accent for borders and tints. Labels on the translucent Quick Access
   menu, tray, and taskbar use `--text-secondary`. Quick Access's search
-  focus ring and highlight border mark state, so they keep 3:1 for every
-  accent: the accent in the dark theme, half mixed with black in the light
-  one (`start-menu.css`). Surfaces that stay dark in both themes (the
-  Snake board, the SRE game, Terminal) point the
+  focus ring, highlight border, and armed Reset Desktop border mark state,
+  so they keep 3:1 for every accent, against the menu and the tint inside
+  them (`start-menu.css`). In the dark theme the ring is the accent's
+  secondary colour (`--accent-cyan`) and the highlight the accent, as they
+  are, and the armed border red mixed a quarter with white; in the light
+  theme all three are half mixed with black. Surfaces that stay dark in
+  both themes (the Snake board, the SRE game, Terminal) point the
   `--text-*` variables at the `--dark-text-*` ones in `variables.css`. In
   the light theme the garden's links, inline code, and callout titles use
   their accent's hue at OKLCH lightness 0.42 (`garden.css`). The

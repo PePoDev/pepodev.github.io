@@ -25,11 +25,15 @@
   pointer-events: none;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
-  /* Accent strokes that mark state, at 3:1 or more on the menu: the search
-     box's focus ring and the highlight's border. The accents are pale in
-     the light theme, so there they darken (below). */
+  /* Strokes that mark state, at 3:1 or more on the menu and on the tint
+     they surround: the search box's focus ring (the accent's secondary
+     colour, which --accent-cyan holds), the highlight's border (the
+     accent), and the armed Reset Desktop's border (red, lightened for a
+     margin on opaque glass). The colours are pale in the light theme, so
+     there they darken (below). */
   --start-menu-ring: var(--accent-cyan);
   --start-menu-highlight: var(--accent-primary);
+  --start-menu-armed: color-mix(in srgb, var(--accent-red) 75%, #fff);
 }
 
 #start-menu.visible {
@@ -130,6 +134,7 @@
 }
 
 .start-menu-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -162,7 +167,7 @@
 /* Reset Desktop, armed: the next Enter, click or tap runs it. */
 .start-menu-item.confirming {
   background: color-mix(in srgb, var(--accent-red) 16%, transparent);
-  border-color: color-mix(in srgb, var(--accent-red) 60%, transparent);
+  border-color: var(--start-menu-armed);
 }
 
 .start-menu-item-icon {
@@ -197,12 +202,22 @@
   margin-top: 2px;
 }
 
-/* Links open in a new tab. */
+/* Links open in a new tab. As options they are not announced as links, so
+   a hidden note says so in place of the icon. */
 .start-menu-item-external {
   width: 12px;
   height: 12px;
   flex-shrink: 0;
   color: var(--text-secondary);
+}
+
+.start-menu-item-new-tab {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* Always rendered, so screen readers announce "No matching apps, commands
@@ -347,6 +362,7 @@
   backdrop-filter: blur(30px) saturate(1.2);
   --start-menu-ring: color-mix(in srgb, var(--accent-cyan) 50%, #000);
   --start-menu-highlight: color-mix(in srgb, var(--accent-primary) 50%, #000);
+  --start-menu-armed: color-mix(in srgb, var(--accent-red) 50%, #000);
 }
 
 [data-theme="light"] #start-menu-search {
@@ -370,7 +386,7 @@
 
 [data-theme="light"] .start-menu-item.confirming {
   background: color-mix(in srgb, var(--accent-red) 14%, transparent);
-  border-color: color-mix(in srgb, var(--accent-red) 70%, transparent);
+  border-color: var(--start-menu-armed);
 }
 
 [data-theme="light"] #start-menu-results::-webkit-scrollbar-thumb {
