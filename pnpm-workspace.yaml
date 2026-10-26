@@ -1,5 +1,9 @@
 allowBuilds:
   sharp: true
+# Resolve only versions published at least 3 days (4320 minutes) ago, the
+# same rule Dependabot's npm updates apply: a lockfile holding a younger
+# version fails every Dependabot update until that version is 3 days old.
+minimumReleaseAge: 4320
 # Patched versions of build-time dependencies that pnpm audit flags:
 # source-map-js (GHSA-68fv-2mgg-jv7q, via the postcss that Next.js pins).
 # Drop an entry once Next.js's own dependency ranges exclude the bad versions.

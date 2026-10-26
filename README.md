@@ -585,6 +585,11 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
 - pnpm `overrides` in `pnpm-workspace.yaml` pin patched versions of vulnerable
   build-time packages; keep `pnpm audit` clean and drop an override once
   Next.js's own ranges exclude the bad versions.
+- `minimumReleaseAge: 4320` in `pnpm-workspace.yaml`: pnpm resolves only
+  versions published at least 3 days ago, the rule Dependabot's npm updates
+  apply. A lockfile holding a younger version makes every Dependabot update
+  fail until that version turns 3 days old, so never work around it (no
+  `minimumReleaseAgeExclude`) to take a release early.
 
 ### Content and Apps
 
@@ -832,7 +837,7 @@ GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`
 | --- | --- | --- | --- |
 | `garden` | Syncs the vault when `VAULT_DEPLOY_KEY` is set | Skips its steps | Skips its steps |
 | `build` | `pnpm install --frozen-lockfile`, `pnpm build`, uploads `out/` (`actions/upload-pages-artifact`) | Same, without garden notes | Same, without garden notes |
-| `test` | `pnpm test:scripts`, then Playwright against that artifact in Google Chrome, on `ubuntu-24.04` (Playwright 1.60 cannot install its ffmpeg on Ubuntu 26.04, the new `ubuntu-latest`) | Same | Same |
+| `test` | `pnpm test:scripts`, then Playwright against that artifact in Google Chrome | Same | Same |
 | `deploy` | Publishes the artifact (`actions/deploy-pages`) after `build` and `test` pass | Skipped | Skipped |
 
 - Concurrency: runs of `main` share the group `pages`, one at a time; a newer
@@ -855,8 +860,9 @@ GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`
 - Dependabot (`.github/dependabot.yml`): weekly npm updates for the pnpm
   lockfile (Next.js, React, and their types grouped together; every other
   minor and patch update in one group; majors one per pull request;
-  TypeScript 7 and later ignored, since `pnpm check` stays on 6) and weekly
-  GitHub Actions updates. Its pull requests run `build` and `test` without
+  TypeScript 7 and later ignored, since `pnpm check` stays on 6, and
+  `@types/node` majors ignored, since they follow the Node.js major the
+  workflow runs) and weekly GitHub Actions updates. Its pull requests run `build` and `test` without
   secrets; merge one only when green (the merge deploys). Pull request runs
   write their pnpm cache to their own ref only.
 

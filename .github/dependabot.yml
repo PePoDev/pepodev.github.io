@@ -28,6 +28,10 @@ updates:
       # hand, not through Dependabot.
       - dependency-name: typescript
         versions: [">=7"]
+      # @types/node describes the Node.js that CI runs (24, deploy.yaml), so
+      # its major moves with that Node version, by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   # The actions in .github/workflows/.
   - package-ecosystem: github-actions
