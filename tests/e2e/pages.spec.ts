@@ -4,7 +4,7 @@
 import { expect, test } from "@playwright/test";
 import { SECURITY_HEADERS } from "../../scripts/security-headers.mjs";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "../../src/consts";
-import { resetPage } from "./helpers";
+import { openApp, resetPage } from "./helpers";
 
 // Cloudflare adds the security headers on pepo.dev and serve-static.mjs adds
 // the same ones, so only the export (PLAYWRIGHT_SERVER=preview) has them.
@@ -323,6 +323,7 @@ test("the security headers allow everything the site does, Cloudflare Web Analyt
 
 test("the garden follows the saved theme and accent, and its skip link is readable", async ({
   page,
+  context,
 }) => {
   await page.goto("/");
   await page.evaluate(() =>
@@ -335,14 +336,66 @@ test("the garden follows the saved theme and accent, and its skip link is readab
   const html = page.locator("html");
   await expect(html).toHaveAttribute("data-theme", "light");
   await expect(html).toHaveCSS("--accent-primary", "#bf5af2");
+  // Note bodies (.prose) read the older accent variables.
+  await expect(html).toHaveCSS("--accent-green", "#bf5af2");
+  await expect(html).toHaveCSS("--accent-cyan", "#64d2ff");
 
+  // Website mode's ink-on-paper colours, not a link colour on the ink.
   await page.keyboard.press("Tab");
   const skip = page.locator(".website-skip-link");
   await expect(skip).toBeFocused();
-  const [color, background] = await skip.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return [style.color, style.backgroundColor];
+  await expect(skip).toHaveCSS("color", "rgb(244, 244, 239)");
+  await expect(skip).not.toHaveCSS("background-color", "rgb(244, 244, 239)");
+
+  // A change saved in another tab applies at once.
+  const other = await context.newPage();
+  await other.goto("/blog/");
+  await other.evaluate(() =>
+    localStorage.setItem(
+      "pepodev.desktopPrefs",
+      JSON.stringify({ theme: "dark", accent: "amber" }),
+    ),
+  );
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await expect(html).toHaveCSS("--accent-primary", "#ff9f0a");
+  await other.close();
+});
+
+test("the desktop Garden window takes the theme and accent from the desktop", async ({
+  page,
+  context,
+}) => {
+  await resetPage(page, {
+    "pepodev.desktopPrefs": JSON.stringify({ theme: "dark", accent: "purple" }),
   });
-  expect(color).not.toBe(background);
+  await openApp(page, "Garden", "garden");
+  const frame = page.frameLocator("#window-garden iframe");
+  const frameRoot = frame.locator("html");
+  await expect(frameRoot).toHaveAttribute("data-embed", "");
+  await expect(frameRoot).toHaveAttribute("data-theme", "dark");
+  await expect(frameRoot).toHaveCSS("--accent-primary", "#bf5af2");
+
+  // Another tab's save leaves this desktop as it is, so the frame stays
+  // with it.
+  const other = await context.newPage();
+  await other.goto("/blog/");
+  await other.evaluate(() =>
+    localStorage.setItem(
+      "pepodev.desktopPrefs",
+      JSON.stringify({ theme: "light", accent: "amber" }),
+    ),
+  );
+  await other.close();
+  await expect(page.locator("html")).toHaveCSS("--accent-primary", "#bf5af2");
+  await expect(frameRoot).toHaveCSS("--accent-primary", "#bf5af2");
+  await expect(frameRoot).toHaveAttribute("data-theme", "dark");
+
+  // A change on this desktop reaches the frame.
+  await page.evaluate(() =>
+    document.dispatchEvent(new CustomEvent("desktop:toggle-theme")),
+  );
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(frameRoot).toHaveAttribute("data-theme", "light");
+  await expect(frameRoot).toHaveCSS("--accent-primary", "#bf5af2");
 });
 

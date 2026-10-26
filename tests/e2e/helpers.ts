@@ -54,8 +54,9 @@ export async function resetPage(
 
 /**
  * Opens an app from its desktop icon, or Settings from its taskbar tray
- * button (a pointer open, so focus stays where it was) and waits until its window is shown, focused and done fading in,
- * so screenshots see the window, not a blend, and until its body has
+ * button (a pointer open, so focus stays where it was), and waits until its
+ * window is shown, focused and done fading in, so screenshots see the
+ * window, not a blend, and until its body has
  * rendered (its code can arrive after the window opened; pass
  * `{ body: false }` when a test holds that code back on purpose).
  */

@@ -1096,3 +1096,27 @@ test("desktop icons snap and swap occupied grid cells", async ({ page }) => {
   expect(Math.round(movedBlog!.x)).not.toBe(Math.round(blogBox!.x));
   expect(Math.round(movedBlog!.y)).toBe(Math.round(welcomeBox!.y));
 });
+
+test("closing Settings from the keyboard returns focus to its tray button", async ({
+  page,
+}) => {
+  await resetPage(page);
+  const settings = page.locator("#window-settings");
+  const gear = page.locator("#taskbar-settings");
+  // Opened from Quick Access, which leaves no launcher to go back to, and
+  // from a click on the gear: either way the gear reopens it.
+  await page.keyboard.press("Control+k");
+  await page.keyboard.type("settings");
+  await page.keyboard.press("Enter");
+  await expect(settings).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(settings).toBeHidden();
+  await expect(gear).toBeFocused();
+
+  await gear.click();
+  await expect(settings).toBeVisible();
+  await settings.locator(".min-btn").focus();
+  await page.keyboard.press("Escape");
+  await expect(settings).toBeHidden();
+  await expect(gear).toBeFocused();
+});

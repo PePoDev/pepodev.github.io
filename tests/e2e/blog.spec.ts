@@ -463,6 +463,35 @@ test("article Markdown gets the reading styles and responsive images", async ({
   );
 });
 
+test("a post's contents nest its subsections in their sections", async ({
+  page,
+}) => {
+  await page.goto(gravitonPath);
+  const toc = page.locator(".post-toc");
+  const subsections = toc.locator('li[data-depth="3"]');
+  expect(await subsections.count()).toBeGreaterThan(0);
+  // Each subsection is in its section's own list, as the indentation shows.
+  await expect(toc.locator(':scope > ol > li[data-depth="3"]')).toHaveCount(0);
+  await expect(
+    toc.locator('li[data-depth="2"] > ol > li[data-depth="3"]'),
+  ).toHaveCount(await subsections.count());
+});
+
+test("a post's article bar keeps its language tag beside the command on phones", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const post of posts) {
+    await page.goto(`/blog/${post.id}/`);
+    const bar = page.locator(".post-doc-bar");
+    const command = (await bar.locator("p").boundingBox())!;
+    const tag = (await bar.locator(".ws-lang-tag").boundingBox())!;
+    expect(Math.abs(tag.y + tag.height / 2 - (command.y + command.height / 2)), post.id).toBeLessThan(2);
+    expect(tag.x, post.id).toBeGreaterThan(command.x + command.width);
+    expect(tag.x + tag.width, post.id).toBeLessThanOrEqual(390);
+  }
+});
+
 test("post pages declare their language, share metadata, and structured data", async ({
   page,
   request,

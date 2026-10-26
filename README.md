@@ -50,7 +50,8 @@ tests that only passed on a retry (flaky). `garden.spec.ts` skips itself
 without synced notes. Specs share these helpers from `tests/e2e/helpers.ts`:
 
 - `resetPage`, `prefsStorage`, `waitForWindowManager`.
-- `openApp(page, label, appId)` opens an app from its icon and waits until
+- `openApp(page, label, appId)` opens an app from its icon (Settings from
+  its tray button) and waits until
   its window is shown and its body rendered; pass `{ body: false }` when the
   test holds the app's code back.
 - `holdChunks(page)` holds Next.js's chunks requested from then on (`held()`,
@@ -322,7 +323,7 @@ stores take over with the same code:
   hydrates (`window.__pepodevCopyEmailReady`). Other keys, icon drags, and
   other clicks are lost before the boot. Until the boot the script also
   keeps the `<html>` attributes the parse-time scripts set (mode, theme,
-  preference attributes and variables): a hydration error (text that an
+  experience and the other preference attributes and variables): a hydration error (text that an
   extension or Cloudflare's e-mail obfuscation changed) makes React render
   the page again and reset `<html>` to its server attributes
   (`data-site-mode="desktop"`, no theme), and the script puts them back
@@ -621,8 +622,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   outline).
 - Website mode is dark by default and follows the Settings theme
   (`data-theme="light"` on `<html>`) and accent, both applied by the `<head>`
-  script before first paint (on `/` and on the blog pages; the garden
-  applies the theme). Size its text in `rem` and set its breakpoints
+  script before first paint (on `/`, the blog pages and the garden; the
+  desktop Garden window takes both from the desktop around it). Size its text in `rem` and set its breakpoints
   in `em`, so it follows the browser's text size. Rows that run edge to edge
   inside a panel or scroller use inset focus rings, which the panel cannot
   clip. Neither mode panel is `aria-hidden` in the markup:
@@ -738,12 +739,12 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   reading time, `getReadingMinutes()`), then the article in a panel (cover,
   `.prose`, topics), and on wide screens a table of contents and three more
   posts beside it. They stay static (`runtime="none"`).
-- The garden pages are static; their theme and embed script runs in `<head>`,
-  the filter and frame script at the end of `<body>`. The desktop Garden app
-  frames `/garden/` instead of inlining notes into `out/index.html`. Inside
-  the frame the garden hides the site header, gives links that leave the
-  garden `target` and `rel`, and forwards `mousedown`, `click`, `focusin`,
-  `Escape`, and `Ctrl`/`Cmd` + `K` to the desktop. Lists of names that can
+- The garden pages are static; their theme, accent and embed script runs in
+  `<head>`, the filter and frame script at the end of `<body>`. The desktop
+  Garden app frames `/garden/` instead of inlining notes into
+  `out/index.html`. Inside the frame the garden hides the site header, gives
+  links that leave the garden `target` and `rel`, and forwards `mousedown`,
+  `click`, `focusin`, `Escape`, and `Ctrl`/`Cmd` + `K` to the desktop. Lists of names that can
   repeat (folders, tags) are keyed by position.
 - The resume remains a standalone static `/resume/` page (GitHub Pages
   redirects `/resume`, so link with the slash); do not restore a resume app.
@@ -782,7 +783,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   `.focused` to the topmost remaining one; after a pointer close, DOM focus
   is dropped so the next app gets the keys, and from the keyboard focus
   returns to the window's launcher if still shown, else into the topmost
-  window, else to the app's icon. Tabbing into a window focuses it.
+  window, else to the app's icon (Settings: its tray button). Tabbing into
+  a window focuses it.
   Minimized and closed windows are `inert` and `aria-hidden`. Taskbar window
   buttons are named by their label, which phone widths hide only visually.
 - After a click or tap on a taskbar window button, the button gives up focus,

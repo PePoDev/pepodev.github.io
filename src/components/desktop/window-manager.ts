@@ -263,7 +263,7 @@ function releaseWindowFocus(appId: AppId, snapshot: FocusSnapshot, next: AppId |
       closing && returnFocus.get(appId),
       nextElement,
       closing
-        ? document.querySelector(`#desktop-icons [data-open-app="${appId}"]`)
+        ? document.querySelector(`:is(#desktop-icons, #taskbar-tray) [data-open-app="${appId}"]`)
         : document.querySelector(`#taskbar-apps [data-app-id="${appId}"]`),
     ].find(canTakeFocus);
   if (!target) {

@@ -84,7 +84,15 @@ const earlyInputScript = `(() => {
   // resets <html> to its server attributes: the desktop, no theme. Until the
   // boot, put back what the parse-time scripts set (the mode, and the theme
   // and preferences' attributes and variables) before the next paint.
-  const kept = ["data-site-mode", "data-theme", "data-background-effect", "data-window-glass", "style"];
+  const kept = [
+    "data-site-mode",
+    "data-theme",
+    "data-background-effect",
+    "data-window-glass",
+    "data-experience",
+    "data-experience-variant",
+    "style",
+  ];
   const saved = {};
   const save = () => kept.forEach((name) => (saved[name] = root.getAttribute(name)));
   save();

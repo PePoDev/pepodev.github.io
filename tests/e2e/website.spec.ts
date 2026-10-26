@@ -600,11 +600,13 @@ test("the Copy email button copies when pressed before the page hydrates", async
   expect(await copied()).toEqual(["pepo@pepo.dev", "pepo@pepo.dev"]);
 });
 
-test("a hydration error keeps website mode and the theme", async ({ page }) => {
-  // Text that changed before React hydrated (a browser extension, or
-  // Cloudflare's e-mail obfuscation) makes React render the page again from
-  // scratch, resetting <html> to its server attributes (the desktop, no
-  // theme). Not even one frame may show that.
+// Text that changed before React hydrated (a browser extension, or
+// Cloudflare's e-mail obfuscation) makes React render the page again from
+// scratch, resetting <html> to its server attributes (the desktop, no theme,
+// no experience). Not even one frame may show that. Returns the page's
+// errors, and what every frame showed of `attributes` from the end of the
+// <head> scripts (the last one sets __pepodevEarlyInput) to the boot.
+async function breakHydration(page: Page, attributes: string[]) {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
@@ -621,9 +623,7 @@ test("a hydration error keeps website mode and the theme", async ({ page }) => {
       await route.fulfill({ response, body });
     },
   );
-  // What every frame shows from the end of the <head> scripts (the last one
-  // sets __pepodevEarlyInput) to the boot.
-  await page.addInitScript(() => {
+  await page.addInitScript((attributes) => {
     type Win = typeof window & {
       __seen?: Set<string>;
       __pepodevEarlyInput?: unknown;
@@ -634,17 +634,28 @@ test("a hydration error keeps website mode and the theme", async ({ page }) => {
     const sample = () => {
       const root = document.documentElement;
       if ((window as Win).__pepodevEarlyInput) {
-        seen.add(`${root.dataset.siteMode} ${root.dataset.theme}`);
+        seen.add(attributes.map((name) => root.getAttribute(name)).join(" "));
       }
       if (!(window as Win).__pepodevWindowManagerReady) {
         requestAnimationFrame(sample);
       }
     };
     requestAnimationFrame(sample);
-  });
+  }, attributes);
+  return {
+    errors,
+    seen: () =>
+      page.evaluate(() => [
+        ...((window as typeof window & { __seen?: Set<string> }).__seen ?? []),
+      ]),
+  };
+}
+
+test("a hydration error keeps website mode and the theme", async ({ page }) => {
+  const broken = await breakHydration(page, ["data-site-mode", "data-theme"]);
   const website = await openWebsite(page, { theme: "light" });
   await waitForWindowManager(page);
-  expect(errors.join("\n")).toMatch(/#418|[Hh]ydrat/);
+  expect(broken.errors.join("\n")).toMatch(/#418|[Hh]ydrat/);
 
   await expect(page.locator("html")).toHaveAttribute(
     "data-site-mode",
@@ -653,11 +664,31 @@ test("a hydration error keeps website mode and the theme", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(website).toBeVisible();
   await expect(page.locator("#desktop")).toBeHidden();
-  expect(
-    await page.evaluate(() => [
-      ...((window as typeof window & { __seen?: Set<string> }).__seen ?? []),
-    ]),
-  ).toEqual(["website light"]);
+  expect(await broken.seen()).toEqual(["website light"]);
+});
+
+test("a hydration error keeps the desktop experience", async ({ page }) => {
+  const broken = await breakHydration(page, [
+    "data-site-mode",
+    "data-theme",
+    "data-experience",
+    "data-experience-variant",
+  ]);
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("website-spec-ready")) return;
+    sessionStorage.setItem("website-spec-ready", "1");
+    localStorage.clear();
+    localStorage.setItem("pepodev.hasVisited", "true");
+    localStorage.setItem(
+      "pepodev.desktopPrefs",
+      JSON.stringify({ theme: "light", experience: "macos", variant: "tahoe" }),
+    );
+  });
+  await page.goto("/");
+  await waitForWindowManager(page);
+  expect(broken.errors.join("\n")).toMatch(/#418|[Hh]ydrat/);
+  await expect(page.locator("html")).toHaveAttribute("data-experience", "macos");
+  expect(await broken.seen()).toEqual(["desktop light macos tahoe"]);
 });
 
 test("website mode keeps a skip link, visible focus and reduced motion", async ({

@@ -3,13 +3,14 @@
 import { InlineScript, scriptValue } from "@components/InlineScript";
 import { accentMap } from "@utils/desktop-prefs";
 
-// <head>, before first paint: the saved light or dark theme (the desktop's
-// own inside the desktop Garden window, whose titlebar then replaces the
-// site header: html[data-embed], garden.css) and the Settings accent, as /
-// and the blog apply them to website mode. Changes saved in other tabs (or
-// by the desktop around the Garden window) are followed live. It sets
-// <html> attributes, so the layout renders <Document
-// suppressHydrationWarning>.
+// <head>, before first paint: the saved light or dark theme and the Settings
+// accent, as / and the blog apply them to website mode. Inside the desktop
+// Garden window (whose titlebar then replaces the site header:
+// html[data-embed], garden.css) both come from the desktop around it, so the
+// frame never disagrees with it. Changes saved in other tabs (or by the
+// desktop around the Garden window, whose saves reach the frame as storage
+// events) are followed live. It sets <html> attributes and variables, so the
+// layout renders <Document suppressHydrationWarning>.
 const themeScript = `(() => {
   const accentMap = ${scriptValue(accentMap)};
   const root = document.documentElement;
@@ -17,19 +18,26 @@ const themeScript = `(() => {
   if (embedded) root.dataset.embed = "";
   const apply = () => {
     let prefs = {};
+    let desktop = null;
     try {
-      prefs = JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}");
-      root.dataset.theme =
-        (embedded && parent.document.documentElement.dataset.theme) ||
-        prefs.theme ||
-        localStorage.getItem("pepodev.theme") ||
-        "dark";
-    } catch {
-      root.dataset.theme = "dark";
-    }
-    const accent = accentMap[prefs?.accent] || accentMap.green;
-    root.style.setProperty("--accent-primary", accent.primary);
-    root.style.setProperty("--accent-secondary", accent.secondary);
+      prefs = JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}") || {};
+      if (embedded) desktop = parent.document.documentElement;
+    } catch {}
+    let theme = prefs.theme;
+    try {
+      theme = desktop?.dataset.theme || theme || localStorage.getItem("pepodev.theme");
+    } catch {}
+    root.dataset.theme = theme === "light" ? "light" : "dark";
+    const accent = accentMap[prefs.accent] || accentMap.green;
+    const fromDesktop = (name) => desktop?.style.getPropertyValue(name).trim();
+    const primary = fromDesktop("--accent-primary") || accent.primary;
+    const secondary = fromDesktop("--accent-secondary") || accent.secondary;
+    root.style.setProperty("--accent-primary", primary);
+    root.style.setProperty("--accent-secondary", secondary);
+    // The older accent variables note bodies (.prose, blog.css) still read,
+    // mapped as the desktop maps them (prefs-core.ts).
+    root.style.setProperty("--accent-green", primary);
+    root.style.setProperty("--accent-cyan", secondary);
   };
   apply();
   addEventListener("storage", (event) => {

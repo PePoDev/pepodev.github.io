@@ -34,15 +34,22 @@ export default async function PostPage({ params }: { params: PostParams }) {
   const lang = getPostLanguage(post);
   // English page chrome inside a Thai post.
   const chromeLang = lang === "en" ? undefined : "en";
-  // The contents: sections (h2, numbered like website mode's nav) and their
-  // subsections (h3).
+  // The contents: sections (h2, numbered like website mode's nav), each with
+  // its subsections (h3) in a list of its own, so screen readers hear the
+  // nesting the indentation shows.
+  const tocHeadings = headings.filter(({ depth }) => depth === 2 || depth === 3);
   let sections = 0;
-  const toc = headings
-    .filter(({ depth }) => depth === 2 || depth === 3)
-    .map((heading) => ({
-      ...heading,
-      number: heading.depth === 2 ? String(++sections).padStart(2, "0") : undefined,
-    }));
+  const toc: ((typeof tocHeadings)[number] & { number?: string; subsections: typeof tocHeadings })[] = [];
+  for (const heading of tocHeadings) {
+    const section = toc.at(-1);
+    if (heading.depth === 3 && section?.depth === 2) section.subsections.push(heading);
+    else
+      toc.push({
+        ...heading,
+        number: heading.depth === 2 ? String(++sections).padStart(2, "0") : undefined,
+        subsections: [],
+      });
+  }
   const morePosts = (await getPublishedPosts()).filter((other) => other.id !== post.id).slice(0, 3);
 
   return (
@@ -118,23 +125,32 @@ export default async function PostPage({ params }: { params: PostParams }) {
             </nav>
           </article>{" "}
           <div className="post-rail">
-            {toc.length > 1 && (
+            {tocHeadings.length > 1 && (
               <nav className="ws-panel post-toc" aria-labelledby="post-toc-title">
                 <div className="ws-panel-head" lang={chromeLang}>
                   <h2 id="post-toc-title">On this page</h2>{" "}
                   <small>
                     {sections > 0
                       ? `${sections} ${sections === 1 ? "section" : "sections"}`
-                      : `${toc.length} headings`}
+                      : `${tocHeadings.length} headings`}
                   </small>
                 </div>{" "}
                 <ol>
-                  {toc.map(({ depth, slug, text, number }) => (
+                  {toc.map(({ depth, slug, text, number, subsections }) => (
                     <li key={slug} data-depth={depth}>
                       <a href={`#${slug}`}>
                         {number && <span aria-hidden="true">{number}</span>}
                         {text}
                       </a>
+                      {subsections.length > 0 && (
+                        <ol>
+                          {subsections.map((subsection) => (
+                            <li key={subsection.slug} data-depth={subsection.depth}>
+                              <a href={`#${subsection.slug}`}>{subsection.text}</a>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
                     </li>
                   ))}
                 </ol>
