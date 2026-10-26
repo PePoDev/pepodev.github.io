@@ -157,8 +157,30 @@ function hitArea(control: Locator) {
       }
       return steps;
     };
-    return { width: reach(-1, 0) + reach(1, 0) + 1, height: reach(0, -1) + reach(0, 1) + 1 };
+    const [up, down] = [reach(0, -1), reach(0, 1)];
+    return {
+      width: reach(-1, 0) + reach(1, 0) + 1,
+      height: up + down + 1,
+      top: y - up,
+      bottom: y + down + 1,
+    };
   });
+}
+
+// Waits for an element's transitions and animations, such as those a
+// viewport change starts.
+function settled(locator: Locator) {
+  return locator.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+}
+
+function showToast(page: Page, message: string) {
+  return page.evaluate(
+    (message) =>
+      document.dispatchEvent(new CustomEvent("desktop:show-toast", { detail: { message, duration: 0 } })),
+    message,
+  );
 }
 
 // Opens every app window, as a visitor with a crowded taskbar would.
@@ -400,47 +422,82 @@ for (const [experience, variant] of LOOKS) {
     const window = await openApp(page, "About Me", "me");
     await window.locator(".max-btn").click();
     await expect(window).toHaveClass(/maximized/);
-    await page.evaluate(() =>
-      document.dispatchEvent(
-        new CustomEvent("desktop:show-toast", { detail: { message: "Saved", duration: 0 } }),
-      ),
-    );
+    await showToast(page, "Saved");
     const toast = page.locator("#toast-container .toast");
     await expect(toast).toHaveClass(/toast-show/);
     await expect(toast).toHaveCSS("opacity", "1");
     const titlebar = await box(page, "#window-me .window-titlebar");
     expect((await toast.boundingBox())!.y).toBeGreaterThanOrEqual(titlebar.y + titlebar.height);
 
-    // macOS and GNOME drop the tray panel from the top bar, beside the toasts.
+    // macOS and GNOME drop the tray panel from the top bar at the right,
+    // beside the toasts. Windows and KDE raise it from the tray, just above
+    // the taskbar or panel.
     await page.locator("#taskbar-clock-button").click();
     const panel = page.locator("#tray-panel");
     await expect(panel).toHaveClass(/visible/);
     await expect(panel).toHaveCSS("opacity", "1");
-    expect(intersects((await toast.boundingBox())!, (await panel.boundingBox())!)).toBe(false);
+    await settled(panel);
+    const placed = (await panel.boundingBox())!;
+    if (experience === "macos" || variant === "gnome") {
+      const { top } = await insetsOf(page);
+      expect(placed.y).toBeGreaterThanOrEqual(top);
+      expect(placed.y - top).toBeLessThanOrEqual(12);
+      expect(page.viewportSize()!.width - (placed.x + placed.width)).toBeLessThanOrEqual(12);
+    } else {
+      const bar = await box(page, "#taskbar");
+      expect(placed.y + placed.height).toBeLessThanOrEqual(bar.y + 0.5);
+      expect(bar.y - (placed.y + placed.height)).toBeLessThanOrEqual(12);
+      expect(bar.x + bar.width - (placed.x + placed.width)).toBeLessThanOrEqual(16);
+    }
+    expect(intersects((await toast.boundingBox())!, placed)).toBe(false);
   });
 
-  test(`${experience} ${variant}: Quick Access opens in the free area, clear of the bars`, async ({
+  test(`${experience} ${variant}: Quick Access opens in the free area, clear of the bars and toasts`, async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await resetPage(page, prefsStorage({ experience, variant }));
+    // A long toast in the top-right corner, which the menu reaches where it
+    // fills the free area.
+    await showToast(page, "Link copied to the clipboard, ready to paste into a message");
+    const toast = page.locator("#toast-container .toast");
+    await expect(toast).toHaveCSS("opacity", "1");
     await page.locator("#taskbar-start").click();
     const menu = page.locator("#start-menu");
     await expect(menu).toHaveClass(/visible/);
-    await menu.evaluate((element) =>
-      Promise.all(element.getAnimations().map((animation) => animation.finished)),
-    );
-    const viewport = page.viewportSize()!;
-    const insets = await insetsOf(page);
-    const rect = (await menu.boundingBox())!;
-    expect(rect.y).toBeGreaterThanOrEqual(insets.top);
-    expect(rect.y + rect.height).toBeLessThanOrEqual(viewport.height - insets.bottom + 0.5);
-    expect(intersects(rect, await box(page, "#taskbar"))).toBe(false);
-    // Windows 10's Start menu and KDE's Kickoff sit over their launcher, at
-    // the left; the others centre.
-    if (variant === "10" || variant === "kde") {
-      expect(rect.x).toBeLessThan(16);
-    } else {
-      expect(Math.abs(rect.x + rect.width / 2 - viewport.width / 2)).toBeLessThan(2);
+    // At 1440x900 the menu is shorter than the free area, so the side it
+    // opens from shows; at 800x700 it fills the free area beside the toast.
+    for (const [width, height] of [
+      [1440, 900],
+      [800, 700],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await settled(menu);
+      await settled(toast);
+      const label = `${width}x${height}`;
+      const insets = await insetsOf(page);
+      const free = { top: insets.top, bottom: height - insets.bottom };
+      const rect = (await menu.boundingBox())!;
+      expect(rect.y, label).toBeGreaterThanOrEqual(free.top);
+      expect(rect.y + rect.height, label).toBeLessThanOrEqual(free.bottom + 0.5);
+      expect(intersects(rect, await box(page, "#taskbar")), label).toBe(false);
+      if (variant === "gnome") {
+        // GNOME searches from the top bar.
+        expect(rect.y - free.top, label).toBeLessThanOrEqual(16);
+      } else {
+        // The others open just above the dock, taskbar or panel; Windows
+        // 10's Start menu sits on its taskbar.
+        const gap = free.bottom - (rect.y + rect.height);
+        expect(gap, label).toBeLessThanOrEqual(variant === "10" ? 0.5 : 16);
+      }
+      // Windows 10's Start menu and KDE's Kickoff sit over their launcher,
+      // at the left; the others centre.
+      if (variant === "10" || variant === "kde") {
+        expect(rect.x, label).toBeLessThan(16);
+      } else {
+        expect(Math.abs(rect.x + rect.width / 2 - width / 2), label).toBeLessThan(2);
+      }
+      expect(intersects(rect, (await toast.boundingBox())!), label).toBe(false);
     }
   });
 }
@@ -498,12 +555,22 @@ test("phones keep the bottom taskbar, a large close target and whole titles in e
     expect((await box(page, "#taskbar-clock-button")).y, label).toBeGreaterThan(780);
 
     // Only the close button shows. It keeps a target near the shared 42x36
-    // (Windows 10's caption button is 46x30), and the longest title fits
-    // beside it.
+    // that ends with the title bar: 32px tall in the 32px bars, and Windows
+    // 10's caption button is 46x30. About Me's content does not stack over
+    // the title bar's edge, so a target that reached into it would show.
+    const about = await openApp(page, "About Me", "me");
+    const close = about.locator(".close-btn");
+    const target = await hitArea(close);
+    const titlebar = await box(page, "#window-me .window-titlebar");
+    expect(target.width, label).toBeGreaterThanOrEqual(36);
+    expect(target.height, label).toBeGreaterThanOrEqual(variant === "10" ? 30 : 32);
+    expect(target.top, label).toBeGreaterThanOrEqual(titlebar.y - 1);
+    expect(target.bottom, label).toBeLessThanOrEqual(titlebar.y + titlebar.height + 0.5);
+    await close.click();
+    await expect(about).toBeHidden();
+
+    // The longest title fits beside it.
     const window = await openApp(page, "SRE Game", "sregame");
-    const target = await hitArea(window.locator(".close-btn"));
-    expect(target.width, label).toBeGreaterThanOrEqual(30);
-    expect(target.height, label).toBeGreaterThanOrEqual(30);
     expect(
       await window.locator(".window-title").evaluate((title) => title.scrollWidth <= title.clientWidth),
       label,

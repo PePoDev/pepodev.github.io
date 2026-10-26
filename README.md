@@ -544,9 +544,12 @@ value falls back to the default. Every look follows the theme and accent.
     
     Every look's window controls are at least 24x24 and do not overlap
     (WCAG 2.5.8). On phones only the close button shows: macOS, GNOME and
-    KDE still draw it at 24px, its `::after` takes taps in the shared
-    42x36 target (`window.css`), and the centred title takes the room the
-    hidden buttons left.
+    KDE still draw it at 24px, and its `::after` takes taps around it, up
+    to the shared 42x36 target (`window.css`) but no further than the
+    title bar (42x32 in Sequoia's and KDE's 32px bars) or the window's
+    edge, which trims it to about 38px wide in macOS and 40px in KDE.
+    Windows keeps its caption buttons (46x32, 46x30 in Windows 10). The
+    centred title takes the room the hidden buttons left.
   - The bars, and type: system font stacks over Inter, with no web fonts.
 - Above 768px each look lays out the taskbar's markup, plus
   `#taskbar-focused-app` (`Taskbar.tsx`), the focused app's name, which
@@ -573,11 +576,15 @@ value falls back to the default. Every look follows the theme and accent.
   them re-places the icons and re-fits maximized windows. A look with bars
   must set both.
 - Overlays keep to the free area between the insets. Quick Access opens
-  above the dock, taskbar or panel (at the left over Windows 10's Start
-  and KDE's launcher) and, in GNOME, from the top bar. Toasts start below
-  a top bar, and below a maximized window's title bar in every look
-  (`toast.css`); in macOS and GNOME, where the tray panel drops from the
-  top bar, they step left of the open panel.
+  just above the dock, taskbar or panel (at the left over Windows 10's
+  Start and KDE's launcher, flush with Windows 10's taskbar) and, in
+  GNOME, just below the top bar. The tray panel drops from the top bar at
+  the right in macOS and GNOME, and rises from the tray just above the
+  bar in Windows and KDE. Toasts start below a top bar, and below a
+  maximized window's title bar in every look (`toast.css`). They narrow
+  beside open Quick Access (`toast.css` for a centred menu,
+  `experiences.css` for Windows 10's and KDE's at the left), and in macOS
+  and GNOME they step left of the open tray panel.
 - In the light theme, a Start glyph drawn in the accent (Windows 11, KDE)
   uses `--exp-accent-ink`, the accent darkened to keep 3:1 on the light
   bars.
@@ -853,7 +860,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   with nothing focusable inside (hidden and disabled controls do not count)
   is a labelled tab stop; an inner scroller of its own, such as the SRE
   game's boot log, is a labelled tab stop too. Toasts sit below a maximized
-  window's title bar, in every desktop experience.
+  window's title bar, in every desktop experience, and above 768px they
+  narrow while Quick Access is open, to keep 12px clear of it (`toast.css`).
 - Quick Access (the Start menu, `#start-menu`) is the desktop's one
   launcher; there is no separate command palette. It and the tray panel are
   `inert` while closed, and only one is open at a time: opening one closes

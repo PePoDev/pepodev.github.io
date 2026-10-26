@@ -75,8 +75,9 @@ html[data-experience="linux"][data-theme="light"] {
   }
 
   /* Toasts start below a top bar (toast.css moves them below a maximized
-     window's title bar too), and step left of the tray panel that drops
-     from it: 380px wide, 8px from the edge. */
+     window's title bar too, and narrows them beside open Quick Access), and
+     step left of the tray panel that drops from it: 380px wide, 8px from
+     the edge. */
   :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) #toast-container {
     top: calc(var(--desktop-inset-top) + 16px);
   }
@@ -85,6 +86,14 @@ html[data-experience="linux"][data-theme="light"] {
     #toast-container {
     right: 400px;
     max-width: min(420px, calc(100vw - 420px));
+  }
+
+  /* Windows 10's Start menu and KDE's Kickoff open at the left and end at
+     most 408px from the edge, so toasts keep 12px clear of that rather than
+     of the centred menu toast.css allows for. */
+  html:is([data-experience="windows"][data-experience-variant="10"], [data-experience="linux"][data-experience-variant="kde"]):has(#start-menu.visible)
+    #toast-container {
+    max-width: min(420px, calc(100vw - 440px));
   }
 
   /* Quick Access opens above the dock, taskbar or panel (below GNOME's top
@@ -1264,9 +1273,11 @@ html[data-experience="linux"][data-experience-variant="kde"][data-theme="light"]
     left: 48px;
   }
 
-  /* The close button keeps the shared 42x36 target (window.css): the 24px
-     light or button stays as drawn, and its ::after takes the taps around
-     it. */
+  /* The close button keeps a target near the shared 42x36 (window.css):
+     the 24px light or button stays as drawn, and its ::after takes the taps
+     around it. In Sequoia's and KDE's 32px title bars it is 42x32, so it
+     ends with the bar instead of taking taps meant for the window's
+     content; the window's edge clips it beside the close button. */
   :is([data-experience="macos"], [data-experience="linux"]) .window-controls button {
     position: relative;
   }
@@ -1275,6 +1286,11 @@ html[data-experience="linux"][data-experience-variant="kde"][data-theme="light"]
     content: "";
     position: absolute;
     inset: -6px -9px;
+  }
+
+  [data-experience="macos"][data-experience-variant="sequoia"] .window-controls button::after,
+  [data-experience="linux"][data-experience-variant="kde"] .window-controls button::after {
+    inset: -4px -9px;
   }
 }
 
