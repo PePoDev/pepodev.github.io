@@ -293,9 +293,11 @@ the icon placement and clock scripts, and `<WebsiteMode />`.
   `null`, no preferences), which is what hydration sees. After hydration
   `useDesktopRuntime` boots in a microtask: preferences, toasts, overlays,
   Quick Access, site mode, icon layout, window manager, launchers, Quick
-  Access tip, idle mounts, app keys, system audio, `?blog=`, then the
-  replay of input made before the boot; then it sets
-  `window.__pepodevWindowManagerReady`.
+  Access tip, idle mounts, app prefetching (its launcher-intent listeners
+  and the idle prefetch timer; see App Registry), app keys, system audio,
+  `?blog=`, then the replay of input made before the boot; then it sets
+  `window.__pepodevWindowManagerReady`. Site mode's boot `site:mode-change`
+  reaches only what started before it.
 
 ### Parse-Time Scripts of the Desktop
 
