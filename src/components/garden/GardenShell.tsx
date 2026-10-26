@@ -20,7 +20,15 @@ export async function GardenShell({
   children: ReactNode;
 }) {
   const tree = buildGardenTree(await getGardenNotes());
-  const toc = headings.filter(({ depth }) => depth <= 3);
+  // Each h3 in its section's own list, so screen readers hear the nesting
+  // the indentation shows (as on post pages).
+  const tocHeadings = headings.filter(({ depth }) => depth <= 3);
+  const toc: (MarkdownHeading & { subsections: MarkdownHeading[] })[] = [];
+  for (const heading of tocHeadings) {
+    const section = toc.at(-1);
+    if (heading.depth === 3 && section && section.depth < 3) section.subsections.push(heading);
+    else toc.push({ ...heading, subsections: [] });
+  }
   return (
     <>
       <div className="garden-shell">
@@ -68,13 +76,22 @@ export async function GardenShell({
               No notes match.
             </p>
           </aside>{" "}
-          {toc.length > 1 && (
+          {tocHeadings.length > 1 && (
             <nav className="garden-toc" aria-label="On this page">
               <p>On this page</p>
               <ul>
-                {toc.map(({ depth, slug, text }) => (
+                {toc.map(({ depth, slug, text, subsections }) => (
                   <li key={slug} data-depth={depth}>
                     <a href={`#${slug}`}>{text}</a>
+                    {subsections.length > 0 && (
+                      <ul>
+                        {subsections.map((subsection) => (
+                          <li key={subsection.slug} data-depth={subsection.depth}>
+                            <a href={`#${subsection.slug}`}>{subsection.text}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>

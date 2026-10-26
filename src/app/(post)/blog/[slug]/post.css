@@ -91,10 +91,6 @@ main.blog-post {
   padding-block: 11px;
 }
 
-.blog-post .post-doc-bar .ws-lang-tag {
-  flex: none;
-}
-
 .blog-post .post-doc-bar p {
   min-width: 0;
   margin: 0;

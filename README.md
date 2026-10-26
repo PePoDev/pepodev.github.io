@@ -51,9 +51,8 @@ without synced notes. Specs share these helpers from `tests/e2e/helpers.ts`:
 
 - `resetPage`, `prefsStorage`, `waitForWindowManager`.
 - `openApp(page, label, appId)` opens an app from its icon (Settings from
-  its tray button) and waits until
-  its window is shown and its body rendered; pass `{ body: false }` when the
-  test holds the app's code back.
+  its tray button) and waits until its window is shown and its body
+  rendered; pass `{ body: false }` when the test holds the app's code back.
 - `holdChunks(page)` holds Next.js's chunks requested from then on (`held()`,
   `hold()`, `release()`): before a reload it holds hydration, so only
   parse-time scripts run; after the boot it holds an app's code.
@@ -306,28 +305,28 @@ early-input script also scrolls, focuses and writes the clipboard), and the
 stores take over with the same code:
 
 - `<head>`: site mode; theme and accent; preferences ("Initialize theme
-  immediately": background, glass, radius, effects, with the defaults boot
-  applies); early input (`window.__pepodevEarlyInput`). Until the boot it
-  takes clicks on `[data-open-app]` launchers and the taskbar's Start,
-  clock and audio buttons, Enter or Space on a desktop icon, and Ctrl/Cmd +
-  K, in order; the boot replays them and they count as interaction
-  (Welcome stays closed), a launch from the keyboard (a click with `detail`
-  0) moves focus into its window, and Ctrl/Cmd + K (`{ type:
-  "quick-access" }`) opens Quick Access with focus in its search box, also
-  when pressed again before the boot. A mode switch applies at once, keeps
-  the website scroll position
-  (`window.__pepodevWebsiteScrollY`, which site mode takes over at the
-  boot), and counts as interaction too. Until website mode's Copy email
-  button hydrates, a press on it copies at once
-  (`window.__pepodevEarlyCopyEmail`) and the button shows the result when it
-  hydrates (`window.__pepodevCopyEmailReady`). Other keys, icon drags, and
-  other clicks are lost before the boot. Until the boot the script also
-  keeps the `<html>` attributes the parse-time scripts set (mode, theme,
-  experience and the other preference attributes and variables): a hydration error (text that an
-  extension or Cloudflare's e-mail obfuscation changed) makes React render
-  the page again and reset `<html>` to its server attributes
-  (`data-site-mode="desktop"`, no theme), and the script puts them back
-  before the next paint.
+  immediately": background, glass, radius, effects, experience and its
+  variant, with the defaults boot applies); early input
+  (`window.__pepodevEarlyInput`). Until the boot it takes clicks on
+  `[data-open-app]` launchers and the taskbar's Start, clock and audio
+  buttons, Enter or Space on a desktop icon, and Ctrl/Cmd + K, in order; the
+  boot replays them and they count as interaction (Welcome stays closed), a
+  launch from the keyboard (a click with `detail` 0) moves focus into its
+  window, and Ctrl/Cmd + K (`{ type: "quick-access" }`) opens Quick Access
+  with focus in its search box, also when pressed again before the boot. A
+  mode switch applies at once, keeps the website scroll position
+  (`window.__pepodevWebsiteScrollY`, which site mode takes over at the boot),
+  and counts as interaction too. Until website mode's Copy email button
+  hydrates, a press on it copies at once (`window.__pepodevEarlyCopyEmail`)
+  and the button shows the result when it hydrates
+  (`window.__pepodevCopyEmailReady`). Other keys, icon drags, and other clicks
+  are lost before the boot. Until the boot the script also keeps the `<html>`
+  attributes the parse-time scripts set (mode, theme, experience and the other
+  preference attributes and variables): a hydration error (text that an
+  extension or Cloudflare's e-mail obfuscation changed) makes React render the
+  page again and reset `<html>` to its server attributes
+  (`data-site-mode="desktop"`, no theme), and the script puts them back before
+  the next paint.
 - After `#desktop`: icon placement (above 768px in desktop mode; sets
   `data-desktop-icon-ready` and `window.__pepodevDesktopIconsReady`, and
   re-places on resize until the boot) and the taskbar clock (time and date in
@@ -340,6 +339,10 @@ stores take over with the same code:
 Tests, apps, and the garden frame rely on this; change it only with the
 tests.
 
+- `<html>`: `data-theme` and the inline `--accent-primary` and
+  `--accent-secondary` (set by `applyDesktopPrefs`), which the Garden frame
+  reads; moved into a stylesheet, the frame would fall back to the saved
+  accent and drift from the desktop.
 - Markup: `#desktop`/`#website` with `data-site-mode-panel` (after boot the
   inactive one is `hidden`, `inert`, `aria-hidden="true"`); `#bg-canvas`;
   `#desktop-icons` (`button.desktop-icon[data-open-app][data-default-col]`);
@@ -623,8 +626,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
 - Website mode is dark by default and follows the Settings theme
   (`data-theme="light"` on `<html>`) and accent, both applied by the `<head>`
   script before first paint (on `/`, the blog pages and the garden; the
-  desktop Garden window takes both from the desktop around it). Size its text in `rem` and set its breakpoints
-  in `em`, so it follows the browser's text size. Rows that run edge to edge
+  desktop Garden window takes both from the desktop around it). Size its
+  text in `rem` and set its breakpoints in `em`, so it follows the browser's
+  text size. Rows that run edge to edge
   inside a panel or scroller use inset focus rings, which the panel cannot
   clip. Neither mode panel is `aria-hidden` in the markup:
   `html[data-site-mode]` hides the other one from first paint, before
@@ -744,8 +748,11 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   Garden app frames `/garden/` instead of inlining notes into
   `out/index.html`. Inside the frame the garden hides the site header, gives
   links that leave the garden `target` and `rel`, and forwards `mousedown`,
-  `click`, `focusin`, `Escape`, and `Ctrl`/`Cmd` + `K` to the desktop. Lists of names that can
-  repeat (folders, tags) are keyed by position.
+  `click`, `focusin`, `Escape`, and `Ctrl`/`Cmd` + `K` to the desktop. It
+  takes the theme and accent from the desktop's `<html>`: `data-theme` and
+  the inline `--accent-primary`/`--accent-secondary` (part of the Public
+  Contract). Lists of names that can repeat (folders, tags) are keyed by
+  position.
 - The resume remains a standalone static `/resume/` page (GitHub Pages
   redirects `/resume`, so link with the slash); do not restore a resume app.
   It renders as HTML from `experiences.json`, `skills.json`,

@@ -7,9 +7,9 @@ import { accentMap } from "@utils/desktop-prefs";
 // accent, as / and the blog apply them to website mode. Inside the desktop
 // Garden window (whose titlebar then replaces the site header:
 // html[data-embed], garden.css) both come from the desktop around it, so the
-// frame never disagrees with it. Changes saved in other tabs (or by the
-// desktop around the Garden window, whose saves reach the frame as storage
-// events) are followed live. It sets <html> attributes and variables, so the
+// frame never disagrees with it. A standalone page follows changes saved in
+// other tabs live; the frame follows the desktop's own saves, which reach it
+// as storage events. It sets <html> attributes and variables, so the
 // layout renders <Document suppressHydrationWarning>.
 const themeScript = `(() => {
   const accentMap = ${scriptValue(accentMap)};
@@ -17,11 +17,13 @@ const themeScript = `(() => {
   const embedded = window.top !== window.self;
   if (embedded) root.dataset.embed = "";
   const apply = () => {
-    let prefs = {};
     let desktop = null;
     try {
-      prefs = JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}") || {};
       if (embedded) desktop = parent.document.documentElement;
+    } catch {}
+    let prefs = {};
+    try {
+      prefs = JSON.parse(localStorage.getItem("pepodev.desktopPrefs") || "{}") || {};
     } catch {}
     let theme = prefs.theme;
     try {

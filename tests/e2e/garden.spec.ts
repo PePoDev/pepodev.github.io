@@ -85,6 +85,23 @@ test("a note renders its title, links, callouts, images, and backlinks", async (
   await expect(page.locator(".garden-backlinks")).toContainText("Google Cloud");
 });
 
+test("a note's contents nest each subsection in its section", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(notePath);
+  // A subsection sits at the top level only before the first section.
+  const misplaced = await page.locator(".garden-toc").evaluateAll((navs) =>
+    navs.flatMap((nav) => {
+      const top = [...nav.querySelectorAll(":scope > ul > li")] as HTMLElement[];
+      const firstSection = top.findIndex((item) => item.dataset.depth !== "3");
+      return top
+        .slice(Math.max(firstSection, 0))
+        .filter((item, index) => firstSection >= 0 && index > 0 && item.dataset.depth === "3")
+        .map((item) => item.textContent);
+    }),
+  );
+  expect(misplaced).toEqual([]);
+});
+
 test("the sidebar filter narrows the note tree", async ({ page }) => {
   await page.goto("/garden/");
 
