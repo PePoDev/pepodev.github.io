@@ -1,0 +1,115 @@
+/* BlogShell.tsx: the blog index's and posts' page base, website mode's
+   header and footer around them. The header, footer, panels and tokens are
+   website-mode.css's (html[data-site-mode="website"]); this adds only what
+   the blog pages need on top. Every selector starts at .blog-shell. */
+
+.blog-shell {
+  min-height: 100dvh;
+  background: var(--ws-bg);
+  color: var(--ws-ink);
+  font-family: var(--ws-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* No specificity, so website-mode.css's own link colours (the skip link's
+   among them) still win. */
+:where(.blog-shell a) {
+  color: inherit;
+}
+
+.blog-shell ::selection {
+  background: var(--ws-accent-soft);
+  color: var(--ws-ink);
+}
+
+.blog-shell :focus-visible {
+  outline: 2px solid var(--ws-accent);
+  outline-offset: 3px;
+}
+
+.blog-shell #blog-main:focus {
+  outline: none;
+}
+
+/* The blog's own entry in the header: Writing is the page on the index and
+   the section on a post. */
+.blog-shell .ws-nav a[aria-current] {
+  background: var(--ws-surface);
+  box-shadow: inset 0 0 0 1px var(--ws-line);
+  color: var(--ws-ink);
+}
+
+/* Where website mode has its mode switch, the blog has its feed. */
+.blog-shell .blog-rss-link {
+  min-height: 2.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 0 12px;
+  border-radius: 8px;
+  background: var(--ws-ink);
+  color: var(--ws-bg);
+  font: 600 0.875rem/1 var(--ws-sans);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.blog-shell .blog-rss-link svg {
+  flex: none;
+  color: var(--accent-primary);
+}
+
+.blog-shell .blog-rss-link:hover {
+  background: var(--ws-ink-2);
+}
+
+@media (max-width: 56.25em) {
+  .blog-shell .ws-nav a[aria-current] {
+    background: none;
+    box-shadow: none;
+    text-decoration: underline;
+    text-decoration-color: var(--ws-accent-bar);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+
+  .blog-shell .blog-rss-link {
+    min-height: 2.25rem;
+    padding: 0 12px 0 10px;
+    font-size: 0.8438rem;
+  }
+}
+
+/* Website mode spreads its six links across the row; the blog's two or
+   three stay together. */
+@media (max-width: 30em) {
+  .blog-shell .ws-nav {
+    justify-content: flex-start;
+    gap: 24px;
+  }
+}
+
+/* High contrast drops the background, so the current entry keeps a line. */
+@media (forced-colors: active) {
+  .blog-shell .ws-nav a[aria-current] {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+
+  .blog-shell .blog-rss-link {
+    border: 1px solid CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-shell *,
+  .blog-shell *::before,
+  .blog-shell *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -74,7 +74,8 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 | `src/app/global-not-found.tsx`, `src/app/not-found/` | Branded 404, exported as `out/404.html`; GitHub Pages serves it for unknown paths, so its URLs must be root-relative |
 | `src/app/rss.xml/`, `src/app/sitemap-index.xml/`, `src/app/sitemap-0.xml/` | RSS feed and sitemaps (static route handlers, written to `out/` as files) |
 | `src/components/Document.tsx`, `InlineScript.tsx`, `Prefetch.tsx` | The `<html>` shell, parse-time scripts, link prefetching |
-| `src/components/SiteHeader.tsx` | Header (home, Blog, RSS) for the blog index, posts, and 404 |
+| `src/components/SiteHeader.tsx` | Header (home, Blog, RSS) for the 404 |
+| `src/components/blog/` | The blog pages' shell (website mode's header and footer) and `<head>` theme script |
 | `src/components/desktop/` | The React desktop: stores, window manager, overlays, icons, taskbar, menus, palette, app registry and app API (see The React Desktop) |
 | `src/components/apps/` | One app per `<Name>App.tsx` (client body, its own chunk) and `<Name>App.data.ts` (build-time data); `app-data.ts` lists the loaders |
 | `src/components/WebsiteMode.tsx`, `src/components/website/` | Website mode (the `#website` panel, a Server Component) and its islands: Bangkok clock, copy e-mail |
@@ -91,7 +92,7 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 | `src/types/`, `src/utils/` | Data types and reusable logic, including the shared focus rules (`overlays.ts`), the app keyboard guard (`app-keyboard.ts`), search ranking (`search.ts`), and desktop accent and background colours and experiences (`desktop-prefs.ts`) |
 | `src/styles/global.css` | Shared desktop, app, and article styles (on every page) |
 | `src/styles/experiences.css` | The macOS, Windows and Linux desktop looks (see Desktop Experiences) |
-| `src/styles/website-mode.css` | Website-mode styles (`ws-*` classes) |
+| `src/styles/website-mode.css` | Website-mode styles (`ws-*` classes), also used by the blog pages and the garden |
 | `public/music/` | Local audio library |
 | `public/robots.txt`, `public/manifest.webmanifest` | Sitemap pointer and web app manifest (icons: `favicon.svg`, `icon-192.png`, `icon-512.png`) |
 | `public/_img/` | Images resized at build time; generated, gitignored |
@@ -145,7 +146,8 @@ Every root layout declares its runtime:
   renders a client component (`"use client"`). Postbuild gives each Next.js
   script `data-cfasync="false"` so Rocket Loader cannot defer hydration.
 - Small behaviours of static pages are `<InlineScript>`s (`Prefetch.tsx`,
-  `NotFoundPath.tsx`, the garden and resume scripts), never client components.
+  `NotFoundPath.tsx`, the blog, garden and resume scripts), never client
+  components.
 - `next dev` hydrates every page, so the difference exists only in `out/`;
   CI, which tests `out/`, proves static pages work without React.
 
@@ -571,7 +573,11 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
 - `base.css` locks only `html[data-site-mode="desktop"]` to one screen; every
   other page must scroll.
 - Markdown article styles are global in `src/styles/blog.css`: `.prose` on
-  post pages, `.blog-reader-body` in the desktop reader.
+  post pages and garden notes, `.blog-reader-body` in the desktop reader.
+  Post pages restyle `.prose` in website mode's look only inside
+  `main.blog-post` (`post.css`, loaded by post pages alone), so the garden
+  and the desktop Blog reader keep theirs; put blog-only article rules
+  there, not in `blog.css` or `global.css`, which every page loads.
 - A new desktop overlay gets an `OverlayId` in `overlay-state.ts`: announce
   it with `announceOverlay` (or `desktop:overlay-open`) when it opens,
   register its closer (`registerOverlayCloser`), close it with
@@ -603,7 +609,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   forced-colors mode (the selected palette item gets a `Highlight` outline).
 - Website mode is dark by default and follows the Settings theme
   (`data-theme="light"` on `<html>`) and accent, both applied by the `<head>`
-  script before first paint. Size its text in `rem` and set its breakpoints
+  script before first paint (on `/` and on the blog pages; the garden
+  applies the theme). Size its text in `rem` and set its breakpoints
   in `em`, so it follows the browser's text size. Rows that run edge to edge
   inside a panel or scroller use inset focus rings, which the panel cannot
   clip. Neither mode panel is `aria-hidden` in the markup:
@@ -618,9 +625,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
 - All type is self-hosted from the woff2 files committed in
   `src/assets/fonts/` (`src/styles/fonts-desktop.css`,
   `src/styles/fonts-website.css`): Inter and JetBrains Mono (`--font-sans`,
-  `--font-mono`) for the desktop, blog, and resume, without preload so
+  `--font-mono`) for the desktop, resume, and 404, without preload so
   website mode never downloads them; IBM Plex Sans, Sans Thai, and Mono for
-  website mode, imported only by the `(home)` and `(garden)` layouts. Never
+  website mode, imported only by the `(home)` and `(garden)` layouts and
+  `BlogShell` (the blog index and posts). Never
   load fonts from Google at runtime (no CSS `@import`), and do not use
   `next/font` (it needs Google at build time or cannot express the
   `unicode-range` subsets). To update a font, download the woff2 subsets
@@ -706,6 +714,18 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   warning. Never commit vault content or log unpublished note names; keep
   `pnpm test:garden` passing when changing the sync. Garden URLs are
   `/garden/<slugified vault path>/`; list notes through `src/utils/garden.ts`.
+- The blog index and posts are part of website mode
+  (`html[data-site-mode="website"]`, `website-mode.css`, the website fonts),
+  inside `BlogShell` (`src/components/blog/`): website mode's header (the
+  brand home; Writing, Garden once it has notes, and Resume; the RSS feed
+  where `/` has its mode switch) and footer. Their `<head>` script
+  (`BlogScripts.tsx`) applies the saved theme (`pepodev.desktopPrefs`, then
+  `pepodev.theme`, else dark) and accent before first paint, and follows
+  changes saved in other tabs. The index is laid out like website mode's
+  Writing section; a post shows its title, lede, and byline (date and
+  reading time, `getReadingMinutes()`), then the article in a panel (cover,
+  `.prose`, topics), and on wide screens a table of contents and three more
+  posts beside it. They stay static (`runtime="none"`).
 - The garden pages are static; their theme and embed script runs in `<head>`,
   the filter and frame script at the end of `<body>`. The desktop Garden app
   frames `/garden/` instead of inlining notes into `out/index.html`. Inside

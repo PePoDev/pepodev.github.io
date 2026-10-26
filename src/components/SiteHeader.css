@@ -36,8 +36,7 @@
   text-decoration: none;
 }
 
-.site-header .site-header-nav a:hover,
-.site-header .site-header-nav a[aria-current="page"] {
+.site-header .site-header-nav a:hover {
   background: var(--glass-highlight);
   color: var(--text-primary);
 }
@@ -45,14 +44,4 @@
 .site-header a:focus-visible {
   outline: 3px solid var(--accent-secondary);
   outline-offset: 3px;
-}
-
-/* High contrast drops the background, so mark the current page with a
-   line instead. */
-@media (forced-colors: active) {
-  .site-header .site-header-nav a[aria-current="page"] {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 6px;
-  }
 }

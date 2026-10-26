@@ -17,8 +17,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Lock the desktop shell to one screen. Website mode (website-mode.css) and
-   the standalone blog pages, which have no data-site-mode, scroll normally. */
+/* Lock the desktop shell to one screen. Website mode (website-mode.css, also
+   on the blog and garden pages) and the other standalone pages scroll
+   normally. */
 html[data-site-mode="desktop"],
 html[data-site-mode="desktop"] body {
   height: 100%;

@@ -1,57 +1,500 @@
-/* A blog post's page chrome (page.tsx); the article itself is styled by
-   .prose in src/styles/blog.css. Every selector starts at main.blog-post and
-   reaches only the page's own elements, never the Markdown content. */
+/* A blog post (page.tsx) in website mode's look: the page's own chrome, and
+   the reading styles of its Markdown. The article keeps .prose, whose base
+   rules (src/styles/blog.css) the garden and the desktop Blog reader share;
+   the rules here only override them inside main.blog-post, so neither of
+   those changes. Panels, buttons and tokens come from website-mode.css.
+   Every selector starts at main.blog-post (.blog-post). */
+
 main.blog-post {
-  width: min(1020px, 100% - 32px);
-  margin: 0 auto;
-  padding: 24px 0 64px;
+  padding-top: 48px;
 }
+
+.blog-post .post-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.blog-post .post-article {
+  min-width: 0;
+}
+
+/* ===== Title, lede and byline ===== */
+.blog-post .post-head {
+  margin-bottom: 32px;
+}
+
+.blog-post .post-head h1 {
+  max-width: 24em;
+  margin: 0;
+  color: var(--ws-ink);
+  font-size: clamp(2rem, 1.35rem + 2vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+/* Thai marks stack above and below the line: more leading, no tightening. */
+.blog-post .post-head h1:lang(th) {
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.blog-post .post-lede {
+  max-width: 38em;
+  margin: 16px 0 0;
+  color: var(--ws-ink-2);
+  font-size: 1.1562rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.blog-post .post-byline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.blog-post .post-byline p {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.blog-post .post-byline b {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.blog-post .post-byline .ws-dots {
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.75rem;
+}
+
+/* ===== The article panel ===== */
+.blog-post .post-doc {
+  box-shadow: var(--ws-shadow);
+}
+
+.blog-post .post-doc-bar {
+  align-items: center;
+  padding-block: 11px;
+}
+
+.blog-post .post-doc-bar p {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blog-post .post-doc-bar p span {
+  color: var(--ws-accent);
+}
+
+.blog-post .ws-lang-tag {
+  font-family: var(--ws-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.blog-post .hero-image {
+  margin: 0;
+  border-bottom: 1px solid var(--ws-line);
+}
+
 .blog-post .hero-image img {
   display: block;
-  max-width: 100%;
+  width: 100%;
   height: auto;
-  margin: 0 auto;
-  border-radius: 12px;
-  box-shadow: var(--window-shadow);
 }
-.blog-post .prose > .title {
-  padding-top: 1.5em;
-  text-align: center;
+
+.blog-post .post-topics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 14px clamp(20px, 6%, 48px);
+  border-top: 1px solid var(--ws-line);
+  background: var(--ws-surface-2);
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.75rem;
 }
-.blog-post .prose > .title h1 {
-  margin: 0 0 0.5em 0;
-  color: var(--text-primary);
-  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
-  line-height: 1.3;
+
+.blog-post .post-topics > span:first-child {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
-.blog-post .title > .date {
-  margin-bottom: 0.75em;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-}
-.blog-post .last-updated-on {
-  font-style: italic;
-}
+
 .blog-post .post-footer {
-  max-width: 720px;
-  margin: 3em auto 0;
-  padding-top: 1.5em;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px 24px;
-  border-top: 1px solid var(--glass-border);
+  gap: 12px;
+  margin-top: 24px;
 }
-.blog-post .post-footer a {
-  color: var(--accent-cyan);
+
+/* ===== Reading styles ===== */
+.blog-post .prose {
+  max-width: none;
+  margin: 0;
+  padding: 40px clamp(20px, 6%, 48px) 16px;
+  color: var(--ws-ink-2);
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+}
+
+.blog-post .prose:lang(th) {
+  line-height: 1.9;
+}
+
+.blog-post .prose :is(h2, h3, h4),
+.blog-post .prose strong {
+  color: var(--ws-ink);
   font-weight: 600;
+}
+
+.blog-post .prose :is(h2, h3, h4) {
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  overflow-wrap: break-word;
+}
+
+.blog-post .prose :is(h2, h3, h4):lang(th) {
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+/* Section heads rule off the text above them, as website mode's do. */
+.blog-post .prose h2 {
+  margin: 2.25em 0 0.75em;
+  padding-top: 1em;
+  border-top: 1px solid var(--ws-line);
+  font-size: 1.5rem;
+}
+
+.blog-post .prose > :first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.blog-post .prose h3 {
+  margin: 1.75em 0 0.5em;
+  font-size: 1.1875rem;
+}
+
+.blog-post .prose h4 {
+  margin: 1.5em 0 0.4em;
+  font-size: 1.0625rem;
+}
+
+.blog-post .prose a,
+.blog-post .prose a:visited {
+  border-bottom: 0;
+  color: var(--ws-accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+}
+
+.blog-post .prose a:hover {
+  color: var(--ws-accent-strong);
+  text-decoration-color: currentColor;
+}
+
+.blog-post .prose li::marker {
+  color: var(--ws-muted);
+}
+
+.blog-post .prose ol > li::marker {
+  font-family: var(--ws-mono);
+  font-size: 0.875em;
+}
+
+.blog-post .prose blockquote {
+  margin: 1.5em 0;
+  padding: 14px 20px;
+  border-left: 3px solid var(--ws-accent-bar);
+  border-radius: 0 10px 10px 0;
+  background: var(--ws-surface-2);
+  color: var(--ws-ink-2);
+}
+
+.blog-post .prose :not(pre) > code {
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  background: var(--ws-surface-2);
+  box-shadow: inset 0 0 0 1px var(--ws-line);
+  color: var(--ws-ink);
+  font-family: var(--ws-mono);
+  font-size: 0.875em;
+}
+
+/* Code blocks keep Shiki's github-dark colours in both themes. */
+.blog-post .prose pre {
+  margin: 1.5em 0;
+  padding: 16px 20px;
+  border: 1px solid var(--ws-line);
+  border-radius: 10px;
+  font-family: var(--ws-mono);
+  font-size: 0.8438rem;
+  line-height: 1.7;
+}
+
+.blog-post .prose pre code {
+  font-family: inherit;
+}
+
+.blog-post .prose pre[data-language]:not([data-language="plaintext"])::before {
+  content: attr(data-language);
+  display: block;
+  margin-bottom: 8px;
+  color: #8b949e;
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.blog-post .prose img {
+  margin: 1.75em auto;
+  border: 1px solid var(--ws-line);
+  border-radius: 10px;
+  background: var(--ws-surface-2);
+}
+
+/* Tables hug their columns and scroll inside the column when wider. */
+.blog-post .prose table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 1.5em 0;
+  overflow-x: auto;
+  border: 1px solid var(--ws-line);
+  border-radius: 10px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9375rem;
+}
+
+.blog-post .prose :is(th, td) {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ws-line);
+  line-height: 1.55;
+  vertical-align: baseline;
+}
+
+.blog-post .prose tr:last-child > td {
+  border-bottom: 0;
+}
+
+.blog-post .prose th {
+  background: var(--ws-surface-2);
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.blog-post .prose hr {
+  border-top-color: var(--ws-line);
+}
+
+/* ===== Contents and more posts ===== */
+.blog-post .post-rail {
+  position: sticky;
+  top: calc(3.875rem + 24px);
+  display: grid;
+  gap: 16px;
+  max-height: calc(100dvh - 3.875rem - 48px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ws-line-strong) transparent;
+}
+
+.blog-post .post-rail h2 {
+  margin: 0;
+  font-size: 0.9062rem;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+}
+
+.blog-post .post-rail ol,
+.blog-post .post-rail ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.blog-post .post-toc ol {
+  padding-block: 8px;
+}
+
+.blog-post .post-toc a {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 20px;
+  color: var(--ws-ink-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
   text-decoration: none;
 }
-.blog-post .post-footer a:hover {
-  color: var(--text-primary);
+
+.blog-post .post-toc a span {
+  flex: none;
+  width: 1.25rem;
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.6875rem;
 }
-.blog-post .post-footer a:focus-visible {
-  outline: 3px solid var(--accent-secondary);
-  outline-offset: 3px;
+
+.blog-post .post-toc li[data-depth="3"] a {
+  padding-left: calc(20px + 1.25rem + 10px);
+  color: var(--ws-muted);
+  font-size: 0.8438rem;
+}
+
+.blog-post .post-toc a:hover {
+  background: var(--ws-surface-2);
+  color: var(--ws-ink);
+}
+
+/* Rows run edge to edge in their panel, so their rings are drawn inside. */
+.blog-post .post-toc a:focus-visible {
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+
+.blog-post .post-more li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 20px;
+}
+
+.blog-post .post-more li + li {
+  border-top: 1px solid var(--ws-line);
+}
+
+.blog-post .post-more li:hover {
+  background: var(--ws-surface-2);
+}
+
+.blog-post .post-more li a {
+  color: var(--ws-ink);
+  font-size: 0.9062rem;
+  font-weight: 600;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+/* The title link covers the whole row. */
+.blog-post .post-more li a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.blog-post .post-more li:hover a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.blog-post .post-more li a:focus-visible {
+  outline: none;
+}
+
+.blog-post .post-more li a:focus-visible::after {
+  outline: 2px solid var(--ws-accent);
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+
+.blog-post .post-more time {
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.75rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 60em) {
+  .blog-post .post-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+
+  /* After the article, the contents would point back up the page. */
+  .blog-post .post-toc {
+    display: none;
+  }
+
+  .blog-post .post-rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Phones: the article panel runs edge to edge, so the text gets the
+   whole width. */
+@media (max-width: 47.5em) {
+  main.blog-post {
+    padding-top: 32px;
+  }
+
+  .blog-post .post-head {
+    margin-bottom: 24px;
+  }
+
+  .blog-post .post-lede {
+    font-size: 1.0625rem;
+  }
+
+  .blog-post .post-doc {
+    margin-inline: calc(-1 * var(--ws-gutter));
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .blog-post .post-doc-bar {
+    padding-inline: var(--ws-gutter);
+  }
+
+  .blog-post .prose {
+    padding: 28px var(--ws-gutter) 8px;
+  }
+
+  .blog-post .prose h2 {
+    font-size: 1.3125rem;
+  }
+
+  .blog-post .post-topics {
+    padding-inline: var(--ws-gutter);
+  }
+
+  .blog-post .post-footer .ws-btn {
+    flex: 1 1 10rem;
+  }
 }

@@ -1,101 +1,182 @@
-/* The blog index (page.tsx). Every selector starts at main.blog-index, so the
-   rules stay scoped to the page. */
+/* The blog index (page.tsx), laid out like website mode's Writing section
+   (.ws-sec-head, .ws-wr-grid, .ws-panel and .ws-elsewhere come from
+   website-mode.css). Every selector starts at main.blog-index (.blog-index),
+   so the rules stay scoped to the page. */
 main.blog-index {
-  width: min(960px, 100% - 32px);
-  margin: 0 auto;
-  padding: 32px 0 64px;
+  padding-top: 64px;
 }
-.blog-index .intro {
-  margin-bottom: 2.5rem;
-  text-align: center;
+
+/* A page head, so no section number: the title, then the counts. */
+.blog-index .ws-sec-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 20px;
 }
-.blog-index .intro h1 {
-  color: var(--text-primary);
-  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);
-  line-height: 1.2;
+
+.blog-index .ws-sec-head h1 {
+  font-size: clamp(1.875rem, 1.45rem + 1.4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
 }
-.blog-index .intro p {
-  max-width: 640px;
-  margin: 0.75rem auto 0;
-  color: var(--text-secondary);
+
+.blog-index .blog-index-lede {
+  max-width: 40em;
+  margin: 0 0 40px;
+  color: var(--ws-ink-2);
+  font-size: 1.0625rem;
   line-height: 1.6;
+  text-wrap: pretty;
 }
-.blog-index ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  list-style-type: none;
+
+.blog-index .blog-panel-title,
+.blog-index .blog-index-elsewhere h2 {
+  margin: 0;
+  font-size: 0.9062rem;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+}
+
+.blog-index .blog-index-posts ul {
   margin: 0;
   padding: 0;
+  list-style: none;
 }
-.blog-index ul li {
-  width: calc(50% - 1rem);
+
+.blog-index .blog-index-posts li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 10rem;
+  align-items: start;
+  gap: 20px;
+  padding: 18px 20px;
 }
-/* Only the template's own elements (the link, cover, title, description and
-   date paragraphs), never the <time> FormattedDate renders. */
-.blog-index ul li :is(a, img, h2, p) {
+
+.blog-index .blog-index-posts li + li {
+  border-top: 1px solid var(--ws-line);
+}
+
+.blog-index .blog-index-posts li:hover {
+  background: var(--ws-surface-2);
+}
+
+.blog-index .date {
+  margin: 0;
+  padding-top: 3px;
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.7812rem;
+  white-space: nowrap;
+}
+
+.blog-index .blog-index-main {
+  min-width: 0;
+}
+
+.blog-index .title {
+  margin: 0;
+  color: var(--ws-ink);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.blog-index .title a {
   text-decoration: none;
-  transition: 0.2s ease;
 }
-.blog-index ul li:first-child {
-  width: 100%;
-  margin-bottom: 1rem;
-  text-align: center;
+
+/* The title link covers the whole row, cover included. */
+.blog-index .title a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
-.blog-index ul li:first-child .title {
-  font-size: 2.369rem;
+
+.blog-index li:hover .title a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
-.blog-index ul li img {
+
+/* An edge-to-edge row would lose an outside ring to the panel's clip. */
+.blog-index .title a:focus-visible {
+  outline: none;
+}
+
+.blog-index .title a:focus-visible::after {
+  outline: 2px solid var(--ws-accent);
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+
+.blog-index .description {
+  margin: 4px 0 0;
+  color: var(--ws-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.blog-index .blog-index-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  color: var(--ws-muted);
+  font-family: var(--ws-mono);
+  font-size: 0.7188rem;
+}
+
+.blog-index .blog-index-tags .ws-post-topics {
+  flex: 1 1 12rem;
+}
+
+.blog-index .blog-index-posts img {
   display: block;
   width: 100%;
   height: auto;
-  margin-bottom: 0.5rem;
-  border-radius: 12px;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  border: 1px solid var(--ws-line);
+  border-radius: 8px;
+  background: var(--ws-surface-2);
 }
-.blog-index ul li a {
-  display: block;
-}
-.blog-index .title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 1.25rem;
-  line-height: 1.3;
-}
-.blog-index .description {
-  margin: 0.35rem 0 0;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-.blog-index .date {
-  margin: 0.35rem 0 0;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-}
-.blog-index ul li a:hover .title,
-.blog-index ul li a:hover .date {
-  color: var(--accent-cyan);
-}
-.blog-index ul a:hover img {
-  box-shadow: var(--window-shadow);
-}
-.blog-index ul a:focus-visible {
-  outline: 3px solid var(--accent-secondary);
-  outline-offset: 4px;
-  border-radius: 12px;
-}
-@media (max-width: 720px) {
-  .blog-index ul {
-    gap: 1.5rem;
+
+/* Website mode drops "Read elsewhere" on phones; here it holds the feed
+   and the other blog, so it stays, under the posts. */
+@media (max-width: 47.5em) {
+  main.blog-index {
+    padding-top: 36px;
   }
-  .blog-index ul li {
-    width: 100%;
-    text-align: center;
+
+  .blog-index .blog-index-lede {
+    margin-bottom: 28px;
+    font-size: 1rem;
   }
-  .blog-index ul li:first-child {
-    margin-bottom: 0;
+
+  .blog-index .blog-index-posts li {
+    grid-template-columns: minmax(0, 1fr) 5.5rem;
+    grid-template-areas: "date cover" "main cover";
+    gap: 6px 16px;
+    padding: 16px;
   }
-  .blog-index ul li:first-child .title {
-    font-size: 1.563em;
+
+  .blog-index .date {
+    grid-area: date;
+    padding-top: 0;
+  }
+
+  .blog-index .blog-index-main {
+    grid-area: main;
+  }
+
+  .blog-index .blog-index-posts img {
+    grid-area: cover;
+    aspect-ratio: 4 / 3;
+  }
+
+  .blog-index .blog-index-elsewhere {
+    display: block;
   }
 }

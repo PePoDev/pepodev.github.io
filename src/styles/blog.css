@@ -271,9 +271,9 @@
   color: var(--text-primary);
 }
 
-/* Standalone article pages (src/app/(post)/blog/[slug]/page.tsx). Markdown
-   renders as the post's <Content />, which the page's own scoped stylesheet
-   (post.css) does not reach, so the article styles live here. */
+/* Base article styles of the post pages (src/app/(post)/blog/[slug]/) and
+   garden notes. Post pages restyle them in website mode's look inside
+   main.blog-post (post.css), and the garden adjusts them in garden.css. */
 .prose {
   max-width: 720px;
   margin: 0 auto;

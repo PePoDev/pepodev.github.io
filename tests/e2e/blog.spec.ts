@@ -86,16 +86,22 @@ async function axeViolations(page: Page, rules: string[]) {
   }, rules);
 }
 
+// The blog pages wear website mode's header: the brand home, Writing (the
+// blog) in the site nav, and the feed where website mode has its mode switch.
 async function expectSiteHeader(page: Page) {
-  const nav = page.getByRole("navigation", { name: "Site", exact: true });
+  const header = page.locator(".website-header");
+  const nav = header.getByRole("navigation", { name: "Site", exact: true });
   await expect(
-    page.getByRole("link", { name: "PePoDev", exact: true }),
+    header.getByRole("link", { name: "pepo.dev home", exact: true }),
   ).toHaveAttribute("href", "/");
   await expect(
-    nav.getByRole("link", { name: "Blog", exact: true }),
+    nav.getByRole("link", { name: "Writing", exact: true }),
   ).toHaveAttribute("href", "/blog/");
   await expect(
-    nav.getByRole("link", { name: "RSS", exact: true }),
+    nav.getByRole("link", { name: "Resume", exact: true }),
+  ).toHaveAttribute("href", "/resume/");
+  await expect(
+    header.getByRole("link", { name: "RSS feed", exact: true }),
   ).toHaveAttribute("href", "/rss.xml");
 }
 
@@ -152,18 +158,222 @@ for (const viewport of [
       ).toHaveAttribute("href", "/rss.xml");
       await expectNoHorizontalOverflow(page);
 
-      await page.getByRole("link", { name: "PePoDev", exact: true }).click();
+      await page
+        .getByRole("link", { name: "pepo.dev home", exact: true })
+        .click();
       await expect(page).toHaveURL(/\/$/);
     });
   });
 }
+
+// Website mode's background in each theme (--ws-bg in website-mode.css).
+const websiteBackground = {
+  dark: "rgb(11, 15, 20)",
+  light: "rgb(244, 244, 239)",
+};
+const accents = ["green", "cyan", "purple", "amber"];
+const gravitonPath = `/blog/${posts[0].id}/`;
+
+// Saves the Settings preferences before the first page loads, as a returning
+// visitor has them.
+async function savePrefs(
+  page: Page,
+  prefs: { theme?: string; accent?: string } | null,
+  legacyTheme?: string,
+) {
+  await page.addInitScript(
+    ([prefs, legacyTheme]) => {
+      if (sessionStorage.getItem("blog-spec-prefs")) return;
+      sessionStorage.setItem("blog-spec-prefs", "1");
+      localStorage.clear();
+      if (prefs) {
+        localStorage.setItem("pepodev.desktopPrefs", JSON.stringify(prefs));
+      }
+      if (legacyTheme) localStorage.setItem("pepodev.theme", legacyTheme);
+    },
+    [prefs, legacyTheme ?? null] as const,
+  );
+}
+
+async function seriousViolations(page: Page, rules?: string[]) {
+  await page.addScriptTag({ content: axeSource });
+  return page.evaluate(async (values) => {
+    const axe = (window as unknown as { axe: any }).axe;
+    const results = await axe.run(document, {
+      resultTypes: ["violations"],
+      ...(values ? { runOnly: { type: "rule", values } } : {}),
+    });
+    return results.violations
+      .filter((v: any) => v.impact === "serious" || v.impact === "critical")
+      .map(
+        (v: any) =>
+          `${v.id}: ${v.nodes
+            .slice(0, 3)
+            .map((n: any) => n.target.join(" "))
+            .join(", ")}`,
+      );
+  }, rules ?? null);
+}
+
+test("blog pages are website mode: its header, type, and dark green default", async ({
+  page,
+}) => {
+  const families = () =>
+    page.evaluate(async () => {
+      await document.fonts.ready;
+      return [...document.fonts]
+        .filter((font) => font.status === "loaded")
+        .map((font) => font.family.replace(/^["']|["']$/g, ""));
+    });
+  for (const path of ["/blog/", gravitonPath]) {
+    await page.goto(path);
+    const html = page.locator("html");
+    await expect(html).toHaveAttribute("data-site-mode", "website");
+    await expect(html).toHaveAttribute("data-theme", "dark");
+    await expect(html).toHaveCSS("--accent-primary", "#30d158");
+    await expect(page.locator(".blog-shell")).toHaveCSS(
+      "background-color",
+      websiteBackground.dark,
+    );
+    await expect(page.locator(".website-header .ws-brand .ws-mark")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCSS(
+      "font-family",
+      /^"IBM Plex Sans"/,
+    );
+    // Website type only: the desktop's Inter and JetBrains Mono stay unused.
+    const loaded = await families();
+    expect(loaded, path).toContain("IBM Plex Sans");
+    expect(loaded, path).toContain("IBM Plex Mono");
+    expect(
+      loaded.filter((family) => ["Inter", "JetBrains Mono"].includes(family)),
+      path,
+    ).toEqual([]);
+  }
+});
+
+test("the blog skip link shows its text and lands in the main content", async ({
+  page,
+}) => {
+  for (const path of ["/blog/", gravitonPath]) {
+    await page.goto(path);
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: "Skip to content" });
+    await expect(skip).toBeFocused();
+    await expect(skip).toBeInViewport();
+    // Website mode's ink-on-paper colours, not a link colour on the ink.
+    const { color, background } = await skip.evaluate((link) => {
+      const style = getComputedStyle(link);
+      return { color: style.color, background: style.backgroundColor };
+    });
+    expect(color, path).toBe(websiteBackground.dark);
+    expect(background, path).not.toBe(color);
+    await page.keyboard.press("Enter");
+    await expect(page.locator("main#blog-main")).toBeFocused();
+  }
+});
+
+test("the saved theme and accent apply to blog pages from <head>", async ({
+  page,
+}) => {
+  await savePrefs(page, { theme: "light", accent: "purple" });
+  for (const path of ["/blog/", gravitonPath]) {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+    // The script runs in <head>, before the body is parsed or painted.
+    expect(
+      await page.evaluate(() =>
+        [...document.head.querySelectorAll("script")].some((script) =>
+          script.text.includes("Apply the saved website theme"),
+        ),
+      ),
+      path,
+    ).toBe(true);
+    const html = page.locator("html");
+    await expect(html).toHaveAttribute("data-theme", "light");
+    await expect(html).toHaveCSS("--accent-primary", "#bf5af2");
+    await expect(page.locator(".blog-shell")).toHaveCSS(
+      "background-color",
+      websiteBackground.light,
+    );
+  }
+});
+
+test("blog pages fall back to the mirrored theme and follow other tabs", async ({
+  page,
+  context,
+}) => {
+  // Preferences without a theme read the pepodev.theme mirror.
+  await savePrefs(page, { accent: "amber" }, "light");
+  await page.goto(postPath);
+  const html = page.locator("html");
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect(html).toHaveCSS("--accent-primary", "#ff9f0a");
+
+  // Settings saved in another tab (the desktop) apply at once.
+  const other = await context.newPage();
+  await other.goto("/robots.txt");
+  await other.evaluate(() =>
+    localStorage.setItem(
+      "pepodev.desktopPrefs",
+      JSON.stringify({ theme: "dark", accent: "cyan" }),
+    ),
+  );
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await expect(html).toHaveCSS("--accent-primary", "#64d2ff");
+  await expect(page.locator(".blog-shell")).toHaveCSS(
+    "background-color",
+    websiteBackground.dark,
+  );
+});
+
+for (const theme of ["dark", "light"] as const) {
+  test(`blog pages fit and pass axe in the ${theme} theme`, async ({ page }) => {
+    await savePrefs(page, { theme, accent: "purple" });
+    for (const viewport of [
+      { width: 1440, height: 900 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      for (const path of ["/blog/", gravitonPath, postPath]) {
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+        await expectNoHorizontalOverflow(page);
+        expect(
+          await seriousViolations(page),
+          `${path} at ${viewport.width}px`,
+        ).toEqual([]);
+      }
+    }
+  });
+}
+
+test("blog text keeps AA contrast for every Settings accent", async ({
+  page,
+}) => {
+  await page.goto("/robots.txt");
+  for (const theme of ["dark", "light"]) {
+    for (const accent of accents) {
+      await page.evaluate(
+        (prefs) =>
+          localStorage.setItem("pepodev.desktopPrefs", JSON.stringify(prefs)),
+        { theme, accent },
+      );
+      for (const path of ["/blog/", gravitonPath]) {
+        await page.goto(path);
+        expect(
+          await seriousViolations(page, ["color-contrast"]),
+          `${path}, ${theme} theme, ${accent} accent`,
+        ).toEqual([]);
+      }
+    }
+  }
+});
 
 test("the blog index lists real titles and dates, newest first", async ({
   page,
 }) => {
   await page.goto("/blog/");
 
-  const cards = page.locator("main li");
+  const cards = page.getByRole("region", { name: "Posts" }).locator("li");
   await expect(cards.locator(".title")).toHaveText(posts.map((p) => p.title));
   await expect(cards.locator(".date")).toHaveText(posts.map((p) => p.date));
 });
@@ -184,10 +394,10 @@ test("the blog index has its own title, an h1, post descriptions, and a site hea
   await expect(
     page
       .getByRole("navigation", { name: "Site", exact: true })
-      .getByRole("link", { name: "Blog" }),
+      .getByRole("link", { name: "Writing" }),
   ).toHaveAttribute("aria-current", "page");
 
-  const cards = page.locator("main li");
+  const cards = page.getByRole("region", { name: "Posts" }).locator("li");
   await expect(cards.locator("h2.title")).toHaveCount(posts.length);
   await expect(cards.locator(".description")).toHaveCount(posts.length);
   await expect(cards.first().locator(".description")).toHaveText(
@@ -216,11 +426,15 @@ test("post pages use the post title and publish date", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "AWS Local Zone Bangkok Launch",
   );
-  await expect(page.locator(".title time")).toHaveAttribute(
-    "datetime",
-    "2023-03-13T14:22:51.000Z",
-  );
-  await expect(page.locator(".title time")).toHaveText("Mar 13, 2023");
+  const date = page.locator(".post-head .post-date time");
+  await expect(date).toHaveAttribute("datetime", "2023-03-13T14:22:51.000Z");
+  await expect(date).toHaveText("Mar 13, 2023");
+  // The section, not the page: the post is inside Writing.
+  await expect(
+    page
+      .getByRole("navigation", { name: "Site", exact: true })
+      .getByRole("link", { name: "Writing" }),
+  ).toHaveAttribute("aria-current", "true");
 });
 
 test("article Markdown gets the reading styles and responsive images", async ({
@@ -229,10 +443,16 @@ test("article Markdown gets the reading styles and responsive images", async ({
   await page.goto(postPath);
 
   const prose = page.locator(".prose");
-  await expect(prose.locator("p a").first()).toHaveCSS(
-    "color",
-    "rgb(100, 210, 255)",
-  );
+  // Links take website mode's accent text colour (--ws-accent).
+  const accent = await prose.evaluate((element) => {
+    const probe = document.createElement("span");
+    probe.style.color = "var(--ws-accent)";
+    element.append(probe);
+    const color = getComputedStyle(probe).color;
+    probe.remove();
+    return color;
+  });
+  await expect(prose.locator("p a").first()).toHaveCSS("color", accent);
   await expect(prose.locator(":scope > p").first()).not.toHaveCSS(
     "margin-bottom",
     "0px",
@@ -256,7 +476,10 @@ test("post pages declare their language, share metadata, and structured data", a
       post.lang === "th" ? "th_TH" : "en_US",
     );
     // English page chrome stays marked as English inside Thai posts.
-    await expect(page.locator(".site-header")).toHaveAttribute("lang", "en");
+    await expect(page.locator(".website-header")).toHaveAttribute(
+      "lang",
+      "en",
+    );
 
     // The cover is decorative on the page (the h1 follows it); share cards
     // describe it instead of reusing the site default.
@@ -372,10 +595,10 @@ test("every post's article file has the body its page renders", async ({ page })
     const article = await fetchArticle(page, post.id);
     expect(article.id).toBe(post.id);
     await page.goto(`/blog/${encodeURIComponent(post.id)}/`);
-    // The page renders the same document inside .prose, after its title
-    // block; compare what each element is, says and shows. (React drops the
-    // whitespace between table cells that the HTML string keeps, so text is
-    // compared without whitespace.)
+    // The page renders the same document inside .prose (its title block sits
+    // outside); compare what each element is, says and shows. (React drops
+    // the whitespace between table cells that the HTML string keeps, so text
+    // is compared without whitespace.)
     const describe = (elements: Element[]) =>
       elements.map((element) => ({
         tag: element.tagName,
@@ -394,7 +617,7 @@ test("every post's article file has the body its page renders", async ({ page })
         const prose = document.querySelector(".prose")!;
         const body = new DOMParser().parseFromString(html, "text/html").body;
         return {
-          fromPage: describe([...prose.children].filter((element) => !element.matches(".title"))),
+          fromPage: describe([...prose.children]),
           fromFile: describe([...body.children]),
         };
       },

@@ -32,3 +32,24 @@ export function getPostLanguage(post: BlogEntry): "th" | "en" {
     ? "th"
     : "en";
 }
+
+const WORDS_PER_MINUTE = 230;
+// Thai has no spaces between words; ICU's dictionary segmenter finds them.
+const wordSegmenter = new Intl.Segmenter("th", { granularity: "word" });
+
+/**
+ * Estimated reading time in whole minutes (at least 1): the words of the
+ * post's prose, without code blocks, image alt text, link URLs or HTML.
+ */
+export function getReadingMinutes(post: BlogEntry): number {
+  const prose = post.body
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/<[^>]+>/g, " ");
+  let words = 0;
+  for (const segment of wordSegmenter.segment(prose)) {
+    if (segment.isWordLike) words += 1;
+  }
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
+}

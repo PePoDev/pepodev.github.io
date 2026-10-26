@@ -1,16 +1,15 @@
-// Header for the standalone pages (blog index, posts, and 404), so visitors
-// arriving from search or a shared link can reach the rest of the site.
+// Header for the 404 page, so visitors arriving from a broken link can reach
+// the rest of the site. (The blog pages and the garden use website mode's
+// header: BlogShell.tsx, GardenShell.tsx.)
 import type { CSSProperties } from "react";
 import "./SiteHeader.css";
 
 interface SiteHeaderProps {
   /** Max width in px, to line up with the page's content column. */
   width?: number;
-  /** Marks the Blog link as the current page (the blog index). */
-  current?: "blog";
 }
 
-export function SiteHeader({ width = 1020, current }: SiteHeaderProps) {
+export function SiteHeader({ width = 1020 }: SiteHeaderProps) {
   return (
     <header
       className="site-header"
@@ -22,9 +21,7 @@ export function SiteHeader({ width = 1020, current }: SiteHeaderProps) {
           PePoDev
         </a>
         <nav className="site-header-nav" aria-label="Site">
-          <a href="/blog/" aria-current={current === "blog" ? "page" : undefined}>
-            Blog
-          </a>
+          <a href="/blog/">Blog</a>
           <a href="/rss.xml">RSS</a>
         </nav>
       </div>

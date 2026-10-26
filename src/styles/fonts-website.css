@@ -1,8 +1,9 @@
-/* Website mode type, also used by the garden: IBM Plex Sans (latin), IBM Plex
-   Sans Thai (thai) and IBM Plex Mono (latin), 400-600, as --font-plex-sans,
-   --font-plex-thai and --font-plex-mono (read by website-mode.css). Imported
-   only by the root layouts that render website-mode type ((home) and
-   (garden)), so other pages carry neither these rules nor the files.
+/* Website mode type, also used by the blog pages and the garden: IBM Plex
+   Sans (latin), IBM Plex Sans Thai (thai) and IBM Plex Mono (latin), 400-600,
+   as --font-plex-sans, --font-plex-thai and --font-plex-mono (read by
+   website-mode.css). Imported only where website-mode type renders (the
+   (home) and (garden) layouts, BlogShell.tsx), so other pages carry neither
+   these rules nor the files.
 
    Committed files and Google Fonts' @font-face rules, like fonts-desktop.css.
    Plex Mono has a metric-adjusted Courier New fallback face ahead of its
