@@ -29,6 +29,35 @@ const QUOTES = [
     text: "Walking on water and developing software from a specification are easy if both are frozen.",
     author: "Edward V. Berard",
   },
+  { text: "Hope is not a strategy.", author: "Traditional SRE saying" },
+  { text: "Everything fails, all the time.", author: "Werner Vogels" },
+  { text: "You build it, you run it.", author: "Werner Vogels" },
+  { text: "Simplicity is prerequisite for reliability.", author: "Edsger W. Dijkstra" },
+  { text: "Premature optimization is the root of all evil.", author: "Donald Knuth" },
+  { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
+  {
+    text: "There are only two hard things in Computer Science: cache invalidation and naming things.",
+    author: "Phil Karlton",
+  },
+  {
+    text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
+    author: "Martin Fowler",
+  },
+  {
+    text: "A distributed system is one in which the failure of a computer you didn't even know existed can render your own computer unusable.",
+    author: "Leslie Lamport",
+  },
+  {
+    text: "The cheapest, fastest, and most reliable components are those that aren't there.",
+    author: "Gordon Bell",
+  },
+  {
+    text: "Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away.",
+    author: "Antoine de Saint-Exupéry",
+  },
+  { text: "In the face of ambiguity, refuse the temptation to guess.", author: "Tim Peters" },
+  { text: "Errors should never pass silently.", author: "Tim Peters" },
+  { text: "If it hurts, do it more often.", author: "Martin Fowler" },
 ];
 
 // The first quote reads in quotation marks until the visitor asks for another.
