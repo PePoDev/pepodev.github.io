@@ -366,8 +366,7 @@ test("reset desktop and reset all settings clear saved icon positions", async ({
   expect(await getSavedIconKeys(page)).toHaveLength(2);
 
   await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: "Settings" })
+    .locator("#taskbar-settings")
     .click();
   // Like Reset Desktop, the first click only asks for confirmation, and
   // clicking elsewhere cancels it.

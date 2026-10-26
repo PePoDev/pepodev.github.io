@@ -255,6 +255,26 @@ function AudioStatusButton() {
   );
 }
 
+// Settings has no desktop icon: it opens from here. A [data-open-app]
+// launcher, so the desktop opens (or focuses) the window on a click
+// (runtime.tsx) and the parse-time input script keeps a press made before
+// the boot.
+function SettingsButton() {
+  return (
+    <button id="taskbar-settings" type="button" data-open-app="settings" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
 // Named by its text, the time and date. DesktopClockScript writes them
 // before first paint (hence suppressHydrationWarning: the server renders
 // them empty, having no visitor's clock), so the button is never blank or
@@ -334,6 +354,7 @@ export function Taskbar() {
       </div>
       <div id="taskbar-tray">
         <ModeSwitch id="taskbar-site-mode" variant="taskbar" />
+        <SettingsButton />
         <AudioStatusButton />
         <ClockButton now={now} />
       </div>

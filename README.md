@@ -348,7 +348,8 @@ tests.
   `#taskbar-start` (`aria-expanded`, `aria-controls`),
   `#taskbar-command-palette`, `#taskbar-apps`
   (`button.taskbar-app.active(.focused)[data-app-id][title]`),
-  `#taskbar-site-mode`, `#taskbar-audio-status` (`title` Muted or Audio on,
+  `#taskbar-site-mode`, `#taskbar-settings` (`data-open-app="settings"`),
+  `#taskbar-audio-status` (`title` Muted or Audio on,
   `.muted`), `#taskbar-clock-button`, `#tray-panel(.visible)` (`#calendar-*`,
   `#audio-mute`, `#audio-volume`, `#audio-volume-value`);
   `#start-menu(.visible)` (`role="dialog"`, `tabindex="-1"`),
@@ -384,7 +385,10 @@ tests.
 `APPS` in `apps.ts` lists the 16 apps in window (taskbar) order: `id`,
 `title` (dialog name; the taskbar label is the part before "-"), `label`,
 default `width`/`height`, `startDescription`, `paletteDescription`, `icon`
-(default grid cell) and `mount`. `DESKTOP_ICON_ORDER` is the icon order.
+(default grid cell; absent for an app without a desktop icon) and `mount`.
+`DESKTOP_ICON_ORDER` is the icon order. Settings has no desktop icon: it
+opens from the taskbar tray (`#taskbar-settings`, a `[data-open-app]`
+launcher between the mode switch and the audio button).
 Each body is its own chunk, loaded by `app-chunks.ts`:
 
 - Loading: every launch and idle mount calls `loadAppChunk(appId)` before it
@@ -397,7 +401,8 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
 - Prefetching: a launcher's hover, focus, or press fetches its app; 2 s after
   the boot, in desktop mode, every app is fetched one at a time in idle time
   (each waiting at most 300 ms for it; idle mounts at most 1 s), in icon
-  order, except with Save-Data on or a 2G connection.
+  order and then the apps without an icon, except with Save-Data on or a 2G
+  connection.
 - Errors: a failed download, or a body that throws, shows "This app could not
   load" with "Try again" (`role="alert"`), which relaunches the window (from
   the keyboard it moves focus into the window first); the next launch also

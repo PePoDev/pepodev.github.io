@@ -46,11 +46,18 @@ test("renders the desktop and all launchers", async ({ page }) => {
   await expect(page.locator("#desktop")).toBeVisible();
   await expect(page.locator("#bg-canvas")).toBeVisible();
 
-  for (const app of apps) {
+  // Settings opens from the taskbar tray, not from a desktop icon.
+  for (const app of apps.filter(({ appId }) => appId !== "settings")) {
     await expect(
       page.locator("#desktop-icons").getByRole("button", { name: app.label }),
     ).toBeVisible();
   }
+  await expect(
+    page.locator('#desktop-icons [data-open-app="settings"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.locator("#taskbar-tray").getByRole("button", { name: "Settings", exact: true }),
+  ).toBeVisible();
 });
 
 test("switches modes from the taskbar and website header and persists each choice", async ({
@@ -334,7 +341,7 @@ test("falls back to desktop mode when the saved mode is invalid", async ({
   await expect(page.locator("#website")).toBeHidden();
 });
 
-test("opens every desktop app window from the icon grid", async ({ page }) => {
+test("opens every app window from its desktop icon or the tray", async ({ page }) => {
   for (const app of apps) {
     const window = await openApp(page, app.label, app.appId);
     await expect(window.locator(".window-title")).toHaveText(app.title);
@@ -839,12 +846,8 @@ test("music player and settings music controls update state", async ({
     "late_shift_protocol",
   );
 
-  // The Music window covers the Settings icon at 1280x720, so a click would
-  // land on the window; open Settings from the keyboard instead.
-  await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: "Settings" })
-    .press("Enter");
+  // Settings opens from the taskbar tray, which no window covers.
+  await page.locator("#taskbar-settings").click();
   const settings = page.locator("#window-settings");
   await expect(settings).toBeVisible();
   await expect(settings).toHaveAttribute("aria-hidden", "false");

@@ -21,7 +21,7 @@
 //   leaves a failure to the launch.
 import type { ComponentType } from "react";
 import type { AppProps } from "./app-api";
-import { DESKTOP_ICON_ORDER, isAppId, type AppId } from "./apps";
+import { APP_IDS, DESKTOP_ICON_ORDER, isAppId, type AppId } from "./apps";
 import { whenIdle } from "./idle";
 import { isDesktopSiteMode } from "./site-mode";
 
@@ -146,6 +146,12 @@ const IDLE_PREFETCH_DELAY_MS = 2000;
 // take that long (13 apps over about a minute at 4x CPU slowdown).
 const IDLE_PREFETCH_TIMEOUT_MS = 300;
 
+// The desktop icons' order, then the apps without an icon (Settings).
+const PREFETCH_ORDER: readonly AppId[] = [
+  ...DESKTOP_ICON_ORDER,
+  ...APP_IDS.filter((id) => !DESKTOP_ICON_ORDER.includes(id)),
+];
+
 function startIdlePrefetch(): () => void {
   let timer = 0;
   let cancelIdle: (() => void) | null = null;
@@ -155,7 +161,7 @@ function startIdlePrefetch(): () => void {
   const fetchNext = () => {
     cancelIdle = null;
     if (stopped || !isDesktopSiteMode() || savesData()) return;
-    const appId = DESKTOP_ICON_ORDER.find((id) => !settled.has(id) && !pending.has(id));
+    const appId = PREFETCH_ORDER.find((id) => !settled.has(id) && !pending.has(id));
     if (!appId) return;
     loadAppChunk(appId).catch(() => {}).finally(scheduleNext);
   };

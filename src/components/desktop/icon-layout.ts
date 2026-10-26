@@ -49,7 +49,7 @@ export const DESKTOP_LINKS: readonly DesktopLink[] = (socialLinks as SocialLink[
 /** Every icon as the grid sees it: app icons in markup order, then links in shortcut order. */
 export const GRID_ICONS: readonly GridIcon[] = [
   ...DESKTOP_ICON_ORDER.map((appId): GridIcon => {
-    const { icon } = getApp(appId)!;
+    const icon = getApp(appId)!.icon!;
     return { id: appId, link: false, col: icon.col, row: icon.row, group: icon.group, index: icon.index };
   }),
   ...[...DESKTOP_LINKS]

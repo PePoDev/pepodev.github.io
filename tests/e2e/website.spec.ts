@@ -291,8 +291,7 @@ test("website mode follows the Settings theme and is dark by default", async ({
     .getByRole("button", { name: "Switch to desktop mode" })
     .click();
   await page
-    .locator("#desktop-icons")
-    .getByRole("button", { name: "Settings" })
+    .locator("#taskbar-settings")
     .click();
   await page
     .locator('#window-settings [data-setting="theme"]')

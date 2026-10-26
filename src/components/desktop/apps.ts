@@ -43,9 +43,11 @@ export interface AppDefinition {
   /**
    * Default desktop icon cell (the grid in icon-grid.ts): a column or row
    * number, "center" (+/- an offset), "right" or "bottom". "left-mid" icons
-   * move up next to the middle of the left column on short screens.
+   * move up next to the middle of the left column on short screens. Absent
+   * for an app without a desktop icon (Settings opens from the taskbar
+   * tray); every app in DESKTOP_ICON_ORDER has one.
    */
-  icon: { col: string; row: string; group?: "left-mid" | "utility"; index?: number };
+  icon?: { col: string; row: string; group?: "left-mid" | "utility"; index?: number };
   /**
    * When the body mounts. "open": on the first launch. "idle": once the
    * desktop has booted in desktop mode and the browser is idle, hidden in its
@@ -186,7 +188,6 @@ export const APPS: readonly AppDefinition[] = [
     height: 560,
     startDescription: "Customize desktop",
     paletteDescription: "Customize the desktop",
-    icon: { col: "5", row: "bottom" },
     mount: "open",
   },
   {
@@ -237,7 +238,8 @@ export const APPS: readonly AppDefinition[] = [
 
 /**
  * Desktop icon order: their order in #desktop-icons, which is the Tab order
- * and the order the grid places icons without a saved position in.
+ * and the order the grid places icons without a saved position in. Settings
+ * has no desktop icon: it opens from the taskbar tray (Taskbar.tsx).
  */
 export const DESKTOP_ICON_ORDER: readonly AppId[] = [
   "me",
@@ -255,7 +257,6 @@ export const DESKTOP_ICON_ORDER: readonly AppId[] = [
   "calculator",
   "trash",
   "terminal",
-  "settings",
 ];
 
 const byId = new Map(APPS.map((app) => [app.id, app]));

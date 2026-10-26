@@ -52,8 +52,8 @@ export async function resetPage(
 }
 
 /**
- * Opens an app from its desktop icon (a pointer open, so focus stays where
- * it was) and waits until its window is shown, focused and done fading in,
+ * Opens an app from its desktop icon, or Settings from its taskbar tray
+ * button (a pointer open, so focus stays where it was) and waits until its window is shown, focused and done fading in,
  * so screenshots see the window, not a blend, and until its body has
  * rendered (its code can arrive after the window opened; pass
  * `{ body: false }` when a test holds that code back on purpose).
@@ -67,6 +67,7 @@ export async function openApp(
   await page
     .locator("#desktop-icons")
     .getByRole("button", { name: label })
+    .or(page.locator(`#taskbar-tray [data-open-app="${appId}"]`))
     .click();
   const window = page.locator(`#window-${appId}`);
   await expect(window).toBeVisible();

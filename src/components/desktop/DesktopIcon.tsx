@@ -97,6 +97,8 @@ function useIconDrag(id: string, onTap?: () => void) {
 }
 
 export function DesktopIcon({ app }: { app: AppDefinition }) {
+  // Rendered for the apps in DESKTOP_ICON_ORDER, which all have one.
+  const icon = app.icon!;
   const state = useIconState(app.id);
   const setElement = useCallback((element: HTMLElement | null) => registerIconElement(app.id, element), [app.id]);
   const openApp = () => requestOpenApp(app.id);
@@ -108,10 +110,10 @@ export function DesktopIcon({ app }: { app: AppDefinition }) {
       type="button"
       className={"desktop-icon" + (state.dragging ? " dragging" : "")}
       data-open-app={app.id}
-      data-default-col={app.icon.col}
-      data-default-row={app.icon.row}
-      data-layout-group={app.icon.group}
-      data-layout-index={app.icon.index}
+      data-default-col={icon.col}
+      data-default-row={icon.row}
+      data-layout-group={icon.group}
+      data-layout-index={icon.index}
       data-desktop-icon-ready={state.ready ? "true" : undefined}
       style={iconStyle(state)}
       suppressHydrationWarning

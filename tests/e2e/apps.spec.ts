@@ -762,13 +762,21 @@ test("an app whose code fails to download can be tried again", async ({
   // The chunk fails (Turbopack tries it twice), then the network is back.
   let failing = true;
   await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
-    const response = await route.fetch();
-    const body = await response.text();
-    if (failing && (body.includes(CALCULATOR_CODE) || body.includes(TERMINAL_CODE))) {
-      await route.abort("failed");
-      return;
+    // Idle prefetching can leave a request in flight when the test ends
+    // (holdAppChunks in helpers.ts).
+    try {
+      const response = await route.fetch();
+      const body = await response.text();
+      if (failing && (body.includes(CALCULATOR_CODE) || body.includes(TERMINAL_CODE))) {
+        await route.abort("failed");
+        return;
+      }
+      await route.fulfill({ response, body });
+    } catch (error) {
+      if (!page.isClosed() && !/has been (closed|disposed)/.test(String(error))) {
+        throw error;
+      }
     }
-    await route.fulfill({ response, body });
   });
   await resetPage(page);
   const calculator = await openApp(page, "Calculator", "calculator", {
