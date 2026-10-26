@@ -498,9 +498,9 @@ test("re-launching or restoring Terminal and Gallery focuses their input", async
   const terminalInput = terminal.locator("[data-terminal-input]");
   await openWithKeyboard(page, "Calculator", "calculator");
 
-  // Already open: launching it again from the palette types into it.
+  // Already open: launching it again from Quick Access types into it.
   await page.keyboard.press("ControlOrMeta+K");
-  await expect(page.locator("#command-palette-input")).toBeFocused();
+  await expect(page.locator("#start-menu-search")).toBeFocused();
   await page.keyboard.type("terminal");
   await page.keyboard.press("Enter");
   await expect(terminalInput).toBeFocused();
@@ -558,10 +558,11 @@ test.describe("on a touch phone", () => {
     await expect(gallery).toHaveClass(/focused/);
     await expect(gallery.locator("#gallery-password")).not.toBeFocused();
 
-    // A keyboard launch (an external keyboard) still focuses the input.
+    // A keyboard launch (an external keyboard) still focuses the input, and
+    // Ctrl+K focuses the Quick Access search box even on a touch screen.
     await gallery.getByRole("button", { name: "Close Gallery" }).tap();
     await page.keyboard.press("ControlOrMeta+K");
-    await expect(page.locator("#command-palette-input")).toBeFocused();
+    await expect(page.locator("#start-menu-search")).toBeFocused();
     await page.keyboard.type("gallery");
     await page.keyboard.press("Enter");
     await expect(gallery.locator("#gallery-password")).toBeFocused();

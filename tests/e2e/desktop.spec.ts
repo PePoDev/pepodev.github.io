@@ -199,10 +199,7 @@ test("preserves desktop window state and ignores desktop shortcuts in website mo
     .click();
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+k");
-  await expect(page.locator("#command-palette")).toHaveAttribute(
-    "data-visible",
-    "false",
-  );
+  await expect(page.locator("#start-menu")).not.toHaveClass(/visible/);
 
   await page
     .locator("#website")
@@ -290,7 +287,7 @@ test("pauses the desktop animation loop in website mode and resumes it", async (
     .toBeGreaterThan(pausedCount);
 });
 
-test("defers the desktop command-palette hint while website mode is active", async ({
+test("defers the desktop's Quick Access tip while website mode is active", async ({
   page,
 }) => {
   await page.evaluate(() => {
@@ -631,7 +628,7 @@ test.describe("touch tablets in the desktop layout", () => {
   });
 });
 
-test("searches and launches apps from start menu and command palette", async ({
+test("searches and launches apps from Quick Access, opened by the Start button or Ctrl+K", async ({
   page,
 }) => {
   await page.getByRole("button", { name: "Open start menu" }).click();
@@ -649,18 +646,15 @@ test("searches and launches apps from start menu and command palette", async ({
 
   await page.locator("#desktop").click({ position: { x: 640, y: 120 } });
   await page.keyboard.press("ControlOrMeta+K");
-  await expect(page.locator("#command-palette")).toHaveAttribute(
-    "data-visible",
-    "true",
-  );
-  await page.locator("#command-palette-input").fill("gallery");
+  await expect(page.locator("#start-menu")).toHaveClass(/visible/);
+  await page.locator("#start-menu-search").fill("gallery");
   await page
-    .getByRole("button", { name: /Gallery Open protected pictures/ })
+    .getByRole("button", { name: /Gallery\s*Password protected pictures/ })
     .click();
   await expect(page.locator("#window-gallery")).toBeVisible();
 });
 
-test("command palette keyboard navigation runs desktop commands", async ({
+test("Quick Access runs desktop commands from the keyboard", async ({
   page,
 }) => {
   await page.evaluate(() => {
@@ -671,17 +665,14 @@ test("command palette keyboard navigation runs desktop commands", async ({
   await openApp(page, "Work", "work");
 
   await page.keyboard.press("ControlOrMeta+K");
-  await page.locator("#command-palette-input").fill("close all");
+  await page.locator("#start-menu-search").fill("close all");
   await page.keyboard.press("Enter");
-  await expect(page.locator("#command-palette")).toHaveAttribute(
-    "data-visible",
-    "false",
-  );
+  await expect(page.locator("#start-menu")).not.toHaveClass(/visible/);
   await expect(page.locator("#window-project")).toBeHidden();
   await expect(page.locator("#window-work")).toBeHidden();
 
   await page.keyboard.press("ControlOrMeta+K");
-  await page.locator("#command-palette-input").fill("toggle theme");
+  await page.locator("#start-menu-search").fill("toggle theme");
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(page.locator("html")).toHaveCSS(
@@ -690,10 +681,10 @@ test("command palette keyboard navigation runs desktop commands", async ({
   );
 
   await page.keyboard.press("ControlOrMeta+K");
-  await page.locator("#command-palette-input").fill("reset desktop");
+  await page.locator("#start-menu-search").fill("reset desktop");
   // Reset Desktop asks for a second Enter before it clears anything.
   await page.keyboard.press("Enter");
-  await expect(page.locator("#command-palette-status")).toContainText(
+  await expect(page.locator("#start-menu-status")).toContainText(
     "again",
   );
   await page.keyboard.press("Enter");

@@ -2,9 +2,9 @@
 // The Settings app. Appearance renders from the desktop preferences
 // (useDesktopPrefs) and changes them through updateDesktopPrefs, which
 // applies, saves and announces them (desktop:preferences), so a change made
-// elsewhere (the palette's Toggle Theme) shows here too. Music drives the
+// elsewhere (Quick Access's Toggle Theme) shows here too. Music drives the
 // Music player through its controller (music-settings.ts) and follows what the
-// player saves. Reset all settings, like the palette's Reset Desktop, only
+// player saves. Reset all settings, like Quick Access's Reset Desktop, only
 // runs on a second click, tap or Enter.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { experienceMap } from "@utils/desktop-prefs";
@@ -190,7 +190,7 @@ export default function SettingsApp({ data }: AppProps<"settings">) {
   }, [open]);
 
   const onReset = () => {
-    // Destructive, like the palette's Reset Desktop: the first click or tap
+    // Destructive, like Quick Access's Reset Desktop: the first click or tap
     // only asks for confirmation.
     if (!resetPrompt) {
       setResetPrompt(

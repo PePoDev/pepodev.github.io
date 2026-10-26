@@ -1,11 +1,10 @@
 "use client";
 // The desktop (#desktop panel): background, icons, link shortcuts, windows,
-// Start menu, taskbar, command palette and toasts. The (home) page renders
+// Quick Access (the Start menu), taskbar and toasts. The (home) page renders
 // it with each app's build-time data; it boots after hydration
 // (runtime.tsx). See README, "The React Desktop".
 import type { AppDataMap } from "@components/apps/app-data";
 import { APPS, DESKTOP_ICON_ORDER, getApp } from "./apps";
-import { CommandPalette } from "./CommandPalette";
 import { DesktopIcon, ExternalLinkIcon } from "./DesktopIcon";
 import { DESKTOP_LINKS } from "./icon-layout";
 import { ParticleBackground } from "./ParticleBackground";
@@ -43,7 +42,6 @@ export function Desktop({ appData }: { appData: AppDataMap }) {
 
       <StartMenu />
       <Taskbar />
-      <CommandPalette />
       <Toasts />
     </SiteModePanel>
   );

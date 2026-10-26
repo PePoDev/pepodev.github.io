@@ -71,9 +71,51 @@ html[data-experience="linux"][data-theme="light"] {
     top: calc(var(--desktop-inset-top) + 16px);
   }
 
+  /* Quick Access opens above the dock, taskbar or panel (below GNOME's top
+     bar), as tall as the free area allows. */
   :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) #start-menu {
     bottom: calc(var(--desktop-inset-bottom) + 8px);
-    max-height: min(560px, calc(100vh - var(--desktop-inset-top) - var(--desktop-inset-bottom) - 24px));
+    height: min(640px, calc(100vh - var(--desktop-inset-top) - var(--desktop-inset-bottom) - 24px));
+  }
+
+  [data-experience="macos"] #start-menu {
+    border-radius: calc(var(--mac-radius) + 4px);
+  }
+
+  [data-experience="windows"] #start-menu {
+    border-radius: 8px;
+  }
+
+  /* Windows 10's Start menu and KDE's Kickoff sit over their launcher, at the
+     left. */
+  [data-experience="windows"][data-experience-variant="10"] #start-menu,
+  [data-experience="linux"][data-experience-variant="kde"] #start-menu {
+    left: 0;
+    transform: scale(0.97);
+    transform-origin: bottom left;
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] #start-menu.visible,
+  [data-experience="linux"][data-experience-variant="kde"] #start-menu.visible {
+    transform: none;
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] #start-menu {
+    bottom: var(--desktop-inset-bottom);
+    border-radius: 0;
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #start-menu {
+    left: 8px;
+    border-radius: 10px;
+  }
+
+  /* GNOME searches from the top bar. */
+  [data-experience="linux"][data-experience-variant="gnome"] #start-menu {
+    top: calc(var(--desktop-inset-top) + 8px);
+    bottom: auto;
+    border-radius: 16px;
+    transform-origin: top center;
   }
 }
 

@@ -3,9 +3,10 @@
 A static personal website (portfolio, engineering blog, and digital garden),
 built with Next.js 16 (App Router, `output: "export"`) and served by GitHub
 Pages behind Cloudflare. It has two presentation modes: an interactive
-desktop (a React app with draggable windows, shortcuts, a command palette,
-work and project content, Markdown/MDX posts, a digital garden synced from
-Obsidian, music, tools, and games) and a conventional responsive website.
+desktop (a React app with draggable windows, shortcuts, a Quick Access
+launcher, work and project content, Markdown/MDX posts, a digital garden
+synced from Obsidian, music, tools, and games) and a conventional responsive
+website.
 The resume is a standalone page with PDF download.
 
 Keep it **static-first**: render content at build time. Only `/` hydrates
@@ -76,7 +77,7 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 | `src/components/Document.tsx`, `InlineScript.tsx`, `Prefetch.tsx` | The `<html>` shell, parse-time scripts, link prefetching |
 | `src/components/SiteHeader.tsx` | Header (home, Blog, RSS) for the 404 |
 | `src/components/blog/` | The blog pages' shell (website mode's header and footer) and `<head>` theme script |
-| `src/components/desktop/` | The React desktop: stores, window manager, overlays, icons, taskbar, menus, palette, app registry and app API (see The React Desktop) |
+| `src/components/desktop/` | The React desktop: stores, window manager, overlays (Quick Access, the tray), icons, taskbar, app registry and app API (see The React Desktop) |
 | `src/components/apps/` | One app per `<Name>App.tsx` (client body, its own chunk) and `<Name>App.data.ts` (build-time data); `app-data.ts` lists the loaders |
 | `src/components/WebsiteMode.tsx`, `src/components/website/` | Website mode (the `#website` panel, a Server Component) and its islands: Bangkok clock, copy e-mail |
 | `src/components/home/HomeHeadScripts.tsx` | Mode and theme scripts in `/`'s `<head>` |
@@ -262,12 +263,12 @@ the icon placement and clock scripts, and `<WebsiteMode />`.
 | `store.ts` | `createStore`, `useStore(store, selector)` (`useSyncExternalStore`; the server snapshot is the initial state), `commit(fn)` (state changes inside `flushSync`) |
 | `apps.ts` | The app registry, shared by server and client |
 | `window-manager.ts`, `Window.tsx` | Windows: open, minimize, maximize, close, focus, z-order, bounds, drag and resize, phone layout, focus hand-off, Escape, `desktop:open-app`, `desktop:close-all-windows`, first-visit Welcome |
-| `overlay-state.ts`, `palette.ts`, `StartMenu.tsx`, `CommandPalette.tsx`, `Taskbar.tsx` | Start menu, tray, palette (one open at a time, focus return, Reset Desktop confirmation, Ctrl/Cmd + K) and the taskbar |
+| `overlay-state.ts`, `quick-access.ts`, `StartMenu.tsx`, `Taskbar.tsx` | The overlays, Quick Access (the Start menu: apps, commands and links) and the tray (one open at a time, focus return, Reset Desktop confirmation, Ctrl/Cmd + K), and the taskbar |
 | `site-mode.ts` | `pepodev.viewMode`, `?blog=` rules, `site:mode-change`, mode switches (by delegation), scroll restore |
 | `prefs-core.ts`, `prefs.ts`, `system-audio.ts`, `toasts.ts` | Preferences, `desktop:preferences`, `desktop:toggle-theme`; `pepodev.systemAudio`, `desktop:audio-settings`; toasts, `desktop:show-toast` |
 | `icon-grid.ts`, `icon-layout.ts`, `DesktopIcon.tsx` | The shared icon grid (also inlined in the placement script) and icon state after hydration |
 | `deep-link.ts`, `blog-article.ts` | `?blog=<slug>`; the Blog app's article files |
-| `runtime.tsx`, `idle.ts` | The boot, early-input replay, `[data-open-app]` launchers, palette tip, idle mounts; `whenIdle(callback, timeout)` |
+| `runtime.tsx`, `idle.ts` | The boot, early-input replay, `[data-open-app]` launchers, Quick Access tip, idle mounts; `whenIdle(callback, timeout)` |
 | `app-chunks.ts`, `app-bodies.tsx`, `app-keys.ts`, `app-api.ts` | App code loading and prefetching, body rendering (loading, error, retry), keys for apps, the API apps use |
 | `DesktopScripts.tsx`, `taskbar-clock.ts` | The desktop's parse-time scripts |
 
@@ -291,9 +292,10 @@ the icon placement and clock scripts, and `<WebsiteMode />`.
 - Boot: stores start in their server state (all windows closed, site mode
   `null`, no preferences), which is what hydration sees. After hydration
   `useDesktopRuntime` boots in a microtask: preferences, toasts, overlays,
-  palette, site mode, icon layout, window manager, launchers, palette tip,
-  idle mounts, app keys, system audio, `?blog=`, then the replay of input
-  made before the boot; then it sets `window.__pepodevWindowManagerReady`.
+  Quick Access, site mode, icon layout, window manager, launchers, Quick
+  Access tip, idle mounts, app keys, system audio, `?blog=`, then the
+  replay of input made before the boot; then it sets
+  `window.__pepodevWindowManagerReady`.
 
 ### Parse-Time Scripts of the Desktop
 
@@ -306,11 +308,13 @@ stores take over with the same code:
   immediately": background, glass, radius, effects, with the defaults boot
   applies); early input (`window.__pepodevEarlyInput`). Until the boot it
   takes clicks on `[data-open-app]` launchers and the taskbar's Start,
-  palette, clock and audio buttons, Enter or Space on a desktop icon, and
-  Ctrl/Cmd + K, in order; the boot replays them and they count as
-  interaction (Welcome stays closed), and a launch from the keyboard (a
-  click with `detail` 0) moves focus into its window. A mode switch applies
-  at once, keeps the website scroll position
+  clock and audio buttons, Enter or Space on a desktop icon, and Ctrl/Cmd +
+  K, in order; the boot replays them and they count as interaction
+  (Welcome stays closed), a launch from the keyboard (a click with `detail`
+  0) moves focus into its window, and Ctrl/Cmd + K (`{ type:
+  "quick-access" }`) opens Quick Access with focus in its search box, also
+  when pressed again before the boot. A mode switch applies at once, keeps
+  the website scroll position
   (`window.__pepodevWebsiteScrollY`, which site mode takes over at the
   boot), and counts as interaction too. Until website mode's Copy email
   button hydrates, a press on it copies at once
@@ -348,27 +352,31 @@ tests.
   `.window-controls` (`.min-btn`, `.max-btn` reading Maximize or Restore in
   `title` and `aria-label`, `.close-btn`), `.window-content`, and
   `.window-resize-handle[data-resize-direction]`; `#taskbar`,
-  `#taskbar-start` (`aria-expanded`, `aria-controls`),
-  `#taskbar-command-palette`, `#taskbar-apps`
+  `#taskbar-start` (`aria-expanded`, `aria-controls`), `#taskbar-apps`
   (`button.taskbar-app.active(.focused)[data-app-id][title]`),
   `#taskbar-site-mode`, `#taskbar-settings` (`data-open-app="settings"`),
   `#taskbar-audio-status` (`title` Muted or Audio on,
   `.muted`), `#taskbar-clock-button`, `#tray-panel(.visible)` (`#calendar-*`,
-  `#audio-mute`, `#audio-volume`, `#audio-volume-value`);
-  `#start-menu(.visible)` (`role="dialog"`, `tabindex="-1"`),
-  `#start-menu-search`, `.start-menu-app[data-open-app]`,
-  `#start-menu-empty` (`role="status"`); `#command-palette` (`data-visible`,
-  `aria-modal`), `#command-palette-input`,
-  `.command-palette-item[data-type][data-id]` (`.selected`, `.confirming`),
-  `#command-palette-matches`, `.command-palette-section(-title)`,
-  `#command-palette-status` (`data-tone`); `#toast-container` (`aria-live`)
-  with `.toast(.toast-show|.toast-hide)`, `.toast-icon`, `.toast-message`,
-  `.toast-close`. Hidden Start menu and palette items are `display: none`.
+  `#audio-mute`, `#audio-volume`, `#audio-volume-value`); Quick Access,
+  `#start-menu(.visible)` (`role="dialog"` named "Start menu",
+  `tabindex="-1"`, no `aria-modal`), with `#start-menu-search`,
+  `#start-menu-results` holding `#start-menu-matches` (the flat list while
+  searching) and `.start-menu-section` (`role="group"`, `hidden` while
+  searching) with `.start-menu-section-title` (Apps, Commands, Links), the
+  items `.start-menu-item[data-type][data-id]` (`.selected`, `.confirming`):
+  `button.start-menu-app[data-open-app]`, `button.start-menu-command`,
+  `a.start-menu-link[href][target="_blank"]`, and `#start-menu-status`
+  (`role="status"`, `data-tone="warning"` while Reset Desktop is armed);
+  `#toast-container` (`aria-live`) with `.toast(.toast-show|.toast-hide)`,
+  `.toast-icon`, `.toast-message`, `.toast-close`. Hidden Quick Access
+  items are `display: none`.
 - Events on `document`: in `desktop:open-app` `{ appId, keyboard }`
   (`keyboard: true` moves focus into the window, as a key press does),
-  `desktop:close-all-windows`, `desktop:open-command-palette`,
-  `desktop:toggle-theme`, `desktop:show-toast` `{ message, duration }` (plain
-  text); in and out `desktop:overlay-open` `{ id }`,
+  `desktop:close-all-windows`, `desktop:open-quick-access` (opens Quick
+  Access with focus in its search box; `desktop:open-command-palette`, its
+  older name, is an alias), `desktop:toggle-theme`, `desktop:show-toast`
+  `{ message, duration }` (plain text); in and out `desktop:overlay-open`
+  `{ id }`,
   `desktop:audio-settings` `{ volume, muted }`; out `desktop:preferences`,
   `site:mode-change` `{ mode }`. On the window element (out):
   `desktop:window-open` `{ appId, firstOpen }`, `desktop:window-focus`
@@ -378,20 +386,21 @@ tests.
   `__pepodevEarlyCopyEmail`, `__pepodevCopyEmailReady`,
   `__pepoMusicController`.
 - Key listener order: app handlers (`useAppKeyboard`, capture phase on
-  `document`), then React's handlers, overlays and palette (`document`,
-  bubble), then the window manager's Escape on `window`, which skips a key
-  someone called `preventDefault()` on. The garden frame forwards Escape and
-  Ctrl/Cmd + K as a `keydown` on the parent `document`.
+  `document`), then React's handlers (Quick Access's arrow keys and
+  Enter), the overlays' Escape and Ctrl/Cmd + K (`document`, bubble), then
+  the window manager's Escape on `window`, which skips a key someone called
+  `preventDefault()` on. The garden frame forwards Escape and Ctrl/Cmd + K
+  as a `keydown` on the parent `document`.
 
 ### App Registry
 
 `APPS` in `apps.ts` lists the 16 apps in window (taskbar) order: `id`,
 `title` (dialog name; the taskbar label is the part before "-"), `label`,
-default `width`/`height`, `startDescription`, `paletteDescription`, `icon`
-(default grid cell; absent for an app without a desktop icon) and `mount`.
-`DESKTOP_ICON_ORDER` is the icon order. Settings has no desktop icon: it
-opens from the taskbar tray (`#taskbar-settings`, a `[data-open-app]`
-launcher between the mode switch and the audio button).
+default `width`/`height`, `startDescription` (shown and searched in Quick
+Access), `icon` (default grid cell; absent for an app without a desktop
+icon) and `mount`. `DESKTOP_ICON_ORDER` is the icon order. Settings has no
+desktop icon: it opens from the taskbar tray (`#taskbar-settings`, a
+`[data-open-app]` launcher between the mode switch and the audio button).
 Each body is its own chunk, loaded by `app-chunks.ts`:
 
 - Loading: every launch and idle mount calls `loadAppChunk(appId)` before it
@@ -483,8 +492,8 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   slug pending until the handler registers (no time limit); `false` shows
   "Article not found". Choosing website mode or closing Blog drops it.
   `focus` is the late-mount rule above, checked as the handler runs (and
-  false while an overlay is open): when false, the visitor has moved on (the
-  palette, the Start menu, another app) and the handler opens the target
+  false while an overlay is open): when false, the visitor has moved on
+  (Quick Access, another app) and the handler opens the target
   without moving focus. What the handler opens commits at once, before the
   keys typed while the app loaded replay.
 - Engines (Music, SRE game, Snake, White Noise): create the engine object in a
@@ -567,8 +576,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   root class (`.site-header .site-header-nav a`, `main.blog-index`). Do not
   use CSS Modules for classes tests or other stylesheets reference. A page's
   rule on `body` becomes a class through `bodyClassName`.
-- Preserve keyboard access, stable `global.css` selectors, command-palette
-  stacking, and case-insensitive `Ctrl`/`Cmd` + `K`.
+- Preserve keyboard access, stable `global.css` selectors, Quick Access
+  stacking (above windows and the taskbar), and case-insensitive
+  `Ctrl`/`Cmd` + `K`.
 - Explicit `display` rules on hidden panels require a `[hidden]` override.
 - `base.css` locks only `html[data-site-mode="desktop"]` to one screen; every
   other page must scroll.
@@ -594,19 +604,21 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   `--app-accent-text`, `--app-primary-text`, or `--app-amber-text`
   (`app-base.css`, set only in the light theme, falling back to the accent
   in the dark one), or `--text-primary`/`--text-secondary`, and keeps the
-  accent for borders and tints. Labels on the translucent Start menu, tray,
-  and taskbar use `--text-secondary`. Surfaces that stay dark in both themes
-  (the Snake board, the SRE game, Terminal) point the `--text-*` variables at
-  the `--dark-text-*` ones in `variables.css`. In the light theme the
-  garden's links, inline code, and callout titles use their accent's hue at
-  OKLCH lightness 0.42 (`garden.css`). The opaque-window axe test in
-  `apps.spec.ts` checks the content apps; glass hides backgrounds from axe.
+  accent for borders and tints. Labels on the translucent Quick Access
+  menu, tray, and taskbar use `--text-secondary`. Surfaces that stay dark
+  in both themes (the Snake board, the SRE game, Terminal) point the
+  `--text-*` variables at the `--dark-text-*` ones in `variables.css`. In
+  the light theme the garden's links, inline code, and callout titles use
+  their accent's hue at OKLCH lightness 0.42 (`garden.css`). The
+  opaque-window axe test in `apps.spec.ts` checks the content apps; glass
+  hides backgrounds from axe.
   One known gap: in the light theme, a window at low glass opacity stacked
   over one of those dark windows shows grey behind its text.
 - Honor `prefers-reduced-motion`: the desktop background paints one still
   frame, window, icon, app, and website-mode animations stop, and toasts
   fade without sliding. Keep focus and selection visible in
-  forced-colors mode (the selected palette item gets a `Highlight` outline).
+  forced-colors mode (the highlighted Quick Access item gets a `Highlight`
+  outline).
 - Website mode is dark by default and follows the Settings theme
   (`data-theme="light"` on `<html>`) and accent, both applied by the `<head>`
   script before first paint (on `/` and on the blog pages; the garden
@@ -762,8 +774,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
 - Windows are non-modal dialogs (`role="dialog"`) labelled by their title.
   `Escape` closes the focused window after overlays handle it. Opening a
   window from the keyboard focuses it before `desktop:window-open`. Every
-  launch (a new window, a restore, or an already open one, from an icon, the
-  Start menu, the palette, or the taskbar) and every hand-off of focus into
+  launch (a new window, a restore, or an already open one, from an icon,
+  Quick Access, or the taskbar) and every hand-off of focus into
   the next window then dispatches `desktop:window-focus`, whose
   `detail.keyboard` says whether DOM focus moved into the window, and bumps
   the app's `focusRequest`. Closing or minimizing the focused window hands
@@ -775,7 +787,7 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   buttons are named by their label, which phone widths hide only visually.
 - After a click or tap on a taskbar window button, the button gives up focus,
   so the window gets the keys and Enter does not press it again; Tab then
-  reaches the first window button and Shift+Tab the palette button. From the
+  reaches the first window button and Shift+Tab the Start button. From the
   keyboard, focus stays on it or follows into the window.
 - Windows drag by the title bar and resize from their handles with a mouse, a
   finger, or a pen (pointer events; above 768px the title bar and handles are
@@ -788,25 +800,45 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   is a labelled tab stop; an inner scroller of its own, such as the SRE
   game's boot log, is a labelled tab stop too. Toasts sit below a maximized
   window's title bar.
-- The Start menu, tray panel, and command palette are `inert` while closed,
-  and only one is open at a time: opening one closes the others. Tabbing out
-  of the Start menu or tray closes it. The open palette is modal, and its
-  search box takes focus as it opens, so keys typed straight after
-  `Ctrl`/`Cmd` + `K` are searched rather than lost. Escape, a
-  toggle button, `Ctrl`/`Cmd` + `K`, or a backdrop click returns focus to the
-  opener (a window included), or, when the opener is gone (Close All
-  Windows), to the topmost window or the palette button; launching an app
-  does not. The tray's audio button opens the tray, so it is named "Audio
-  settings" with no pressed state; Mute is in the tray. The taskbar clock is
-  named by its time and date from first paint.
-- Palette and Start search rank names that start with the query first, then
-  other name matches, then description matches (`rankMatch` in
-  `src/utils/search.ts`). Enter runs the top match, or the focused palette
-  item. Reset Desktop, and Settings' Reset all settings, run only on a second
-  Enter, click, or tap, with the reason shown in a status line that stays in
-  view on phones; Reset Desktop reloads after 500 ms. Toggle Theme asks
-  Settings to switch (`desktop:toggle-theme`), so both apply the same
-  preferences.
+- Quick Access (the Start menu, `#start-menu`) is the desktop's one
+  launcher; there is no separate command palette. It and the tray panel are
+  `inert` while closed, and only one is open at a time: opening one closes
+  the other. Both are non-modal (no focus trap, no backdrop): Tab moves
+  through Quick Access's search box and visible items, and tabbing out of
+  either, or a click outside, closes it. The Start button or `Ctrl`/`Cmd` +
+  `K` (any case, desktop mode, also forwarded by the garden frame) opens
+  Quick Access. `Ctrl`/`Cmd` + `K` focuses its search box synchronously
+  after the commit, on every screen, so keys typed straight after it are
+  searched rather than lost; the Start button focuses the search box too,
+  but on phones and touch tablets the menu itself, so no on-screen keyboard
+  covers it. Escape, the Start button, or `Ctrl`/`Cmd` + `K` return focus to
+  what had it before Quick Access opened (a window or its content
+  included), or, when that is gone, to the topmost window, else the Start
+  button; launching an app does not (the window takes focus), and Close All
+  Windows sends focus to the Start button. Escape or a toggle returns focus
+  from the tray to the button that opened it. The tray's audio button opens
+  the tray, so it is named "Audio settings" with no pressed state; Mute is
+  in the tray. The taskbar clock is named by its time and date from first
+  paint.
+- Quick Access holds the apps, three commands (Toggle Theme, Close All
+  Windows, Reset Desktop) and the links in `src/data/social-links.json`
+  (opened in a new tab). An empty query shows them in titled sections:
+  Apps, Commands, Links. A search shows one flat list across all of them,
+  ranked by `rankMatch` (`src/utils/search.ts`): names that start with the
+  query (or a word in it) first, then other name matches, then description
+  matches (apps match their label and Start description), ties in section
+  order, so "set" puts Settings above Reset Desktop. Every item stays in the
+  DOM (hidden ones `display: none`), so the visual, Tab and arrow-key orders
+  agree. The top match is highlighted; ArrowUp and ArrowDown move the
+  highlight (and focus, when it is on an item), it follows focus and
+  clicks, and Enter in the search box runs it. When nothing matches, the
+  status line says "No matching apps, commands or links". Reset Desktop,
+  and Settings' Reset all settings, run only on a second Enter, click, or
+  tap, with the reason shown in a status line that stays in view on phones
+  (touch wording on coarse pointers); typing, choosing another item, or
+  closing Quick Access disarms Reset Desktop, which reloads after 500 ms.
+  Toggle Theme asks Settings to switch (`desktop:toggle-theme`), so both
+  apply the same preferences.
 - Calculator and Snake take keys only while their window is focused in desktop
   mode with no overlay open and no Ctrl, Meta, or Alt (AltGr is allowed). Form
   fields and controls outside the window keep their keys, a focused button or
@@ -821,7 +853,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   `pepodev.music`, `pepodev.systemAudio`, `pepodev.snake.best.v2`,
   `pepodev.desktopIcon.v3.<appId>`, `pepodev.linkIcon.v4.<link id>`,
   `pepodev.hasVisited` (first-visit Welcome), and
-  `pepodev.commandPaletteHintShown` (when the palette tip last showed). Older
+  `pepodev.commandPaletteHintShown` (when the Quick Access tip last showed;
+  it keeps its command-palette name so returning visitors are not shown
+  the tip again). Older
   icon key versions are removed on load; bump the version to discard saved
   layouts. The old `pepodev.snake.best` is removed on load. Corrupt saved
   system audio falls back to valid values.
@@ -870,8 +904,9 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   `https://www.credly.com/badges/<uuid>/public_url`, and the dates follow
   Credly's public record (`https://www.credly.com/users/pepodev/badges.json`).
 - White Noise intentionally has no rain animation.
-- Hide the command-palette tutorial toast at widths `<=768px`; otherwise show
-  it 3 s after load in desktop mode on the first visit or every seven days.
+- The Quick Access tip toast reads "Quick tip: Press Ctrl + K (Cmd on Mac)
+  to open Quick Access". Hide it at widths `<=768px`; otherwise show it 3 s
+  after load in desktop mode on the first visit or every seven days.
   It closes itself after eight seconds; other toasts after five.
 
 ## Verification

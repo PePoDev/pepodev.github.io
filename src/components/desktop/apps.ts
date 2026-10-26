@@ -1,5 +1,5 @@
-// The app registry: every desktop app, once. Windows, desktop icons, the
-// Start menu, the command palette and the taskbar all read it. Each app's
+// The app registry: every desktop app, once. Windows, desktop icons, Quick
+// Access (the Start menu) and the taskbar all read it. Each app's
 // body is a client component at a fixed path, its own chunk loaded on
 // demand, src/components/apps/<Name>App.tsx (app-chunks.ts), with optional
 // build-time data from src/components/apps/<Name>App.data.ts (app-data.ts).
@@ -31,15 +31,13 @@ export interface AppDefinition {
   id: AppId;
   /** Window title (dialog name). The taskbar label is the part before "-". */
   title: string;
-  /** Desktop icon, Start menu and command palette name. */
+  /** Desktop icon and Quick Access name. */
   label: string;
   /** Default window size; phones get a full-screen window instead. */
   width: number;
   height: number;
-  /** Start menu description. */
+  /** Quick Access description, which its search also matches. */
   startDescription: string;
-  /** Command palette description. */
-  paletteDescription: string;
   /**
    * Default desktop icon cell (the grid in icon-grid.ts): a column or row
    * number, "center" (+/- an offset), "right" or "bottom". "left-mid" icons
@@ -66,7 +64,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 680,
     height: 600,
     startDescription: "Login & introduction",
-    paletteDescription: "Login & introduction",
     icon: { col: "center", row: "0" },
     mount: "idle",
   },
@@ -77,7 +74,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 700,
     height: 520,
     startDescription: "Read articles & write-ups",
-    paletteDescription: "Read articles and posts",
     icon: { col: "1", row: "0" },
     mount: "open",
   },
@@ -88,7 +84,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 960,
     height: 640,
     startDescription: "Browse evolving notes",
-    paletteDescription: "Browse digital garden notes",
     icon: { col: "5", row: "0" },
     mount: "open",
   },
@@ -99,7 +94,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 700,
     height: 500,
     startDescription: "Showcase of work",
-    paletteDescription: "Browse project showcase",
     icon: { col: "3", row: "0" },
     mount: "open",
   },
@@ -110,7 +104,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 680,
     height: 540,
     startDescription: "Experience & career",
-    paletteDescription: "Career timeline",
     icon: { col: "2", row: "0" },
     mount: "open",
   },
@@ -121,7 +114,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 600,
     height: 560,
     startDescription: "Contact & personal info",
-    paletteDescription: "Learn more about me",
     icon: { col: "0", row: "0" },
     mount: "open",
   },
@@ -132,7 +124,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 800,
     height: 600,
     startDescription: "Chaos simulation game",
-    paletteDescription: "Play the chaos game",
     icon: { col: "0", row: "4", group: "left-mid", index: 0 },
     mount: "idle",
   },
@@ -143,7 +134,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 560,
     height: 680,
     startDescription: "Classic grid survival game",
-    paletteDescription: "Play the classic grid game",
     icon: { col: "0", row: "5", group: "left-mid", index: 1 },
     mount: "open",
   },
@@ -154,7 +144,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 560,
     height: 490,
     startDescription: "Ambient desktop player",
-    paletteDescription: "Play ambient desktop music",
     icon: { col: "0", row: "bottom" },
     mount: "idle",
   },
@@ -165,7 +154,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 480,
     height: 540,
     startDescription: "Rainy white noise loop",
-    paletteDescription: "Play rainy white noise",
     icon: { col: "4", row: "bottom" },
     mount: "open",
   },
@@ -176,7 +164,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 360,
     height: 520,
     startDescription: "Quick calculations",
-    paletteDescription: "Run quick calculations",
     icon: { col: "1", row: "bottom" },
     mount: "open",
   },
@@ -187,7 +174,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 620,
     height: 640,
     startDescription: "Customize desktop",
-    paletteDescription: "Customize the desktop",
     mount: "open",
   },
   {
@@ -197,7 +183,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 720,
     height: 480,
     startDescription: "Interactive shell",
-    paletteDescription: "Use the interactive shell",
     icon: { col: "center", row: "bottom" },
     mount: "open",
   },
@@ -208,7 +193,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 700,
     height: 520,
     startDescription: "Certification wallet",
-    paletteDescription: "View certification wallet",
     icon: { col: "4", row: "0" },
     mount: "open",
   },
@@ -219,7 +203,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 680,
     height: 560,
     startDescription: "Password protected pictures",
-    paletteDescription: "Open protected pictures",
     icon: { col: "3", row: "bottom" },
     mount: "open",
   },
@@ -230,7 +213,6 @@ export const APPS: readonly AppDefinition[] = [
     width: 680,
     height: 520,
     startDescription: "Deleted desktop nonsense",
-    paletteDescription: "Inspect deleted desktop nonsense",
     icon: { col: "2", row: "bottom" },
     mount: "open",
   },

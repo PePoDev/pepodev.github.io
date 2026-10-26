@@ -3,8 +3,8 @@ import { expect, type Page } from "@playwright/test";
 type ResetOptions = {
   /** Keep the first-visit Welcome window, which opens 1.5s after load. */
   firstVisit?: boolean;
-  /** Keep the command-palette tip toast, which shows 3s after load. */
-  paletteTip?: boolean;
+  /** Keep the Quick Access tip toast, which shows 3s after load. */
+  quickAccessTip?: boolean;
 };
 
 /** pepodev.desktopPrefs for resetPage's storage. */
@@ -23,19 +23,20 @@ export function waitForWindowManager(page: Page) {
 /**
  * Loads the desktop with only `storage` saved. The visitor is a returning
  * one unless the options say otherwise, so neither the Welcome window nor
- * the palette tip can open over the test.
+ * the Quick Access tip can open over the test.
  */
 export async function resetPage(
   page: Page,
   storage: Record<string, string> = {},
-  { firstVisit = false, paletteTip = false }: ResetOptions = {},
+  { firstVisit = false, quickAccessTip = false }: ResetOptions = {},
 ) {
   await page.goto("/");
   await page.evaluate(
-    ({ storage, firstVisit, paletteTip }) => {
+    ({ storage, firstVisit, quickAccessTip }) => {
       localStorage.clear();
       if (!firstVisit) localStorage.setItem("pepodev.hasVisited", "true");
-      if (!paletteTip) {
+      // The tip's key keeps its command-palette name (runtime.tsx).
+      if (!quickAccessTip) {
         localStorage.setItem(
           "pepodev.commandPaletteHintShown",
           String(Date.now()),
@@ -45,7 +46,7 @@ export async function resetPage(
         localStorage.setItem(key, value);
       }
     },
-    { storage, firstVisit, paletteTip },
+    { storage, firstVisit, quickAccessTip },
   );
   await page.reload();
   await waitForWindowManager(page);

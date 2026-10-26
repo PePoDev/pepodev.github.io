@@ -1062,7 +1062,7 @@
   background: color-mix(in srgb, var(--bg-secondary) 90%, var(--text-primary));
 }
 
-/* Reset all settings waits for a second click, like the palette's Reset
+/* Reset all settings waits for a second click, like Quick Access's Reset
    Desktop. */
 .settings-actions button.confirming {
   border-color: color-mix(in srgb, var(--accent-red) 60%, transparent);

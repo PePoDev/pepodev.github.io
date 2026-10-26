@@ -4,9 +4,9 @@
 // parse-time script in DesktopScripts.tsx applies them before first paint;
 // this store owns them after hydration.
 // Every change applies them to <html> (prefs-core.ts), saves them and
-// dispatches desktop:preferences ({ detail: prefs }) on document. The
-// command palette's Toggle Theme dispatches desktop:toggle-theme, which
-// lands here, so Settings and the palette apply the same preferences.
+// dispatches desktop:preferences ({ detail: prefs }) on document. Quick
+// Access's Toggle Theme dispatches desktop:toggle-theme, which lands here,
+// so Settings and Quick Access apply the same preferences.
 import { accentMap, backgroundMap, experienceVariants } from "@utils/desktop-prefs";
 import { applyDesktopPrefs, loadDesktopPrefs, PREFS_KEY, THEME_KEY, type DesktopPrefs } from "./prefs-core";
 import { createStore, useStore } from "./store";

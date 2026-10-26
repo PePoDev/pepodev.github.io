@@ -2,8 +2,8 @@
 // and the DOM and starts its listeners, input made before the boot is
 // replayed, then window.__pepodevWindowManagerReady tells tests (and the
 // parse-time input script) the desktop takes input. Also here: generic
-// [data-open-app] launchers, the command-palette tip and the "idle" app
-// bodies (registry mount: "idle"); app-chunks.ts prefetches the other apps.
+// [data-open-app] launchers, the Quick Access tip and the "idle" app bodies
+// (registry mount: "idle"); app-chunks.ts prefetches the other apps.
 import { useEffect } from "react";
 import { migrateLegacySnakeBest } from "@components/apps/snake-best";
 import { APPS, isAppId } from "./apps";
@@ -14,8 +14,8 @@ import type { EarlyInput } from "./DesktopScripts";
 import { startIconLayout } from "./icon-layout";
 import { whenIdle } from "./idle";
 import { isOverlayOpen, setStartMenu, setTrayOpen, startOverlays } from "./overlay-state";
-import { openPalette, startPalette, togglePalette } from "./palette";
 import { startPrefs } from "./prefs";
+import { openQuickAccess, startQuickAccess } from "./quick-access";
 import { isDesktopSiteMode, startSiteMode } from "./site-mode";
 import { startSystemAudio } from "./system-audio";
 import { showToast, startToasts } from "./toasts";
@@ -37,7 +37,9 @@ declare global {
 // Between the first paint and the boot (React hydrates after the page has
 // loaded), the parse-time input script took every click on a launcher or a
 // taskbar control, and Ctrl/Cmd + K, in the order they came (it applied mode
-// switches itself). Do what each would have done.
+// switches itself). Do what each would have done; Ctrl/Cmd + K opens Quick
+// Access with focus in its search box (pressed again while nothing showed, it
+// still means "open").
 function replayEarlyInput() {
   const early = window.__pepodevEarlyInput ?? [];
   window.__pepodevEarlyInput = [];
@@ -50,12 +52,10 @@ function replayEarlyInput() {
     if (input.type === "launch") {
       // The key press came before the window manager listened for keys.
       if (isAppId(input.appId)) requestOpenApp(input.appId, input.keyboard);
-    } else if (input.type === "palette") {
-      togglePalette();
+    } else if (input.type === "quick-access") {
+      openQuickAccess();
     } else if (input.control === "taskbar-start") {
       setStartMenu(!isOverlayOpen("start-menu"), { restoreFocus: true });
-    } else if (input.control === "taskbar-command-palette") {
-      openPalette();
     } else {
       setTrayOpen(!isOverlayOpen("tray-panel"), {
         opener: document.getElementById(input.control),
@@ -66,8 +66,8 @@ function replayEarlyInput() {
 }
 
 // Any [data-open-app] element outside the desktop icons (which handle their
-// own pointer and key presses) launches its app: Start menu items, and app
-// content that links to another app.
+// own pointer and key presses) launches its app: Quick Access app items, and
+// app content that links to another app.
 function onLauncherClick(event: MouseEvent) {
   const target = event.target instanceof Element ? event.target : null;
   const trigger = target?.closest<HTMLElement>("[data-open-app]");
@@ -81,12 +81,14 @@ function startLaunchers() {
   return () => document.removeEventListener("click", onLauncherClick);
 }
 
-// The command-palette tip: hidden at widths <= 768px, otherwise shown 3s
-// after load on a first visit or every seven days, in desktop mode only;
-// it closes itself after eight seconds.
+// The Quick Access tip (Ctrl/Cmd + K): hidden at widths <= 768px, otherwise
+// shown 3s after load on a first visit or every seven days, in desktop mode
+// only; it closes itself after eight seconds. The key keeps the name it had
+// when the shortcut opened the command palette, so returning visitors are
+// not shown the tip again.
 const HINT_KEY = "pepodev.commandPaletteHintShown";
 
-function startPaletteTip() {
+function startQuickAccessTip() {
   let timer = 0;
   const schedule = () => {
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
@@ -102,11 +104,10 @@ function startPaletteTip() {
     timer = window.setTimeout(() => {
       timer = 0;
       if (!isDesktopSiteMode()) return;
-      const key = navigator.platform.toUpperCase().includes("MAC") ? "Cmd" : "Ctrl";
       // Closes itself so the tip stops covering the top-right icons.
       showToast(
         <>
-          Quick tip: Press <kbd>{key} + K</kbd> to open the command palette
+          Quick tip: Press <kbd>Ctrl + K</kbd> (<kbd>Cmd</kbd> on Mac) to open Quick Access
         </>,
         { duration: 8000 },
       );
@@ -167,14 +168,14 @@ function boot(): () => void {
     startPrefs(),
     startToasts(),
     startOverlays(),
-    startPalette(),
+    startQuickAccess(),
     // Site mode first: its boot site:mode-change reaches only what started
     // before it.
     startSiteMode(),
     startIconLayout(),
     startWindowManager(),
     startLaunchers(),
-    startPaletteTip(),
+    startQuickAccessTip(),
     startIdleMounts(),
     startAppPrefetch(),
     startAppKeys(),

@@ -1,5 +1,5 @@
 "use client";
-// The taskbar: Start and palette buttons, one button per open window (named by
+// The taskbar: the Start button, one button per open window (named by
 // its label, which phone widths hide only visually), the mode switch, and the
 // tray: system audio and the clock, which open the tray panel (calendar,
 // volume, mute).
@@ -8,7 +8,6 @@ import { AppIcon } from "./AppIcon";
 import { APPS, getApp, taskbarLabel, type AppDefinition } from "./apps";
 import { ModeSwitch } from "./ModeSwitch";
 import { setStartMenu, setTrayOpen, useOverlayOpen } from "./overlay-state";
-import { openPalette } from "./palette";
 import { setSystemAudio, useSystemAudio } from "./system-audio";
 import { useStore } from "./store";
 import { formatTaskbarClock } from "./taskbar-clock";
@@ -35,7 +34,7 @@ export function useNow(interval: number): Date | null {
 /**
  * Drops DOM focus from a window button pressed with the pointer, and starts
  * sequential focus at the start of the window buttons (#taskbar-apps): Tab
- * then reaches the first window button and Shift+Tab the palette button, not
+ * then reaches the first window button and Shift+Tab the Start button, not
  * whatever follows the pressed one. Browsers start Tab from the element that
  * lost focus, so the list itself takes focus for a moment.
  */
@@ -352,18 +351,6 @@ export function Taskbar() {
     <div id="taskbar">
       <StartButton />
       <FocusedAppName />
-      <button
-        id="taskbar-command-palette"
-        type="button"
-        aria-label="Open command palette"
-        title="Open command palette"
-        onClick={() => openPalette()}
-      >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-      </button>
       <div id="taskbar-apps">
         {APPS.map((app) => (
           <TaskbarApp key={app.id} app={app} />

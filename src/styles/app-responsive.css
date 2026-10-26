@@ -21,11 +21,6 @@
     text-align: center;
   }
 
-  #start-menu {
-    width: calc(100% - 24px);
-    max-width: 360px;
-  }
-
   /* One row keeps the board tall enough on phones; Status gets the room. */
   .snake-stats {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr);

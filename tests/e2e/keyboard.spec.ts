@@ -90,7 +90,7 @@ test("minimized Calculator and Snake ignore the keyboard", async ({ page }) => {
   await expect(snake.locator("[data-snake-status]")).toHaveText("Ready");
 });
 
-test("Snake leaves the Gallery password and command palette input alone", async ({
+test("Snake leaves the Gallery password and the Quick Access search alone", async ({
   page,
 }) => {
   const snake = await openApp(page, "Snake", "snake");
@@ -104,13 +104,10 @@ test("Snake leaves the Gallery password and command palette input alone", async 
   await focusFromTaskbar(page, /Snake/);
   await expect(snake).toHaveClass(/focused/);
   await page.keyboard.press("ControlOrMeta+K");
-  await expect(page.locator("#command-palette")).toHaveAttribute(
-    "data-visible",
-    "true",
-  );
-  await expect(page.locator("#command-palette-input")).toBeFocused();
+  await expect(page.locator("#start-menu")).toHaveClass(/visible/);
+  await expect(page.locator("#start-menu-search")).toBeFocused();
   await page.keyboard.type("snakeways");
-  await expect(page.locator("#command-palette-input")).toHaveValue("snakeways");
+  await expect(page.locator("#start-menu-search")).toHaveValue("snakeways");
   await expect(snake.locator("[data-snake-status]")).toHaveText("Ready");
 });
 
@@ -283,11 +280,11 @@ test("Tab typed while an app's code loads stays in its window, then moves into t
   page,
 }) => {
   // Until the body renders, the window holds only its title-bar controls,
-  // so a fourth Tab would reach the taskbar's Start button and a fifth its
-  // palette button: Enter, Enter, Enter would then open the palette, arm
-  // Reset Desktop and run it. Tab waits in the window instead, and once the
-  // body renders it moves on into it, so the Enters press the control
-  // those Tabs reached (the first Restore button, after Empty trash).
+  // so a fourth Tab would reach the taskbar's Start button: Enter would then
+  // open Quick Access, and the next Enters run what it highlights. Tab waits
+  // in the window instead, and once the body renders it moves on into it,
+  // so the Enters press the control those Tabs reached (the first Restore
+  // button, after Empty trash).
   await page.evaluate(() =>
     localStorage.setItem("pepodev.snake.best.v2", "42"),
   );
@@ -296,7 +293,7 @@ test("Tab typed while an app's code loads stays in its window, then moves into t
   page.on("load", () => (loads += 1));
 
   await page.keyboard.press("ControlOrMeta+K");
-  await expect(page.locator("#command-palette-input")).toBeFocused();
+  await expect(page.locator("#start-menu-search")).toBeFocused();
   await page.keyboard.type("trash");
   await page.keyboard.press("Enter");
   const trash = page.locator("#window-trash");
@@ -305,10 +302,6 @@ test("Tab typed while an app's code loads stays in its window, then moves into t
   for (let enter = 0; enter < 3; enter += 1) await page.keyboard.press("Enter");
   await expect(trash.locator("[data-trash-app]")).toHaveCount(0);
   await expect(trash).toBeFocused();
-  await expect(page.locator("#command-palette")).toHaveAttribute(
-    "data-visible",
-    "false",
-  );
   await expect(page.locator("#start-menu")).not.toHaveClass(/visible/);
 
   chunks.release();
@@ -326,25 +319,22 @@ test("keys typed after Tabs that pass a loading app never press controls outside
   page,
 }) => {
   // With the body there, the fourth and fifth Tabs reach its two controls,
-  // and the sixth and seventh the taskbar's Start and palette buttons. Focus
-  // ends up there once the body renders, but the Enter typed meanwhile was
-  // kept for the app, so it does not open the palette.
+  // and the sixth the taskbar's Start button. Focus ends up there once the
+  // body renders, but the Enter typed meanwhile was kept for the app, so it
+  // does not open Quick Access.
   const chunks = await reloadAndHoldApps(page);
   await page.locator('#desktop-icons [data-open-app="whitenoise"]').focus();
   await page.keyboard.press("Enter");
   const noise = page.locator("#window-whitenoise");
   await expect(noise).toBeFocused();
-  for (let tab = 0; tab < 7; tab += 1) await page.keyboard.press("Tab");
+  for (let tab = 0; tab < 6; tab += 1) await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
   await expect(noise.locator("[data-noise-toggle]")).toHaveCount(0);
   await expect(noise).toBeFocused();
 
   chunks.release();
-  await expect(page.locator("#taskbar-command-palette")).toBeFocused();
-  await expect(page.locator("#command-palette")).toHaveAttribute(
-    "data-visible",
-    "false",
-  );
+  await expect(page.locator("#taskbar-start")).toBeFocused();
+  await expect(page.locator("#start-menu")).not.toHaveClass(/visible/);
 });
 
 test("Tab still moves through a loading window's title bar", async ({
@@ -429,11 +419,11 @@ test("a window whose app fails to render drops the keys typed meanwhile and lets
   ).toBe(true);
 });
 
-test("an open command palette keeps keys from the app behind it", async ({
+test("an open Quick Access keeps keys from the app behind it", async ({
   page,
 }) => {
-  const palette = page.locator("#command-palette");
-  const input = page.locator("#command-palette-input");
+  const quickAccess = page.locator("#start-menu");
+  const input = page.locator("#start-menu-search");
   const snake = await openApp(page, "Snake", "snake");
   const status = snake.locator("[data-snake-status]");
 
@@ -444,7 +434,7 @@ test("an open command palette keeps keys from the app behind it", async ({
   await page.keyboard.press("Space");
   await expect(status).toHaveText("Ready");
   await page.keyboard.press("Escape");
-  await expect(palette).toHaveAttribute("data-visible", "false");
+  await expect(quickAccess).not.toHaveClass(/visible/);
   await expect(snake).toBeVisible();
 
   const calculator = await openFromStartMenu(page, "calculator");
@@ -456,10 +446,10 @@ test("an open command palette keeps keys from the app behind it", async ({
   await input.blur();
   await page.keyboard.type("42");
   await expect(value).toHaveText("12");
-  // The Escape that closes the palette is not the Calculator's, which
+  // The Escape that closes Quick Access is not the Calculator's, which
   // clears the expression on Escape.
   await page.keyboard.press("Escape");
-  await expect(palette).toHaveAttribute("data-visible", "false");
+  await expect(quickAccess).not.toHaveClass(/visible/);
   await page.keyboard.type("7");
   await expect(value).toHaveText("127");
   await expect(status).toHaveText("Ready");
@@ -580,7 +570,7 @@ test("closing an app opened from its launcher hands the keyboard to the next win
   await expect(calculator.locator(".calculator-value")).toHaveText("7");
 });
 
-test("Snake pauses when the Start menu or command palette takes the keyboard", async ({
+test("Snake pauses when Quick Access, from the Start button or Ctrl+K, takes the keyboard", async ({
   page,
 }) => {
   const snake = await openApp(page, "Snake", "snake");

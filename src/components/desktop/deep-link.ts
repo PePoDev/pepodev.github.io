@@ -8,7 +8,7 @@
 // closing the Blog window before the app is ready, drops the pending link.
 // The handler may move focus to the article only if nothing took focus
 // since the window opened (mayTakeFocus): on a slow network the visitor may
-// have moved on to the palette, the Start menu or another app by then. What
+// have moved on to Quick Access or another app by then. What
 // it opens commits at once, before the keys typed while Blog loaded replay
 // (app-keys.ts): an article that takes focus drops the Tabs held meanwhile,
 // as a body that focuses its field does, so none of those keys acts on the

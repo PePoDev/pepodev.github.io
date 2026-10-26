@@ -119,14 +119,15 @@ test("the desktop Garden window browses notes and keeps desktop keys", async ({
   await expect(frame.getByRole("heading", { level: 1 })).toHaveText("Kafka");
 
   // Keys pressed inside the frame reach the desktop once the page script runs.
-  const palette = page.locator("#command-palette");
+  const quickAccess = page.locator("#start-menu");
   await expect(async () => {
     await frame.getByRole("heading", { level: 1 }).click();
     await page.keyboard.press("ControlOrMeta+K");
-    await expect(palette).toHaveAttribute("data-visible", "true", { timeout: 1000 });
+    await expect(quickAccess).toHaveClass(/visible/, { timeout: 1000 });
   }).toPass();
+  await expect(page.locator("#start-menu-search")).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(palette).not.toHaveAttribute("data-visible", "true");
+  await expect(quickAccess).not.toHaveClass(/visible/);
 
   await frame.getByRole("heading", { level: 1 }).click();
   await page.keyboard.press("Escape");

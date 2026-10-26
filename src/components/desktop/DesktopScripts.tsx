@@ -48,17 +48,13 @@ export function DesktopPrefsScript() {
 export type EarlyInput =
   | { type: "launch"; appId: string | undefined; keyboard: boolean }
   | { type: "control"; control: (typeof EARLY_CONTROLS)[number] }
-  | { type: "palette" }
+  // Ctrl/Cmd + K: the boot opens Quick Access with focus in its search box.
+  | { type: "quick-access" }
   // A mode switch, already applied; it only counts as interaction.
   | { type: "mode" };
 
 /** Taskbar controls whose clicks before the boot are replayed. */
-export const EARLY_CONTROLS = [
-  "taskbar-start",
-  "taskbar-command-palette",
-  "taskbar-clock-button",
-  "taskbar-audio-status",
-] as const;
+export const EARLY_CONTROLS = ["taskbar-start", "taskbar-clock-button", "taskbar-audio-status"] as const;
 
 // For <head>, after the mode script: the listeners must exist before the
 // desktop is painted.
@@ -67,7 +63,7 @@ const earlyInputScript = `(() => {
   // later than the first paint by up to a few seconds on slow devices. Until
   // then this takes the clicks and keys the desktop would handle, so a quick
   // visitor's input is not lost: launches ([data-open-app]), the taskbar's
-  // Start, palette and tray buttons, and Ctrl/Cmd + K are kept in order and
+  // Start and tray buttons, and Ctrl/Cmd + K are kept in order and
   // replayed by the boot (runtime.tsx); a launch from the keyboard (a click
   // with detail 0) still moves focus into its window. A mode switch applies
   // at once, with the attributes and storage the site-mode store uses (it
@@ -164,7 +160,7 @@ const earlyInputScript = `(() => {
       if (window.__pepodevWindowManagerReady || !isDesktop()) return;
       if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === "k") {
         take(event);
-        early.push({ type: "palette" });
+        early.push({ type: "quick-access" });
       }
     },
     true,

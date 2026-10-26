@@ -11,10 +11,10 @@ function startsWord(text: string, query: string): boolean {
 }
 
 /**
- * How well a Start menu or command palette entry matches a search: 0 when
- * the query starts the name or a word in it, 1 for the rest of the name, 2
- * for the description, and -1 for no match. All three are compared in lower
- * case, so pass lowercase text.
+ * How well a Quick Access entry (an app, command or link) matches a search:
+ * 0 when the query starts the name or a word in it, 1 for the rest of the
+ * name, 2 for the description, and -1 for no match. All three are compared
+ * in lower case, so pass lowercase text.
  */
 export function rankMatch(
   name: string,

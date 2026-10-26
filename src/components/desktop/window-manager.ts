@@ -9,7 +9,7 @@
 //   active window after overlays handle it.
 // - Opening a window from the keyboard focuses it before desktop:window-open.
 //   Every launch (a new window, a restore, or an already open one, from an
-//   icon, the Start menu, the palette or the taskbar) and every hand-off of
+//   icon, Quick Access or the taskbar) and every hand-off of
 //   focus into the next window then dispatches desktop:window-focus, whose
 //   detail.keyboard says whether DOM focus moved into the window, and bumps
 //   WindowState.focusRequest for apps (useAppWindow).
@@ -214,7 +214,7 @@ function dispatchWindowFocus(appId: AppId, keyboard: boolean) {
 /**
  * The element that had DOM focus right after the window's latest launch or
  * focus hand-off (its launcher after a click, the window after a keyboard
- * launch, <body> after a Start menu or palette launch).
+ * launch, <body> after a Quick Access launch).
  */
 export function getLaunchFocus(appId: AppId): Element | null {
   return launchFocus.get(appId) ?? null;
@@ -400,7 +400,7 @@ export function openWindow(appId: AppId, moveFocus = false) {
   }
 
   // Closing a window opened from the keyboard returns keyboard focus here
-  // while it is shown. Start menu and palette items close with their overlay.
+  // while it is shown. Quick Access items close with it.
   const element = elements.get(appId);
   const active = document.activeElement;
   returnFocus.set(
@@ -409,7 +409,7 @@ export function openWindow(appId: AppId, moveFocus = false) {
       active instanceof HTMLElement &&
       active !== document.body &&
       !element?.contains(active) &&
-      !active.closest("#start-menu, #command-palette, #tray-panel")
+      !active.closest("#start-menu, #tray-panel")
       ? active
       : null,
   );
@@ -725,7 +725,7 @@ function onOpenApp(event: Event) {
   if (!isDesktopSiteMode()) return;
   const detail = (event as CustomEvent<{ appId?: unknown; keyboard?: unknown }>).detail;
   const appId = detail?.appId;
-  // The Start menu closes on every launch, without taking focus back.
+  // Quick Access closes on every launch, without taking focus back.
   closeStartMenu();
   if (!isAppId(appId)) return;
   userOpenedWindow = true;

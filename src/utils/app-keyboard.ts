@@ -11,12 +11,13 @@ export function isAppWindowActive(
   );
 }
 
-/** The desktop overlays (overlay-state.ts); the window manager's Escape defers to them too. */
+/**
+ * The desktop overlays, Quick Access and the tray (overlay-state.ts); the
+ * window manager's Escape defers to them too.
+ */
 function isDesktopOverlayOpen(): boolean {
   return Boolean(
-    document.querySelector(
-      '#command-palette[data-visible="true"], #start-menu.visible, #tray-panel.visible',
-    ),
+    document.querySelector("#start-menu.visible, #tray-panel.visible"),
   );
 }
 

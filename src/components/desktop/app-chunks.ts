@@ -12,7 +12,7 @@
 //   pushing it out: keys typed meanwhile and the body's entry animation ran
 //   late.)
 // - Prefetching: a launcher's hover, focus or press fetches its app (desktop
-//   icons, Start menu items, palette items), and once the desktop has
+//   icons, Quick Access app items), and once the desktop has
 //   settled every app is fetched, one at a time in idle time (waiting at
 //   most 300 ms for it), unless the visitor saves data or is on a 2G
 //   connection. Website mode fetches none.
@@ -117,13 +117,12 @@ export function prefetchAppChunk(appId: AppId) {
 
 // --- Prefetching ----------------------------------------------------------------
 
-// Hover, focus or press on a launcher: desktop icons and Start menu items
-// ([data-open-app]) and the palette's app items.
+// Hover, focus or press on a launcher ([data-open-app]): desktop icons,
+// Quick Access app items, and app content that opens another app.
 function onLauncherIntent(event: Event) {
   if (!isDesktopSiteMode()) return;
   const target = event.target instanceof Element ? event.target : null;
-  const launcher = target?.closest<HTMLElement>('[data-open-app], .command-palette-item[data-type="app"]');
-  const appId = launcher?.dataset.openApp ?? launcher?.dataset.id;
+  const appId = target?.closest<HTMLElement>("[data-open-app]")?.dataset.openApp;
   if (isAppId(appId)) prefetchAppChunk(appId);
 }
 

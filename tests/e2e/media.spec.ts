@@ -582,7 +582,7 @@ test.describe("Blog reader", () => {
 });
 
 test.describe("Settings", () => {
-  test("controls follow a theme change made in the command palette", async ({
+  test("controls follow a theme change made in Quick Access", async ({
     page,
   }) => {
     await resetPage(page, {
@@ -597,7 +597,7 @@ test.describe("Settings", () => {
     );
 
     await page.keyboard.press("ControlOrMeta+K");
-    await page.locator("#command-palette-input").fill("toggle theme");
+    await page.locator("#start-menu-search").fill("toggle theme");
     await page.keyboard.press("Enter");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expect(settings.locator('[data-setting="theme"]')).toHaveValue(

@@ -4,7 +4,7 @@
 //
 // - App handlers listen on document in the capture phase, so they run
 //   before the desktop's own key listeners (React's handlers, the overlays,
-//   the palette; the window manager's Escape is on window). isAppKeyboardEvent
+//   Ctrl/Cmd + K; the window manager's Escape is on window). isAppKeyboardEvent
 //   then still sees an overlay that is about to close on this very Escape or
 //   Enter as open, and ignores the key; and the app's own launcher, which
 //   re-launches on Enter, still hands the key over.
@@ -25,7 +25,7 @@
 //   handlers get the events. A body with neither ignores them.
 // - Tab: meanwhile the window holds only its title-bar controls, so Tab
 //   from the last of them would leave it for the taskbar, and the keys
-//   typed next would act there (the Start menu, the palette's Reset
+//   typed next would act there (the Start button, then Quick Access's Reset
 //   Desktop). That Tab, and every Tab or Shift+Tab after it, is held instead:
 //   focus waits on the window, so the keys typed next are kept too. The replay
 //   then moves focus on from where the first held Tab was pressed, as those

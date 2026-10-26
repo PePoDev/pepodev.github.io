@@ -556,17 +556,17 @@ test("clicks and keys made before the desktop hydrates are not lost", async ({
     await waitForWindowManager(page);
   };
 
-  // A launch and Ctrl+K are replayed, in order, once the desktop boots.
+  // A launch and Ctrl+K are replayed, in order, once the desktop boots:
+  // Ctrl+K opens Quick Access with focus in its search box, also when it
+  // was pressed twice while nothing showed.
   await holdHydration();
   await page.locator('#desktop-icons [data-open-app="me"]').click();
   await page.keyboard.press("ControlOrMeta+K");
+  await page.keyboard.press("ControlOrMeta+K");
   await hydrate();
   await expect(page.locator("#window-me")).toHaveClass(/focused/);
-  await expect(page.locator("#command-palette")).toHaveAttribute(
-    "data-visible",
-    "true",
-  );
-  await expect(page.locator("#command-palette-input")).toBeFocused();
+  await expect(page.locator("#start-menu")).toHaveClass(/visible/);
+  await expect(page.locator("#start-menu-search")).toBeFocused();
 
   // The Start button too.
   await holdHydration();
@@ -815,7 +815,7 @@ test("a taskbar button pressed with the pointer leaves the keys to the windows",
 test("after a pointer press on a taskbar button, Tab starts at the window buttons", async ({
   page,
 }) => {
-  // Tab reaches the first window button and Shift+Tab the palette button,
+  // Tab reaches the first window button and Shift+Tab the Start button,
   // whichever button was pressed, never the mode switch that follows the last
   // one (Tab and Enter would then switch the site to website mode).
   const work = await openApp(page, "Work", "work");
@@ -836,7 +836,7 @@ test("after a pointer press on a taskbar button, Tab starts at the window button
   await workButton.click();
   await expect(work).toHaveClass(/focused/);
   await page.keyboard.press("Shift+Tab");
-  await expect(page.locator("#taskbar-command-palette")).toBeFocused();
+  await expect(page.locator("#taskbar-start")).toBeFocused();
   await expect(page.locator("html")).toHaveAttribute("data-site-mode", "desktop");
 });
 

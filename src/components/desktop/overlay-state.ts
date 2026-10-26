@@ -1,16 +1,16 @@
-// The desktop overlays: the Start menu (#start-menu), the tray panel
-// (#tray-panel) and the command palette (#command-palette, palette.ts).
-// Only one is open at a time: opening one dispatches desktop:overlay-open
-// ({ id }) on document, and the open one closes and hands focus back to its
-// button first. Closed overlays are inert. Escape, a toggle button, Ctrl/Cmd
-// + K or a backdrop click return focus to the opener; launching an app does
-// not. Tabbing out of the Start menu or tray closes it. Every overlay calls
-// preventDefault() on the Escape it handles, so the window manager does not
-// also close the window behind it.
-import { focusFirst } from "@utils/overlays";
+// The desktop overlays: Quick Access (#start-menu, the Start menu, whose
+// search, commands and links are in quick-access.ts) and the tray panel
+// (#tray-panel). Only one is open at a time: opening one dispatches
+// desktop:overlay-open ({ id }) on document, and the open one closes and
+// hands focus back to its button first. Closed overlays are inert. Escape, a
+// toggle button or Ctrl/Cmd + K return focus to what had it before the
+// overlay opened; launching an app does not. Both are non-modal: tabbing out
+// of one closes it. Every overlay calls preventDefault() on the Escape it
+// handles, so the window manager does not also close the window behind it.
+import { focusFirst, getFocusedWindow } from "@utils/overlays";
 import { commit, createStore, useStore } from "./store";
 
-export type OverlayId = "start-menu" | "tray-panel" | "command-palette";
+export type OverlayId = "start-menu" | "tray-panel";
 
 export const overlayStore = createStore<OverlayId | null>(null);
 
@@ -42,16 +42,22 @@ function onOverlayOpen(event: Event) {
 /**
  * Takes a closing overlay out of the tab order: blurs focus inside it, runs
  * `update` (which renders it closed and inert), then with restoreFocus moves
- * focus that was inside it (or had dropped to <body>) to the first of
- * `returnTo` that can take it.
+ * focus that was inside it (or on its `toggle` button, which a press on it
+ * focuses, or had dropped to <body>) to the first of `returnTo` that can
+ * take it.
  */
 export function closeOverlayPanel(
   panel: HTMLElement | null,
   update: () => void,
-  { restoreFocus = false, returnTo = [] }: { restoreFocus?: boolean; returnTo?: (Element | null | undefined)[] },
+  {
+    restoreFocus = false,
+    returnTo = [],
+    toggle = null,
+  }: { restoreFocus?: boolean; returnTo?: (Element | null | undefined)[]; toggle?: Element | null },
 ) {
   const active = document.activeElement;
-  const hadFocus = !active || active === document.body || Boolean(panel?.contains(active));
+  const hadFocus =
+    !active || active === document.body || Boolean(panel?.contains(active)) || (toggle !== null && active === toggle);
   if (active instanceof HTMLElement && panel?.contains(active)) active.blur();
   commit(update);
   if (restoreFocus && hadFocus) focusFirst(returnTo);
@@ -59,38 +65,86 @@ export function closeOverlayPanel(
 
 const byId = (id: string) => document.getElementById(id);
 
-// --- Start menu ----------------------------------------------------------------
+// --- Quick Access (the Start menu) ------------------------------------------------
 
-/** The Start menu's search text. */
-export const startQueryStore = createStore("");
-
-export function useStartQuery(): string {
-  return useStore(startQueryStore, (query) => query);
+export interface QuickAccessState {
+  query: string;
+  /** Index into the visible entries (rankQuickAccessEntries in quick-access.ts). */
+  selected: number;
+  /** A destructive command waiting for its confirming Enter, click or tap. */
+  armed: string | null;
+  /** What the armed command asks for (the status line). */
+  confirm: string;
 }
+
+/** Quick Access as it opens: no query, the top item highlighted, nothing armed. */
+export const QUICK_ACCESS_FRESH: QuickAccessState = { query: "", selected: 0, armed: null, confirm: "" };
+
+// Nothing is highlighted until it first opens.
+export const quickAccessStore = createStore<QuickAccessState>({ ...QUICK_ACCESS_FRESH, selected: -1 });
 
 // Phones and touch tablets, where focusing the search raises the on-screen
 // keyboard over the menu.
 const TOUCH_QUERY = "(max-width: 768px), (hover: none), (pointer: coarse)";
 
+// What had focus before Quick Access opened.
+let quickAccessOpener: HTMLElement | null = null;
+
 /**
- * Opens or closes the Start menu. restoreFocus returns focus to the Start
- * button; launching an app skips that, so app keys are not held back by a
- * focused taskbar button.
+ * Opens or closes Quick Access (the Start menu). Opening focuses its search
+ * box, or on phones and touch tablets the menu itself, so no on-screen
+ * keyboard covers it; focusSearch (Ctrl/Cmd + K) focuses the search box on
+ * every screen. Closing with restoreFocus returns focus to what had it
+ * before Quick Access opened (a window included), else to the topmost
+ * window, else to the Start button; `returnTo` replaces that order.
+ * Launching an app skips it: the window takes focus.
  */
-export function setStartMenu(open: boolean, { restoreFocus = false } = {}) {
+export function setStartMenu(
+  open: boolean,
+  {
+    restoreFocus = false,
+    focusSearch = false,
+    returnTo,
+  }: { restoreFocus?: boolean; focusSearch?: boolean; returnTo?: (Element | null | undefined)[] } = {},
+) {
   if (open === isOverlayOpen("start-menu")) return;
   const menu = byId("start-menu");
+  const startButton = byId("taskbar-start");
   if (open) {
+    // The tray closes first and hands focus back to its button, so that is
+    // where closing Quick Access returns it.
     announceOverlay("start-menu");
+    const active = document.activeElement;
+    quickAccessOpener =
+      active instanceof HTMLElement && active !== document.body && !menu?.contains(active) ? active : null;
     commit(() => {
       overlayStore.set("start-menu");
-      startQueryStore.set("");
+      quickAccessStore.set(QUICK_ACCESS_FRESH);
     });
-    // Touch screens open the menu without raising the on-screen keyboard.
-    (window.matchMedia(TOUCH_QUERY).matches ? menu : byId("start-menu-search"))?.focus();
+    // The commit rendered the menu open (no longer inert), so focus moves
+    // now: keys typed straight after Ctrl/Cmd + K reach the search instead
+    // of being lost before a delayed focus, which left Enter to run the
+    // first item.
+    const touch = !focusSearch && window.matchMedia(TOUCH_QUERY).matches;
+    (touch ? menu : byId("start-menu-search"))?.focus();
     return;
   }
-  closeOverlayPanel(menu, () => overlayStore.set(null), { restoreFocus, returnTo: [byId("taskbar-start")] });
+  const opener = quickAccessOpener;
+  quickAccessOpener = null;
+  closeOverlayPanel(
+    menu,
+    () => {
+      overlayStore.set(null);
+      // Closing disarms Reset Desktop.
+      quickAccessStore.set((state) => ({ ...state, armed: null, confirm: "" }));
+    },
+    {
+      restoreFocus,
+      // A press on the Start button focuses it before it closes the menu.
+      toggle: startButton,
+      returnTo: returnTo ?? [opener, getFocusedWindow(), startButton],
+    },
+  );
 }
 
 export function closeStartMenu() {
@@ -124,8 +178,7 @@ export function setTrayOpen(
 
 // Clicks on these never close an overlay by clicking "outside": each toggles
 // or opens one itself (the old controllers stopped their propagation).
-const OVERLAY_CONTROLS =
-  "#taskbar-start, #start-menu, #taskbar-clock-button, #taskbar-audio-status, #taskbar-command-palette, #tray-panel";
+const OVERLAY_CONTROLS = "#taskbar-start, #start-menu, #taskbar-clock-button, #taskbar-audio-status, #tray-panel";
 
 function onDocumentClick(event: MouseEvent) {
   const target = event.target instanceof Element ? event.target : null;
@@ -167,7 +220,7 @@ function onFocusOut(event: FocusEvent) {
   }
 }
 
-/** Starts the Start menu and tray listeners. */
+/** Starts the Quick Access and tray listeners (Ctrl/Cmd + K: quick-access.ts). */
 export function startOverlays(): () => void {
   closers.set("start-menu", () => setStartMenu(false, { restoreFocus: true }));
   closers.set("tray-panel", () => setTrayOpen(false, { restoreFocus: true }));
@@ -185,7 +238,7 @@ export function startOverlays(): () => void {
   };
 }
 
-/** Lets the palette (palette.ts) close when another overlay opens. */
+/** Lets an overlay kept outside this module close when another one opens. */
 export function registerOverlayCloser(id: OverlayId, close: () => void): () => void {
   closers.set(id, close);
   return () => closers.delete(id);

@@ -1,7 +1,7 @@
 /**
- * Focus rules shared by the desktop's overlays (the Start menu, the tray
- * panel and the command palette, in src/components/desktop/overlay-state.ts
- * and palette.ts) and its window manager (window-manager.ts).
+ * Focus rules shared by the desktop's overlays (Quick Access, the Start
+ * menu, and the tray panel, in src/components/desktop/overlay-state.ts) and
+ * its window manager (window-manager.ts).
  */
 
 /**

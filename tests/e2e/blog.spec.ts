@@ -744,15 +744,15 @@ async function openLateDeepLink(page: Page, slug: string) {
   return { chunks, blogWindow };
 }
 
-test("a ?blog= article that arrives late leaves the palette its keys", async ({
+test("a ?blog= article that arrives late leaves Quick Access its keys", async ({
   page,
 }) => {
   // The article still opens, but focus stays where the visitor moved it
-  // since the page loaded: the palette keeps its search, and Enter runs
+  // since the page loaded: Quick Access keeps its search, and Enter runs
   // the match for all of it.
   const slug = "aws-local-zone-bangkok-launch";
   const { chunks, blogWindow } = await openLateDeepLink(page, slug);
-  const input = page.locator("#command-palette-input");
+  const input = page.locator("#start-menu-search");
   await page.keyboard.press("ControlOrMeta+K");
   await expect(input).toBeFocused();
   await page.keyboard.type("calc");
