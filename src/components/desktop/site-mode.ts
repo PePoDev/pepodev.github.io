@@ -52,6 +52,14 @@ export function applySiteMode(mode: SiteMode, persist: boolean) {
     websiteScrollY = window.scrollY;
   }
   root.dataset.siteMode = mode;
+  // The panels are server-rendered (the desktop hydrates inside its own), so
+  // their state is set here, before focus moves into the new one.
+  document.querySelectorAll<HTMLElement>("[data-site-mode-panel]").forEach((panel) => {
+    const inactive = panel.dataset.siteModePanel !== mode;
+    panel.hidden = inactive;
+    panel.inert = inactive;
+    panel.setAttribute("aria-hidden", String(inactive));
+  });
   commit(() => siteModeStore.set(mode));
 
   if (persist) {

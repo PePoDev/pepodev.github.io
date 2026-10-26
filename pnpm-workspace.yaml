@@ -1,4 +1,7 @@
 allowBuilds:
+  # esbuild runs from its platform package; its postinstall only verifies
+  # and speeds up finding the binary, so it stays off.
+  esbuild: false
   sharp: true
 # Resolve only versions published at least 3 days (4320 minutes) ago, the
 # same rule Dependabot's npm updates apply: a lockfile holding a younger

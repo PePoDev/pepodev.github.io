@@ -173,18 +173,19 @@ export function ExternalLinkIcon({ link }: { link: DesktopLink }) {
         event.preventDefault();
       }}
       onPointerMove={handlers.onPointerMove}
+      // A drag ends without opening the link (preventDefault). The click
+      // still reaches document, so a drag closes Quick Access and the tray
+      // like an app icon's does.
       onPointerUp={(event) => {
         if (handlers.onPointerUp(event)) {
           wasDragging.current = true;
           event.preventDefault();
-          event.stopPropagation();
         }
       }}
       onPointerCancel={handlers.onPointerCancel}
       onClick={(event) => {
         if (!wasDragging.current) return;
         event.preventDefault();
-        event.stopPropagation();
         wasDragging.current = false;
       }}
     >

@@ -17,7 +17,7 @@ import type { AppId } from "./apps";
 import { isOverlayOpen } from "./overlay-state";
 import { getBlogDeepLink, isDesktopSiteMode } from "./site-mode";
 import { commit } from "./store";
-import { showToast } from "./toasts";
+import { showToast } from "./toast-state";
 import {
   getLaunchFocus,
   getWindowElement,

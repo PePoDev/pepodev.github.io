@@ -17,35 +17,15 @@
 //   most 300 ms for it), unless the visitor saves data or is on a 2G
 //   connection. Website mode fetches none.
 // - A failed download is fetched again by the next launch or "Try again"
-//   (Turbopack retries a chunk once itself, then forgets it); a prefetch
-//   leaves a failure to the launch.
+//   (app-loaders.ts); a prefetch leaves a failure to the launch.
 import type { ComponentType } from "react";
 import type { AppProps } from "./app-api";
+import { importAppModule } from "./app-loaders";
 import { APP_IDS, DESKTOP_ICON_ORDER, isAppId, type AppId } from "./apps";
 import { whenIdle } from "./idle";
 import { isDesktopSiteMode } from "./site-mode";
 
-type AppModule<Id extends AppId> = { default: ComponentType<AppProps<Id>> };
-
-// Fixed paths, so each body gets its own chunk.
-const loaders: { [Id in AppId]: () => Promise<AppModule<Id>> } = {
-  welcome: () => import("@components/apps/WelcomeApp"),
-  blog: () => import("@components/apps/BlogApp"),
-  garden: () => import("@components/apps/GardenApp"),
-  project: () => import("@components/apps/ProjectsApp"),
-  work: () => import("@components/apps/WorkApp"),
-  me: () => import("@components/apps/AboutApp"),
-  sregame: () => import("@components/apps/SreGameApp"),
-  snake: () => import("@components/apps/SnakeApp"),
-  music: () => import("@components/apps/MusicPlayerApp"),
-  whitenoise: () => import("@components/apps/WhiteNoiseApp"),
-  calculator: () => import("@components/apps/CalculatorApp"),
-  settings: () => import("@components/apps/SettingsApp"),
-  terminal: () => import("@components/apps/TerminalApp"),
-  certs: () => import("@components/apps/CertificationsWalletApp"),
-  gallery: () => import("@components/apps/GalleryApp"),
-  trash: () => import("@components/apps/TrashBinApp"),
-};
+export type AppModule<Id extends AppId> = { default: ComponentType<AppProps<Id>> };
 
 /** An app's code once its download has settled. */
 export type AppChunk<Id extends AppId = AppId> =
@@ -56,6 +36,7 @@ export type AppChunk<Id extends AppId = AppId> =
 // a download settles or a failed one starts again, never during a render.
 const settled = new Map<AppId, AppChunk>();
 const pending = new Map<AppId, Promise<void>>();
+const failures = new Map<AppId, number>();
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -90,7 +71,7 @@ export function loadAppChunk(appId: AppId): Promise<void> {
     settled.delete(appId);
     notify();
   }
-  const download = loaders[appId]().then(
+  const download = importAppModule(appId, failures.get(appId) ?? 0).then(
     (module) => {
       pending.delete(appId);
       settled.set(appId, { status: "loaded", Body: module.default as ComponentType<AppProps> });
@@ -98,6 +79,7 @@ export function loadAppChunk(appId: AppId): Promise<void> {
     },
     (error: unknown) => {
       pending.delete(appId);
+      failures.set(appId, (failures.get(appId) ?? 0) + 1);
       settled.set(appId, { status: "failed", error });
       notify();
       throw error;

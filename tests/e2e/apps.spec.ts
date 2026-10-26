@@ -760,9 +760,10 @@ test("the desktop fetches app code in idle time once it has settled", async ({
 test("an app whose code fails to download can be tried again", async ({
   page,
 }) => {
-  // The chunk fails (Turbopack tries it twice), then the network is back.
+  // The app's code fails to download (as often as it is asked for), then
+  // the network is back.
   let failing = true;
-  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+  await page.route(/\/_next\/static\/[^?]+\.js(\?|$)/, async (route) => {
     // Idle prefetching can leave a request in flight when the test ends
     // (holdAppChunks in helpers.ts).
     try {

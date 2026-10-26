@@ -502,9 +502,10 @@ test("website mode reaches assistive tech before the desktop hydrates", async ({
     expect(tag, id).not.toContain("aria-hidden");
   }
 
-  // The site-mode state runs once React hydrates the page, which needs the
-  // Next.js chunks; hold them back (a slow network) and the panel the <head>
-  // script picked is shown and reachable first.
+  // The site-mode state is set when the desktop boots, which needs the
+  // desktop bundle (Next.js's chunks under next dev); hold it back (a slow
+  // network) and the panel the <head> script picked is shown and reachable
+  // first.
   await resetPage(page, { "pepodev.viewMode": "website" });
   const chunks = await holdChunks(page);
   await page.reload({ waitUntil: "domcontentloaded" });
@@ -536,7 +537,8 @@ test("clicks and keys made before the desktop hydrates are not lost", async ({
   page,
 }) => {
   // The desktop takes input once React has hydrated it, after the page has
-  // loaded; hold the Next.js chunks back (a slow network) and act first.
+  // loaded; hold the desktop bundle (Next.js's chunks under next dev) back,
+  // as a slow network would, and act first.
   await resetPage(page);
   const chunks = await holdChunks(page);
   const holdHydration = async () => {
@@ -1033,9 +1035,8 @@ test("scripts that must run while the page parses opt out of Rocket Loader", asy
 }) => {
   // The parse-time scripts: mode, theme, the other preferences, the input
   // made before the desktop boots, the icon placement and the taskbar
-  // clock. The window
-  // manager and the background are part of the React desktop, which
-  // hydrates through Next.js's scripts (checked below).
+  // clock. The window manager and the background are part of the React
+  // desktop, which hydrates through the desktop bundle (checked below).
   const markers = [
     'storageKey = "pepodev.viewMode"',
     "Apply the saved theme and accent before first paint",
@@ -1056,9 +1057,10 @@ test("scripts that must run while the page parses opt out of Rocket Loader", asy
   );
   expect(attributes).toEqual(markers.map(() => "false"));
 
-  // In the export, postbuild gives every script in the HTML, Next.js's own
-  // included (chunks, bootstrap, RSC payload), data-cfasync="false", so
-  // Rocket Loader cannot hold hydration back. `next dev` leaves them unmarked.
+  // In the export, every script in the HTML that runs has
+  // data-cfasync="false", the desktop bundle's module script included, so
+  // Rocket Loader cannot hold the desktop back (JSON-LD and the JSON data
+  // never run). `next dev` leaves Next.js's scripts unmarked.
   if (process.env.PLAYWRIGHT_SERVER === "preview") {
     const html = await (await request.get("/")).text();
     const unmarked = [...html.matchAll(/<script\b([^>]*)>/g)]
@@ -1066,7 +1068,7 @@ test("scripts that must run while the page parses opt out of Rocket Loader", asy
       .filter(
         ({ attributes }) =>
           !/data-cfasync="false"/.test(attributes) &&
-          !/type="application\/ld\+json"/.test(attributes),
+          !/type="application\/(ld\+)?json"/.test(attributes),
       )
       .map(({ tag }) => tag);
     expect(unmarked).toEqual([]);

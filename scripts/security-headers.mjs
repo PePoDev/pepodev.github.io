@@ -8,8 +8,8 @@
 // The site loads nothing from other origins except Cloudflare Web Analytics'
 // beacon, which Cloudflare injects and which reports to the site's own
 // /cdn-cgi/rum (cloudflareinsights.com takes the reports of a manually added
-// beacon). Inline scripts stay allowed: the parse-time scripts and Next.js's
-// payload scripts are inline, and their hashes change with every build. The
+// beacon). Inline scripts stay allowed: the parse-time scripts are inline,
+// and their hashes change with every build. The
 // Garden app frames /garden/, so framing is same-origin, not denied.
 import path from "node:path";
 import { fileURLToPath } from "node:url";

@@ -1,5 +1,5 @@
-// Root layout of / (the desktop and website mode). It hydrates: the desktop
-// is a React app (README, "The React Desktop"). The head scripts pick
+// Root layout of / (the desktop and website mode). The desktop is a React
+// app that hydrates (README, "The React Desktop"). The head scripts pick
 // the mode, theme and the other desktop preferences before first paint, and
 // take the input made before the desktop boots.
 import type { ReactNode } from "react";
@@ -15,7 +15,7 @@ export const viewport = siteViewport;
 export default async function HomeLayout({ children }: { children: ReactNode }) {
   return (
     <Document
-      runtime="react"
+      runtime="desktop"
       htmlData={{ "data-site-mode": "desktop" }}
       suppressHydrationWarning
       head={

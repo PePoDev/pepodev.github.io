@@ -14,7 +14,6 @@ import {
   getDaysUntilExpiry,
   getProviderBadge,
 } from "@utils/certifications";
-import "./CertificationsWalletApp.css";
 
 const REFRESH_MS = 3_600_000;
 

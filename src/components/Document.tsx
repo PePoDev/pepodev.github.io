@@ -16,24 +16,26 @@ import { Prefetch } from "./Prefetch";
 type DataAttributes = { [key: `data-${string}`]: string | undefined };
 
 /**
- * Whether the exported page keeps the React and Next.js runtime.
+ * What runs on the exported page. scripts/postbuild.mjs removes Next.js's
+ * scripts, script preloads and inline RSC payload from every exported page
+ * (and the page's .txt payload files): no page loads the Next.js runtime.
  *
- * - "none": a static page. scripts/postbuild.mjs removes Next.js's scripts,
- *   script preloads and inline RSC payload from the exported HTML (and the
- *   page's .txt payload files), so only <InlineScript>s run. For pages without
- *   client components ("use client"): their server-rendered HTML is all there
- *   is, and nothing hydrates.
- * - "react": the page hydrates (about 133 KB of gzipped JavaScript, plus an
- *   RSC payload that roughly doubles the HTML). Needed as soon as the page
- *   renders a client component. postbuild adds data-cfasync="false" to
- *   Next.js's scripts so Cloudflare Rocket Loader does not delay hydration.
+ * - "none": a static page. Only its <InlineScript>s run. For pages without
+ *   client components ("use client"): their server-rendered HTML is all
+ *   there is, and nothing hydrates.
+ * - "desktop": the home page. postbuild adds the desktop bundle
+ *   (scripts/desktop-bundle.mjs), a React root that hydrates the #desktop
+ *   panel from the props in #desktop-data (src/components/desktop/
+ *   browser-entry.tsx). Desktop.tsx must be the page's only client
+ *   component; nothing else on it hydrates.
  *
- * `next dev` always hydrates; the difference exists only in out/.
+ * `next dev` always hydrates the whole page; the difference exists only in
+ * out/.
  */
-export type PageRuntime = "none" | "react";
+export type PageRuntime = "none" | "desktop";
 
 /** Read by scripts/postbuild.mjs, which strips the runtime and this tag. */
-export const RUNTIME_NONE_META = "pepodev-runtime";
+export const RUNTIME_META = "pepodev-runtime";
 
 interface DocumentProps {
   /** See PageRuntime. Required, so every root layout decides. */
@@ -76,7 +78,7 @@ export function Document({
       {...htmlData}
     >
       <head>
-        {runtime === "none" && <meta name={RUNTIME_NONE_META} content="none" />}
+        <meta name={RUNTIME_META} content={runtime} />
         {head}
         {jsonLd && <JsonLd data={jsonLd} />}
       </head>

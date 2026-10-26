@@ -9,7 +9,6 @@
 // desktop's document.
 import { useEffect, useState } from "react";
 import { useAppWindowElement, type AppProps } from "@components/desktop/app-api";
-import "./GardenApp.css";
 
 export default function GardenApp({ appId }: AppProps<"garden">) {
   const getWindowElement = useAppWindowElement();

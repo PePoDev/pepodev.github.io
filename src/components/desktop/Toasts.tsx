@@ -1,6 +1,6 @@
 "use client";
-// #toast-container and its toasts (toasts.ts).
-import { dismissToast, useToasts } from "./toasts";
+// #toast-container and its toasts (toast-state.ts).
+import { dismissToast, useToasts } from "./toast-state";
 
 export function Toasts() {
   const toasts = useToasts();

@@ -240,13 +240,14 @@ test("the saved theme and accent apply before the end-of-body scripts", async ({
     );
   });
   // The desktop's preferences store applies them too once React hydrates,
-  // which needs the Next.js chunks: hold them back, so only parse-time
+  // which needs the desktop bundle: hold it back, so only parse-time
   // scripts have run when the attributes are checked.
   const chunks = await holdChunks(page);
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect.poll(chunks.held).toBeGreaterThan(0);
-  // The page's RSC payload (self.__next_f, data for hydration) repeats the
-  // scripts' text without running it, so it does not count.
+  // Under `next dev` the page's RSC payload (self.__next_f, data for
+  // hydration) repeats the scripts' text without running it, so it does not
+  // count.
   expect(
     await page.evaluate(() => ({
       prefsScript: Array.from(document.scripts).some(
@@ -536,7 +537,7 @@ test("the Bangkok clock is pre-rendered and kept current", async ({
 
 test("the Copy email button is there from first paint", async ({ page }) => {
   // The e-mail row does not grow (and push the channels and the footer down)
-  // when the page hydrates.
+  // when the desktop boots.
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.clear();
@@ -558,7 +559,7 @@ test("the Copy email button is there from first paint", async ({ page }) => {
   expect(await website.locator(".ws-email-row").boundingBox()).toEqual(row);
 });
 
-test("the Copy email button copies when pressed before the page hydrates", async ({
+test("the Copy email button works from first paint, before the desktop boots", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -585,28 +586,37 @@ test("the Copy email button copies when pressed before the page hydrates", async
   const copy = page.locator("#website [data-copy-email]");
   const status = page.locator("#website [data-copy-status]");
 
-  // It copies at once; the text says so once React has the button.
+  // It copies at once and says so, before the desktop's code has loaded.
   await copy.click();
   await expect.poll(copied).toEqual(["pepo@pepo.dev"]);
-  chunks.release();
-  await waitForWindowManager(page);
   await expect(copy).toHaveText("Copied email address");
   await expect(status).toHaveText("Email address copied");
-
-  // From then on the button handles its presses itself, once each.
   await expect(copy).toHaveText("Copy email address", { timeout: 4_000 });
+  await expect(status).toHaveText("");
+
+  // Nothing takes the button over when the desktop boots: each press
+  // copies once.
+  chunks.release();
+  await waitForWindowManager(page);
   await copy.click();
   await expect(copy).toHaveText("Copied email address");
   expect(await copied()).toEqual(["pepo@pepo.dev", "pepo@pepo.dev"]);
 });
 
 // Text that changed before React hydrated (a browser extension, or
-// Cloudflare's e-mail obfuscation) makes React render the page again from
-// scratch, resetting <html> to its server attributes (the desktop, no theme,
-// no experience). Not even one frame may show that. Returns the page's
-// errors, and what every frame showed of `attributes` from the end of the
-// <head> scripts (the last one sets __pepodevEarlyInput) to the boot.
+// Cloudflare's e-mail obfuscation) makes React render the desktop again
+// from scratch. Only the desktop: <html> keeps what the parse-time scripts
+// set (mode, theme, experience), so no frame may show anything else, and
+// website mode, which never hydrates, keeps its text as the page had it.
+// Only in out/: `next dev` hydrates the whole page, and its client render
+// resets <html> and website mode. Returns the page's errors, and what every
+// frame showed of `attributes` from the end of the <head> scripts (the last
+// one sets __pepodevEarlyInput) to the boot.
 async function breakHydration(page: Page, attributes: string[]) {
+  test.skip(
+    process.env.PLAYWRIGHT_SERVER !== "preview",
+    "next dev hydrates the whole page through Next.js",
+  );
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
@@ -616,10 +626,9 @@ async function breakHydration(page: Page, attributes: string[]) {
     (url) => url.pathname === "/",
     async (route) => {
       const response = await route.fetch();
-      const body = (await response.text()).replace(
-        ">pepo@pepo.dev<",
-        ">[email&#160;protected]<",
-      );
+      const body = (await response.text())
+        .replace(">pepo@pepo.dev<", ">[email&#160;protected]<")
+        .replace(">Quick Access<", ">Quick Access (changed)<");
       await route.fulfill({ response, body });
     },
   );
@@ -665,6 +674,8 @@ test("a hydration error keeps website mode and the theme", async ({ page }) => {
   await expect(website).toBeVisible();
   await expect(page.locator("#desktop")).toBeHidden();
   expect(await broken.seen()).toEqual(["website light"]);
+  await expect(website.locator(".ws-email")).toHaveText("[email\u00a0protected]");
+  await expect(page.locator("#start-menu h3").first()).toHaveText("Quick Access");
 });
 
 test("a hydration error keeps the desktop experience", async ({ page }) => {

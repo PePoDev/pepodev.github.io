@@ -1,15 +1,16 @@
-// Website mode: the conventional, responsive portfolio (the #website panel of
-// /). A Server Component: its markup is rendered at build time, for search
-// engines and for the first paint of returning website-mode visitors (the
-// <head> mode script shows this panel before anything hydrates), and repeated
-// in the page's RSC payload. Only SiteModePanel and two small islands hydrate:
+// Website mode: the conventional, responsive portfolio (the #website panel
+// of /). A Server Component, and no React runs in it: its markup is
+// rendered at build time, for search engines and for the first paint of
+// returning website-mode visitors (the <head> mode script shows this panel
+// before the desktop boots). Its two behaviours are parse-time scripts:
 // the Bangkok clock and the copy-e-mail button (src/components/website/).
 //
-// Mode switching, focus handover, `?blog=` removal and the scroll restore
-// are site-mode's (src/components/desktop/site-mode.ts) and, before the
-// desktop boots, the early-input script's: the header's ModeSwitch and the
-// one-way [data-site-mode-target="desktop"] buttons need no code here.
-// website-mode.css also hides this panel before hydration in desktop mode.
+// Mode switching, the panels' state, focus handover, `?blog=` removal and
+// the scroll restore are site-mode's (src/components/desktop/site-mode.ts)
+// and, before the desktop boots, the early-input script's: the header's
+// ModeSwitch and the one-way [data-site-mode-target="desktop"] buttons need
+// no code here. website-mode.css also hides this panel before the boot in
+// desktop mode.
 //
 // Every number is computed when the site is built: experience from
 // experiences.json (src/utils/experience.ts; data-as-of holds the build

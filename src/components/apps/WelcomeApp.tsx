@@ -3,7 +3,6 @@
 // out, swaps in another random quote after 200 ms and fades it back in.
 import { useEffect, useRef, useState } from "react";
 import type { AppProps } from "@components/desktop/app-api";
-import "./WelcomeApp.css";
 
 const QUOTES = [
   {

@@ -1,18 +1,22 @@
 // Runs while the HTML parses, right after the website panel: replaces the
 // build-time Bangkok time (which can be hours old) with the current one
-// before first paint, instead of waiting for hydration (about 1.8 s on a slow
-// phone). It only rewrites the text and `datetime` of the [data-bkk-time]
-// elements, which carry suppressHydrationWarning (hydration rule 1); the
-// BangkokClock components keep them current once hydrated.
+// before first paint, then every 15 seconds. It only rewrites the text and
+// `datetime` of the [data-bkk-time] elements (BangkokClock.tsx).
 import { InlineScript, scriptValue } from "@components/InlineScript";
 import { BANGKOK_TIME_OPTIONS } from "./bangkok-time";
 
 const code = `(() => {
-  const time = new Intl.DateTimeFormat("en-GB", ${scriptValue(BANGKOK_TIME_OPTIONS)}).format(new Date());
-  document.querySelectorAll("#website [data-bkk-time]").forEach((element) => {
-    if (element.textContent !== time) element.textContent = time;
-    if (element instanceof HTMLTimeElement) element.dateTime = time;
-  });
+  const format = new Intl.DateTimeFormat("en-GB", ${scriptValue(BANGKOK_TIME_OPTIONS)});
+  const clocks = document.querySelectorAll("#website [data-bkk-time]");
+  const tick = () => {
+    const time = format.format(new Date());
+    clocks.forEach((element) => {
+      if (element.textContent !== time) element.textContent = time;
+      if (element instanceof HTMLTimeElement) element.dateTime = time;
+    });
+  };
+  tick();
+  setInterval(tick, 15000);
 })();`;
 
 export function BangkokClockScript() {

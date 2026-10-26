@@ -17,6 +17,11 @@ updates:
           - react
           - react-dom
           - "@types/react*"
+      # esbuild (scripts/desktop-bundle.mjs) ships breaking changes as 0.x
+      # minor releases, so its updates come in a pull request of their own.
+      esbuild:
+        patterns:
+          - esbuild
       # Every other minor and patch update in one pull request; majors come
       # one per pull request.
       minor-and-patch:

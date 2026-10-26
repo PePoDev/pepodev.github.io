@@ -176,7 +176,7 @@ export function hasAppKeyboard(appId: AppId): boolean {
 export { useSiteMode } from "./site-mode";
 export { updateDesktopPrefs, toggleTheme, useDesktopPrefs } from "./prefs";
 export { setSystemAudio, useSystemAudio } from "./system-audio";
-export { showToast } from "./toasts";
+export { showToast } from "./toast-state";
 export { resetDesktop } from "./quick-access";
 export { blogArticleUrl, loadBlogArticle, type BlogArticle } from "./blog-article";
 

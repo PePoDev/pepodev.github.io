@@ -18,7 +18,7 @@ import { startPrefs } from "./prefs";
 import { openQuickAccess, startQuickAccess } from "./quick-access";
 import { isDesktopSiteMode, startSiteMode } from "./site-mode";
 import { startSystemAudio } from "./system-audio";
-import { showToast, startToasts } from "./toasts";
+import { showToast, startToasts } from "./toast-state";
 import { mountWindowBody, noteUserInteraction, requestOpenApp, startWindowManager } from "./window-manager";
 
 declare global {

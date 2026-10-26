@@ -1,10 +1,11 @@
 // Site-wide pages and files that no other area owns: the 404 page,
-// robots.txt, the web manifest, favicons, self-hosted fonts, and the
-// security headers.
+// robots.txt, the web manifest, favicons, self-hosted fonts, the security
+// headers, and the scripts the home page loads.
+import { gzipSync } from "node:zlib";
 import { expect, test } from "@playwright/test";
 import { SECURITY_HEADERS } from "../../scripts/security-headers.mjs";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "../../src/consts";
-import { openApp, resetPage } from "./helpers";
+import { openApp, resetPage, waitForWindowManager } from "./helpers";
 
 // Cloudflare adds the security headers on pepo.dev and serve-static.mjs adds
 // the same ones, so only the export (PLAYWRIGHT_SERVER=preview) has them.
@@ -399,3 +400,44 @@ test("the desktop Garden window takes the theme and accent from the desktop", as
   await expect(frameRoot).toHaveCSS("--accent-primary", "#bf5af2");
 });
 
+test("the home page loads the desktop bundle and no Next.js runtime", async ({
+  page,
+}) => {
+  test.skip(
+    process.env.PLAYWRIGHT_SERVER !== "preview",
+    "next dev hydrates through Next.js",
+  );
+  // Every script file the page asks for until the desktop has booted.
+  const scripts: { url: string; gzipped: number }[] = [];
+  const reads: Promise<void>[] = [];
+  page.on("response", (response) => {
+    if (response.request().resourceType() !== "script") return;
+    reads.push(
+      response.body().then((body) => {
+        scripts.push({
+          url: new URL(response.url()).pathname,
+          gzipped: gzipSync(body).length,
+        });
+      }),
+    );
+  });
+  await page.goto("/");
+  await waitForWindowManager(page);
+  await Promise.all(reads);
+
+  // App bodies load on demand, from the URLs in #desktop-apps.
+  const apps = Object.values(
+    JSON.parse((await page.locator("#desktop-apps").textContent()) ?? "{}"),
+  );
+  const loaded = scripts.filter(({ url }) => !apps.includes(url));
+  expect(
+    loaded
+      .map(({ url }) => url)
+      .filter((url) => !url.startsWith("/_next/static/desktop/")),
+  ).toEqual([]);
+  expect(await page.evaluate(() => "__next_f" in self)).toBe(false);
+  // React and the desktop: about 100 KB gzipped (203 KB with Next.js's
+  // runtime). Raise this on purpose, never to make room by accident.
+  const total = loaded.reduce((sum, { gzipped }) => sum + gzipped, 0);
+  expect(total).toBeLessThan(115_000);
+});

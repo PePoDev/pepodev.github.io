@@ -2,7 +2,6 @@
 // taskbar buttons, the Start menu and link shortcuts all draw them. Decorative:
 // every icon is aria-hidden, and the control around it carries the name.
 import { memo } from "react";
-import webringIcon from "@/assets/icons/webring.svg";
 
 // Apps without a drawn icon get a labelled tile in their colour.
 const utilityIcons: Record<string, { label: string; color: string }> = {
@@ -501,7 +500,9 @@ export const AppIcon = memo(function AppIcon({ name }: { name: string }) {
       );
     case "webring":
       return (
-        <img src={webringIcon.src} alt="" aria-hidden="true" loading="lazy" />
+        // A public file, not an import: the desktop bundle (scripts/
+        // desktop-bundle.mjs) must render the same URL as the server.
+        <img src="/icons/webring.svg" alt="" aria-hidden="true" loading="lazy" />
       );
     case "garden":
       return (

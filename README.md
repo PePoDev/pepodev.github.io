@@ -9,9 +9,9 @@ synced from Obsidian, music, tools, and games) and a conventional responsive
 website.
 The resume is a standalone page with PDF download.
 
-Keep it **static-first**: render content at build time. Only `/` hydrates
-(the desktop); every other page ships no React or Next.js JavaScript, just
-its own small inline scripts.
+Keep it **static-first**: render content at build time. Only `/`'s desktop
+hydrates, from a bundle of its own; no page loads Next.js's runtime, and
+every other page ships no React, just its own small inline scripts.
 
 ## Setup
 
@@ -29,31 +29,35 @@ Requires Node `>=22.22.0` and pnpm 10.33 (pinned by `packageManager` in
 | `pnpm test:e2e:ui` | Run Playwright in UI mode |
 | `pnpm garden:sync` | Sync published garden notes from the vault in `GARDEN_VAULT` (or `--vault <path>`) |
 | `pnpm test:garden` | Run the garden sync privacy and link checks |
-| `pnpm test:scripts` | Run the build scripts' unit tests (`scripts/*.test.mjs`: the garden checks and postbuild's HTML helpers) |
+| `pnpm test:scripts` | Run the build scripts' unit tests (`scripts/*.test.mjs`: the garden checks, postbuild's HTML helpers and the desktop bundle's checks) |
 
-Run commands from the repository root. Use `pnpm build` and `pnpm check`
-after code changes and `pnpm test:e2e` after desktop, window, or app
-interaction changes. Set `NEXT_TELEMETRY_DISABLED=1` in scripts and CI. The
-build needs no network (fonts are committed). `next.config.ts` sets
+Run commands from the repository root. Use `pnpm build` and `pnpm check` after
+code changes, and after desktop, window, or app interaction changes
+`pnpm test:e2e`, then the same against the export (see below): `next dev` does
+not run the desktop bundle. Set `NEXT_TELEMETRY_DISABLED=1` in scripts and CI.
+The build needs no network (fonts are committed). `next.config.ts` sets
 `agentRules: false` so `next dev` never writes into `AGENTS.md`; keep it.
-`next dev` logs four "preloaded using link preload but not used" warnings
-for stylesheets on static routes; they are dev-only, ignore them.
+`next dev` logs four "preloaded using link preload but not used" warnings for
+stylesheets on static routes; they are dev-only, ignore them.
 
 `pnpm test:e2e` tests `next dev` in Playwright's bundled Chromium, which
 cannot play the AAC music, so the two Music tests fail locally. `next dev`
-hydrates every page, so static pages are only proven by the export: CI sets
-`PLAYWRIGHT_SERVER=preview` (serve the built `out/`; run `pnpm build` first)
-and `PLAYWRIGHT_CHANNEL=chrome` (installed Google Chrome); set both to
-reproduce CI. In CI, `test.only` fails the run and tests get two retries; the
-job uploads the `playwright-report` artifact on every run, so check it for
-tests that only passed on a retry (flaky). `garden.spec.ts` skips itself
-without synced notes. Specs share these helpers from `tests/e2e/helpers.ts`:
+hydrates every page through Next.js, so static pages and the desktop bundle
+are only proven by the export, and the tests of the bundle and of a hydration
+error run only there: CI sets `PLAYWRIGHT_SERVER=preview` (serve the built
+`out/`; run `pnpm build` first) and `PLAYWRIGHT_CHANNEL=chrome` (installed
+Google Chrome); set both to reproduce CI. In CI, `test.only` fails the run and
+tests get two retries; the job uploads the `playwright-report` artifact on
+every run, so check it for tests that only passed on a retry (flaky).
+`garden.spec.ts` skips itself without synced notes. Specs share these helpers
+from `tests/e2e/helpers.ts`:
 
 - `resetPage`, `prefsStorage`, `waitForWindowManager`.
 - `openApp(page, label, appId)` opens an app from its icon (Settings from
   its tray button) and waits until its window is shown and its body
   rendered; pass `{ body: false }` when the test holds the app's code back.
-- `holdChunks(page)` holds Next.js's chunks requested from then on (`held()`,
+- `holdChunks(page)` holds the script files requested from then on (the
+  desktop bundle in `out/`, Next.js's chunks under `next dev`; `held()`,
   `hold()`, `release()`): before a reload it holds hydration, so only
   parse-time scripts run; after the boot it holds an app's code.
 - `holdAppChunks(page, markers)` holds the chunks whose code contains a
@@ -61,14 +65,15 @@ without synced notes. Specs share these helpers from `tests/e2e/helpers.ts`:
   hover, idle prefetch); install it before the page loads.
 - `emulateSaveData(page)` turns idle prefetching off.
 
-On a hydrating page the RSC payload repeats inline scripts as text: a test
-that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
+Under `next dev` the RSC payload repeats inline scripts as text: a test that
+searches `document.scripts` must skip `self.__next_f.push(...)` scripts (the
+export has no payload).
 
 ## Project Map
 
 | Path | Purpose |
 | --- | --- |
-| `src/app/(home)/` | `/`: root layout (`runtime="react"`, the `<head>` scripts) and page (desktop and website mode) |
+| `src/app/(home)/` | `/`: root layout (`runtime="desktop"`, the `<head>` scripts) and page (desktop, its props in `#desktop-data`, and website mode) |
 | `src/app/(blog)/blog/`, `src/app/(post)/blog/[slug]/` | Blog index; post pages (the root layout sits in the dynamic segment, so `<html lang>` is the post's), with `post-data.ts` and `article.json/route.ts` (the desktop Blog app's copy of each post) |
 | `src/app/(resume)/resume/` | Standalone HTML resume: `page.tsx`, `resume.css`, `resume-pdf.ts` (PDF generator), `ResumeDownloadScript.tsx` |
 | `src/app/(garden)/garden/[[...slug]]/` | Garden home and notes in one optional catch-all route, with its root layout and `garden-data.ts` |
@@ -78,8 +83,8 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 | `src/components/SiteHeader.tsx` | Header (home, Blog, RSS) for the 404 |
 | `src/components/blog/` | The blog pages' shell (website mode's header and footer) and `<head>` theme script |
 | `src/components/desktop/` | The React desktop: stores, window manager, overlays (Quick Access, the tray), icons, taskbar, app registry and app API (see The React Desktop) |
-| `src/components/apps/` | One app per `<Name>App.tsx` (client body, its own chunk) and `<Name>App.data.ts` (build-time data); `app-data.ts` lists the loaders |
-| `src/components/WebsiteMode.tsx`, `src/components/website/` | Website mode (the `#website` panel, a Server Component) and its islands: Bangkok clock, copy e-mail |
+| `src/components/apps/` | One app per `<Name>App.tsx` (client body, loaded on demand) and `<Name>App.data.ts` (build-time data); `app-data.ts` lists the data loaders |
+| `src/components/WebsiteMode.tsx`, `src/components/website/` | Website mode (the `#website` panel, a Server Component; no React runs in it) and its parse-time scripts: Bangkok clock, copy e-mail |
 | `src/components/home/HomeHeadScripts.tsx` | Mode and theme scripts in `/`'s `<head>` |
 | `src/components/garden/`, `src/styles/garden.css` | Garden shell, note tree, parse-time scripts, page styles |
 | `src/lib/` | Content layer (`content.ts`), Markdown (`markdown.ts`), images (`images.ts`), metadata (`head.ts`), `static-params.ts`, `sitemap.ts`, `xml.ts` |
@@ -97,7 +102,8 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 | `public/music/` | Local audio library |
 | `public/robots.txt`, `public/manifest.webmanifest` | Sitemap pointer and web app manifest (icons: `favicon.svg`, `icon-192.png`, `icon-512.png`) |
 | `public/_img/` | Images resized at build time; generated, gitignored |
-| `scripts/postbuild.mjs`, `scripts/serve-static.mjs` | Export checks (see Page Runtime); pepo.dev-like static server |
+| `scripts/postbuild.mjs`, `scripts/serve-static.mjs` | Export checks and the runtime of each page (see Page Runtime); pepo.dev-like static server |
+| `scripts/desktop-bundle.mjs`, `src/components/desktop/browser-entry.tsx`, `app-loaders.ts`, `app-loaders.browser.ts` | The exported `/`'s desktop bundle (esbuild), its entry, and how app bodies load in it and under Next.js (see Page Runtime) |
 | `scripts/security-headers.mjs` | The security headers pepo.dev sends (Cloudflare adds them; see Cloudflare) |
 | `scripts/generate-og-image.mjs` | Default Open Graph image generator |
 | `tests/e2e/*.spec.ts` | Playwright coverage, one spec per area; `data.spec.ts` checks rules the portfolio JSON must keep, not its current values |
@@ -136,46 +142,104 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 
 ### Page Runtime
 
-Every root layout declares its runtime:
+No exported page loads Next.js's runtime: `scripts/postbuild.mjs` strips
+Next.js's scripts (`src` under `/_next/`, the Turbopack bootstrap, the
+`self.__next_f`/`__next_s` payload), script preloads, hydration-only markup
+and the `.txt` payload files from every page, then deletes Next.js's client
+files, which no page loads (stylesheets and media stay). Every root layout
+declares what runs instead:
 
-- `runtime="none"` (static page; all pages but `/`): `scripts/postbuild.mjs`
-  strips Next.js's scripts (`src` under `/_next/`, the Turbopack bootstrap,
-  the `self.__next_f`/`__next_s` payload), script preloads, hydration-only
-  markup and the `.txt` payload files. The page keeps its `<InlineScript>`s,
-  JSON-LD, and any `<script>` a post or note writes as raw HTML.
-- `runtime="react"` (hydrating page; only `/`): needed as soon as a page
-  renders a client component (`"use client"`). Postbuild gives each Next.js
-  script `data-cfasync="false"` so Rocket Loader cannot defer hydration.
-- Small behaviours of static pages are `<InlineScript>`s (`Prefetch.tsx`,
-  `NotFoundPath.tsx`, the blog, garden and resume scripts), never client
-  components.
-- `next dev` hydrates every page, so the difference exists only in `out/`;
-  CI, which tests `out/`, proves static pages work without React.
+- `runtime="none"` (static page; all pages but `/`): only the page's
+  `<InlineScript>`s, JSON-LD, and any `<script>` a post or note writes as
+  raw HTML. Small behaviours of static pages are `<InlineScript>`s
+  (`Prefetch.tsx`, `NotFoundPath.tsx`, the blog, garden and resume scripts),
+  never client components.
+- `runtime="desktop"` (only `/`): the desktop bundle. Next.js renders the
+  page's HTML; `scripts/desktop-bundle.mjs` (esbuild, run by postbuild)
+  bundles the desktop as ES modules into `out/_next/static/desktop/`, with
+  content hashes in the file names. Its entry (`browser-entry.tsx`) is a
+  React root of its own that hydrates the `#desktop` panel
+  (`hydrateRoot`) with the props the page wrote as JSON in
+  `#desktop-data`; nothing else on the page is React, so `Desktop.tsx` is
+  the page's only client component, and it renders the panel's children,
+  never the panel (`SiteModePanel` and website mode are Server Components).
+  The bundle hydrates with the React build Next.js rendered the HTML with
+  (its vendored `next/dist/compiled/react…`, following Next.js's choice of
+  channel), not `package.json`'s `react`. Postbuild adds the bundle as async
+  module scripts, so DOMContentLoaded never waits for them, each with
+  `data-cfasync="false"` before `src`, the only place Rocket Loader reads
+  it: in `<head>`, a `modulepreload` for every file, a script for each
+  shared chunk (so browsers without modulepreload, Firefox 114 and Safari
+  16, fetch them alongside the entry; each loads once) and the app bodies'
+  URLs as JSON in `#desktop-apps`; at the end of `<body>`, the entry, which
+  so runs only once the page has parsed and hydrates at once, without
+  `readyState` or DOMContentLoaded (Rocket Loader fakes both once it takes
+  over any script on the page). If a file the entry imports fails to
+  download, the desktop the server rendered stays on screen but ignores
+  input until a reload (link shortcuts and the mode switch still work), as
+  with Next.js's own scripts before.
+- Each app body is an entry point of its own, imported on demand.
+  `app-loaders.ts` lists the bodies, one line each in the form
+  `<id>: () => import("@components/apps/<Name>App"),` (the bundle script
+  reads that list and fails unless it holds every id in `APP_IDS`); under
+  Next.js each becomes its own chunk, and the bundle swaps the module for
+  `app-loaders.browser.ts`, which imports the URL from `#desktop-apps`. A
+  browser keeps a failed module download for the page's lifetime, so a
+  retry asks for the same file with `?retry=<n>`. Every chunk a body
+  imports is also one the entry imports, loaded with the page, so a body's
+  own file is all a launch can fail on: the build fails on a chunk only
+  app bodies share (import that module from `browser-entry.tsx`, as it
+  does `music-settings.ts`; it then loads with the page), on an app body
+  inside another output (a static import that would load it with the page),
+  and on a file an `import()` inside the bundle would create (neither
+  preloaded nor retried).
+- The bundle loads no styles: Next.js links every stylesheet the server render
+  imports, so `Desktop.tsx` imports the app bodies' own CSS (`<Name>App.css`),
+  and code that loads on demand imports none (the build fails on CSS imported
+  anywhere outside the entry's static imports, and on CSS Modules, whose class
+  names would differ from the server render's). Assets the desktop renders are
+  URLs both renders agree on (a `public/` file, not an imported image:
+  `public/icons/webring.svg`).
+- `next dev` hydrates every page through Next.js, so the difference exists
+  only in `out/`; CI, which tests `out/`, proves static pages work without
+  React and the desktop works from its bundle.
 
 Postbuild fails the build when:
 
-1. a static page renders a client component (its RSC payload is read against
-   `.next/`'s client reference manifests; an unreadable manifest fails too),
-   a hydrating page renders none, or a static page keeps anything that needs
-   the runtime (streamed Suspense content);
-2. a page references a local file missing from `out/`, in its attributes or,
-   on a hydrating page, as an asset URL in its RSC payload (app data such as
-   Music tracks);
-3. `sitemap-0.xml` does not list exactly the exported pages (every
+1. a page renders a client component other than the desktop (its RSC
+   payload is read against `.next/`'s client reference manifests; an
+   unreadable manifest fails too), the desktop page renders no desktop
+   (`Desktop.tsx` and `#desktop-data`), or a page keeps anything that needs
+   the runtime (streamed Suspense content, also on a page without the
+   runtime marker). A page that fails is left as it was, so running
+   postbuild again reports it again;
+2. the desktop bundle breaks a rule above (`app-loaders.ts` against
+   `APP_IDS`, chunks only app bodies share, an app body loaded with the
+   page, an `import()` inside the bundle, CSS imported by code that loads
+   on demand, a CSS Module, `useId`), a script on the desktop page lacks
+   `data-cfasync="false"` before its other attributes, or a stylesheet in
+   `out/_next/` is linked by no page (CSS that only lazily loaded code
+   imports, on any page);
+3. a page references a local file missing from `out/`, in its attributes or
+   as an asset URL in its JSON data (the desktop's app data, such as Music
+   tracks, and the app bodies' files);
+4. `sitemap-0.xml` does not list exactly the exported pages (every
    `out/**/index.html`) or `sitemap-index.xml` does not point to it;
-4. a post has no `out/blog/<id>/article.json` (`{ id, html }`) or the file
+5. a post has no `out/blog/<id>/article.json` (`{ id, html }`) or the file
    references a missing local file.
 
 It also removes `out/404/` and `out/_not-found/` (copies of the 404 that
-would answer with status 200). Its HTML helpers are unit-tested in
-`scripts/postbuild.test.mjs`.
+would answer with status 200). Its HTML helpers and the bundle's pure
+helpers are unit-tested in `scripts/postbuild.test.mjs`.
 
 Weight: the site's own pages load no JavaScript from other origins; the
 only such script is Cloudflare Web Analytics' beacon, which Cloudflare adds
-to every page (see Cloudflare). `/` loads about 159 KB
-gzip of JavaScript before the desktop takes input (React and Next.js about
-134 KB); `index.html` is about 44 KB gzip. Keep app bodies out of the
-initial chunks.
+to every page (see Cloudflare). `/` loads about 99 KB gzip of JavaScript
+before the desktop takes input (React and the desktop; with Next.js's
+runtime it was 203 KB), and `index.html` is about 27 KB gzip (46 KB with
+the RSC payload). `pages.spec.ts` fails above 115 KB: raise that on
+purpose, never to make room by accident. Keep app bodies out of the
+entry's imports.
 
 ### Parse-Time Scripts and Rocket Loader
 
@@ -207,8 +271,8 @@ behaviours) is an `<InlineScript code={...} />`:
 
 ### Hydration Rules
 
-React hydrates `/` (and every page under `next dev`), so scripts that touch
-server-rendered DOM follow these rules:
+React hydrates `/`'s `#desktop` panel (and every whole page under
+`next dev`), so scripts that touch server-rendered DOM follow these rules:
 
 1. Before hydration, a parse-time script may change attributes of
    React-rendered elements (`class`, `style`, `hidden`, `inert`, `aria-*`,
@@ -224,13 +288,17 @@ server-rendered DOM follow these rules:
    (there is no client-side navigation or `router.refresh()`). Never let a
    client component render DOM that other code mutates.
 4. Adding nodes to `<head>` is fine at any time.
+5. No `useId` in the desktop (the build fails on it): React derives its ids
+   from the component's place in the tree, and the exported page's desktop
+   is a root of its own while the server rendered it inside Next.js's page,
+   so the ids would differ.
 
 Client modules: React Strict Mode is on in development, so effects that
 start listeners or timers return a cleanup. Effects run after hydration,
 possibly after `DOMContentLoaded` and `load`; never wait for those events in
 a client module. Anything a visitor must see earlier is a parse-time script.
-On `/`, `<body>` starts with React's `<div hidden="">`; mind that in
-`body > :first-child` selectors.
+Under `next dev`, `<body>` starts with React's `<div hidden="">`; mind that
+in `body > :first-child` selectors.
 
 ### Dynamic Routes
 
@@ -255,8 +323,10 @@ icons, and apps render from React state, not a static desktop with bundled
 DOM controllers.
 
 `src/app/(home)/page.tsx` loads every app's build-time data
-(`loadAppData()`), then renders `<Desktop appData>` (the `#desktop` panel),
-the icon placement and clock scripts, and `<WebsiteMode />`.
+(`loadAppData()`), then renders `<SiteModePanel id="desktop">` around
+`<Desktop appData>`, the same props as JSON in `#desktop-data` (what the
+exported page's bundle hydrates with), the icon placement and clock
+scripts, and `<WebsiteMode />`.
 
 | File (`src/components/desktop/`) | Role |
 | --- | --- |
@@ -264,8 +334,9 @@ the icon placement and clock scripts, and `<WebsiteMode />`.
 | `apps.ts` | The app registry, shared by server and client |
 | `window-manager.ts`, `Window.tsx` | Windows: open, minimize, maximize, close, focus, z-order, bounds, drag and resize, phone layout, focus hand-off, Escape, `desktop:open-app`, `desktop:close-all-windows`, first-visit Welcome |
 | `overlay-state.ts`, `quick-access.ts`, `StartMenu.tsx`, `Taskbar.tsx` | The overlays, Quick Access (the Start menu: apps, commands and links) and the tray (one open at a time, focus return, Reset Desktop confirmation, Ctrl/Cmd + K), and the taskbar |
-| `site-mode.ts` | `pepodev.viewMode`, `?blog=` rules, `site:mode-change`, mode switches (by delegation), scroll restore |
-| `prefs-core.ts`, `prefs.ts`, `system-audio.ts`, `toasts.ts` | Preferences, `desktop:preferences`, `desktop:toggle-theme`; `pepodev.systemAudio`, `desktop:audio-settings`; toasts, `desktop:show-toast` |
+| `site-mode.ts`, `SiteModePanel.tsx` | `pepodev.viewMode`, `?blog=` rules, `site:mode-change`, mode switches (by delegation), the panels' `hidden`/`inert`/`aria-hidden` (set from the boot on; the panels are Server Components), scroll restore |
+| `browser-entry.tsx`, `app-loaders.ts`, `app-loaders.browser.ts` | The exported page's desktop bundle: its entry, and how app bodies load in it and under Next.js (see Page Runtime) |
+| `prefs-core.ts`, `prefs.ts`, `system-audio.ts`, `toast-state.ts` | Preferences, `desktop:preferences`, `desktop:toggle-theme`; `pepodev.systemAudio`, `desktop:audio-settings`; toasts, `desktop:show-toast` |
 | `icon-grid.ts`, `icon-layout.ts`, `DesktopIcon.tsx` | The shared icon grid (also inlined in the placement script) and icon state after hydration |
 | `deep-link.ts`, `blog-article.ts` | `?blog=<slug>`; the Blog app's article files |
 | `runtime.tsx`, `idle.ts` | The boot, early-input replay, `[data-open-app]` launchers, Quick Access tip, idle mounts; `whenIdle(callback, timeout)` |
@@ -303,8 +374,8 @@ the icon placement and clock scripts, and `<WebsiteMode />`.
 
 `DesktopScripts.tsx` and `HomeHeadScripts.tsx`; before hydration they never
 change text (hydration rule 1): they set attributes, styles and globals (the
-early-input script also scrolls, focuses and writes the clipboard), and the
-stores take over with the same code:
+early-input script also scrolls and focuses), and the stores take over with
+the same code:
 
 - `<head>`: site mode; theme and accent; preferences ("Initialize theme
   immediately": background, glass, radius, effects, experience and its
@@ -318,17 +389,13 @@ stores take over with the same code:
   with focus in its search box, also when pressed again before the boot. A
   mode switch applies at once, keeps the website scroll position
   (`window.__pepodevWebsiteScrollY`, which site mode takes over at the boot),
-  and counts as interaction too. Until website mode's Copy email button
-  hydrates, a press on it copies at once (`window.__pepodevEarlyCopyEmail`)
-  and the button shows the result when it hydrates
-  (`window.__pepodevCopyEmailReady`). Other keys, icon drags, and other clicks
-  are lost before the boot. Until the boot the script also keeps the `<html>`
-  attributes the parse-time scripts set (mode, theme, experience and the other
-  preference attributes and variables): a hydration error (text that an
-  extension or Cloudflare's e-mail obfuscation changed) makes React render the
-  page again and reset `<html>` to its server attributes
-  (`data-site-mode="desktop"`, no theme), and the script puts them back before
-  the next paint.
+  and counts as interaction too. Other keys, icon drags, and other clicks are
+  lost before the boot. A hydration error (desktop text that an extension
+  changed before the boot) makes React render the desktop again from
+  scratch, and in `out/` only the desktop: `<html>` and website mode keep
+  what they had. Under `next dev`, which hydrates the whole page, it also
+  resets `<html>` to its server attributes and website mode to its server
+  text; the hydration-error tests run only against the export.
 - After `#desktop`: icon placement (above 768px in desktop mode; sets
   `data-desktop-icon-ready` and `window.__pepodevDesktopIconsReady`, and
   re-places on resize until the boot) and the taskbar clock (time and date in
@@ -345,6 +412,9 @@ tests.
   `--accent-secondary` (set by `applyDesktopPrefs`), which the Garden frame
   reads; moved into a stylesheet, the frame would fall back to the saved
   accent and drift from the desktop.
+- `#desktop-data` (the desktop's props; also under `next dev`) and
+  `#desktop-apps` (app body URLs, only in `out/`), JSON script elements on
+  `/`.
 - Markup: `#desktop`/`#website` with `data-site-mode-panel` (after boot the
   inactive one is `hidden`, `inert`, `aria-hidden="true"`); `#bg-canvas`;
   `#desktop-icons` (`button.desktop-icon[data-open-app][data-default-col]`);
@@ -395,7 +465,6 @@ tests.
   `{ appId, keyboard }`, `desktop:window-close` `{ appId }`.
 - Globals: `__pepodevWindowManagerReady`, `__pepodevDesktopIconsReady`,
   `__pepodevEarlyInput`, `__pepodevWebsiteScrollY`,
-  `__pepodevEarlyCopyEmail`, `__pepodevCopyEmailReady`,
   `__pepoMusicController`.
 - Key listener order: app handlers (`useAppKeyboard`, capture phase on
   `document`), then React's handlers (Quick Access's arrow keys and
@@ -413,7 +482,7 @@ Access), `icon` (default grid cell; absent for an app without a desktop
 icon) and `mount`. `DESKTOP_ICON_ORDER` is the icon order. Settings has no
 desktop icon: it opens from the taskbar tray (`#taskbar-settings`, a
 `[data-open-app]` launcher between the mode switch and the audio button).
-Each body is its own chunk, loaded by `app-chunks.ts`:
+Each body loads on demand, through `app-chunks.ts` and `app-loaders.ts`:
 
 - Loading: every launch and idle mount calls `loadAppChunk(appId)` before it
   commits; it runs once per app and keeps the result. `app-bodies.tsx`
@@ -441,7 +510,7 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
 - Body: `"use client"`, `export default function <Name>App({ appId, data }:
   AppProps<"<id>">)`, rendered inside `.window-content`, its root usually
   `<div class="app-content ...">`. Keep the classes and `data-*` attributes
-  tests and global CSS use. Never import other apps' bodies or anything
+  tests and global CSS use. Never import other apps' bodies, CSS, or anything
   large statically. It is memoized on `(appId, data)`: moves, resizes, and
   raises never re-render it.
 - Data: `<Name>App.data.ts` default-exports an async loader that runs at
@@ -597,16 +666,20 @@ value falls back to the default. Every look follows the theme and accent.
 
 ### Adding an App
 
-Add it to `APP_IDS`, `APPS` and `DESKTOP_ICON_ORDER` (`apps.ts`), its loader
-to `app-chunks.ts` and `apps/app-data.ts`, its icon to `AppIcon.tsx`, and
-`<Name>App.tsx` plus `<Name>App.data.ts` (and `<Name>App.css` for scoped
-styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
+Add it to `APP_IDS`, `APPS` and `DESKTOP_ICON_ORDER` (`apps.ts`), its body's
+loader to `app-loaders.ts` (one line, `<id>: () =>
+import("@components/apps/<Name>App"),`), its data loader to
+`apps/app-data.ts`, its icon to `AppIcon.tsx`, and `<Name>App.tsx` plus
+`<Name>App.data.ts` to `src/components/apps/`. Scoped styles go in
+`<Name>App.css`, imported by `Desktop.tsx`, never by the body (see Page
+Runtime). Do not recreate `src/content/apps.ts`.
 
 ## Development Rules
 
 - Prefer Server Components and build-time HTML over client-generated markup;
-  keep client code scoped to interactions. A page that renders a client
-  component must be `runtime="react"`.
+  keep client code scoped to interactions. Only the desktop is a client
+  component tree; anywhere else, use Server Components and
+  `<InlineScript>`s (see Page Runtime).
 - Use existing desktop classes, CSS variables, and TypeScript aliases:
   `@/*`, `@components/*`, `@lib/*`, `@data/*`, `@utils/*`, `@app-types/*`,
   and `@styles/*`. Never use `@types/*`.
@@ -620,7 +693,8 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   from another origin (script, style, image, font, frame, request) needs a
   policy change there and in the Cloudflare rule.
 - CSS: `global.css` comes through `<Document>`; a feature stylesheet is
-  imported by the component that needs it. A component's own styles are a
+  imported by the component that needs it, except an app body's, which
+  `Desktop.tsx` imports (bodies load on demand). A component's own styles are a
   plain CSS file next to it with every selector starting at the component's
   root class (`.site-header .site-header-nav a`, `main.blog-index`). Do not
   use CSS Modules for classes tests or other stylesheets reference. A page's
@@ -685,12 +759,13 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   clip. Neither mode panel is `aria-hidden` in the markup:
   `html[data-site-mode]` hides the other one from first paint, before
   site-mode also marks it hidden and inert.
-- Website mode is a Server Component (repeated in the RSC payload, so keep it
-  lean); only `SiteModePanel` and two islands hydrate. The Bangkok clock's
-  parse-time script writes the current time before first paint; the Copy
-  email button renders from first paint and hydration hides it only where
-  the Clipboard API is missing. A press before hydration copies at once
-  (the early-input script), and "Copied" shows when the button hydrates.
+- Website mode is a Server Component, and no React runs in it; its two
+  behaviours are parse-time scripts (`src/components/website/`). The
+  Bangkok clock's script writes the current time before first paint and
+  every 15 seconds. The Copy email button renders from first paint; the
+  script right after it hides it where the Clipboard API is missing and
+  handles its presses from the moment it is painted ("Copied" for two
+  seconds, and a `role="status"` line).
 - All type is self-hosted from the woff2 files committed in
   `src/assets/fonts/` (`src/styles/fonts-desktop.css`,
   `src/styles/fonts-website.css`): Inter and JetBrains Mono (`--font-sans`,
@@ -980,9 +1055,11 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
 For substantial changes:
 
 1. Run `pnpm build` (postbuild included) and `pnpm check`.
-2. Run `pnpm test:e2e` for desktop/app interactions, and against the export
-   (`PLAYWRIGHT_SERVER=preview`) for anything that touches static pages, the
-   page runtime, or parse-time scripts. Run `pnpm test:scripts` after
+2. Run `pnpm test:e2e` as the quick loop, and after `pnpm build` against
+   the export (`PLAYWRIGHT_SERVER=preview`, plus `PLAYWRIGHT_CHANNEL=chrome`
+   to match CI) for anything that touches the desktop, an app, static
+   pages, the page runtime, or parse-time scripts: `next dev` does not run
+   the desktop bundle. Run `pnpm test:scripts` after
    changing `scripts/`.
 3. Check `out/index.html` after page composition or app content changes.
 4. Manually test window opening, minimizing, maximizing, closing, dragging, and
@@ -1050,8 +1127,10 @@ written here.
   Redirect Rule): wildcard pattern, request URL `http*://www.pepo.dev/*`,
   target URL `https://pepo.dev/${2}`, status 301, preserve query string.
 - Email Address Obfuscation (Security > Settings): off. It rewrites the
-  address in the HTML React hydrates, and shows "[email protected]" without
-  JavaScript.
+  address in the HTML: in the desktop's Email shortcut and Quick Access,
+  which React hydrates (a rewritten text is a hydration error, and React
+  renders the desktop again), and in the text of website mode and
+  `/resume/`, which then read "[email protected]" without JavaScript.
 - Web Analytics: on, set up automatically. Cloudflare injects its beacon, a
   module script from `https://static.cloudflareinsights.com/beacon.min.js/v…`
   with `crossorigin`, into every HTML page. It is the one script from
@@ -1067,8 +1146,11 @@ written here.
   static for each header that `node scripts/security-headers.mjs` prints,
   with the name and value exactly as printed. Paste each value whole: the
   policy's directives are separated by `; `, and a comma would start a
-  second policy that blocks every inline script, so the desktop would never
-  boot. `scripts/serve-static.mjs` sends the same headers, so the Playwright
+  second policy that blocks every inline script: no parse-time script
+  would run (the saved mode, theme and early input before the boot,
+  website mode's Copy button and clock, every static page's behaviours),
+  though the desktop's bundle, module scripts from the site itself, still
+  boots. `scripts/serve-static.mjs` sends the same headers, so the Playwright
   suite runs under them, and `pages.spec.ts` checks that every page and app
   (with a stand-in for Cloudflare's beacon) works without a policy
   violation. Update the rule whenever that file changes.

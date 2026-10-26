@@ -1,8 +1,9 @@
 // The app registry: every desktop app, once. Windows, desktop icons, Quick
 // Access (the Start menu) and the taskbar all read it. Each app's
-// body is a client component at a fixed path, its own chunk loaded on
-// demand, src/components/apps/<Name>App.tsx (app-chunks.ts), with optional
-// build-time data from src/components/apps/<Name>App.data.ts (app-data.ts).
+// body is a client component at a fixed path, loaded on demand,
+// src/components/apps/<Name>App.tsx (app-chunks.ts, app-loaders.ts), with
+// optional build-time data from src/components/apps/<Name>App.data.ts
+// (app-data.ts).
 // Plain data, no "use client": the server page and client components share it.
 
 /** Window order: the windows container and the taskbar list apps in this order. */

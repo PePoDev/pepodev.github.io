@@ -375,7 +375,7 @@ test("a window whose app fails to render drops the keys typed meanwhile and lets
   const count = '"data-trash-count":""';
   let release = () => {};
   const held = new Promise<void>((resolve) => (release = resolve));
-  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+  await page.route(/\/_next\/static\/[^?]+\.js(\?|$)/, async (route) => {
     const response = await route.fetch();
     let body = await response.text();
     if (body.includes(count)) {

@@ -69,8 +69,7 @@ const earlyInputScript = `(() => {
   // at once, with the attributes and storage the site-mode store uses (it
   // takes over at the boot), keeps the website scroll position
   // (window.__pepodevWebsiteScrollY, which the store takes over too), hands
-  // focus to the other panel's switch, and counts as interaction. Website
-  // mode's Copy email button copies until React has hydrated it.
+  // focus to the other panel's switch, and counts as interaction.
   const early = (window.__pepodevEarlyInput = []);
   const root = document.documentElement;
   const isDesktop = () => root.dataset.siteMode !== "website";
@@ -79,45 +78,11 @@ const earlyInputScript = `(() => {
     event.preventDefault();
     event.stopImmediatePropagation();
   };
-  // A hydration error (text a browser extension or Cloudflare changed before
-  // React hydrated) makes React render the page again from scratch, which
-  // resets <html> to its server attributes: the desktop, no theme. Until the
-  // boot, put back what the parse-time scripts set (the mode, and the theme
-  // and preferences' attributes and variables) before the next paint.
-  const kept = [
-    "data-site-mode",
-    "data-theme",
-    "data-background-effect",
-    "data-window-glass",
-    "data-experience",
-    "data-experience-variant",
-    "style",
-  ];
-  const saved = {};
-  const save = () => kept.forEach((name) => (saved[name] = root.getAttribute(name)));
-  save();
-  const keeper = new MutationObserver(() => {
-    if (window.__pepodevWindowManagerReady) return keeper.disconnect();
-    kept.forEach((name) => {
-      if (saved[name] !== null && root.getAttribute(name) !== saved[name]) root.setAttribute(name, saved[name]);
-    });
-  });
-  keeper.observe(root, { attributeFilter: kept });
   document.addEventListener(
     "click",
     (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target) return;
-      const copyButton = window.__pepodevCopyEmailReady ? null : target.closest("#website [data-copy-email]");
-      if (copyButton) {
-        take(event);
-        // Now, while the press still allows it; the button shows the
-        // result once it has hydrated (CopyEmailButton.tsx).
-        window.__pepodevEarlyCopyEmail = new Promise((resolve) =>
-          resolve(navigator.clipboard.writeText(copyButton.dataset.copyEmail)),
-        ).then(() => true, () => false);
-        return;
-      }
       if (window.__pepodevWindowManagerReady) return;
       const modeSwitch = target.closest("[data-site-mode-toggle], [data-site-mode-target]");
       if (modeSwitch) {
@@ -131,7 +96,6 @@ const earlyInputScript = `(() => {
         // Desktop mode locks the page to one screen, which resets its scroll.
         if (mode === "desktop") window.__pepodevWebsiteScrollY = window.scrollY;
         root.dataset.siteMode = mode;
-        save();
         try {
           localStorage.setItem(${scriptValue(VIEW_MODE_STORAGE_KEY)}, mode);
         } catch {}
@@ -175,10 +139,7 @@ const earlyInputScript = `(() => {
   );
 })();`;
 
-/**
- * Takes clicks and Ctrl/Cmd + K made before the desktop boots (replayed by
- * runtime.tsx), and keeps the parse-time <html> attributes until then.
- */
+/** Takes clicks and Ctrl/Cmd + K made before the desktop boots (replayed by runtime.tsx). */
 export function DesktopEarlyInputScript() {
   return <InlineScript code={earlyInputScript} />;
 }

@@ -310,6 +310,36 @@ test("swapping an app icon onto a link icon persists both positions", async ({
   await expectIconsUnstacked(page);
 });
 
+test("dragging a link icon closes Quick Access, as an app icon's drag does, and opens nothing", async ({
+  page,
+  context,
+}) => {
+  await page.locator("#taskbar-start").click();
+  const quickAccess = page.locator("#start-menu");
+  await expect(quickAccess).toHaveClass(/visible/);
+  // The rightmost shortcut, clear of Quick Access.
+  const links = await page
+    .locator("#desktop-links a.desktop-link-icon")
+    .evaluateAll((icons) =>
+      icons
+        .map((icon) => ({ id: icon.id, x: icon.getBoundingClientRect().x }))
+        .sort((a, b) => b.x - a.x),
+    );
+  const box = (await page.locator(`#${links[0].id}`).boundingBox())!;
+  // A new tab would arrive a moment after the click: wait for one.
+  const opened = context
+    .waitForEvent("page", { timeout: 1500 })
+    .then(() => true, () => false);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 - 110, box.y + box.height / 2 + 10, {
+    steps: 8,
+  });
+  await page.mouse.up();
+  await expect(quickAccess).not.toHaveClass(/visible/);
+  expect(await opened).toBe(false);
+});
+
 test("swapping a link icon onto an app icon persists both positions", async ({
   page,
 }) => {

@@ -1,72 +1,57 @@
-"use client";
 // Website mode's "Copy" button next to the e-mail address, and the status
 // line that announces the result. The server renders the button, so it is
-// there from first paint (the e-mail row never grows when scripts run);
-// hydration hides it where the Clipboard API is missing (an insecure context,
-// an old browser). Until it hydrates, the parse-time input script
-// (DesktopScripts.tsx) copies on a press, and the button shows that result
-// once it has hydrated.
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+// there from first paint and the e-mail row never grows; the parse-time
+// script right after it hides it where the Clipboard API is missing (an
+// insecure context, an old browser) and handles its presses from the moment
+// it is painted: the button reads "Copied" for two seconds and the status
+// line says what happened. Under `next dev`, which hydrates the whole page,
+// the button keeps a changed label (suppressHydrationWarning) and the
+// status line is a static island React never compares (hydration rules 1
+// and 2).
+import { InlineScript } from "@components/InlineScript";
 
-declare global {
-  interface Window {
-    /** Set once the button has hydrated and handles its own presses. */
-    __pepodevCopyEmailReady?: boolean;
-    /** Whether a press made before that copied (DesktopScripts.tsx). */
-    __pepodevEarlyCopyEmail?: Promise<boolean>;
+const code = `(() => {
+  const button = document.querySelector("#website [data-copy-email]");
+  const status = document.querySelector("#website [data-copy-status]");
+  if (!button || !status) return;
+  if (!navigator.clipboard) {
+    button.hidden = true;
+    return;
   }
-}
-
-const subscribeNever = () => () => {};
-const hasClipboard = () => Boolean(navigator.clipboard);
-const serverHasClipboard = () => true;
+  const label = button.firstChild;
+  let timer = 0;
+  button.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(button.dataset.copyEmail);
+    } catch {
+      status.textContent = "Copy failed";
+      return;
+    }
+    label.data = "Copied";
+    status.textContent = "Email address copied";
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      label.data = "Copy";
+      status.textContent = "";
+    }, 2000);
+  });
+})();`;
 
 export function CopyEmailButton({ email }: { email: string }) {
-  const supported = useSyncExternalStore(subscribeNever, hasClipboard, serverHasClipboard);
-  const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState("");
-  const resetTimer = useRef(0);
-
-  function showResult(ok: boolean) {
-    if (!ok) {
-      setStatus("Copy failed");
-      return;
-    }
-    setCopied(true);
-    setStatus("Email address copied");
-    window.clearTimeout(resetTimer.current);
-    resetTimer.current = window.setTimeout(() => {
-      setCopied(false);
-      setStatus("");
-    }, 2000);
-  }
-
-  useEffect(() => {
-    window.__pepodevCopyEmailReady = true;
-    window.__pepodevEarlyCopyEmail?.then(showResult);
-    window.__pepodevEarlyCopyEmail = undefined;
-    return () => window.clearTimeout(resetTimer.current);
-  }, []);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(email);
-    } catch {
-      showResult(false);
-      return;
-    }
-    showResult(true);
-  }
-
   return (
     <>
-      <button className="ws-copy" type="button" data-copy-email={email} hidden={!supported} onClick={copy}>
-        {copied ? "Copied" : "Copy"}
+      <button className="ws-copy" type="button" data-copy-email={email} suppressHydrationWarning>
+        Copy
         <span className="ws-sr"> email address</span>
       </button>{" "}
-      <span className="ws-sr" role="status" data-copy-status="">
-        {status}
-      </span>
+      <span
+        className="ws-sr"
+        role="status"
+        data-copy-status=""
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: "" }}
+      />
+      <InlineScript code={code} />
     </>
   );
 }

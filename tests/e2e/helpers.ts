@@ -85,17 +85,18 @@ export async function openApp(
 }
 
 /**
- * Holds back the Next.js chunks requested from now on, as a slow network
- * would, until `release()`: React's runtime and the desktop when called
- * before a (re)load (the desktop then has not hydrated, and only parse-time
- * scripts have run), or an app body's chunk on its window's first launch.
+ * Holds back the script files requested from now on (the desktop bundle in
+ * out/, Next.js's chunks under `next dev`), as a slow network would, until
+ * `release()`: React and the desktop when called before a (re)load (the
+ * desktop then has not hydrated, and only parse-time scripts have run), or
+ * an app body's file on its window's first launch.
  * `hold()` holds again (before the next reload); `held()` counts the
  * requests waiting.
  */
 export async function holdChunks(page: Page) {
   const waiting: (() => void)[] = [];
   let holding = true;
-  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+  await page.route(/\/_next\/static\/[^?]+\.js(\?|$)/, async (route) => {
     if (holding) await new Promise<void>((resolve) => waiting.push(resolve));
     await route.continue();
   });
@@ -124,7 +125,7 @@ export async function holdAppChunks(page: Page, markers: string[]) {
   const waiting = new Map<string, (() => void)[]>();
   const released = new Set<string>();
   const requested = new Map<string, string>();
-  await page.route(/\/_next\/static\/chunks\/.+\.js$/, async (route) => {
+  await page.route(/\/_next\/static\/[^?]+\.js(\?|$)/, async (route) => {
     // Idle prefetching keeps fetching app code, so a request can still be in
     // flight when the test ends and closes the page (or its context, which
     // disposes the fetched response): let it go quietly.
