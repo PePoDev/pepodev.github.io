@@ -5,7 +5,7 @@
 // volume, mute).
 import { memo, useEffect, useRef, useState, type CSSProperties } from "react";
 import { AppIcon } from "./AppIcon";
-import { APPS, taskbarLabel, type AppDefinition } from "./apps";
+import { APPS, getApp, taskbarLabel, type AppDefinition } from "./apps";
 import { ModeSwitch } from "./ModeSwitch";
 import { setStartMenu, setTrayOpen, useOverlayOpen } from "./overlay-state";
 import { openPalette } from "./palette";
@@ -255,6 +255,22 @@ function AudioStatusButton() {
   );
 }
 
+// The focused window's app, for the looks whose top bar names it (macOS's
+// menu bar, GNOME's top bar: experiences.css); hidden otherwise. The window
+// itself names it for assistive tech, so this is aria-hidden.
+function FocusedAppName() {
+  const name = useStore(windowsStore, (state) => {
+    const id = state.focused;
+    const win = id ? state.windows[id] : null;
+    return id && win?.open && !win.minimized ? taskbarLabel(getApp(id)!) : "";
+  });
+  return (
+    <span id="taskbar-focused-app" aria-hidden="true">
+      {name}
+    </span>
+  );
+}
+
 // Settings has no desktop icon: it opens from here. A [data-open-app]
 // launcher, so the desktop opens (or focuses) the window on a click
 // (runtime.tsx) and the parse-time input script keeps a press made before
@@ -335,6 +351,7 @@ export function Taskbar() {
   return (
     <div id="taskbar">
       <StartButton />
+      <FocusedAppName />
       <button
         id="taskbar-command-palette"
         type="button"

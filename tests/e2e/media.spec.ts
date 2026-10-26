@@ -636,6 +636,9 @@ async function contrastFailures(page: Page, selectors: string[]) {
     (selectors) =>
       selectors.map((selector) => {
         const element = document.querySelector(selector)!;
+        // A target below the fold of its window's scroller is sampled where
+        // it shows.
+        element.scrollIntoView({ block: "nearest" });
         const style = getComputedStyle(element);
         const rect = element.getBoundingClientRect();
         const size = parseFloat(style.fontSize);

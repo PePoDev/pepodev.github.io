@@ -1,12 +1,13 @@
 // Desktop preferences (theme, accent, background, radius, glass, background
-// effect, window glass), saved in pepodev.desktopPrefs with the theme
-// mirrored in pepodev.theme. The parse-time script in DesktopScripts.tsx
-// applies them before first paint; this store owns them after hydration.
+// effect, window glass, experience and variant), saved in
+// pepodev.desktopPrefs with the theme mirrored in pepodev.theme. The
+// parse-time script in DesktopScripts.tsx applies them before first paint;
+// this store owns them after hydration.
 // Every change applies them to <html> (prefs-core.ts), saves them and
 // dispatches desktop:preferences ({ detail: prefs }) on document. The
 // command palette's Toggle Theme dispatches desktop:toggle-theme, which
 // lands here, so Settings and the palette apply the same preferences.
-import { accentMap, backgroundMap } from "@utils/desktop-prefs";
+import { accentMap, backgroundMap, experienceVariants } from "@utils/desktop-prefs";
 import { applyDesktopPrefs, loadDesktopPrefs, PREFS_KEY, THEME_KEY, type DesktopPrefs } from "./prefs-core";
 import { createStore, useStore } from "./store";
 
@@ -29,7 +30,7 @@ function storage(): Storage | null {
 
 /** The saved preferences over the defaults, read from storage now. */
 export function readDesktopPrefs(): DesktopPrefs {
-  return loadDesktopPrefs(storage(), backgroundMap);
+  return loadDesktopPrefs(storage(), backgroundMap, experienceVariants);
 }
 
 export function getDefaultBackground(theme: string): string {
@@ -51,13 +52,17 @@ export function setDesktopPrefs(prefs: DesktopPrefs) {
 
 /**
  * Changes some preferences. A new theme starts on its own default
- * background unless the change names one.
+ * background, and a new experience on its default variant, unless the
+ * change names one.
  */
 export function updateDesktopPrefs(change: Partial<DesktopPrefs>) {
   const current = prefsStore.get() ?? readDesktopPrefs();
   const next = { ...current, ...change };
   if (change.theme !== undefined && change.theme !== current.theme && change.background === undefined) {
     next.background = getDefaultBackground(next.theme);
+  }
+  if (change.experience !== undefined && change.experience !== current.experience && change.variant === undefined) {
+    next.variant = experienceVariants[next.experience]?.[0] ?? "";
   }
   setDesktopPrefs(next);
 }

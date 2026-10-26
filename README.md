@@ -88,8 +88,9 @@ that searches `document.scripts` must skip `self.__next_f.push(...)` scripts.
 | `src/assets/blog/` | Local post images |
 | `src/assets/fonts/` | Committed woff2 files and `OFL.txt` |
 | `src/data/` | Portfolio JSON and build-time music discovery |
-| `src/types/`, `src/utils/` | Data types and reusable logic, including the shared focus rules (`overlays.ts`), the app keyboard guard (`app-keyboard.ts`), search ranking (`search.ts`), and desktop accent and background colours (`desktop-prefs.ts`) |
+| `src/types/`, `src/utils/` | Data types and reusable logic, including the shared focus rules (`overlays.ts`), the app keyboard guard (`app-keyboard.ts`), search ranking (`search.ts`), and desktop accent and background colours and experiences (`desktop-prefs.ts`) |
 | `src/styles/global.css` | Shared desktop, app, and article styles (on every page) |
+| `src/styles/experiences.css` | The macOS, Windows and Linux desktop looks (see Desktop Experiences) |
 | `src/styles/website-mode.css` | Website-mode styles (`ws-*` classes) |
 | `public/music/` | Local audio library |
 | `public/robots.txt`, `public/manifest.webmanifest` | Sitemap pointer and web app manifest (icons: `favicon.svg`, `icon-192.png`, `icon-512.png`) |
@@ -494,6 +495,46 @@ Each body is its own chunk, loaded by `app-chunks.ts`:
   `element.style.display`, not the serialized style. Text that mixes literals
   and values is one template string.
 
+### Desktop Experiences
+
+Settings' "Desktop experience" picks the desktop's look: the site's own
+(`pepodev`), macOS (styles Tahoe, with Liquid Glass, and Sequoia), Windows
+(11 and 10) or Linux (GNOME and KDE Plasma). `experienceMap` in
+`src/utils/desktop-prefs.ts` lists them; the first style is the default,
+and `glass: false` marks an opaque look. They are saved as `experience` and
+`variant` in `pepodev.desktopPrefs` and applied before first paint as
+`data-experience` and `data-experience-variant` on `<html>`; an unknown
+value falls back to the default. Every look follows the theme and accent.
+
+- `src/styles/experiences.css` holds every look, by attribute:
+  - Window chrome:
+    - macOS: traffic lights on the left, each with a 22px target, and a
+      centred title.
+    - Windows: 46px caption buttons; Windows 10 is square, with an accent
+      border on the active window.
+    - GNOME: round header-bar buttons.
+    - KDE: Breeze title bars.
+  - The bars, and type: system font stacks over Inter, with no web fonts.
+- Above 768px each look lays out the taskbar without new markup:
+  - macOS: a menu bar (holding the tray) and a centred dock.
+  - Windows 11: a centred taskbar. Windows 10: a flat one, aligned left.
+  - GNOME: a black top bar (Activities, a centred clock, the tray) and a
+    floating dash.
+  - KDE: a floating panel.
+  
+  `#taskbar` then has no backdrop filter of its own, because a filter would
+  make it the containing block of the fixed tray. It draws the dock or
+  panel in `::before` and a top bar in `::after`. Phones keep the shared
+  bottom taskbar and full-screen windows.
+- Insets: `--desktop-inset-top` and `--desktop-inset-bottom` (defaults in
+  `variables.css`, set per look above 768px) are what the bars cover.
+  `readDesktopInsets` (`icon-grid.ts`) reads them for the icon grid and for
+  centred, clamped and maximized windows. A preference change that moves
+  them re-places the icons and re-fits maximized windows. A look with bars
+  must set both.
+- Settings hides the window radius slider for an operating system's look,
+  and the glass preferences for an opaque one.
+
 ### Adding an App
 
 Add it to `APP_IDS`, `APPS` and `DESKTOP_ICON_ORDER` (`apps.ts`), its loader
@@ -719,9 +760,10 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
 - Windows drag by the title bar and resize from their handles with a mouse, a
   finger, or a pen (pointer events; above 768px the title bar and handles are
   `touch-action: none`), and a touch drag raises the window as a click does.
-  Dragging keeps a window's title bar above the taskbar with at least 120px of
-  it on screen. Maximized windows end at the taskbar (`getTaskbarHeight()`),
-  and Maximize reads Restore while maximized. An overflowing `.window-content`
+  Dragging keeps a window's title bar between the bars with at least 120px
+  of it on screen. Maximized windows fill the space between the bars
+  (`readDesktopInsets()`: the taskbar, or a look's top bar and dock), and
+  Maximize reads Restore while maximized. An overflowing `.window-content`
   with nothing focusable inside (hidden and disabled controls do not count)
   is a labelled tab stop; an inner scroller of its own, such as the SRE
   game's boot log, is a labelled tab stop too. Toasts sit below a maximized

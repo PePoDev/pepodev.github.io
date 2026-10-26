@@ -15,6 +15,7 @@ import type { SocialLink } from "@app-types/data";
 import { DESKTOP_ICON_ORDER, getApp } from "./apps";
 import {
   createIconGrid,
+  readDesktopInsets,
   ICON_STORAGE_PREFIX,
   LINK_ICON_STORAGE_PREFIX,
   layoutIcons,
@@ -116,7 +117,13 @@ function isDesktopShown() {
 function currentGrid(): IconGrid | null {
   const icon = firstIcon();
   if (!icon) return null;
-  return createIconGrid(window.innerWidth, window.innerHeight, icon.offsetWidth, icon.offsetHeight);
+  return createIconGrid(
+    window.innerWidth,
+    window.innerHeight,
+    icon.offsetWidth,
+    icon.offsetHeight,
+    readDesktopInsets(document.documentElement),
+  );
 }
 
 function clampFor(grid: IconGrid, id: string, point: GridPoint): GridPoint {
@@ -212,7 +219,17 @@ function onSiteModeChange(event: Event) {
   if ((event as CustomEvent<{ mode?: string }>).detail?.mode === "desktop") layoutDesktopIcons();
 }
 
-/** Loads saved positions, lays the icons out and follows resizes. */
+// A new desktop experience can move the bars the grid keeps clear of
+// (readDesktopInsets); only then do the icons move.
+let layoutInsets = "";
+function onPreferencesChange() {
+  const insets = JSON.stringify(readDesktopInsets(document.documentElement));
+  if (insets === layoutInsets) return;
+  layoutInsets = insets;
+  layoutDesktopIcons();
+}
+
+/** Loads saved positions, lays the icons out and follows resizes and new insets. */
 export function startIconLayout(): () => void {
   mobileQuery = window.matchMedia("(max-width: 768px)");
   savedPositions.clear();
@@ -225,13 +242,16 @@ export function startIconLayout(): () => void {
   } catch {
     // Without storage every icon takes its default cell.
   }
+  layoutInsets = JSON.stringify(readDesktopInsets(document.documentElement));
   layoutDesktopIcons();
   mobileQuery.addEventListener("change", layoutDesktopIcons);
   window.addEventListener("resize", layoutDesktopIcons);
   document.addEventListener("site:mode-change", onSiteModeChange);
+  document.addEventListener("desktop:preferences", onPreferencesChange);
   return () => {
     mobileQuery?.removeEventListener("change", layoutDesktopIcons);
     window.removeEventListener("resize", layoutDesktopIcons);
     document.removeEventListener("site:mode-change", onSiteModeChange);
+    document.removeEventListener("desktop:preferences", onPreferencesChange);
   };
 }

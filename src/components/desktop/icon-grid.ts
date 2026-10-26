@@ -39,23 +39,47 @@ export interface GridIcon {
 export type IconGrid = ReturnType<typeof createIconGrid>;
 
 /**
+ * The desktop's free area (readDesktopInsets): `top` is covered by a top
+ * bar, `bottom` by the taskbar, dock or panel.
+ */
+export interface DesktopInsets {
+  top: number;
+  bottom: number;
+}
+
+/**
+ * The desktop's insets, from --desktop-inset-top and --desktop-inset-bottom
+ * on <html> (variables.css, experiences.css): what the experience's bars
+ * cover. Self-contained, for the parse-time icon script.
+ */
+export function readDesktopInsets(root: HTMLElement): DesktopInsets {
+  const style = getComputedStyle(root);
+  return {
+    top: parseFloat(style.getPropertyValue("--desktop-inset-top")) || 0,
+    bottom: parseFloat(style.getPropertyValue("--desktop-inset-bottom")) || 56,
+  };
+}
+
+/**
  * The grid for a viewport. Columns fit between equal side margins; columns
  * right of the center column are anchored to the right edge, so spare width
  * stays in the middle and the link column sits against the right edge.
- * `iconWidth` and `iconHeight` are the first icon's size.
+ * `iconWidth` and `iconHeight` are the first icon's size; rows start below
+ * `insets.top` and end above `insets.bottom`.
  */
 export function createIconGrid(
   viewportWidth: number,
   viewportHeight: number,
   iconWidth: number,
   iconHeight: number,
+  insets: DesktopInsets = { top: 0, bottom: 56 },
 ) {
   const originX = 20;
-  const originY = 20;
+  const originY = 20 + insets.top;
   const columnStep = 88;
   const rowStep = 98;
   const margin = 8;
-  const taskbarReserve = 56;
+  const taskbarReserve = insets.bottom;
   // Keeps "center" icons clear of the left-hand app group on narrow screens.
   const minCenterColumn = 6;
 
@@ -148,13 +172,14 @@ export function createIconGrid(
     return { column, row };
   }
 
-  /** Keeps an icon of this size on screen and above the taskbar. */
+  /** Keeps an icon of this size on screen, below a top bar and above the taskbar. */
   function clamp(x: number, y: number, width: number, height: number): GridPoint {
+    const minY = margin + insets.top;
     const maxX = Math.max(margin, viewportWidth - width - margin);
-    const maxY = Math.max(margin, viewportHeight - height - taskbarReserve);
+    const maxY = Math.max(minY, viewportHeight - height - taskbarReserve);
     return {
       x: Math.min(Math.max(margin, x), maxX),
-      y: Math.min(Math.max(margin, y), maxY),
+      y: Math.min(Math.max(minY, y), maxY),
     };
   }
 

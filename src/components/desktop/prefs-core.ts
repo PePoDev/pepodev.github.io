@@ -18,6 +18,10 @@ export interface DesktopPrefs {
   glass: number;
   backgroundEffect: boolean;
   windowGlass: boolean;
+  /** A key of experienceMap: the desktop's look (macOS, Windows, Linux). */
+  experience: string;
+  /** One of the experience's variants (experienceVariants). */
+  variant: string;
 }
 
 export const PREFS_KEY = "pepodev.desktopPrefs";
@@ -27,11 +31,13 @@ export const THEME_KEY = "pepodev.theme";
 /**
  * The saved preferences over the defaults. A missing or unknown background
  * follows the theme ("cloud" when light, else "network"), so a light theme
- * never starts on a dark background.
+ * never starts on a dark background. An unknown experience is the default
+ * one, and an unknown variant its experience's first.
  */
 export function loadDesktopPrefs(
   storage: Storage | null | undefined,
   backgrounds: Record<string, unknown>,
+  experiences: Record<string, string[]>,
 ): DesktopPrefs {
   let theme = "dark";
   let saved: Partial<DesktopPrefs> = {};
@@ -49,17 +55,23 @@ export function loadDesktopPrefs(
     glass: 55,
     backgroundEffect: true,
     windowGlass: true,
+    experience: "pepodev",
+    variant: "",
     ...saved,
   };
   if (!Object.prototype.hasOwnProperty.call(backgrounds, prefs.background)) {
     prefs.background = prefs.theme === "light" ? "cloud" : "network";
   }
+  if (!Object.prototype.hasOwnProperty.call(experiences, prefs.experience)) prefs.experience = "pepodev";
+  const variants = experiences[prefs.experience] || [];
+  if (variants.indexOf(prefs.variant) < 0) prefs.variant = variants[0] || "";
   return prefs;
 }
 
 /**
  * Applies preferences to <html>: data-theme, data-background-effect,
- * data-window-glass and the accent, radius, glass and background variables.
+ * data-window-glass, data-experience, data-experience-variant and the
+ * accent, radius, glass and background variables.
  */
 export function applyDesktopPrefs(
   root: HTMLElement,
@@ -90,4 +102,6 @@ export function applyDesktopPrefs(
   style.setProperty("--particle-secondary-rgb", background.secondary);
   root.setAttribute("data-background-effect", prefs.backgroundEffect ? "on" : "off");
   root.setAttribute("data-window-glass", prefs.windowGlass ? "on" : "off");
+  root.setAttribute("data-experience", prefs.experience);
+  root.setAttribute("data-experience-variant", prefs.variant);
 }

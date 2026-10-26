@@ -1,0 +1,1174 @@
+/* Desktop experiences: the look of macOS, Windows or Linux for the desktop's
+   window chrome, taskbar and type, chosen in Settings (pepodev.desktopPrefs
+   `experience` and `variant`; prefs-core.ts sets html[data-experience] and
+   [data-experience-variant] before first paint). "pepodev" is the site's own
+   look and has no rules here. Every experience follows the theme
+   (data-theme) and the accent (--accent-primary).
+
+   The layouts (dock and menu bar, centred or floating taskbar, top bar and
+   dash) apply above 768px, where they set --desktop-inset-top and
+   --desktop-inset-bottom: windows and icons keep clear of what the bars
+   cover (readDesktopInsets in icon-grid.ts). Phones keep the shared
+   full-screen windows and bottom taskbar, with each experience's window
+   controls and type.
+
+   The bars move without new markup: #taskbar loses its own backdrop filter
+   (a filter makes it the containing block of its fixed children) and draws
+   the dock or panel in ::before and a top bar in ::after, so the tray can sit
+   in the top bar as a fixed box. */
+
+/* ===== Shared ===== */
+
+html[data-experience="macos"],
+html[data-experience="windows"],
+html[data-experience="linux"] {
+  --exp-window-shadow: 0 18px 48px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.24);
+  --exp-window-shadow-focused: 0 24px 64px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.3);
+  --exp-control-ink: var(--text-primary);
+}
+
+html[data-experience="macos"][data-theme="light"],
+html[data-experience="windows"][data-theme="light"],
+html[data-experience="linux"][data-theme="light"] {
+  --exp-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.1);
+  --exp-window-shadow-focused: 0 22px 56px rgba(0, 0, 0, 0.24), 0 3px 10px rgba(0, 0, 0, 0.14);
+}
+
+:is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .window {
+  box-shadow: var(--exp-window-shadow);
+}
+
+:is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .window.focused {
+  box-shadow: var(--exp-window-shadow-focused);
+}
+
+/* Window buttons draw their own states; no shared hover fill or maximized
+   tint. */
+:is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .window-controls button,
+:is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .window.maximized .max-btn {
+  background: transparent;
+  color: var(--exp-control-ink);
+}
+
+/* App buttons show only their icon in docks and icon-only taskbars; the
+   label still names the button. */
+@media (min-width: 769px) {
+  :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .taskbar-app span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .taskbar-app {
+    justify-content: center;
+    padding: 0;
+  }
+
+  :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) #toast-container {
+    top: calc(var(--desktop-inset-top) + 16px);
+  }
+
+  :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) #start-menu {
+    bottom: calc(var(--desktop-inset-bottom) + 8px);
+    max-height: min(560px, calc(100vh - var(--desktop-inset-top) - var(--desktop-inset-bottom) - 24px));
+  }
+}
+
+/* ===== macOS ===== */
+
+html[data-experience="macos"] {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter, "Inter"), "Helvetica Neue", sans-serif;
+  --mac-radius: 12px;
+  --mac-titlebar: 32px;
+  --mac-light: 12px;
+  --mac-close: #ff5f57;
+  --mac-minimize: #febc2e;
+  --mac-zoom: #28c840;
+  --mac-light-idle: rgba(255, 255, 255, 0.2);
+  --mac-bar: rgba(30, 30, 32, 0.6);
+  --mac-bar-ink: #f5f5f7;
+  --mac-dock: rgba(48, 48, 52, 0.55);
+  --mac-dock-border: rgba(255, 255, 255, 0.16);
+  --mac-dock-radius: 20px;
+  --mac-dock-rim: inset 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+  --mac-separator: rgba(255, 255, 255, 0.08);
+}
+
+html[data-experience="macos"][data-theme="light"] {
+  --mac-light-idle: rgba(0, 0, 0, 0.14);
+  --mac-bar: rgba(246, 246, 246, 0.62);
+  --mac-bar-ink: #1d1d1f;
+  --mac-dock: rgba(246, 246, 248, 0.5);
+  --mac-dock-border: rgba(0, 0, 0, 0.1);
+  --mac-separator: rgba(0, 0, 0, 0.08);
+}
+
+/* Tahoe's Liquid Glass: rounder corners, taller title bars, a clear menu
+   bar and a dock with a bright rim. */
+html[data-experience="macos"][data-experience-variant="tahoe"] {
+  --mac-radius: 18px;
+  --mac-titlebar: 40px;
+  --mac-light: 14px;
+  --mac-bar: transparent;
+  --mac-dock: rgba(255, 255, 255, 0.12);
+  --mac-dock-border: rgba(255, 255, 255, 0.28);
+  --mac-dock-radius: 28px;
+  --mac-dock-rim:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+html[data-experience="macos"][data-experience-variant="tahoe"][data-theme="light"] {
+  --mac-dock: rgba(255, 255, 255, 0.36);
+  --mac-dock-border: rgba(255, 255, 255, 0.7);
+}
+
+[data-experience="macos"] .window {
+  border: 0.5px solid var(--mac-dock-border);
+  border-radius: var(--mac-radius);
+}
+
+/* Glass that blurs what is behind but keeps a window's text readable over
+   another window: the glass preference mixed with the solid surface. */
+[data-window-glass="on"][data-experience="macos"] .window,
+[data-window-glass="on"][data-experience="windows"][data-experience-variant="11"] .window {
+  background: color-mix(in srgb, var(--glass-bg) 35%, var(--bg-secondary));
+}
+
+[data-experience="macos"][data-experience-variant="tahoe"] .window {
+  -webkit-backdrop-filter: blur(48px) saturate(2) brightness(1.08);
+  backdrop-filter: blur(48px) saturate(2) brightness(1.08);
+}
+
+[data-experience="macos"] .window.focused {
+  border-color: var(--mac-dock-border);
+}
+
+[data-experience="macos"] .window-titlebar,
+[data-experience="macos"] .window.focused .window-titlebar {
+  position: relative;
+  height: var(--mac-titlebar);
+  padding: 0 10px;
+  background: transparent;
+  border-bottom: 1px solid var(--mac-separator);
+}
+
+[data-experience="macos"] .window-titlebar-icon {
+  display: none;
+}
+
+/* The title centres on the window, clear of the lights; the bar under it
+   still takes the drag. */
+[data-experience="macos"] .window-title {
+  position: absolute;
+  right: 84px;
+  left: 84px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Traffic lights on the left, close first. Each button keeps a 24px target;
+   the light is its ::before. */
+[data-experience="macos"] .window-controls {
+  order: -1;
+  gap: 0;
+  margin: 0 0 0 -6px;
+}
+
+[data-experience="macos"] .window-controls .close-btn {
+  order: 1;
+  --light: var(--mac-close);
+}
+
+[data-experience="macos"] .window-controls .min-btn {
+  order: 2;
+  --light: var(--mac-minimize);
+}
+
+[data-experience="macos"] .window-controls .max-btn {
+  order: 3;
+  --light: var(--mac-zoom);
+}
+
+[data-experience="macos"] .window-controls button,
+[data-experience="macos"] .window-controls button:hover,
+[data-experience="macos"] .window.maximized .max-btn,
+[data-experience="macos"] .window.maximized .max-btn:hover {
+  position: relative;
+  width: calc(var(--mac-light) + 10px);
+  height: 24px;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-experience="macos"] .window-controls button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: var(--mac-light);
+  height: var(--mac-light);
+  margin: auto;
+  border-radius: 50%;
+  background: var(--light);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+}
+
+[data-experience="macos"] .window:not(.focused) .window-controls:not(:hover) button::before {
+  background: var(--mac-light-idle);
+  box-shadow: none;
+}
+
+[data-experience="macos"] .window-controls button svg {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  stroke-width: 2;
+  opacity: 0;
+}
+
+[data-experience="macos"] .window-controls:hover button svg,
+[data-experience="macos"] .window-controls button:focus-visible svg {
+  opacity: 1;
+}
+
+@media (min-width: 769px) {
+  html[data-experience="macos"] {
+    --desktop-inset-top: 28px;
+    --desktop-inset-bottom: 84px;
+  }
+
+  [data-experience="macos"] #taskbar,
+  [data-theme="light"][data-experience="macos"] #taskbar {
+    right: 0;
+    bottom: 10px;
+    left: 0;
+    width: fit-content;
+    max-width: calc(100vw - 32px);
+    height: 66px;
+    margin: 0 auto;
+    padding: 0 10px;
+    gap: 6px;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* The dock. */
+  [data-experience="macos"] #taskbar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border: 1px solid var(--mac-dock-border);
+    border-radius: var(--mac-dock-radius);
+    background: var(--mac-dock);
+    box-shadow:
+      var(--mac-dock-rim),
+      0 12px 32px rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(30px) saturate(1.8);
+    backdrop-filter: blur(30px) saturate(1.8);
+  }
+
+  /* The menu bar. */
+  [data-experience="macos"] #taskbar::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: -1;
+    height: 28px;
+    background: var(--mac-bar);
+    -webkit-backdrop-filter: blur(30px) saturate(1.6);
+    backdrop-filter: blur(30px) saturate(1.6);
+  }
+
+  [data-experience="macos"] #taskbar-start,
+  [data-experience="macos"] .taskbar-app {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: transparent;
+    transition: transform 0.18s ease;
+  }
+
+  [data-experience="macos"] .taskbar-app svg,
+  [data-experience="macos"] .taskbar-app img {
+    width: 42px;
+    height: 42px;
+  }
+
+  [data-experience="macos"] #taskbar-start:hover,
+  [data-experience="macos"] .taskbar-app:hover {
+    background: transparent;
+    transform: translateY(-6px) scale(1.12);
+  }
+
+  /* Launchpad: a tile of the accent with a grid of dots. */
+  [data-experience="macos"] #taskbar-start svg {
+    display: none;
+  }
+
+  [data-experience="macos"] #taskbar-start::before {
+    content: "";
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background:
+      radial-gradient(circle, #fff 2.4px, transparent 2.9px) 6px 6px / 10px 10px,
+      linear-gradient(160deg, color-mix(in srgb, var(--accent-primary) 70%, #fff), var(--accent-primary));
+    background-clip: content-box, border-box;
+    padding: 6px;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.2);
+  }
+
+  /* A running app: a dot under it. */
+  [data-experience="macos"] .taskbar-app::after,
+  [data-experience="macos"] .taskbar-app.active::after,
+  [data-experience="macos"] .taskbar-app.focused::after {
+    bottom: -6px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--mac-bar-ink);
+    opacity: 0.75;
+  }
+
+  /* The menu bar names the focused app. */
+  [data-experience="macos"] #taskbar-focused-app {
+    position: fixed;
+    top: 0;
+    left: 18px;
+    display: block;
+    max-width: 40vw;
+    overflow: hidden;
+    color: var(--mac-bar-ink);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 28px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-experience="macos"] #taskbar-tray {
+    position: fixed;
+    top: 0;
+    right: 10px;
+    height: 28px;
+    gap: 2px;
+  }
+
+  [data-experience="macos"] #taskbar-tray > button,
+  [data-experience="macos"] #taskbar-tray > button:hover,
+  [data-experience="macos"] #taskbar-tray > button[aria-expanded="true"] {
+    width: 30px;
+    min-width: 0;
+    height: 24px;
+    border: 0;
+    border-radius: 6px;
+    color: var(--mac-bar-ink);
+  }
+
+  [data-experience="macos"] #taskbar-tray > button:hover,
+  [data-experience="macos"] #taskbar-tray > button[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--mac-bar-ink) 14%, transparent);
+  }
+
+  [data-experience="macos"] #taskbar-tray svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  [data-experience="macos"] #taskbar-tray #taskbar-clock-button {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: auto;
+    padding: 0 8px;
+  }
+
+  [data-experience="macos"] #taskbar-date {
+    order: -1;
+  }
+
+  [data-experience="macos"] #taskbar-clock,
+  [data-experience="macos"] #taskbar-date {
+    color: var(--mac-bar-ink);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Control Center drops from the menu bar. */
+  [data-experience="macos"] #tray-panel {
+    top: 34px;
+    right: 8px;
+    bottom: auto;
+    max-height: calc(100vh - 34px - var(--desktop-inset-bottom));
+    border-radius: 18px;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  [data-experience="macos"] #tray-panel.visible {
+    transform: none;
+  }
+}
+
+/* ===== Windows ===== */
+
+html[data-experience="windows"] {
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", var(--font-inter, "Inter"), system-ui, sans-serif;
+  --win-bar: rgba(32, 32, 32, 0.82);
+  --win-bar-border: rgba(255, 255, 255, 0.08);
+  --win-hover: rgba(255, 255, 255, 0.07);
+  --win-pressed: rgba(255, 255, 255, 0.1);
+  --win-close: #c42b1c;
+  --win-indicator: rgba(255, 255, 255, 0.55);
+}
+
+html[data-experience="windows"][data-theme="light"] {
+  --win-bar: rgba(238, 238, 238, 0.86);
+  --win-bar-border: rgba(0, 0, 0, 0.08);
+  --win-hover: rgba(0, 0, 0, 0.05);
+  --win-pressed: rgba(0, 0, 0, 0.08);
+  --win-indicator: rgba(0, 0, 0, 0.45);
+}
+
+[data-experience="windows"] .window {
+  border: 1px solid var(--win-bar-border);
+  border-radius: 8px;
+}
+
+[data-experience="windows"] .window.focused {
+  border-color: var(--win-bar-border);
+}
+
+[data-experience="windows"] .window-titlebar,
+[data-experience="windows"] .window.focused .window-titlebar {
+  height: 32px;
+  padding: 0 0 0 12px;
+  background: transparent;
+  border-bottom: 0;
+}
+
+[data-experience="windows"] .window-titlebar-icon {
+  opacity: 1;
+}
+
+[data-experience="windows"] .window-title {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+[data-experience="windows"] .window-controls {
+  align-self: stretch;
+  gap: 0;
+}
+
+[data-experience="windows"] .window-controls button {
+  width: 46px;
+  height: 100%;
+  border-radius: 0;
+}
+
+[data-experience="windows"] .window-controls button svg {
+  width: 10px;
+  height: 10px;
+  stroke-width: 1;
+}
+
+[data-experience="windows"] .window-controls button:hover,
+[data-experience="windows"] .window.maximized .max-btn:hover {
+  background: var(--win-hover);
+  color: var(--text-primary);
+}
+
+[data-experience="windows"] .window-controls button.close-btn:hover {
+  background: var(--win-close);
+  color: #fff;
+}
+
+[data-experience="windows"] .window:not(.focused) .window-title,
+[data-experience="windows"] .window:not(.focused) .window-controls button:not(:hover) {
+  color: var(--text-muted);
+}
+
+/* Windows 10: square, solid title bars, an accent border on the active
+   window. */
+html[data-experience="windows"][data-experience-variant="10"] {
+  --win-bar: rgba(18, 18, 18, 0.94);
+  --win-close: #e81123;
+}
+
+html[data-experience="windows"][data-experience-variant="10"][data-theme="light"] {
+  --win-bar: rgba(240, 240, 240, 0.96);
+}
+
+[data-experience="windows"][data-experience-variant="10"] .window {
+  border-radius: 0;
+  background: var(--bg-secondary);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+[data-experience="windows"][data-experience-variant="10"] .window.focused {
+  border-color: var(--accent-primary);
+}
+
+[data-experience="windows"][data-experience-variant="10"] .window-titlebar,
+[data-experience="windows"][data-experience-variant="10"] .window.focused .window-titlebar {
+  height: 30px;
+  background: var(--bg-primary);
+}
+
+@media (min-width: 769px) {
+  html[data-experience="windows"] {
+    --desktop-inset-bottom: 48px;
+  }
+
+  html[data-experience="windows"][data-experience-variant="10"] {
+    --desktop-inset-bottom: 40px;
+  }
+
+  /* Windows 11: Start and the apps centred, the tray on the right. */
+  [data-experience="windows"] #taskbar,
+  [data-theme="light"][data-experience="windows"] #taskbar {
+    height: 48px;
+    padding: 0 12px;
+    gap: 4px;
+    justify-content: center;
+    background: var(--win-bar);
+    border-top: 1px solid var(--win-bar-border);
+    box-shadow: none;
+    -webkit-backdrop-filter: blur(60px) saturate(1.6);
+    backdrop-filter: blur(60px) saturate(1.6);
+  }
+
+  [data-experience="windows"] #taskbar-apps {
+    flex: 0 1 auto;
+    gap: 4px;
+    padding: 0;
+  }
+
+  [data-experience="windows"] #taskbar-tray {
+    position: absolute;
+    top: 0;
+    right: 8px;
+    bottom: 0;
+    gap: 2px;
+  }
+
+  [data-experience="windows"] #taskbar-start,
+  [data-experience="windows"] .taskbar-app,
+  [data-experience="windows"] #taskbar-tray > button {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    height: 40px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+  }
+
+  [data-experience="windows"] #taskbar-start:hover,
+  [data-experience="windows"] .taskbar-app:hover,
+  [data-experience="windows"] #taskbar-tray > button:hover,
+  [data-experience="windows"] #taskbar-tray > button[aria-expanded="true"],
+  [data-experience="windows"] #taskbar-start[aria-expanded="true"] {
+    background: var(--win-hover);
+    border-color: var(--win-bar-border);
+  }
+
+  [data-experience="windows"] .taskbar-app.focused {
+    background: var(--win-pressed);
+  }
+
+  [data-experience="windows"] .taskbar-app svg,
+  [data-experience="windows"] .taskbar-app img {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Start: the four panes in the accent. */
+  [data-experience="windows"] #taskbar-start svg {
+    width: 22px;
+    height: 22px;
+    color: var(--accent-primary);
+  }
+
+  [data-experience="windows"] .taskbar-app::after,
+  [data-experience="windows"] .taskbar-app.active::after {
+    bottom: 1px;
+    width: 6px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--win-indicator);
+  }
+
+  [data-experience="windows"] .taskbar-app.focused::after {
+    width: 16px;
+    background: var(--accent-primary);
+  }
+
+  [data-experience="windows"] #taskbar-tray #taskbar-clock-button {
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    align-items: flex-end;
+    padding: 0 10px;
+  }
+
+  [data-experience="windows"] #taskbar-clock,
+  [data-experience="windows"] #taskbar-date {
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  /* Windows 10: a flat, full-width bar with Start and the apps on the left. */
+  [data-experience="windows"][data-experience-variant="10"] #taskbar,
+  [data-theme="light"][data-experience="windows"][data-experience-variant="10"] #taskbar {
+    height: 40px;
+    padding: 0;
+    gap: 0;
+    justify-content: flex-start;
+    border-top: 0;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] #taskbar-apps {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] #taskbar-tray {
+    position: static;
+    height: 100%;
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] #taskbar-start,
+  [data-experience="windows"][data-experience-variant="10"] .taskbar-app,
+  [data-experience="windows"][data-experience-variant="10"] #taskbar-tray > button {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    height: 40px;
+    border: 0;
+    border-radius: 0;
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] #taskbar-start svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-primary);
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] .taskbar-app::after,
+  [data-experience="windows"][data-experience-variant="10"] .taskbar-app.active::after {
+    bottom: 0;
+    width: 80%;
+    height: 2px;
+    border-radius: 0;
+    background: color-mix(in srgb, var(--accent-primary) 70%, transparent);
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] .taskbar-app.focused::after {
+    width: 100%;
+    background: var(--accent-primary);
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] .taskbar-app.focused {
+    background: var(--win-pressed);
+  }
+
+  [data-experience="windows"] #tray-panel {
+    bottom: calc(var(--desktop-inset-bottom) + 10px);
+    border-radius: 8px;
+  }
+
+  [data-experience="windows"][data-experience-variant="10"] #tray-panel {
+    bottom: var(--desktop-inset-bottom);
+    right: 0;
+    border-radius: 0;
+  }
+}
+
+/* ===== Linux: GNOME ===== */
+
+html[data-experience="linux"] {
+  --font-sans: "Cantarell", "Adwaita Sans", var(--font-inter, "Inter"), "Noto Sans", sans-serif;
+  --gnome-window: #242424;
+  --gnome-headerbar: #303030;
+  --gnome-headerbar-idle: #242424;
+  --gnome-border: rgba(0, 0, 0, 0.36);
+  --gnome-button: rgba(255, 255, 255, 0.1);
+  --gnome-button-hover: rgba(255, 255, 255, 0.15);
+  --gnome-dash: rgba(30, 30, 30, 0.86);
+}
+
+html[data-experience="linux"][data-theme="light"] {
+  --gnome-window: #fafafa;
+  --gnome-headerbar: #ebebeb;
+  --gnome-headerbar-idle: #fafafa;
+  --gnome-border: rgba(0, 0, 0, 0.12);
+  --gnome-button: rgba(0, 0, 0, 0.08);
+  --gnome-button-hover: rgba(0, 0, 0, 0.12);
+  --gnome-dash: rgba(250, 250, 250, 0.86);
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window {
+  border: 1px solid var(--gnome-border);
+  border-radius: 12px;
+  background: var(--gnome-window);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window-titlebar,
+[data-experience="linux"][data-experience-variant="gnome"] .window.focused .window-titlebar {
+  position: relative;
+  height: 46px;
+  padding: 0 8px 0 12px;
+  background: var(--gnome-headerbar);
+  border-bottom: 1px solid var(--gnome-border);
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window:not(.focused) .window-titlebar {
+  background: var(--gnome-headerbar-idle);
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window-titlebar-icon {
+  display: none;
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window-title {
+  position: absolute;
+  right: 112px;
+  left: 112px;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window:not(.focused) .window-title {
+  color: var(--text-muted);
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window-controls {
+  gap: 10px;
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window-controls button,
+[data-experience="linux"][data-experience-variant="gnome"] .window.maximized .max-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gnome-button);
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window-controls button:hover,
+[data-experience="linux"][data-experience-variant="gnome"] .window-controls button.close-btn:hover,
+[data-experience="linux"][data-experience-variant="gnome"] .window.maximized .max-btn:hover {
+  background: var(--gnome-button-hover);
+  color: var(--text-primary);
+}
+
+[data-experience="linux"][data-experience-variant="gnome"] .window-controls button svg {
+  width: 9px;
+  height: 9px;
+  stroke-width: 2;
+}
+
+@media (min-width: 769px) {
+  html[data-experience="linux"][data-experience-variant="gnome"] {
+    --desktop-inset-top: 32px;
+    --desktop-inset-bottom: 80px;
+  }
+
+  /* The dash, floating at the bottom. */
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar,
+  [data-theme="light"][data-experience="linux"][data-experience-variant="gnome"] #taskbar {
+    right: 0;
+    bottom: 10px;
+    left: 0;
+    width: fit-content;
+    max-width: calc(100vw - 32px);
+    height: 62px;
+    margin: 0 auto;
+    padding: 0 8px;
+    gap: 4px;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* With no window open the dash has nothing to show. */
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar:not(:has(.taskbar-app))::before {
+    opacity: 0;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 24px;
+    background: var(--gnome-dash);
+    box-shadow: 0 0 0 1px var(--gnome-border), 0 8px 24px rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+  }
+
+  /* The top bar: always black, as GNOME draws it. */
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: -1;
+    height: 32px;
+    background: #000;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app:hover {
+    background: var(--gnome-button);
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app svg,
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app img {
+    width: 38px;
+    height: 38px;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app::after,
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app.active::after,
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app.focused::after {
+    bottom: -3px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--text-primary);
+  }
+
+  /* Activities, top left: the workspace pills. */
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start:hover {
+    position: fixed;
+    top: 4px;
+    left: 8px;
+    width: 52px;
+    height: 24px;
+    border-radius: 12px;
+    color: #fff;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start:hover,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start svg {
+    display: none;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start::before {
+    content: "";
+    width: 34px;
+    height: 8px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='8'%3E%3Crect width='22' height='8' rx='4' fill='white'/%3E%3Ccircle cx='30' cy='4' r='3.5' fill='white' fill-opacity='.55'/%3E%3C/svg%3E")
+      center / 34px 8px no-repeat;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-focused-app {
+    position: fixed;
+    top: 0;
+    left: 76px;
+    display: block;
+    max-width: 30vw;
+    overflow: hidden;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 32px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray {
+    position: fixed;
+    top: 0;
+    right: 8px;
+    height: 32px;
+    gap: 2px;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray > button,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray > button:hover,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray > button[aria-expanded="true"] {
+    width: 32px;
+    min-width: 0;
+    height: 24px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray > button:hover,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray > button[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* The clock sits in the middle of the top bar. */
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-tray #taskbar-clock-button {
+    position: fixed;
+    top: 4px;
+    left: 50%;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    padding: 0 12px;
+    translate: -50% 0;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-date {
+    order: -1;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-clock,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-date {
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #tray-panel {
+    top: 38px;
+    right: 8px;
+    bottom: auto;
+    max-height: calc(100vh - 38px - var(--desktop-inset-bottom));
+    border-radius: 16px;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] #tray-panel.visible {
+    transform: none;
+  }
+}
+
+/* ===== Linux: KDE Plasma ===== */
+
+html[data-experience="linux"][data-experience-variant="kde"] {
+  --font-sans: "Noto Sans", "Oxygen", var(--font-inter, "Inter"), system-ui, sans-serif;
+  --kde-titlebar: #2a2e32;
+  --kde-titlebar-focused: #31363b;
+  --kde-window: #202326;
+  --kde-border: rgba(0, 0, 0, 0.45);
+  --kde-panel: rgba(32, 35, 38, 0.9);
+  --kde-panel-border: rgba(255, 255, 255, 0.08);
+  --kde-hover: rgba(255, 255, 255, 0.1);
+  --kde-close: #da4453;
+}
+
+html[data-experience="linux"][data-experience-variant="kde"][data-theme="light"] {
+  --kde-titlebar: #dee0e2;
+  --kde-titlebar-focused: #e3e5e7;
+  --kde-window: #fcfcfc;
+  --kde-border: rgba(0, 0, 0, 0.22);
+  --kde-panel: rgba(239, 240, 241, 0.92);
+  --kde-panel-border: rgba(0, 0, 0, 0.1);
+  --kde-hover: rgba(0, 0, 0, 0.08);
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window {
+  border: 1px solid var(--kde-border);
+  border-radius: 6px;
+  background: var(--kde-window);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-titlebar,
+[data-experience="linux"][data-experience-variant="kde"] .window.focused .window-titlebar {
+  position: relative;
+  height: 32px;
+  padding: 0 6px 0 10px;
+  background: var(--kde-titlebar);
+  border-bottom: 1px solid var(--kde-border);
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window.focused .window-titlebar {
+  background: var(--kde-titlebar-focused);
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-titlebar-icon {
+  opacity: 1;
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-title {
+  position: absolute;
+  right: 100px;
+  left: 100px;
+  font-size: 13px;
+  font-weight: 400;
+  text-align: center;
+  pointer-events: none;
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window:not(.focused) .window-title {
+  color: var(--text-muted);
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-controls {
+  gap: 4px;
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-controls button,
+[data-experience="linux"][data-experience-variant="kde"] .window.maximized .max-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-controls button:hover,
+[data-experience="linux"][data-experience-variant="kde"] .window.maximized .max-btn:hover {
+  background: var(--kde-hover);
+  color: var(--text-primary);
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-controls button.close-btn:hover {
+  background: var(--kde-close);
+  color: #fff;
+}
+
+[data-experience="linux"][data-experience-variant="kde"] .window-controls button svg {
+  width: 10px;
+  height: 10px;
+}
+
+@media (min-width: 769px) {
+  html[data-experience="linux"][data-experience-variant="kde"] {
+    --desktop-inset-bottom: 58px;
+  }
+
+  /* Plasma's floating panel: launcher and tasks on the left, the tray and a
+     two-line clock on the right. */
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar,
+  [data-theme="light"][data-experience="linux"][data-experience-variant="kde"] #taskbar {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    height: 44px;
+    padding: 0 6px;
+    gap: 2px;
+    justify-content: flex-start;
+    background: var(--kde-panel);
+    border: 1px solid var(--kde-panel-border);
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-apps {
+    justify-content: flex-start;
+    gap: 2px;
+    padding: 0;
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-start,
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app,
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-tray > button {
+    width: 38px;
+    min-width: 38px;
+    max-width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 6px;
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-start:hover,
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-start[aria-expanded="true"],
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app:hover,
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-tray > button:hover,
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-tray > button[aria-expanded="true"] {
+    background: var(--kde-hover);
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-start svg {
+    color: var(--accent-primary);
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app svg,
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app img {
+    width: 26px;
+    height: 26px;
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app::after,
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app.active::after {
+    bottom: 0;
+    width: 50%;
+    height: 3px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--text-primary) 45%, transparent);
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app.focused::after {
+    width: 80%;
+    background: var(--accent-primary);
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-tray #taskbar-clock-button {
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    align-items: center;
+    padding: 0 10px;
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-clock,
+  [data-experience="linux"][data-experience-variant="kde"] #taskbar-date {
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  [data-experience="linux"][data-experience-variant="kde"] #tray-panel {
+    bottom: 52px;
+    border-radius: 10px;
+  }
+}
+
+/* Reduced motion: the dock does not magnify. */
+@media (prefers-reduced-motion: reduce) {
+  [data-experience="macos"] #taskbar-start:hover,
+  [data-experience="macos"] .taskbar-app:hover {
+    transform: none;
+  }
+}

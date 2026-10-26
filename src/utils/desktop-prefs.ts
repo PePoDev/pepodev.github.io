@@ -171,3 +171,44 @@ export const backgroundMap: Record<
     secondary: "245, 158, 11",
   },
 };
+
+/**
+ * Desktop experiences (pepodev.desktopPrefs `experience` and `variant`): the
+ * look of the window chrome, taskbar, dock or panels, and type
+ * (src/styles/experiences.css, applied as <html data-experience> and
+ * data-experience-variant). Each follows the theme and accent preferences.
+ * The first variant is the experience's default; `glass: false` marks an
+ * opaque look, for which Settings hides the glass preferences.
+ */
+export const experienceMap: Record<
+  string,
+  { label: string; variants: { id: string; label: string; glass?: false }[] }
+> = {
+  pepodev: { label: "PePoDev", variants: [{ id: "default", label: "Default" }] },
+  macos: {
+    label: "macOS",
+    variants: [
+      { id: "tahoe", label: "Tahoe (Liquid Glass)" },
+      { id: "sequoia", label: "Sequoia" },
+    ],
+  },
+  windows: {
+    label: "Windows",
+    variants: [
+      { id: "11", label: "Windows 11" },
+      { id: "10", label: "Windows 10", glass: false },
+    ],
+  },
+  linux: {
+    label: "Linux",
+    variants: [
+      { id: "gnome", label: "GNOME", glass: false },
+      { id: "kde", label: "KDE Plasma", glass: false },
+    ],
+  },
+};
+
+/** Each experience's variant ids, default first: what loadDesktopPrefs accepts. */
+export const experienceVariants: Record<string, string[]> = Object.fromEntries(
+  Object.entries(experienceMap).map(([id, { variants }]) => [id, variants.map((variant) => variant.id)]),
+);

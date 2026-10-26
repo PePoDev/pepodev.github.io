@@ -23,6 +23,7 @@
 import { canTakeFocus } from "@utils/overlays";
 import { loadAppChunk } from "./app-chunks";
 import { APPS, getApp, isAppId, type AppDefinition, type AppId } from "./apps";
+import { readDesktopInsets } from "./icon-grid";
 import { closeStartMenu, isOverlayOpen } from "./overlay-state";
 import { getBlogDeepLink, isDesktopSiteMode } from "./site-mode";
 import { commit, createStore, useStore } from "./store";
@@ -290,19 +291,24 @@ function boundsStyle(bounds: Bounds): WindowBoundsStyle {
   return { left: px(bounds.left), top: px(bounds.top), width: px(bounds.width), height: px(bounds.height) };
 }
 
+/** What the experience's top bar and taskbar, dock or panel cover. */
+function desktopInsets() {
+  return readDesktopInsets(document.documentElement);
+}
+
 function getCenteredBounds(app: AppDefinition): Bounds {
-  const taskbarHeight = getTaskbarHeight();
+  const insets = desktopInsets();
   const availableWidth = Math.max(280, window.innerWidth - 24);
-  const availableHeight = Math.max(220, window.innerHeight - taskbarHeight - 24);
+  const availableHeight = Math.max(220, window.innerHeight - insets.top - insets.bottom - 24);
   const width = Math.min(app.width, availableWidth);
   const height = Math.min(app.height, availableHeight);
   return {
     left: Math.max(12, (window.innerWidth - width) / 2 + (Math.random() * 40 - 20)),
     top: Math.max(
-      12,
+      insets.top + 12,
       Math.min(
-        (window.innerHeight - height - taskbarHeight) / 2 + (Math.random() * 30 - 15),
-        window.innerHeight - height - taskbarHeight - 12,
+        insets.top + (window.innerHeight - insets.top - insets.bottom - height) / 2 + (Math.random() * 30 - 15),
+        window.innerHeight - height - insets.bottom - 12,
       ),
     ),
     width,
@@ -311,9 +317,9 @@ function getCenteredBounds(app: AppDefinition): Bounds {
 }
 
 /**
- * Keeps a title bar reachable: above the taskbar, with at least 120px of it
- * on screen to grab. Off the left edge, the window controls at its right end
- * do not count.
+ * Keeps a title bar reachable: below a top bar and above the taskbar, with
+ * at least 120px of it on screen to grab. Off the left edge, the window
+ * controls at its right end do not count.
  */
 export function clampWindowOrigin(win: HTMLElement, left: number, top: number) {
   const titlebar = win.querySelector<HTMLElement>(".window-titlebar");
@@ -322,10 +328,11 @@ export function clampWindowOrigin(win: HTMLElement, left: number, top: number) {
   const controlsWidth = controls ? win.offsetWidth - win.clientLeft - controls.offsetLeft : 0;
   const visibleWidth = Math.min(MIN_VISIBLE_TITLEBAR, win.offsetWidth);
   const visibleLeftWidth = Math.min(MIN_VISIBLE_TITLEBAR + controlsWidth, win.offsetWidth);
-  const maxTop = window.innerHeight - getTaskbarHeight() - titlebarBottom;
+  const insets = desktopInsets();
+  const maxTop = window.innerHeight - insets.bottom - titlebarBottom;
   return {
     left: Math.min(Math.max(left, visibleLeftWidth - win.offsetWidth), window.innerWidth - visibleWidth),
-    top: Math.min(Math.max(0, top), Math.max(0, maxTop)),
+    top: Math.min(Math.max(insets.top, top), Math.max(insets.top, maxTop)),
   };
 }
 
@@ -503,13 +510,14 @@ export function toggleMaximize(appId: AppId) {
   if (!state.maximized) {
     const rect = elements.get(appId)?.getBoundingClientRect();
     if (rect) prevBounds.set(appId, { left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+    const insets = desktopInsets();
     commit(() => {
       patch(appId, { maximized: true });
       patchStyle(appId, {
         left: "0",
-        top: "0",
+        top: px(insets.top),
         width: "100vw",
-        height: `calc(100vh - ${getTaskbarHeight()}px)`,
+        height: `calc(100vh - ${insets.top + insets.bottom}px)`,
         zIndex: ++topZ,
       });
     });
@@ -569,7 +577,7 @@ export function beginWindowDrag(appId: AppId, event: { clientX: number; clientY:
           const restored = {
             ...saved,
             left: Math.max(0, dragStartX - saved.width * clickRatioX),
-            top: 0,
+            top: desktopInsets().top,
           };
           unmaximizeWindow(appId, restored);
           winStartX = parseInt(win.style.left, 10);
@@ -650,6 +658,30 @@ function syncViewportMode() {
       }
     });
   }
+}
+
+// A new desktop experience can move the bars (desktop insets): maximized
+// windows then fill the new free area, and the others keep their title
+// bars clear of it. Other preference changes leave the windows alone.
+let windowInsets = "";
+function onPreferencesChange() {
+  const insets = desktopInsets();
+  const key = JSON.stringify(insets);
+  if (key === windowInsets) return;
+  windowInsets = key;
+  if (!isDesktopSiteMode() || mobileMode) return;
+  commit(() => {
+    for (const app of APPS) {
+      const state = get(app.id);
+      if (!isShown(state)) continue;
+      if (state.maximized) {
+        patchStyle(app.id, { top: px(insets.top), height: `calc(100vh - ${insets.top + insets.bottom}px)` });
+      } else {
+        const position = clampedPosition(app.id);
+        if (position.left !== state.style.left || position.top !== state.style.top) patchStyle(app.id, position);
+      }
+    }
+  });
 }
 
 // --- First visit -----------------------------------------------------------------
@@ -760,6 +792,8 @@ export function startWindowManager(): () => void {
   mobileQuery.addEventListener("change", syncViewportMode);
   window.addEventListener("resize", syncViewportMode);
   document.addEventListener("site:mode-change", onSiteModeChange);
+  windowInsets = JSON.stringify(desktopInsets());
+  document.addEventListener("desktop:preferences", onPreferencesChange);
   syncViewportMode();
   scheduleWelcomeWindow();
 
@@ -775,6 +809,7 @@ export function startWindowManager(): () => void {
     mobileQuery?.removeEventListener("change", syncViewportMode);
     window.removeEventListener("resize", syncViewportMode);
     document.removeEventListener("site:mode-change", onSiteModeChange);
+    document.removeEventListener("desktop:preferences", onPreferencesChange);
     window.clearTimeout(welcomeTimerId);
     welcomeTimerId = 0;
     timers.forEach((id) => window.clearTimeout(id));

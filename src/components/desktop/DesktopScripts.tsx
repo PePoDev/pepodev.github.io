@@ -6,12 +6,13 @@
 // with Function#toString (see icon-grid.ts, prefs-core.ts and
 // taskbar-clock.ts).
 import { InlineScript, scriptValue } from "@components/InlineScript";
-import { accentMap, backgroundMap } from "@utils/desktop-prefs";
+import { accentMap, backgroundMap, experienceVariants } from "@utils/desktop-prefs";
 import {
   createIconGrid,
   ICON_STORAGE_PREFIX,
   LINK_ICON_STORAGE_PREFIX,
   layoutIcons,
+  readDesktopInsets,
   readIconPosition,
   removeStaleIconPositions,
 } from "./icon-grid";
@@ -25,16 +26,17 @@ const VIEW_MODE_STORAGE_KEY = "pepodev.viewMode";
 // even if this one is dropped).
 const prefsScript = `(() => {
   // Initialize theme immediately to prevent flash: the background, glass,
-  // radius and effect preferences, before first paint.
+  // radius, effect and experience preferences, before first paint.
   const accentMap = ${scriptValue(accentMap)};
   const backgroundMap = ${scriptValue(backgroundMap)};
+  const experiences = ${scriptValue(experienceVariants)};
   const loadPrefs = ${loadDesktopPrefs.toString()};
   const applyPrefs = ${applyDesktopPrefs.toString()};
   let storage = null;
   try {
     storage = window.localStorage;
   } catch {}
-  applyPrefs(document.documentElement, loadPrefs(storage, backgroundMap), accentMap, backgroundMap);
+  applyPrefs(document.documentElement, loadPrefs(storage, backgroundMap, experiences), accentMap, backgroundMap);
 })();`;
 
 /** Applies every desktop preference before first paint (prefs-core.ts). */
@@ -186,6 +188,7 @@ const iconScript = `(() => {
   // script announces as one) places them again.
   window.__pepodevDesktopIconsReady = true;
   const createIconGrid = ${createIconGrid.toString()};
+  const readInsets = ${readDesktopInsets.toString()};
   const layoutIcons = ${layoutIcons.toString()};
   const removeStale = ${removeStaleIconPositions.toString()};
   const readPosition = ${readIconPosition.toString()};
@@ -233,7 +236,13 @@ const iconScript = `(() => {
         if (position) saved[icon.id] = position;
       });
     } catch {}
-    const grid = createIconGrid(window.innerWidth, window.innerHeight, first.offsetWidth, first.offsetHeight);
+    const grid = createIconGrid(
+      window.innerWidth,
+      window.innerHeight,
+      first.offsetWidth,
+      first.offsetHeight,
+      readInsets(document.documentElement),
+    );
     const layout = layoutIcons(grid, descriptors, saved);
     icons.forEach((icon, i) => {
       const cell = grid.cellPosition(layout.cells[descriptors[i].id]);

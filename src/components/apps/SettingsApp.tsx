@@ -7,6 +7,7 @@
 // player saves. Reset all settings, like the palette's Reset Desktop, only
 // runs on a second click, tap or Enter.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { experienceMap } from "@utils/desktop-prefs";
 import {
   mountApp,
   resetDesktop,
@@ -76,7 +77,11 @@ const DEFAULT_PREFS: DesktopPrefs = {
   glass: 55,
   backgroundEffect: true,
   windowGlass: true,
+  experience: "pepodev",
+  variant: "default",
 };
+
+const EXPERIENCES = Object.entries(experienceMap).map(([id, { label, variants }]) => ({ id, label, variants }));
 
 function rangeProgress(value: number, min: number, max: number) {
   const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
@@ -149,6 +154,11 @@ export default function SettingsApp({ data }: AppProps<"settings">) {
   const [resetPrompt, setResetPrompt] = useState("");
   const resetRef = useRef<HTMLButtonElement>(null);
   const backgrounds = prefs.theme === "light" ? LIGHT_BACKGROUNDS : DARK_BACKGROUNDS;
+  const variants = experienceMap[prefs.experience]?.variants ?? [];
+  // The PePoDev look has the radius slider; an operating system's look draws
+  // its own corners, and an opaque one (Windows 10, GNOME, KDE) no glass.
+  const ownLook = prefs.experience === "pepodev";
+  const glassLook = variants.find((variant) => variant.id === prefs.variant)?.glass !== false;
 
   // The Music controls drive the player, so its body mounts with Settings
   // (if the desktop's idle mount has not mounted it yet): a click then
@@ -209,6 +219,38 @@ export default function SettingsApp({ data }: AppProps<"settings">) {
           <h2>Appearance</h2>
           <div className="settings-grid">
             <label className="settings-field">
+              <span>Desktop experience</span>
+              <select
+                data-setting="experience"
+                value={prefs.experience}
+                onChange={(event) => updateDesktopPrefs({ experience: event.target.value })}
+              >
+                {EXPERIENCES.map((experience) => (
+                  <option key={experience.id} value={experience.id}>
+                    {experience.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {variants.length > 1 && (
+              <label className="settings-field">
+                <span>Style</span>
+                <select
+                  data-setting="variant"
+                  value={prefs.variant}
+                  onChange={(event) => updateDesktopPrefs({ variant: event.target.value })}
+                >
+                  {variants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            <label className="settings-field">
               <span>Theme</span>
               <select
                 data-setting="theme"
@@ -236,23 +278,27 @@ export default function SettingsApp({ data }: AppProps<"settings">) {
               </select>
             </label>
 
-            <RangeSetting
-              label="Window radius"
-              name="radius"
-              min={6}
-              max={20}
-              value={prefs.radius}
-              onInput={(radius) => updateDesktopPrefs({ radius })}
-            />
+            {ownLook && (
+              <RangeSetting
+                label="Window radius"
+                name="radius"
+                min={6}
+                max={20}
+                value={prefs.radius}
+                onInput={(radius) => updateDesktopPrefs({ radius })}
+              />
+            )}
 
-            <RangeSetting
-              label="Glass opacity"
-              name="glass"
-              min={55}
-              max={90}
-              value={prefs.glass}
-              onInput={(glass) => updateDesktopPrefs({ glass })}
-            />
+            {glassLook && (
+              <RangeSetting
+                label="Glass opacity"
+                name="glass"
+                min={55}
+                max={90}
+                value={prefs.glass}
+                onInput={(glass) => updateDesktopPrefs({ glass })}
+              />
+            )}
 
             <label className="settings-field settings-checkbox">
               <input
@@ -264,15 +310,17 @@ export default function SettingsApp({ data }: AppProps<"settings">) {
               <span>Background effect</span>
             </label>
 
-            <label className="settings-field settings-checkbox">
-              <input
-                data-setting="windowGlass"
-                type="checkbox"
-                checked={Boolean(prefs.windowGlass)}
-                onChange={(event) => updateDesktopPrefs({ windowGlass: event.target.checked })}
-              />
-              <span>Window glass style</span>
-            </label>
+            {glassLook && (
+              <label className="settings-field settings-checkbox">
+                <input
+                  data-setting="windowGlass"
+                  type="checkbox"
+                  checked={Boolean(prefs.windowGlass)}
+                  onChange={(event) => updateDesktopPrefs({ windowGlass: event.target.checked })}
+                />
+                <span>Window glass style</span>
+              </label>
+            )}
           </div>
 
           <div className="settings-swatches" role="radiogroup" aria-label="Accent color">

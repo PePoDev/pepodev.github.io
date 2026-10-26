@@ -1048,18 +1048,25 @@
   border-color: var(--text-primary);
 }
 
+/* Opaque, so their accent text keeps its contrast over whatever the glass
+   window shows behind it. */
 .settings-actions button {
   height: 36px;
   padding: 0 14px;
+  background: var(--bg-secondary);
   color: var(--app-accent-text, var(--accent-cyan));
   font-size: 13px;
+}
+
+.settings-actions button:hover {
+  background: color-mix(in srgb, var(--bg-secondary) 90%, var(--text-primary));
 }
 
 /* Reset all settings waits for a second click, like the palette's Reset
    Desktop. */
 .settings-actions button.confirming {
   border-color: color-mix(in srgb, var(--accent-red) 60%, transparent);
-  background: color-mix(in srgb, var(--accent-red) 16%, transparent);
+  background: color-mix(in srgb, var(--accent-red) 16%, var(--bg-secondary));
 }
 
 .app-content .settings-status {

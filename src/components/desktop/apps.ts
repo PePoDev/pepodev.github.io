@@ -185,7 +185,7 @@ export const APPS: readonly AppDefinition[] = [
     title: "Settings",
     label: "Settings",
     width: 620,
-    height: 560,
+    height: 640,
     startDescription: "Customize desktop",
     paletteDescription: "Customize the desktop",
     mount: "open",

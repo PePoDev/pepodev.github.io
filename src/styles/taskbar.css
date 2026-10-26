@@ -111,6 +111,12 @@
   flex-shrink: 0;
 }
 
+/* Shown only by the looks whose top bar names the focused app
+   (experiences.css). */
+#taskbar-focused-app {
+  display: none;
+}
+
 #taskbar-tray {
   display: flex;
   align-items: center;

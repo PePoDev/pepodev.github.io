@@ -342,6 +342,9 @@ test("falls back to desktop mode when the saved mode is invalid", async ({
 });
 
 test("opens every app window from its desktop icon or the tray", async ({ page }) => {
+  // Sixteen windows, each opened, faded in and closed in turn: about 30 s
+  // on an idle machine.
+  test.setTimeout(90_000);
   for (const app of apps) {
     const window = await openApp(page, app.label, app.appId);
     await expect(window.locator(".window-title")).toHaveText(app.title);

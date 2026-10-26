@@ -37,6 +37,11 @@
   --particle-primary-rgb: 34, 197, 94;
   --particle-secondary-rgb: 6, 182, 212;
   --taskbar-bg: rgba(28, 28, 30, 0.65);
+  /* What the desktop's bars cover, which windows and icons keep clear of
+     (readDesktopInsets in icon-grid.ts): a top bar and the taskbar.
+     experiences.css sets them for docks, panels and menu bars. */
+  --desktop-inset-top: 0px;
+  --desktop-inset-bottom: 56px;
   --window-radius: 12px;
   --window-shadow:
     0 16px 32px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
