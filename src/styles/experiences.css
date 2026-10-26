@@ -12,10 +12,13 @@
    full-screen windows and bottom taskbar, with each experience's window
    controls and type.
 
-   The bars move without new markup: #taskbar loses its own backdrop filter
-   (a filter makes it the containing block of its fixed children) and draws
-   the dock or panel in ::before and a top bar in ::after, so the tray can sit
-   in the top bar as a fixed box. */
+   The bars reuse the taskbar's markup; only #taskbar-focused-app, the
+   focused app's name in a top bar, is extra (Taskbar.tsx). Windows and KDE
+   paint the bar on #taskbar itself and keep its backdrop filter, which makes
+   #taskbar the containing block of its fixed children (the tray panel), so
+   their tray is laid out in the bar, never fixed. macOS and GNOME drop the
+   filter and draw the dock or dash in ::before and the top bar in ::after,
+   so the tray can sit in the top bar as a fixed box. */
 
 /* ===== Shared ===== */
 
@@ -25,13 +28,17 @@ html[data-experience="linux"] {
   --exp-window-shadow: 0 18px 48px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.24);
   --exp-window-shadow-focused: 0 24px 64px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.3);
   --exp-control-ink: var(--text-primary);
+  --exp-accent-ink: var(--accent-primary);
 }
 
+/* The accents are pale in the light theme, so a glyph drawn in the accent
+   darkens to keep 3:1 on the light bars. */
 html[data-experience="macos"][data-theme="light"],
 html[data-experience="windows"][data-theme="light"],
 html[data-experience="linux"][data-theme="light"] {
   --exp-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.1);
   --exp-window-shadow-focused: 0 22px 56px rgba(0, 0, 0, 0.24), 0 3px 10px rgba(0, 0, 0, 0.14);
+  --exp-accent-ink: color-mix(in srgb, var(--accent-primary) 55%, #000);
 }
 
 :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .window {
@@ -67,8 +74,17 @@ html[data-experience="linux"][data-theme="light"] {
     padding: 0;
   }
 
+  /* Toasts start below a top bar (toast.css moves them below a maximized
+     window's title bar too), and step left of the tray panel that drops
+     from it: 380px wide, 8px from the edge. */
   :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) #toast-container {
     top: calc(var(--desktop-inset-top) + 16px);
+  }
+
+  html:is([data-experience="macos"], [data-experience="linux"][data-experience-variant="gnome"]):has(#tray-panel.visible)
+    #toast-container {
+    right: 400px;
+    max-width: min(420px, calc(100vw - 420px));
   }
 
   /* Quick Access opens above the dock, taskbar or panel (below GNOME's top
@@ -131,6 +147,7 @@ html[data-experience="macos"] {
   --mac-minimize: #febc2e;
   --mac-zoom: #28c840;
   --mac-light-idle: rgba(255, 255, 255, 0.2);
+  --mac-light-idle-rim: rgba(255, 255, 255, 0.45);
   --mac-bar: rgba(30, 30, 32, 0.6);
   --mac-bar-ink: #f5f5f7;
   --mac-dock: rgba(48, 48, 52, 0.55);
@@ -141,7 +158,8 @@ html[data-experience="macos"] {
 }
 
 html[data-experience="macos"][data-theme="light"] {
-  --mac-light-idle: rgba(0, 0, 0, 0.14);
+  --mac-light-idle: rgba(0, 0, 0, 0.1);
+  --mac-light-idle-rim: rgba(0, 0, 0, 0.45);
   --mac-bar: rgba(246, 246, 246, 0.62);
   --mac-bar-ink: #1d1d1f;
   --mac-dock: rgba(246, 246, 248, 0.5);
@@ -214,8 +232,9 @@ html[data-experience="macos"][data-experience-variant="tahoe"][data-theme="light
   pointer-events: none;
 }
 
-/* Traffic lights on the left, close first. Each button keeps a 24px target;
-   the light is its ::before. */
+/* Traffic lights on the left, close first: Window.tsx renders them in that
+   order for this look, so Tab meets them as drawn. Each button is a 24px
+   target (WCAG 2.5.8) around its light, which is its ::before. */
 [data-experience="macos"] .window-controls {
   order: -1;
   gap: 0;
@@ -223,17 +242,14 @@ html[data-experience="macos"][data-experience-variant="tahoe"][data-theme="light
 }
 
 [data-experience="macos"] .window-controls .close-btn {
-  order: 1;
   --light: var(--mac-close);
 }
 
 [data-experience="macos"] .window-controls .min-btn {
-  order: 2;
   --light: var(--mac-minimize);
 }
 
 [data-experience="macos"] .window-controls .max-btn {
-  order: 3;
   --light: var(--mac-zoom);
 }
 
@@ -242,7 +258,7 @@ html[data-experience="macos"][data-experience-variant="tahoe"][data-theme="light
 [data-experience="macos"] .window.maximized .max-btn,
 [data-experience="macos"] .window.maximized .max-btn:hover {
   position: relative;
-  width: calc(var(--mac-light) + 10px);
+  width: max(24px, calc(var(--mac-light) + 10px));
   height: 24px;
   border-radius: 50%;
   background: transparent;
@@ -261,9 +277,17 @@ html[data-experience="macos"][data-experience-variant="tahoe"][data-theme="light
   box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
 }
 
+/* Each light, or its rim, keeps 3:1 against the title bar (WCAG 1.4.11).
+   On the light theme's near-white bars the yellow and green fall short, so
+   every light gets a darker rim of its own colour there. */
+[data-theme="light"][data-experience="macos"] .window-controls button::before {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--light) 60%, #000);
+}
+
+/* An unfocused window's lights turn grey, with a rim that keeps 3:1. */
 [data-experience="macos"] .window:not(.focused) .window-controls:not(:hover) button::before {
   background: var(--mac-light-idle);
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--mac-light-idle-rim);
 }
 
 [data-experience="macos"] .window-controls button svg {
@@ -581,13 +605,17 @@ html[data-experience="windows"][data-experience-variant="10"][data-theme="light"
     --desktop-inset-bottom: 40px;
   }
 
-  /* Windows 11: Start and the apps centred, the tray on the right. */
+  /* Windows 11: Start and the apps centred, the tray on the right. The
+     outer columns share the free space, so the group stays centred until it
+     reaches the tray's column; then it moves left, and its buttons shrink
+     rather than run under the tray. */
   [data-experience="windows"] #taskbar,
   [data-theme="light"][data-experience="windows"] #taskbar {
+    display: grid;
+    grid-template-columns: 1fr auto minmax(0, max-content) 1fr;
     height: 48px;
-    padding: 0 12px;
+    padding: 0 8px;
     gap: 4px;
-    justify-content: center;
     background: var(--win-bar);
     border-top: 1px solid var(--win-bar-border);
     box-shadow: none;
@@ -595,17 +623,21 @@ html[data-experience="windows"][data-experience-variant="10"][data-theme="light"
     backdrop-filter: blur(60px) saturate(1.6);
   }
 
+  [data-experience="windows"] #taskbar-start {
+    grid-column: 2;
+  }
+
   [data-experience="windows"] #taskbar-apps {
-    flex: 0 1 auto;
+    grid-column: 3;
+    min-width: 0;
+    justify-content: flex-start;
     gap: 4px;
     padding: 0;
   }
 
   [data-experience="windows"] #taskbar-tray {
-    position: absolute;
-    top: 0;
-    right: 8px;
-    bottom: 0;
+    grid-column: 4;
+    justify-self: end;
     gap: 2px;
   }
 
@@ -643,7 +675,7 @@ html[data-experience="windows"][data-experience-variant="10"][data-theme="light"
   [data-experience="windows"] #taskbar-start svg {
     width: 22px;
     height: 22px;
-    color: var(--accent-primary);
+    color: var(--exp-accent-ink);
   }
 
   [data-experience="windows"] .taskbar-app::after,
@@ -678,6 +710,7 @@ html[data-experience="windows"][data-experience-variant="10"][data-theme="light"
   /* Windows 10: a flat, full-width bar with Start and the apps on the left. */
   [data-experience="windows"][data-experience-variant="10"] #taskbar,
   [data-theme="light"][data-experience="windows"][data-experience-variant="10"] #taskbar {
+    display: flex;
     height: 40px;
     padding: 0;
     gap: 0;
@@ -689,12 +722,10 @@ html[data-experience="windows"][data-experience-variant="10"][data-theme="light"
 
   [data-experience="windows"][data-experience-variant="10"] #taskbar-apps {
     flex: 1 1 auto;
-    justify-content: flex-start;
     gap: 0;
   }
 
   [data-experience="windows"][data-experience-variant="10"] #taskbar-tray {
-    position: static;
     height: 100%;
   }
 
@@ -707,6 +738,13 @@ html[data-experience="windows"][data-experience-variant="10"][data-theme="light"
     height: 40px;
     border: 0;
     border-radius: 0;
+  }
+
+  /* A crowded taskbar shrinks its app buttons, down to a 24px target, rather
+     than push the tray aside. */
+  [data-experience="windows"] .taskbar-app,
+  [data-experience="windows"][data-experience-variant="10"] .taskbar-app {
+    min-width: 24px;
   }
 
   [data-experience="windows"][data-experience-variant="10"] #taskbar-start svg {
@@ -1138,6 +1176,7 @@ html[data-experience="linux"][data-experience-variant="kde"][data-theme="light"]
   }
 
   [data-experience="linux"][data-experience-variant="kde"] #taskbar-apps {
+    min-width: 0;
     justify-content: flex-start;
     gap: 2px;
     padding: 0;
@@ -1163,12 +1202,19 @@ html[data-experience="linux"][data-experience-variant="kde"][data-theme="light"]
   }
 
   [data-experience="linux"][data-experience-variant="kde"] #taskbar-start svg {
-    color: var(--accent-primary);
+    color: var(--exp-accent-ink);
+  }
+
+  /* A crowded panel shrinks its task buttons and their icons, down to a
+     24px target, rather than push the tray off screen. */
+  [data-experience="linux"][data-experience-variant="kde"] .taskbar-app {
+    min-width: 24px;
   }
 
   [data-experience="linux"][data-experience-variant="kde"] .taskbar-app svg,
   [data-experience="linux"][data-experience-variant="kde"] .taskbar-app img {
     width: 26px;
+    max-width: 100%;
     height: 26px;
   }
 
@@ -1207,10 +1253,67 @@ html[data-experience="linux"][data-experience-variant="kde"][data-theme="light"]
   }
 }
 
+/* ===== Phones ===== */
+
+@media (max-width: 768px) {
+  /* Only the close button shows, so a centred title needs less room. */
+  [data-experience="macos"] .window-title,
+  [data-experience="linux"][data-experience-variant="gnome"] .window-title,
+  [data-experience="linux"][data-experience-variant="kde"] .window-title {
+    right: 48px;
+    left: 48px;
+  }
+
+  /* The close button keeps the shared 42x36 target (window.css): the 24px
+     light or button stays as drawn, and its ::after takes the taps around
+     it. */
+  :is([data-experience="macos"], [data-experience="linux"]) .window-controls button {
+    position: relative;
+  }
+
+  :is([data-experience="macos"], [data-experience="linux"]) .window-controls button::after {
+    content: "";
+    position: absolute;
+    inset: -6px -9px;
+  }
+}
+
 /* Reduced motion: the dock does not magnify. */
 @media (prefers-reduced-motion: reduce) {
   [data-experience="macos"] #taskbar-start:hover,
   [data-experience="macos"] .taskbar-app:hover {
     transform: none;
+  }
+}
+
+/* Forced colors drop background colours and gradients, and turn GNOME's
+   black top bar into Canvas: the traffic lights keep an outline and their
+   glyphs, and Launchpad and Activities show the Start glyph instead of their
+   art. A forced background keeps its alpha, so the translucent dock, dash
+   and menu bar turn opaque, or the wallpaper would show through them at the
+   wrong lightness. Later in the file than the layouts, so these win. */
+@media (forced-colors: active) {
+  [data-experience="macos"] #taskbar::before,
+  [data-experience="macos"] #taskbar::after,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar::before {
+    background: Canvas;
+  }
+
+  [data-experience="macos"] .window-controls button::before {
+    border: 1px solid ButtonText;
+  }
+
+  [data-experience="macos"] .window-controls button svg {
+    opacity: 1;
+  }
+
+  [data-experience="macos"] #taskbar-start::before,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start::before {
+    content: none;
+  }
+
+  [data-experience="macos"] #taskbar-start svg,
+  [data-experience="linux"][data-experience-variant="gnome"] #taskbar-start svg {
+    display: block;
   }
 }

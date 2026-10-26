@@ -531,30 +531,60 @@ value falls back to the default. Every look follows the theme and accent.
 
 - `src/styles/experiences.css` holds every look, by attribute:
   - Window chrome:
-    - macOS: traffic lights on the left, each with a 22px target, and a
-      centred title.
+    - macOS: traffic lights on the left and a centred title. `Window.tsx`
+      renders the controls close first in this look, so Tab meets them in
+      the order drawn. Each light sits in a 24px button and keeps 3:1
+      against the title bar: an unfocused window's lights are grey with a
+      rim, and on the light theme's title bars each light has a darker rim
+      of its own colour.
     - Windows: 46px caption buttons; Windows 10 is square, with an accent
       border on the active window.
     - GNOME: round header-bar buttons.
     - KDE: Breeze title bars.
+    
+    Every look's window controls are at least 24x24 and do not overlap
+    (WCAG 2.5.8). On phones only the close button shows: macOS, GNOME and
+    KDE still draw it at 24px, its `::after` takes taps in the shared
+    42x36 target (`window.css`), and the centred title takes the room the
+    hidden buttons left.
   - The bars, and type: system font stacks over Inter, with no web fonts.
-- Above 768px each look lays out the taskbar without new markup:
-  - macOS: a menu bar (holding the tray) and a centred dock.
+- Above 768px each look lays out the taskbar's markup, plus
+  `#taskbar-focused-app` (`Taskbar.tsx`), the focused app's name, which
+  only a top bar shows:
+  - macOS: a menu bar (the focused app and the tray) and a centred dock.
   - Windows 11: a centred taskbar. Windows 10: a flat one, aligned left.
-  - GNOME: a black top bar (Activities, a centred clock, the tray) and a
-    floating dash.
+  - GNOME: a black top bar (Activities, the focused app, a centred clock,
+    the tray) and a floating dash.
   - KDE: a floating panel.
   
-  `#taskbar` then has no backdrop filter of its own, because a filter would
-  make it the containing block of the fixed tray. It draws the dock or
-  panel in `::before` and a top bar in `::after`. Phones keep the shared
-  bottom taskbar and full-screen windows.
+  Windows and KDE paint the bar on `#taskbar` itself and keep its backdrop
+  filter, which makes `#taskbar` the containing block of its fixed
+  children (the tray panel), so their tray stays in the bar's layout and
+  is never fixed. macOS and GNOME drop the filter, draw the dock or dash
+  in `::before` and the top bar in `::after`, and fix the tray in the top
+  bar. Windows 11 centres Start and the apps in a grid whose outer columns
+  share the free space. A crowded Windows or KDE taskbar shrinks its app
+  buttons, down to 24px, rather than run under the tray or push it off
+  screen. Phones keep the shared bottom taskbar and full-screen windows.
 - Insets: `--desktop-inset-top` and `--desktop-inset-bottom` (defaults in
   `variables.css`, set per look above 768px) are what the bars cover.
   `readDesktopInsets` (`icon-grid.ts`) reads them for the icon grid and for
   centred, clamped and maximized windows. A preference change that moves
   them re-places the icons and re-fits maximized windows. A look with bars
   must set both.
+- Overlays keep to the free area between the insets. Quick Access opens
+  above the dock, taskbar or panel (at the left over Windows 10's Start
+  and KDE's launcher) and, in GNOME, from the top bar. Toasts start below
+  a top bar, and below a maximized window's title bar in every look
+  (`toast.css`); in macOS and GNOME, where the tray panel drops from the
+  top bar, they step left of the open panel.
+- In the light theme, a Start glyph drawn in the accent (Windows 11, KDE)
+  uses `--exp-accent-ink`, the accent darkened to keep 3:1 on the light
+  bars.
+- Forced colors: the traffic lights get a `ButtonText` outline and show
+  their glyphs, Launchpad and Activities show the Start glyph instead of
+  their art, and the dock, dash and menu bar turn opaque `Canvas` (a
+  forced background keeps its alpha, so the wallpaper would show through).
 - Settings hides the window radius slider for an operating system's look,
   and the glass preferences for an opaque one.
 
@@ -823,7 +853,7 @@ styles) to `src/components/apps/`. Do not recreate `src/content/apps.ts`.
   with nothing focusable inside (hidden and disabled controls do not count)
   is a labelled tab stop; an inner scroller of its own, such as the SRE
   game's boot log, is a labelled tab stop too. Toasts sit below a maximized
-  window's title bar.
+  window's title bar, in every desktop experience.
 - Quick Access (the Start menu, `#start-menu`) is the desktop's one
   launcher; there is no separate command palette. It and the tray panel are
   `inert` while closed, and only one is open at a time: opening one closes

@@ -140,10 +140,12 @@
   background: rgba(0, 0, 0, 0.12);
 }
 
-/* A maximized window's title bar runs under the top-right corner, so
-   toasts move below it rather than cover its buttons. */
+/* A maximized window's title bar runs under the top-right corner, below a
+   desktop experience's top bar (--desktop-inset-top, experiences.css), so
+   toasts move below it rather than cover its buttons. 52px clears the
+   tallest title bar, GNOME's 46px. */
 html:has(.window.maximized:not(.minimized, .mobile-window)) #toast-container {
-  top: 52px;
+  top: calc(var(--desktop-inset-top) + 52px);
 }
 
 /* Phone windows fill the screen from the top edge, so toasts sit above the

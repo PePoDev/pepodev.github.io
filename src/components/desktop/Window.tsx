@@ -18,6 +18,7 @@ import { AppWindowContext } from "./app-api";
 import { AppBody } from "./app-bodies";
 import { AppIcon } from "./AppIcon";
 import type { AppDefinition, AppId } from "./apps";
+import { prefsStore } from "./prefs";
 import { useStore } from "./store";
 import {
   beginWindowDrag,
@@ -87,6 +88,10 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
   const state = useWindow(id);
   // A boolean, so a focus change re-renders only the two windows it concerns.
   const isFocusedWindow = useStore(windowsStore, (windows) => windows.focused === id);
+  // macOS draws its controls close first, on the left (experiences.css), so
+  // they render in that order and Tab meets them as drawn. The preferences
+  // load after hydration, so the first render matches the server's.
+  const closeFirst = useStore(prefsStore, (prefs) => prefs?.experience === "macos");
   const contentRef = useRef<HTMLDivElement>(null);
   const [scrollTabStop, setScrollTabStop] = useState(false);
   const shown = state.open && !state.minimized;
@@ -173,6 +178,50 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
     event.preventDefault();
   };
 
+  const minimizeButton = (
+    <button
+      key="min"
+      className="min-btn"
+      type="button"
+      title="Minimize"
+      aria-label={`Minimize ${title}`}
+      onClick={() => minimizeWindow(id)}
+    >
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <line x1="2" y1="6" x2="10" y2="6" />
+      </svg>
+    </button>
+  );
+  const maximizeButton = (
+    <button
+      key="max"
+      className="max-btn"
+      type="button"
+      title={action}
+      aria-label={`${action} ${title}`}
+      onClick={() => toggleMaximize(id)}
+    >
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <rect x="2" y="2" width="8" height="8" rx="1" />
+      </svg>
+    </button>
+  );
+  const closeButton = (
+    <button
+      key="close"
+      className="close-btn"
+      type="button"
+      title="Close"
+      aria-label={`Close ${title}`}
+      onClick={() => closeWindow(id)}
+    >
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <line x1="2" y1="2" x2="10" y2="10" />
+        <line x1="10" y1="2" x2="2" y2="10" />
+      </svg>
+    </button>
+  );
+
   const className = [
     "window",
     focused && "focused",
@@ -228,40 +277,9 @@ export function Window({ app, data }: { app: AppDefinition; data: unknown }) {
           {title}
         </span>
         <div className="window-controls">
-          <button
-            className="min-btn"
-            type="button"
-            title="Minimize"
-            aria-label={`Minimize ${title}`}
-            onClick={() => minimizeWindow(id)}
-          >
-            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <line x1="2" y1="6" x2="10" y2="6" />
-            </svg>
-          </button>
-          <button
-            className="max-btn"
-            type="button"
-            title={action}
-            aria-label={`${action} ${title}`}
-            onClick={() => toggleMaximize(id)}
-          >
-            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <rect x="2" y="2" width="8" height="8" rx="1" />
-            </svg>
-          </button>
-          <button
-            className="close-btn"
-            type="button"
-            title="Close"
-            aria-label={`Close ${title}`}
-            onClick={() => closeWindow(id)}
-          >
-            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <line x1="2" y1="2" x2="10" y2="10" />
-              <line x1="10" y1="2" x2="2" y2="10" />
-            </svg>
-          </button>
+          {closeFirst
+            ? [closeButton, minimizeButton, maximizeButton]
+            : [minimizeButton, maximizeButton, closeButton]}
         </div>
       </div>
       <div
