@@ -636,8 +636,9 @@ value falls back to the default. Every look follows the theme and accent.
   in `::before` and the top bar in `::after`, and fix the tray in the top
   bar. Windows 11 centres Start and the apps in a grid whose outer columns
   share the free space. A crowded Windows or KDE taskbar shrinks its app
-  buttons, down to 24px, rather than run under the tray or push it off
-  screen. Phones keep the shared bottom taskbar and full-screen windows.
+  buttons, down to 24px, and a crowded macOS dock or GNOME dash its icons,
+  down to 32px, rather than run under the tray or off screen; their rows
+  never scroll. Phones keep the shared bottom taskbar and full-screen windows.
 - Insets: `--desktop-inset-top` and `--desktop-inset-bottom` (defaults in
   `variables.css`, set per look above 768px) are what the bars cover.
   `readDesktopInsets` (`icon-grid.ts`) reads them for the icon grid and for
@@ -921,6 +922,11 @@ Runtime). Do not recreate `src/content/apps.ts`.
   a window focuses it.
   Minimized and closed windows are `inert` and `aria-hidden`. Taskbar window
   buttons are named by their label, which phone widths hide only visually.
+  A crowded taskbar keeps the Start button, the tray and the clock whole:
+  the window buttons shrink, their labels first (an ellipsis), down to
+  their icon (36px), and past that the row scrolls sideways with a hidden
+  scrollbar, by the mouse wheel too, and to show the focused window's
+  button (`taskbar.css`, `Taskbar.tsx`).
 - After a click or tap on a taskbar window button, the button gives up focus,
   so the window gets the keys and Enter does not press it again; Tab then
   reaches the first window button and Shift+Tab the Start button. From the

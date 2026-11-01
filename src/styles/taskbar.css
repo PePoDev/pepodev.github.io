@@ -20,6 +20,7 @@
 
 #taskbar-start,
 #taskbar-site-mode {
+  flex: none;
   width: 40px;
   height: 40px;
   display: flex;
@@ -45,11 +46,15 @@
   height: 20px;
 }
 
+/* A crowded taskbar: the Start button, the tray and the clock keep their
+   size, and the window buttons shrink, their labels first (an ellipsis),
+   down to their icon (36px). Past that the row scrolls sideways (below). */
 #taskbar-apps {
   display: flex;
   align-items: center;
   gap: 2px;
   flex: 1;
+  min-width: 0;
   justify-content: center;
   height: 100%;
   padding: 4px 0;
@@ -57,11 +62,12 @@
 
 .taskbar-app {
   height: 36px;
-  min-width: 40px;
+  min-width: 36px;
   max-width: 160px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0;
+  overflow: hidden;
   padding: 0 10px;
   border-radius: 6px;
   cursor: pointer;
@@ -108,6 +114,44 @@
   flex-shrink: 0;
 }
 
+/* The space before the label is its margin, not the button's gap, so a
+   label shrunk to nothing leaves the icon alone in the middle. */
+.taskbar-app span {
+  min-width: 0;
+  margin-inline-start: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Too many windows for even their icons: the row scrolls sideways, its
+   scrollbar hidden (Taskbar.tsx scrolls it with the mouse wheel, and
+   brings the focused window's button into view). Auto margins centre the
+   buttons while they fit and let the row start at the first one once it
+   scrolls (justify-content: center would cut off the start). The padding
+   keeps the end buttons' focus rings inside the row. Phones scroll the row
+   their own way (below). */
+@media (min-width: 769px) {
+  #taskbar-apps {
+    justify-content: flex-start;
+    padding-inline: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  #taskbar-apps::-webkit-scrollbar {
+    display: none;
+  }
+
+  :where(#taskbar-apps > .taskbar-app:first-child) {
+    margin-inline-start: auto;
+  }
+
+  :where(#taskbar-apps > .taskbar-app:last-child) {
+    margin-inline-end: auto;
+  }
+}
+
 /* Shown only by the looks whose top bar names the focused app
    (experiences.css). */
 #taskbar-focused-app {
@@ -115,6 +159,7 @@
 }
 
 #taskbar-tray {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;

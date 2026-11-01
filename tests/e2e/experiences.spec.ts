@@ -502,42 +502,94 @@ for (const [experience, variant] of LOOKS) {
   });
 }
 
-test("a crowded Windows or KDE taskbar keeps every button on screen and clear of the tray", async ({
+test("a crowded taskbar, dock or dash keeps every button on screen and clear of the tray in every look", async ({
   page,
 }) => {
-  // Three looks with sixteen windows each.
-  test.setTimeout(90_000);
-  for (const [experience, variant] of [
-    ["windows", "11"],
-    ["windows", "10"],
-    ["linux", "kde"],
-  ]) {
+  // Seven looks with sixteen windows each, at three widths.
+  test.setTimeout(150_000);
+  for (const [experience, variant] of [["pepodev", "default"], ...LOOKS] as const) {
     await page.setViewportSize({ width: 1024, height: 768 });
     await resetPage(page, prefsStorage({ experience, variant }));
     await openEveryApp(page);
-    for (const width of [1024, 800]) {
+    for (const width of [1024, 800, 769]) {
       await page.setViewportSize({ width, height: 768 });
       const label = `${experience} ${variant} at ${width}px`;
+      // The site's own look scrolls a row too crowded for its icons; a
+      // button scrolled out of the row is hidden, and the rest are what the
+      // row shows of them.
       const buttons = await page
         .locator("#taskbar-start, #taskbar-apps .taskbar-app, #taskbar-tray > *")
-        .evaluateAll((elements) =>
-          elements
+        .evaluateAll((elements) => {
+          const row = document.querySelector("#taskbar-apps")!.getBoundingClientRect();
+          return elements
             .filter((element) => element.getClientRects().length > 0)
             .map((element) => {
-              const { x, y, width, height } = element.getBoundingClientRect();
+              let { x, y, width, height } = element.getBoundingClientRect();
+              if (element.closest("#taskbar-apps")) {
+                const right = Math.min(x + width, row.right);
+                x = Math.max(x, row.left);
+                width = right - x;
+              }
               return { name: element.id || element.getAttribute("data-app-id"), x, y, width, height };
-            }),
-        );
+            })
+            .filter((button) => button.width >= 1);
+        });
       for (const [i, button] of buttons.entries()) {
         expect(button.x, `${label}: ${button.name}`).toBeGreaterThanOrEqual(-0.5);
         expect(button.x + button.width, `${label}: ${button.name}`).toBeLessThanOrEqual(width + 0.5);
-        expect(button.width, `${label}: ${button.name}`).toBeGreaterThanOrEqual(24);
         for (const other of buttons.slice(i + 1)) {
           expect(intersects(button, other, 0.5), `${label}: ${button.name} and ${other.name}`).toBe(false);
         }
       }
+      // Every window button keeps a target of at least 24px, scrolled or not.
+      const widths = await page
+        .locator("#taskbar-apps .taskbar-app")
+        .evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().width));
+      expect(Math.min(...widths), label).toBeGreaterThanOrEqual(24);
+      for (const name of ["taskbar-start", "taskbar-clock-button"]) {
+        expect(buttons.some((button) => button.name === name), `${label}: ${name}`).toBe(true);
+      }
     }
   }
+});
+
+test("a crowded row of window buttons scrolls, by wheel and to the focused window", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 768 });
+  await resetPage(page);
+  await openEveryApp(page);
+  const row = page.locator("#taskbar-apps");
+  const scroll = () => row.evaluate((element) => element.scrollLeft);
+  expect(await row.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+  // Focusing the first window scrolls back to the start of the row, where
+  // its button is whole: centring would cut it off.
+  const firstId = await row.locator(".taskbar-app").first().getAttribute("data-app-id");
+  await page.evaluate(
+    (appId) => document.dispatchEvent(new CustomEvent("desktop:open-app", { detail: { appId } })),
+    firstId,
+  );
+  await expect.poll(scroll).toBe(0);
+  const first = await row.locator(".taskbar-app").first().boundingBox();
+  const rowBox = (await row.boundingBox())!;
+  expect(first!.x).toBeGreaterThanOrEqual(rowBox.x);
+
+  // A vertical wheel scrolls it sideways.
+  await page.mouse.move(rowBox.x + rowBox.width / 2, rowBox.y + rowBox.height / 2);
+  await page.mouse.wheel(0, 120);
+  await expect.poll(scroll).toBeGreaterThan(0);
+
+  // Focusing the last window brings its button into view.
+  await row.evaluate((element) => (element.scrollLeft = 0));
+  const lastId = await row.locator(".taskbar-app").last().getAttribute("data-app-id");
+  await page.evaluate(
+    (appId) => document.dispatchEvent(new CustomEvent("desktop:open-app", { detail: { appId } })),
+    lastId,
+  );
+  await expect
+    .poll(async () => {
+      const button = (await row.locator(`[data-app-id="${lastId}"]`).boundingBox())!;
+      return button.x + button.width <= rowBox.x + rowBox.width + 0.5 && button.x >= rowBox.x - 0.5;
+    })
+    .toBe(true);
 });
 
 test("phones keep the bottom taskbar, a large close target and whole titles in every experience", async ({

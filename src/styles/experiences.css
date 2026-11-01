@@ -71,7 +71,16 @@ html[data-experience="linux"][data-theme="light"] {
 
   :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) .taskbar-app {
     justify-content: center;
+    margin-inline: 0;
+    overflow: visible;
     padding: 0;
+  }
+
+  /* A crowded dock, dash or taskbar shrinks its buttons instead (each look
+     below), so its row never scrolls, nor clips a dock's magnified icon or
+     running dot. */
+  :is([data-experience="macos"], [data-experience="windows"], [data-experience="linux"]) #taskbar-apps {
+    overflow: visible;
   }
 
   /* Toasts start below a top bar (toast.css moves them below a maximized
@@ -381,6 +390,18 @@ html[data-experience="macos"][data-experience-variant="tahoe"][data-theme="light
   [data-experience="macos"] .taskbar-app img {
     width: 42px;
     height: 42px;
+  }
+
+  /* A crowded dock shrinks its icons, as macOS does, down to a 32px target. */
+  [data-experience="macos"] .taskbar-app {
+    min-width: 32px;
+  }
+
+  [data-experience="macos"] .taskbar-app svg,
+  [data-experience="macos"] .taskbar-app img {
+    width: min(42px, 100% - 6px);
+    height: auto;
+    aspect-ratio: 1;
   }
 
   [data-experience="macos"] #taskbar-start:hover,
@@ -949,6 +970,18 @@ html[data-experience="linux"][data-theme="light"] {
   [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app img {
     width: 38px;
     height: 38px;
+  }
+
+  /* A crowded dash shrinks its icons, down to a 32px target. */
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app {
+    min-width: 32px;
+  }
+
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app svg,
+  [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app img {
+    width: min(38px, 100% - 6px);
+    height: auto;
+    aspect-ratio: 1;
   }
 
   [data-experience="linux"][data-experience-variant="gnome"] .taskbar-app::after,

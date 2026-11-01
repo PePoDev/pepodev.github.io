@@ -3,7 +3,7 @@
 // its label, which phone widths hide only visually), the mode switch, and the
 // tray: system audio and the clock, which open the tray panel (calendar,
 // volume, mute).
-import { memo, useEffect, useRef, useState, type CSSProperties } from "react";
+import { memo, useEffect, useRef, useState, type CSSProperties, type WheelEvent } from "react";
 import { AppIcon } from "./AppIcon";
 import { APPS, getApp, taskbarLabel, type AppDefinition } from "./apps";
 import { ModeSwitch } from "./ModeSwitch";
@@ -46,6 +46,27 @@ function releaseTaskbarFocus(apps: HTMLElement | null) {
   apps.removeAttribute("tabindex");
 }
 
+/**
+ * A row of window buttons too crowded for their icons scrolls sideways
+ * (taskbar.css): scrolls it to show `button` whole.
+ */
+function revealInRow(button: HTMLElement | null) {
+  const row = button?.parentElement;
+  if (!button || !row || row.scrollWidth <= row.clientWidth) return;
+  const box = button.getBoundingClientRect();
+  const view = row.getBoundingClientRect();
+  if (box.left < view.left) row.scrollLeft -= view.left - box.left + 4;
+  else if (box.right > view.right) row.scrollLeft += box.right - view.right + 4;
+}
+
+/** Scrolls that row with a vertical mouse wheel too (its scrollbar is hidden). */
+function scrollRowSideways(event: WheelEvent<HTMLDivElement>) {
+  const row = event.currentTarget;
+  if (row.scrollWidth <= row.clientWidth || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+  // Firefox can report the wheel in lines.
+  row.scrollLeft += event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+}
+
 const TaskbarApp = memo(function TaskbarApp({ app }: { app: AppDefinition }) {
   // Only what the button shows, so drags, resizes and z-order changes of its
   // window do not re-render it.
@@ -54,10 +75,15 @@ const TaskbarApp = memo(function TaskbarApp({ app }: { app: AppDefinition }) {
     windowsStore,
     (state) => state.focused === app.id && state.windows[app.id].open && !state.windows[app.id].minimized,
   );
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (focused) revealInRow(button.current);
+  }, [focused]);
   if (!open) return null;
   const label = taskbarLabel(app);
   return (
     <button
+      ref={button}
       type="button"
       className={"taskbar-app active" + (focused ? " focused" : "")}
       data-app-id={app.id}
@@ -351,7 +377,7 @@ export function Taskbar() {
     <div id="taskbar">
       <StartButton />
       <FocusedAppName />
-      <div id="taskbar-apps">
+      <div id="taskbar-apps" onWheel={scrollRowSideways}>
         {APPS.map((app) => (
           <TaskbarApp key={app.id} app={app} />
         ))}
