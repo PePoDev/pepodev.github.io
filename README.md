@@ -399,7 +399,9 @@ the same code:
   shows the notice when a bundle script fails to download (Page Runtime).
 - After `#desktop`: icon placement (above 768px in desktop mode; sets
   `data-desktop-icon-ready` and `window.__pepodevDesktopIconsReady`, and
-  re-places on resize until the boot) and the taskbar clock (time and date in
+  until the boot re-places on resize and, before the next paint, when React
+  renders icons again: a hydration error renders the desktop from scratch,
+  and its new icons would stay hidden) and the taskbar clock (time and date in
   `#taskbar-clock`/`#taskbar-date`, so its button is named from first paint).
 - The background canvas starts at hydration; until then the desktop shows its
   plain background colour.

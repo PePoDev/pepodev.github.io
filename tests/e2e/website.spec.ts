@@ -678,7 +678,7 @@ test("a hydration error keeps website mode and the theme", async ({ page }) => {
   await expect(page.locator("#start-menu h3").first()).toHaveText("Quick Access");
 });
 
-test("a hydration error keeps the desktop experience", async ({ page }) => {
+test("a hydration error keeps the desktop experience and its placed icons", async ({ page }) => {
   const broken = await breakHydration(page, [
     "data-site-mode",
     "data-theme",
@@ -695,11 +695,37 @@ test("a hydration error keeps the desktop experience", async ({ page }) => {
       JSON.stringify({ theme: "light", experience: "macos", variant: "tahoe" }),
     );
   });
+  // How many icons each frame shows unplaced (hidden), once the placement
+  // script has run: React renders the desktop again from scratch, with new
+  // icons, which must be placed before they are painted.
+  await page.addInitScript(() => {
+    type Win = typeof window & {
+      __unplaced?: number[];
+      __pepodevDesktopIconsReady?: boolean;
+      __pepodevWindowManagerReady?: boolean;
+    };
+    const win = window as Win;
+    const unplaced: number[] = (win.__unplaced = []);
+    const sample = () => {
+      if (win.__pepodevDesktopIconsReady) {
+        unplaced.push(
+          document.querySelectorAll("#desktop-icons .desktop-icon:not([data-desktop-icon-ready])").length,
+        );
+      }
+      if (!win.__pepodevWindowManagerReady) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
   await page.goto("/");
   await waitForWindowManager(page);
   expect(broken.errors.join("\n")).toMatch(/#418|[Hh]ydrat/);
   await expect(page.locator("html")).toHaveAttribute("data-experience", "macos");
   expect(await broken.seen()).toEqual(["desktop light macos tahoe"]);
+  const unplaced = await page.evaluate(
+    () => (window as typeof window & { __unplaced?: number[] }).__unplaced ?? [],
+  );
+  expect(unplaced.length).toBeGreaterThan(0);
+  expect(Math.max(...unplaced)).toBe(0);
 });
 
 test("website mode keeps a skip link, visible focus and reduced motion", async ({

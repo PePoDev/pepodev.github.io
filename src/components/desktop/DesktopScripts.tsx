@@ -176,7 +176,9 @@ const iconScript = `(() => {
   // never show stacked and then jump (icon-layout.ts takes over once the
   // desktop boots). Above 768px only; phones use the CSS grid. Until the
   // boot, a resize (or a mode switch to the desktop, which the early-input
-  // script announces as one) places them again.
+  // script announces as one) places them again, and so do icons React
+  // renders again (a hydration error renders the desktop from scratch, and
+  // its new icons would stay hidden until the boot).
   window.__pepodevDesktopIconsReady = true;
   const createIconGrid = ${createIconGrid.toString()};
   const readInsets = ${readDesktopInsets.toString()};
@@ -186,12 +188,7 @@ const iconScript = `(() => {
   const appPrefix = ${scriptValue(ICON_STORAGE_PREFIX)};
   const linkPrefix = ${scriptValue(LINK_ICON_STORAGE_PREFIX)};
   const index = (value) => Number.parseInt(value || "0", 10);
-  const apps = Array.from(document.querySelectorAll("#desktop-icons .desktop-icon[data-open-app]"));
-  const links = Array.from(document.querySelectorAll("#desktop-links .desktop-link-icon[id]")).sort(
-    (a, b) => index(a.dataset.shortcutIndex) - index(b.dataset.shortcutIndex),
-  );
-  const icons = apps.concat(links);
-  const descriptors = icons.map((icon) =>
+  const describe = (icon) =>
     icon.dataset.openApp
       ? {
           id: icon.dataset.openApp,
@@ -201,8 +198,7 @@ const iconScript = `(() => {
           group: icon.dataset.layoutGroup,
           index: index(icon.dataset.layoutIndex),
         }
-      : { id: icon.id, link: true, shortcut: index(icon.dataset.shortcutIndex) },
-  );
+      : { id: icon.id, link: true, shortcut: index(icon.dataset.shortcutIndex) };
   const setPosition = (icon, left, top, fixed) => {
     icon.style.position = fixed ? "fixed" : "";
     icon.style.left = left;
@@ -212,6 +208,12 @@ const iconScript = `(() => {
   };
   const place = () => {
     if (document.documentElement.dataset.siteMode !== "desktop") return;
+    const apps = Array.from(document.querySelectorAll("#desktop-icons .desktop-icon[data-open-app]"));
+    const links = Array.from(document.querySelectorAll("#desktop-links .desktop-link-icon[id]")).sort(
+      (a, b) => index(a.dataset.shortcutIndex) - index(b.dataset.shortcutIndex),
+    );
+    const icons = apps.concat(links);
+    const descriptors = icons.map(describe);
     if (window.matchMedia("(max-width: 768px)").matches) {
       icons.forEach((icon) => setPosition(icon, "", "", false));
       return;
@@ -246,6 +248,13 @@ const iconScript = `(() => {
   window.addEventListener("resize", () => {
     if (!window.__pepodevWindowManagerReady) place();
   });
+  // A mutation observer runs before the next paint.
+  const desktop = document.getElementById("desktop");
+  const rendered = new MutationObserver(() => {
+    if (window.__pepodevWindowManagerReady) return rendered.disconnect();
+    if (desktop.querySelector(".desktop-icon:not([data-desktop-icon-ready])")) place();
+  });
+  if (desktop) rendered.observe(desktop, { childList: true, subtree: true });
 })();`;
 
 /** Places the desktop icons before first paint (icon-grid.ts). */
