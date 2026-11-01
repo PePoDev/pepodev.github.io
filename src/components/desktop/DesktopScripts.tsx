@@ -137,6 +137,32 @@ const earlyInputScript = `(() => {
     },
     true,
   );
+  // A file of the desktop's bundle (script[data-desktop-bundle], added by
+  // scripts/postbuild.mjs) failed to download, so the desktop will never
+  // boot and would ignore every click until a reload: say so, with a reload
+  // and the way to website mode, which needs no bundle (the click above
+  // switches it). A module script reports a failure, its imports' included,
+  // with an error event on itself, which only a capturing listener sees.
+  addEventListener(
+    "error",
+    (event) => {
+      const script = event.target;
+      if (!(script instanceof HTMLScriptElement) || !script.hasAttribute("data-desktop-bundle")) return;
+      if (window.__pepodevWindowManagerReady || document.querySelector(".desktop-load-error")) return;
+      const notice = document.createElement("div");
+      notice.className = "desktop-load-error";
+      notice.setAttribute("role", "alert");
+      notice.innerHTML =
+        "<p>The desktop could not load. Check your connection, then reload the page.</p>" +
+        '<div><button type="button" data-desktop-reload="">Reload</button> ' +
+        '<button type="button" data-site-mode-target="website">Website mode</button></div>';
+      notice.querySelector("[data-desktop-reload]").addEventListener("click", () => location.reload());
+      const show = () => document.body.append(notice);
+      if (document.body) show();
+      else document.addEventListener("DOMContentLoaded", show, { once: true });
+    },
+    true,
+  );
 })();`;
 
 /** Takes clicks and Ctrl/Cmd + K made before the desktop boots (replayed by runtime.tsx). */

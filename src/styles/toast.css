@@ -184,3 +184,62 @@ html:has(.window.maximized:not(.minimized, .mobile-window)) #toast-container {
     font-size: 10px;
   }
 }
+
+/* The notice the early-input script shows when the desktop's bundle failed
+   to download (DesktopScripts.tsx): the desktop would ignore every click,
+   so it says so, above everything, with a reload and website mode. */
+.desktop-load-error {
+  position: fixed;
+  bottom: calc(var(--desktop-inset-bottom, 56px) + 16px);
+  left: 50%;
+  z-index: 20001;
+  width: min(420px, calc(100vw - 32px));
+  padding: 16px;
+  transform: translateX(-50%);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.desktop-load-error p {
+  margin: 0 0 12px;
+}
+
+.desktop-load-error div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.desktop-load-error button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.desktop-load-error button:first-child {
+  border-color: transparent;
+  background: var(--accent-primary);
+  color: #0b0f14;
+  font-weight: 600;
+}
+
+html[data-site-mode="website"] .desktop-load-error {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-load-error {
+    bottom: calc(56px + env(safe-area-inset-bottom) + 16px);
+  }
+}

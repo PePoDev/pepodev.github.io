@@ -174,10 +174,10 @@ declares what runs instead:
   URLs as JSON in `#desktop-apps`; at the end of `<body>`, the entry, which
   so runs only once the page has parsed and hydrates at once, without
   `readyState` or DOMContentLoaded (Rocket Loader fakes both once it takes
-  over any script on the page). If a file the entry imports fails to
-  download, the desktop the server rendered stays on screen but ignores
-  input until a reload (link shortcuts and the mode switch still work), as
-  with Next.js's own scripts before.
+  over any script on the page). Every bundle script carries
+  `data-desktop-bundle`: if one fails to download, the desktop never boots,
+  and the early-input script shows a notice instead (`.desktop-load-error`,
+  `role="alert"`, with Reload and Website mode, which needs no bundle).
 - Each app body is an entry point of its own, imported on demand.
   `app-loaders.ts` lists the bodies, one line each in the form
   `<id>: () => import("@components/apps/<Name>App"),` (the bundle script
@@ -395,7 +395,8 @@ the same code:
   scratch, and in `out/` only the desktop: `<html>` and website mode keep
   what they had. Under `next dev`, which hydrates the whole page, it also
   resets `<html>` to its server attributes and website mode to its server
-  text; the hydration-error tests run only against the export.
+  text; the hydration-error tests run only against the export. It also
+  shows the notice when a bundle script fails to download (Page Runtime).
 - After `#desktop`: icon placement (above 768px in desktop mode; sets
   `data-desktop-icon-ready` and `window.__pepodevDesktopIconsReady`, and
   re-places on resize until the boot) and the taskbar clock (time and date in
@@ -414,7 +415,8 @@ tests.
   accent and drift from the desktop.
 - `#desktop-data` (the desktop's props; also under `next dev`) and
   `#desktop-apps` (app body URLs, only in `out/`), JSON script elements on
-  `/`.
+  `/`; `script[data-desktop-bundle]` and `.desktop-load-error` (Page
+  Runtime).
 - Markup: `#desktop`/`#website` with `data-site-mode-panel` (after boot the
   inactive one is `hidden`, `inert`, `aria-hidden="true"`); `#bg-canvas`;
   `#desktop-icons` (`button.desktop-icon[data-open-app][data-default-col]`);

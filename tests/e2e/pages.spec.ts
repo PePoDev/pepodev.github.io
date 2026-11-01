@@ -400,6 +400,48 @@ test("the desktop Garden window takes the theme and accent from the desktop", as
   await expect(frameRoot).toHaveCSS("--accent-primary", "#bf5af2");
 });
 
+test("a desktop bundle file that fails to download shows a notice with reload and website mode", async ({
+  page,
+}) => {
+  test.skip(process.env.PLAYWRIGHT_SERVER !== "preview", "next dev hydrates through Next.js");
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("pepodev.hasVisited", "true");
+  });
+  // One shared chunk fails, as on a flaky connection: the entry imports it,
+  // so the desktop never boots.
+  const chunk = await page
+    .locator('script[data-desktop-bundle][src*="/chunk-"]')
+    .first()
+    .getAttribute("src");
+  await page.route((url) => url.pathname === chunk, (route) => route.abort("connectionreset"));
+  await page.reload();
+  const notice = page.getByRole("alert").filter({ hasText: "The desktop could not load" });
+  await expect(notice).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => (window as typeof window & { __pepodevWindowManagerReady?: boolean }).__pepodevWindowManagerReady ?? false,
+    ),
+  ).toBe(false);
+
+  // Reload loads the page again (and, with the chunk still failing, the notice).
+  await Promise.all([page.waitForEvent("load"), notice.getByRole("button", { name: "Reload" }).click()]);
+  await expect(notice).toBeVisible();
+
+  // Website mode needs no bundle: the parse-time mode switch takes it.
+  await notice.getByRole("button", { name: "Website mode" }).click();
+  await expect(page.locator("#website")).toBeVisible();
+  await expect(notice).toBeHidden();
+
+  // A boot that works shows no notice.
+  await page.unrouteAll();
+  await page.evaluate(() => localStorage.removeItem("pepodev.viewMode"));
+  await page.reload();
+  await waitForWindowManager(page);
+  await expect(page.locator(".desktop-load-error")).toHaveCount(0);
+});
+
 test("the home page loads the desktop bundle and no Next.js runtime", async ({
   page,
 }) => {

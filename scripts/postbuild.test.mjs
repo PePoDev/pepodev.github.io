@@ -111,13 +111,13 @@ test("the desktop bundle's files go in <head>, its entry at the end of <body>, a
     html.slice(html.indexOf("<link"), html.indexOf("</head>")),
     '<link rel="modulepreload" href="/_next/static/desktop/chunk-CD.js"/>' +
       '<link rel="modulepreload" href="/_next/static/desktop/desktop-AB.js"/>' +
-      '<script data-cfasync="false" type="module" async="" src="/_next/static/desktop/chunk-CD.js"></script>' +
+      '<script data-cfasync="false" data-desktop-bundle="" type="module" async="" src="/_next/static/desktop/chunk-CD.js"></script>' +
       '<script type="application/json" id="desktop-apps">' +
       '{"calculator":"/_next/static/desktop/CalculatorApp-EF.js","gallery":"\\u003c/script>"}</script>',
   );
   assert.ok(
     html.endsWith(
-      '</script><script data-cfasync="false" type="module" async="" src="/_next/static/desktop/desktop-AB.js"></script></body></html>',
+      '</script><script data-cfasync="false" data-desktop-bundle="" type="module" async="" src="/_next/static/desktop/desktop-AB.js"></script></body></html>',
     ),
   );
   assert.deepEqual(rocketLoaderProblems(html), []);

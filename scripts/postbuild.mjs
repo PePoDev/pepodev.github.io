@@ -164,7 +164,9 @@ const scriptJson = (value) => JSON.stringify(value).replace(/</g, "\\u003c");
 
 /**
  * The home page's desktop bundle (buildDesktopBundle's result). Every
- * script is an async module script, so DOMContentLoaded never waits for it
+ * script is an async module script marked data-desktop-bundle (the
+ * early-input script shows a notice when one fails to download, in
+ * DesktopScripts.tsx), so DOMContentLoaded never waits for it
  * (a deferred one would hold the event until the bundle has downloaded),
  * with data-cfasync="false" before src, where Cloudflare Rocket Loader
  * looks for it. At the end of <head>: a module preload for every file,
@@ -179,7 +181,8 @@ export function addDesktopBundle(html, bundle) {
   if (!html.includes("</head>") || !html.includes("</body>")) {
     throw new Error("The page has no </head> or </body> for the desktop bundle.");
   }
-  const moduleScript = (url) => `<script data-cfasync="false" type="module" async="" src="${url}"></script>`;
+  const moduleScript = (url) =>
+    `<script data-cfasync="false" data-desktop-bundle="" type="module" async="" src="${url}"></script>`;
   const head =
     [...bundle.preload, bundle.entry].map((url) => `<link rel="modulepreload" href="${url}"/>`).join("") +
     bundle.preload.map(moduleScript).join("") +
