@@ -35,4 +35,4 @@ pnpm-debug.log*
 # garden notes synced from the private Obsidian vault (pnpm garden:sync)
 src/content/garden/
 src/assets/garden/
-.vault/
+.obsidian-vault/

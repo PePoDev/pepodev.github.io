@@ -4,7 +4,7 @@ import test from "node:test";
 import { buildIndex, convertNote, slugify } from "./sync-garden.mjs";
 
 const pub = (body, extra = "") => `---\ndg-publish: true\n${extra}---\n${body}`;
-const vault = buildIndex(
+const obsidianVault = buildIndex(
   [
     {
       rel: "Knowledge/Cloud/AWS/AWS.md",
@@ -40,7 +40,7 @@ const vault = buildIndex(
   ],
   ["Attachments/aws diagram.png"],
 );
-const note = (rel) => vault.all.find((n) => n.rel === rel);
+const note = (rel) => obsidianVault.all.find((n) => n.rel === rel);
 
 test("slugify turns names into readable URL segments", () => {
   for (const [input, slug] of [
@@ -60,7 +60,7 @@ test("slugify turns names into readable URL segments", () => {
 });
 
 test("only dg-publish notes outside Blog/ with frontmatter at byte 0 publish", () => {
-  const published = vault.all.filter((n) => n.published).map((n) => n.id);
+  const published = obsidianVault.all.filter((n) => n.published).map((n) => n.id);
   assert.deepEqual(published.sort(), [
     "index",
     "knowledge/business/business",
@@ -73,7 +73,7 @@ test("only dg-publish notes outside Blog/ with frontmatter at byte 0 publish", (
 });
 
 test("converted note keeps nothing private", () => {
-  const { body, links, assets, dropped } = convertNote(note("Knowledge/Cloud/AWS/AWS.md"), vault);
+  const { body, links, assets, dropped } = convertNote(note("Knowledge/Cloud/AWS/AWS.md"), obsidianVault);
   assert.doesNotMatch(body, /Secret Plan|private aside|hidden|candidate|1234/);
   assert.match(body, /## Pages  \n- \[IAM\]\(\/garden\/knowledge\/cloud\/aws\/iam\/\)\n/);
   // Obsidian resolves this [[Financial]] to the shorter, private Financial/Financial.md.
@@ -90,7 +90,7 @@ test("converted note keeps nothing private", () => {
 });
 
 test("same-folder note wins an ambiguous link", () => {
-  const { body } = convertNote(note("Knowledge/Business/Business.md"), vault);
+  const { body } = convertNote(note("Knowledge/Business/Business.md"), obsidianVault);
   assert.equal(body, "- [Financial](/garden/knowledge/business/financial/)");
 });
 

@@ -41,7 +41,7 @@ export const getRecentlyTended = (notes: GardenNote[], count: number) =>
     )
     .slice(0, count);
 
-/** Vault folders as a tree, folders and notes sorted by name. */
+/** Obsidian vault folders as a tree, folders and notes sorted by name. */
 export function buildGardenTree(notes: GardenNote[]): GardenFolder {
   const root: GardenFolder = { name: "", folders: [], notes: [], ids: new Set() };
   for (const note of notes) {

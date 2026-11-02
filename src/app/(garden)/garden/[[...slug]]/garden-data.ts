@@ -43,7 +43,7 @@ export async function getGardenPage(params: GardenParams): Promise<GardenPage> {
   return { notes, home, note };
 }
 
-/** The home's title: the vault home note's, or a default. */
+/** The home's title: the Obsidian vault home note's, or a default. */
 export const gardenHomeTitle = (home?: GardenNote) => home?.data.title ?? "Digital Garden";
 
 export function getGardenHead({ home, note }: GardenPage): PageHead {

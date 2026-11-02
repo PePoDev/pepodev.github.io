@@ -18,16 +18,17 @@ Obsidian vault ──obsidian-git (every ~3 min)──▶ PePoDev/obsidian-vault
 GitHub Actions deploy.yaml (push, hourly, manual)    │
   garden job ◀───────────────────────────────────────┘  (installs with --ignore-scripts)
     1. sparse, blob-less checkout: *.md, Attachments/, .obsidian/app.json
-    2. node scripts/sync-garden.mjs --vault .vault
+    2. node scripts/sync-garden.mjs --obsidian-vault .obsidian-vault
     3. upload src/content/garden + src/assets/garden (published notes only)
   build job: download that artifact, then pnpm build exports out/
   test job: Playwright against that export
   deploy job: GitHub Pages
 ```
 
-- **Nothing from the vault is committed.** Synced notes and attachments are
-  gitignored and rebuilt on every deploy, so unpublishing a note removes it on
-  the next deploy, with no copy left in this public repo's history.
+- **Nothing from the Obsidian vault is committed.** Synced notes and
+  attachments are gitignored and rebuilt on every deploy, so unpublishing a
+  note removes it on the next deploy, with no copy left in this public repo's
+  history.
 - **`scripts/sync-garden.mjs` is the privacy boundary.**
   - It publishes only notes with `dg-publish: true` in frontmatter at byte 0,
     as Obsidian reads it. `Blog/` is skipped because posts live in
@@ -43,17 +44,18 @@ GitHub Actions deploy.yaml (push, hourly, manual)    │
     (`satteri`), so nothing inside code is rewritten and nothing outside it
     escapes the rewrites.
   - Every converted note is parsed again before it is written. If it would
-    still publish a comment, a raw wikilink, or a link into the vault, that
-    note is skipped with a CI warning; the rest of the garden still deploys.
+    still publish a comment, a raw wikilink, or a link into the Obsidian
+    vault, that note is skipped with a CI warning; the rest of the garden
+    still deploys.
   - Logs print counts only.
-  - `pnpm test:garden` checks these rules against a fake vault.
-- **URLs are slugified vault paths.** For example,
+  - `pnpm test:garden` checks these rules against a fake Obsidian vault.
+- **URLs are slugified Obsidian vault paths.** For example,
   `Knowledge/Technical/Kubernetes/CKS.md` is served at
   `/garden/knowledge/technical/kubernetes/cks/`.
 - **The site renders:**
   - a note tree with a filter
   - breadcrumbs
-  - "Last tended" dates from vault git history
+  - "Last tended" dates from Obsidian vault git history
   - callouts, including foldable ones
   - responsive WebP images
   - table of contents
@@ -65,18 +67,18 @@ GitHub Actions deploy.yaml (push, hourly, manual)    │
 ## One-time setup
 
 Until step 1 is done, deploys still succeed, but the garden ships empty: the
-vault steps skip when the secret is missing.
+Obsidian vault steps skip when the secret is missing.
 
-- [ ] **1. Give the deploy workflow read-only access to the vault.**
+- [ ] **1. Give the deploy workflow read-only access to the Obsidian vault.**
   ```bash
-  ssh-keygen -t ed25519 -N "" -C "pepo.dev garden read-only" -f vault_ro
+  ssh-keygen -t ed25519 -N "" -C "pepo.dev garden read-only" -f obsidian_vault_ro
   ```
   1. In `PePoDev/obsidian-vault`, go to Settings → Deploy keys → Add, paste
-     `vault_ro.pub`, and leave "Allow write access" **unchecked**.
+     `obsidian_vault_ro.pub`, and leave "Allow write access" **unchecked**.
   2. In `PePoDev/pepodev.github.io`, go to Settings → Secrets and variables →
-     Actions → New repository secret. Name it `VAULT_DEPLOY_KEY` and paste the
-     contents of `vault_ro`.
-  3. Delete `vault_ro` and `vault_ro.pub` locally.
+     Actions → New repository secret. Name it `OBSIDIAN_VAULT_DEPLOY_KEY` and
+     paste the contents of `obsidian_vault_ro`.
+  3. Delete `obsidian_vault_ro` and `obsidian_vault_ro.pub` locally.
 - [ ] **2. Deploy and watch the run.** Run
   `gh workflow run deploy.yaml -R PePoDev/pepodev.github.io`, then
   `gh run watch -R PePoDev/pepodev.github.io`. The "Sync published garden notes"
@@ -93,8 +95,9 @@ vault steps skip when the secret is missing.
   after 60 days without commits, and emails before doing so. Run
   `gh workflow enable deploy.yaml` if that happens, or add the instant trigger
   below.
-- **Instant publish (optional).** Add a workflow to the vault repo that calls
-  `gh workflow run deploy.yaml --repo PePoDev/pepodev.github.io --ref main`.
+- **Instant publish (optional).** Add a workflow to the Obsidian vault repo
+  that calls `gh workflow run deploy.yaml --repo PePoDev/pepodev.github.io
+  --ref main`.
   - Use a fine-grained token scoped to this repo with Actions: read and write
     only.
   - Gate it, for example on a `#publish` commit message, because obsidian-git
@@ -109,6 +112,6 @@ vault steps skip when the secret is missing.
   - a garden feed
 
   Add any of these if you miss them; Pagefind would cover search.
-- **Local preview.** Run `pnpm garden:sync` with `GARDEN_VAULT` set to your
-  vault, then `pnpm dev`. Synced content is gitignored, so `garden.spec.ts`
-  skips until you sync.
+- **Local preview.** Run `pnpm garden:sync` with `OBSIDIAN_VAULT` set to your
+  Obsidian vault, then `pnpm dev`. Synced content is gitignored, so
+  `garden.spec.ts` skips until you sync.

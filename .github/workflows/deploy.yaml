@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
   # Pull requests into main (Dependabot's included) build and test, never
-  # deploy, and never get the vault key (see the garden and deploy jobs).
+  # deploy, and never get the Obsidian vault key (see the garden and deploy
+  # jobs).
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -28,18 +29,18 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # The vault is private and this repo is public. Only this job sees the vault
-  # deploy key, and only for runs of main (push, schedule, manual), never for
-  # a pull request (fork and Dependabot pull requests get no secrets anyway).
-  # It installs packages without running their scripts and runs only the
-  # sync (plus the Markdown parser it loads), fetches just Markdown and
-  # attachments, and hands the build the published notes only (already
-  # public on the site). Elsewhere (a pull request, no key, or a manual run on
-  # another branch) its steps skip and the site builds without garden notes.
+  # The Obsidian vault is private and this repo is public. Only this job sees
+  # the Obsidian vault deploy key, and only for runs of main (push, schedule,
+  # manual), never for a pull request (fork and Dependabot pull requests get no
+  # secrets anyway). It installs packages without running their scripts and runs
+  # only the sync (plus the Markdown parser it loads), fetches just Markdown and
+  # attachments, and hands the build the published notes only (already public on
+  # the site). Elsewhere (a pull request, no key, or a manual run on another
+  # branch) its steps skip and the site builds without garden notes.
   garden:
     runs-on: ubuntu-latest
     env:
-      SYNC_GARDEN: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && secrets.VAULT_DEPLOY_KEY != '' }}
+      SYNC_GARDEN: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && secrets.OBSIDIAN_VAULT_DEPLOY_KEY != '' }}
     outputs:
       synced: ${{ env.SYNC_GARDEN }}
     steps:
@@ -53,7 +54,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
-          # No cache in the job that holds the vault key.
+          # No cache in the job that holds the Obsidian vault key.
           package-manager-cache: false
       - name: Install dependencies without running their scripts
         if: env.SYNC_GARDEN == 'true'
@@ -63,8 +64,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: PePoDev/obsidian-vault
-          ssh-key: ${{ secrets.VAULT_DEPLOY_KEY }}
-          path: .vault
+          ssh-key: ${{ secrets.OBSIDIAN_VAULT_DEPLOY_KEY }}
+          path: .obsidian-vault
           fetch-depth: 0 # commit history dates each note
           filter: blob:none # without downloading old file versions
           sparse-checkout-cone-mode: false
@@ -76,7 +77,7 @@ jobs:
           show-progress: false
       - name: Sync published garden notes
         if: env.SYNC_GARDEN == 'true'
-        run: node scripts/sync-garden.mjs --vault .vault
+        run: node scripts/sync-garden.mjs --obsidian-vault .obsidian-vault
       - name: Upload published garden notes
         if: env.SYNC_GARDEN == 'true'
         uses: actions/upload-artifact@v7

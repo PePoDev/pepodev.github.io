@@ -1,5 +1,5 @@
 # Weekly dependency updates. Each pull request runs the deploy workflow's
-# build and test jobs (never the deploy, never with the vault key); see
+# build and test jobs (never the deploy, never with the Obsidian vault key); see
 # README.md, Deployment and Git.
 version: 2
 updates:

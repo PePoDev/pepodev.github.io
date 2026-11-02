@@ -27,7 +27,7 @@ Requires Node `>=22.22.0` and pnpm 10.33 (pinned by `packageManager` in
 | `pnpm check` | Type-check `src/`, `tests/` and the configs (`next typegen && tsc --noEmit`); keep it at 0 errors |
 | `pnpm test:e2e` | Run Playwright tests |
 | `pnpm test:e2e:ui` | Run Playwright in UI mode |
-| `pnpm garden:sync` | Sync published garden notes from the vault in `GARDEN_VAULT` (or `--vault <path>`) |
+| `pnpm garden:sync` | Sync published garden notes from the Obsidian vault in `OBSIDIAN_VAULT` (or `--obsidian-vault <path>`) |
 | `pnpm test:garden` | Run the garden sync privacy and link checks |
 | `pnpm test:scripts` | Run the build scripts' unit tests (`scripts/*.test.mjs`: the garden checks, postbuild's HTML helpers and the desktop bundle's checks) |
 
@@ -89,7 +89,7 @@ export has no payload).
 | `src/components/garden/`, `src/styles/garden.css` | Garden shell, note tree, parse-time scripts, page styles |
 | `src/lib/` | Content layer (`content.ts`), Markdown (`markdown.ts`), images (`images.ts`), metadata (`head.ts`), `static-params.ts`, `sitemap.ts`, `xml.ts` |
 | `src/content/blog/` | Markdown/MDX posts; standard and Obsidian frontmatter |
-| `scripts/sync-garden.mjs` | Obsidian vault to garden sync; the privacy boundary for vault content |
+| `scripts/sync-garden.mjs` | Obsidian vault to garden sync; the privacy boundary for Obsidian vault content |
 | `src/content/garden/`, `src/assets/garden/` | Synced garden notes and attachments; gitignored, never edit |
 | `docs/superpowers/plans/2026-10-19-garden-obsidian-sync.md` | Garden sync design and one-time setup |
 | `src/assets/blog/` | Local post images |
@@ -854,15 +854,16 @@ Runtime). Do not recreate `src/content/apps.ts`.
   48 px and is declared with `sizes="32x32"` before `favicon.svg`, so Chromium
   uses the SVG; regenerate `icon-192.png` and `icon-512.png` from `favicon.svg`
   when the mark changes.
-- The digital garden comes only from `pnpm garden:sync`. It publishes vault
-  notes with `dg-publish: true` (except `Blog/`), turns links to unpublished
-  notes into plain text, drops comments and frontmatter, and copies only
-  embedded attachments. Code is found with `satteri`, the parser the site
-  renders with, and every note is re-parsed before writing: a note that would
-  publish a comment, a raw wikilink, or a vault path is skipped with a
-  warning. Never commit vault content or log unpublished note names; keep
-  `pnpm test:garden` passing when changing the sync. Garden URLs are
-  `/garden/<slugified vault path>/`; list notes through `src/utils/garden.ts`.
+- The digital garden comes only from `pnpm garden:sync`. It publishes Obsidian
+  vault notes with `dg-publish: true` (except `Blog/`), turns links to
+  unpublished notes into plain text, drops comments and frontmatter, and
+  copies only embedded attachments. Code is found with `satteri`, the parser
+  the site renders with, and every note is re-parsed before writing: a note
+  that would publish a comment, a raw wikilink, or an Obsidian vault path is
+  skipped with a warning. Never commit Obsidian vault content or log
+  unpublished note names; keep `pnpm test:garden` passing when changing the
+  sync. Garden URLs are `/garden/<slugified Obsidian vault path>/`; list
+  notes through `src/utils/garden.ts`.
 - The blog index and posts are part of website mode
   (`html[data-site-mode="website"]`, `website-mode.css`, the website fonts),
   inside `BlogShell` (`src/components/blog/`): website mode's header (the
@@ -1089,7 +1090,7 @@ GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`
 
 | Job | Push to `main`, schedule, manual run on `main` | Manual run on another branch | Pull request into `main` |
 | --- | --- | --- | --- |
-| `garden` | Syncs the vault when `VAULT_DEPLOY_KEY` is set | Skips its steps | Skips its steps |
+| `garden` | Syncs the Obsidian vault when `OBSIDIAN_VAULT_DEPLOY_KEY` is set | Skips its steps | Skips its steps |
 | `build` | `pnpm install --frozen-lockfile`, `pnpm build`, uploads `out/` (`actions/upload-pages-artifact`) | Same, without garden notes | Same, without garden notes |
 | `test` | `pnpm test:scripts`, then Playwright against that artifact in Google Chrome | Same | Same |
 | `deploy` | Publishes the artifact (`actions/deploy-pages`) after `build` and `test` pass | Skipped | Skipped |
@@ -1104,12 +1105,12 @@ GitHub Pages deploys `main` through `.github/workflows/deploy.yaml`
   schedule after 60 days without repository activity (a push to `main`
   resets it); re-enable it in the Actions tab, or with
   `gh workflow enable deploy.yaml`, if the values go stale.
-- Garden: `VAULT_DEPLOY_KEY` is a read-only deploy key on
+- Garden: `OBSIDIAN_VAULT_DEPLOY_KEY` is a read-only deploy key on
   `PePoDev/obsidian-vault`. Only the `garden` job sees it, only for runs of
-  `main`: it checks out only the vault's Markdown and attachments, installs
-  packages with `--ignore-scripts` and no cache, runs nothing but the sync,
-  and passes the published notes to `build` and `test` as an artifact (a sync
-  that publishes nothing fails the job). Keep the key out of any job that
+  `main`: it checks out only the Obsidian vault's Markdown and attachments,
+  installs packages with `--ignore-scripts` and no cache, runs nothing but the
+  sync, and passes the published notes to `build` and `test` as an artifact (a
+  sync that publishes nothing fails the job). Keep the key out of any job that
   builds or runs package scripts, and never use `pull_request_target`.
 - Dependabot (`.github/dependabot.yml`): weekly npm updates for the pnpm
   lockfile (Next.js, React, and their types grouped together; every other

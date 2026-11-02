@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { expect, type Locator, test, type Page } from "@playwright/test";
 
-// Garden notes are synced from the private vault and gitignored.
+// Garden notes are synced from the private Obsidian vault and gitignored.
 test.skip(
   !existsSync("src/content/garden/index.md"),
   "Run `pnpm garden:sync` to sync garden notes first",
@@ -51,7 +51,7 @@ for (const viewport of [
   });
 }
 
-test("note URLs are slugified vault paths", async ({ page }) => {
+test("note URLs are slugified Obsidian vault paths", async ({ page }) => {
   for (const path of [
     "/garden/knowledge/technical/cloud/google-cloud/io-t/",
     "/garden/knowledge/technical/others/bash-and-shell/",

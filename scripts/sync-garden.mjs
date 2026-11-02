@@ -1,13 +1,14 @@
 // Sync published Obsidian notes into the garden collection.
 //
-//   node scripts/sync-garden.mjs --vault <path>   (or GARDEN_VAULT=<path>)
+//   node scripts/sync-garden.mjs --obsidian-vault <path>
+//   (or OBSIDIAN_VAULT=<path>)
 //
-// The vault is private and this repo is public, so this script is the privacy
-// boundary: only notes with `dg-publish: true` and the attachments they embed
-// are written, links to anything else become plain text, and logs print counts
-// and published ids only. Every note is re-parsed before it is written, and the
-// sync fails rather than publish anything Obsidian hides or a vault path.
-// Output goes to gitignored folders and is rebuilt on every run.
+// The Obsidian vault is private and this repo is public, so this script is the
+// privacy boundary: only notes with `dg-publish: true` and the attachments they
+// embed are written, links to anything else become plain text, and logs print
+// counts and published ids only. Every note is re-parsed before it is written,
+// and the sync fails rather than publish anything Obsidian hides or an Obsidian
+// vault path. Output goes to gitignored folders and is rebuilt on every run.
 import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
@@ -83,9 +84,9 @@ const isTrue = (value) => /^true$/i.test(value ?? "");
 const stripBom = (text) => (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text);
 
 /**
- * Index every vault note. `notes` is [{ rel, text }], `images` every image path
- * in the vault, both forward-slash and relative to the vault root. Only images
- * inside `attachmentDir` are ever published.
+ * Index every Obsidian vault note. `notes` is [{ rel, text }], `images` every
+ * image path in the Obsidian vault, both forward-slash and relative to the
+ * Obsidian vault root. Only images inside `attachmentDir` are ever published.
  */
 export function buildIndex(notes, images = [], attachmentDir = "Attachments") {
   const all = notes.map(({ rel, text }) => {
@@ -144,9 +145,10 @@ function resolveNote(target, from, index) {
 
 /**
  * Obsidian's rule for embeds: `./x` and `../x` from the note's folder, other
- * paths from the vault root (or the note's folder), bare names from the note's
- * folder first, else the only file with that name. Anything ambiguous, or
- * outside the attachment folder, is dropped rather than risk the wrong file.
+ * paths from the Obsidian vault root (or the note's folder), bare names from
+ * the note's folder first, else the only file with that name. Anything
+ * ambiguous, or outside the attachment folder, is dropped rather than risk the
+ * wrong file.
  */
 function resolveAttachment(ref, from, index) {
   const decoded = safeDecode(ref.trim());
@@ -179,8 +181,11 @@ const isExternal = (url) =>
   (/^([a-z][\w+.-]*:|#)/i.test(url) && !/^(obsidian|file):/i.test(url)) ||
   (url.startsWith("/") && !/\.md(#|$)/i.test(safeDecode(url)));
 
-/** A URL that would point into the vault (or at Obsidian) on the public site. */
-const isVaultUrl = (url) => {
+/**
+ * A URL that would point into the Obsidian vault (or at Obsidian) on the
+ * public site.
+ */
+const isObsidianVaultUrl = (url) => {
   const value = safeDecode(url.trim());
   if (/^[a-z][\w+.-]*:/i.test(value)) return /^(obsidian|file):/i.test(value);
   if (value.startsWith("#") || /^(\.\.\/)+assets\/garden\/[^/]+$/.test(value)) return false;
@@ -277,7 +282,8 @@ const mdTarget = (url) => {
 
 /**
  * Re-parse a converted note and fail if anything Obsidian hides (comments,
- * unconverted wikilinks) or any URL into the vault would reach the site.
+ * unconverted wikilinks) or any URL into the Obsidian vault would reach the
+ * site.
  */
 function assertPublishable(body, id) {
   const problems = [];
@@ -289,11 +295,11 @@ function assertPublishable(body, id) {
     if (node.type === "html") {
       if (/<!--|%%/.test(node.value)) problems.push("a comment in HTML");
       for (const [, url] of node.value.matchAll(/\b(?:href|src)\s*=\s*["']?([^"'\s>]+)/gi)) {
-        if (isVaultUrl(url)) problems.push("an HTML link into the vault");
+        if (isObsidianVaultUrl(url)) problems.push("an HTML link into the Obsidian vault");
       }
     }
-    if (["link", "image", "definition"].includes(node.type) && isVaultUrl(node.url)) {
-      problems.push("a link into the vault");
+    if (["link", "image", "definition"].includes(node.type) && isObsidianVaultUrl(node.url)) {
+      problems.push("a link into the Obsidian vault");
     }
     node.children?.forEach(visit);
   };
@@ -304,9 +310,10 @@ function assertPublishable(body, id) {
 }
 
 /**
- * Turn one published note into standard Markdown. Returns the body, the ids
- * it links to, the attachments it needs ({ from, to } vault/output names), and
- * how many links were left as text because their target is not public.
+ * Turn one published note into standard Markdown. Returns the body, the ids it
+ * links to, the attachments it needs ({ from, to } Obsidian vault/output
+ * names), and how many links were left as text because their target is not
+ * public.
  */
 export function convertNote(note, index, assetNames = new Map()) {
   const links = new Set();
@@ -412,13 +419,16 @@ export function convertNote(note, index, assetNames = new Map()) {
   return { body, links: [...links], assets, dropped };
 }
 
-/** Latest commit date per vault path, when the vault is a git checkout with history. */
-function gitDates(vault) {
+/**
+ * Latest commit date per Obsidian vault path, when the Obsidian vault is a
+ * git checkout with history.
+ */
+function gitDates(obsidianVault) {
   const dates = new Map();
   try {
     let date;
     // --no-renames: rename detection would download old blobs in CI's partial clone.
-    for (const line of git(vault, ["log", "--no-renames", "--format=%x00%cs", "--name-only"]).split("\n")) {
+    for (const line of git(obsidianVault, ["log", "--no-renames", "--format=%x00%cs", "--name-only"]).split("\n")) {
       if (line.startsWith("\u0000")) date = line.slice(1);
       else if (line && !dates.has(line)) dates.set(line, date);
     }
@@ -428,25 +438,25 @@ function gitDates(vault) {
   return dates;
 }
 
-const git = (vault, args) =>
-  execFileSync("git", ["-C", vault, "-c", "core.quotePath=false", ...args], {
+const git = (obsidianVault, args) =>
+  execFileSync("git", ["-C", obsidianVault, "-c", "core.quotePath=false", ...args], {
     encoding: "utf8",
     maxBuffer: 1024 * 1024 * 1024,
     stdio: ["ignore", "pipe", "ignore"],
   });
 
 /**
- * Vault files, skipping dot-folders. A git checkout lists what git tracks,
- * which is also all that CI's sparse checkout can see.
+ * Obsidian vault files, skipping dot-folders. A git checkout lists what git
+ * tracks, which is also all that CI's sparse checkout can see.
  */
-function listFiles(vault) {
+function listFiles(obsidianVault) {
   const visible = (rel) =>
     !rel.split("/").some((part) => part.startsWith(".") || SKIP_DIRS.has(part));
   try {
-    return git(vault, ["ls-files", "-z"]).split("\0").filter((rel) => rel && visible(rel));
+    return git(obsidianVault, ["ls-files", "-z"]).split("\0").filter((rel) => rel && visible(rel));
   } catch {
     const walk = (dir) =>
-      readdirSync(path.join(vault, dir), { withFileTypes: true }).flatMap((entry) => {
+      readdirSync(path.join(obsidianVault, dir), { withFileTypes: true }).flatMap((entry) => {
         const rel = dir ? `${dir}/${entry.name}` : entry.name;
         if (!visible(rel)) return [];
         return entry.isDirectory() ? walk(rel) : [rel];
@@ -456,19 +466,19 @@ function listFiles(vault) {
 }
 
 function main() {
-  const flag = process.argv.indexOf("--vault");
-  const vault = path.resolve(
-    (flag > -1 && process.argv[flag + 1]) || process.env.GARDEN_VAULT || "",
+  const flag = process.argv.indexOf("--obsidian-vault");
+  const obsidianVault = path.resolve(
+    (flag > -1 && process.argv[flag + 1]) || process.env.OBSIDIAN_VAULT || "",
   );
-  if (!existsSync(path.join(vault, ".obsidian"))) {
-    console.error("Pass an Obsidian vault with --vault <path> or GARDEN_VAULT.");
+  if (!existsSync(path.join(obsidianVault, ".obsidian"))) {
+    console.error("Pass an Obsidian vault with --obsidian-vault <path> or OBSIDIAN_VAULT.");
     process.exit(1);
   }
 
-  const files = listFiles(vault);
+  const files = listFiles(obsidianVault);
   const attachmentDir = (() => {
     try {
-      return JSON.parse(readFileSync(path.join(vault, ".obsidian/app.json"), "utf8"))
+      return JSON.parse(readFileSync(path.join(obsidianVault, ".obsidian/app.json"), "utf8"))
         .attachmentFolderPath;
     } catch {
       return "Attachments";
@@ -476,8 +486,8 @@ function main() {
   })();
   const index = buildIndex(
     files
-      .filter((rel) => rel.endsWith(".md") && existsSync(path.join(vault, rel)))
-      .map((rel) => ({ rel, text: readFileSync(path.join(vault, rel), "utf8") })),
+      .filter((rel) => rel.endsWith(".md") && existsSync(path.join(obsidianVault, rel)))
+      .map((rel) => ({ rel, text: readFileSync(path.join(obsidianVault, rel), "utf8") })),
     files.filter((rel) => IMAGE_EXT.test(rel)),
     attachmentDir,
   );
@@ -514,14 +524,14 @@ function main() {
   rmSync(ASSETS_OUT, { recursive: true, force: true });
   mkdirSync(ASSETS_OUT, { recursive: true });
 
-  const dates = gitDates(vault);
+  const dates = gitDates(obsidianVault);
   const copied = new Set();
   let textLinks = 0;
   for (const { note, body, links, assets, dropped } of converted) {
     textLinks += dropped;
     for (const { from, to } of assets) {
       if (copied.has(to)) continue;
-      copyFileSync(path.join(vault, from), path.join(ASSETS_OUT, to));
+      copyFileSync(path.join(obsidianVault, from), path.join(ASSETS_OUT, to));
       copied.add(to);
     }
     const frontmatter = {
